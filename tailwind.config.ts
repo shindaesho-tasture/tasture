@@ -59,6 +59,13 @@ export default {
           DEFAULT: "hsl(var(--surface))",
           elevated: "hsl(var(--surface-elevated))",
         },
+        score: {
+          emerald: "hsl(var(--score-emerald))",
+          mint: "hsl(var(--score-mint))",
+          slate: "hsl(var(--score-slate))",
+          amber: "hsl(var(--score-amber))",
+          ruby: "hsl(var(--score-ruby))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

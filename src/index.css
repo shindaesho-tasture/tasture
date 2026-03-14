@@ -47,6 +47,13 @@
     --surface: 0 0% 98%;
     --surface-elevated: 0 0% 100%;
 
+    /* Score Tier Colors */
+    --score-emerald: 163 78% 20%;
+    --score-mint: 105 24% 70%;
+    --score-slate: 215 16% 47%;
+    --score-amber: 32 95% 44%;
+    --score-ruby: 0 68% 35%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 26%;
     --sidebar-primary: 0 0% 10%;
