@@ -5,6 +5,8 @@ export interface CategoryMetric {
   options: [string, string, string]; // [+2 label, 0 label, -2 label]
   smartGate?: {
     question: string;
+    yesLabel?: string;
+    noLabel?: string;
     subMetrics: CategoryMetric[];
   };
 }
@@ -17,6 +19,33 @@ export interface Category {
   description: string;
   metrics: CategoryMetric[];
 }
+
+// Score tier helpers
+export type ScoreTier = "emerald" | "mint" | "slate" | "amber" | "ruby";
+
+export function getScoreTier(score: number): ScoreTier {
+  if (score >= 1.5) return "emerald";
+  if (score >= 0.5) return "mint";
+  if (score >= -0.4) return "slate";
+  if (score >= -1.4) return "amber";
+  return "ruby";
+}
+
+export function getScoreLabel(score: number): string {
+  if (score === 2) return "ดีเลิศ";
+  if (score === 1) return "ดีกว่าทั่วไป";
+  if (score === 0) return "มาตรฐาน";
+  if (score === -1) return "ค่อนข้างติดขัด";
+  return "วิกฤต";
+}
+
+export const scoreTiers = [
+  { value: 2, label: "ดีเลิศ", tier: "emerald" as ScoreTier, shortLabel: "+2" },
+  { value: 1, label: "ดีกว่าทั่วไป", tier: "mint" as ScoreTier, shortLabel: "+1" },
+  { value: 0, label: "มาตรฐาน", tier: "slate" as ScoreTier, shortLabel: "0" },
+  { value: -1, label: "ค่อนข้างติดขัด", tier: "amber" as ScoreTier, shortLabel: "-1" },
+  { value: -2, label: "วิกฤต", tier: "ruby" as ScoreTier, shortLabel: "-2" },
+];
 
 export const categories: Category[] = [
   {
@@ -45,6 +74,29 @@ export const categories: Category[] = [
       { id: "consistency", label: "ความคงเส้นคงวา", icon: "🎯", options: ["รสมือแม่นยำ", "มาตรฐาน", "รสชาติไม่นิ่ง"] },
       { id: "charm", label: "เสน่ห์เฉพาะตัว", icon: "💫", options: ["หนึ่งเดียวในโลก", "ทั่วไป", "ไร้เสน่ห์"] },
       { id: "value", label: "ความคุ้มค่า", icon: "💰", options: ["คุ้มค่าที่สุด", "สมราคา", "ไม่คุ้มราคา"] },
+      {
+        id: "restroom-gate", label: "ห้องน้ำ", icon: "🚻", options: ["สะอาดกริบ", "มาตรฐาน", "ไม่โอเคเลย"],
+        smartGate: {
+          question: "ร้านนี้มีห้องน้ำไหม?",
+          yesLabel: "มี",
+          noLabel: "ไม่มี",
+          subMetrics: [
+            { id: "restroom", label: "ห้องน้ำ", icon: "🚻", options: ["สะอาดกริบ", "มาตรฐาน", "ไม่โอเคเลย"] },
+          ],
+        },
+      },
+      {
+        id: "seating-gate", label: "ที่นั่ง", icon: "🪑", options: ["สะอาดมาก", "มาตรฐาน", "สกปรก"],
+        smartGate: {
+          question: "ร้านนี้มีที่นั่งไหม?",
+          yesLabel: "มี",
+          noLabel: "ไม่มี",
+          subMetrics: [
+            { id: "table-clean", label: "ความสะอาดโต๊ะ", icon: "✨", options: ["สะอาดกริบ", "มาตรฐาน", "สกปรกมาก"] },
+            { id: "overall-clean", label: "ความสะอาดโดยรวม", icon: "🧹", options: ["สะอาดมาก", "มาตรฐาน", "สกปรก"] },
+          ],
+        },
+      },
     ],
   },
   {
@@ -55,9 +107,32 @@ export const categories: Category[] = [
     description: "คาเฟ่ ร้านกาแฟ พื้นที่สร้างสรรค์",
     metrics: [
       { id: "parking", label: "ที่จอดรถ", icon: "🅿️", options: ["จอดสะดวกมาก", "มาตรฐาน", "จอดลำบาก"] },
+      {
+        id: "restroom-gate", label: "ห้องน้ำ", icon: "🚻", options: ["สะอาดกริบ", "มาตรฐาน", "ไม่โอเค"],
+        smartGate: {
+          question: "ร้านนี้มีห้องน้ำไหม?",
+          yesLabel: "มี",
+          noLabel: "ไม่มี",
+          subMetrics: [
+            { id: "restroom", label: "ห้องน้ำ", icon: "🚻", options: ["สะอาดกริบ", "มาตรฐาน", "ไม่โอเค"] },
+          ],
+        },
+      },
       { id: "photo-spot", label: "มุมถ่ายรูป", icon: "📸", options: ["สวยทุกมุม", "มาตรฐาน", "ไม่ตรงปก"] },
       { id: "lighting", label: "แสงและสี", icon: "💡", options: ["แสงนวลถ่ายรูปสวย", "มาตรฐาน", "แสงไม่สวย"] },
       { id: "noise", label: "ระดับเสียง", icon: "🔇", options: ["เงียบสงบ", "ทั่วไป", "เสียงดังรบกวน"] },
+      {
+        id: "workspace-gate", label: "นั่งทำงาน", icon: "💻", options: ["ดีมาก", "มาตรฐาน", "ไม่เหมาะ"],
+        smartGate: {
+          question: "คุณใช้เป็นที่นั่งทำงานไหม?",
+          yesLabel: "ใช่",
+          noLabel: "ไม่ใช่",
+          subMetrics: [
+            { id: "power-outlet", label: "ปลั๊กไฟ", icon: "🔌", options: ["เพียงพอทุกโต๊ะ", "มีบ้าง", "ไม่มีเลย"] },
+            { id: "wifi", label: "WiFi", icon: "📶", options: ["เร็วมาก", "ใช้ได้", "ช้า/ไม่มี"] },
+          ],
+        },
+      },
     ],
   },
   {
