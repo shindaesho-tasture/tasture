@@ -223,6 +223,7 @@ const ReviewFlow = () => {
 
   // ─── Rating View ───
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-32">
       <div className="sticky top-0 z-10 glass-effect glass-border">
         <div className="flex items-center gap-3 px-4 py-3">
