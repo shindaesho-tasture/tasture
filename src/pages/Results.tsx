@@ -68,6 +68,7 @@ const Results = () => {
 
       <BottomNav />
     </div>
+    </PageTransition>
   );
 };
 

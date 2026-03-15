@@ -81,6 +81,7 @@ const CategorySelect = () => {
 
       <BottomNav />
     </div>
+    </PageTransition>
   );
 };
 

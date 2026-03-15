@@ -63,6 +63,7 @@ const Index = () => {
 
       <BottomNav />
     </div>
+    </PageTransition>
   );
 };
 
