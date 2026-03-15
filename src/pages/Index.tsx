@@ -54,8 +54,8 @@ const Index = () => {
           >
             <span className="text-xl">📊</span>
             <div>
-              <span className="text-xs font-semibold text-foreground block">ผลรีวิว</span>
-              <span className="text-[10px] text-muted-foreground">Result Cards</span>
+              <span className="text-xs font-medium text-foreground block">ผลรีวิว</span>
+              <span className="text-[10px] font-light text-muted-foreground">สรุปผลคะแนน</span>
             </div>
           </motion.button>
         </div>
