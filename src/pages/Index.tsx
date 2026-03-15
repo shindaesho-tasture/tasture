@@ -38,7 +38,7 @@ const Index = () => {
         <div className="px-6 pt-4 grid grid-cols-2 gap-3">
           <motion.button
             whileTap={{ scale: 0.96 }}
-            onClick={() => navigate("/categories")}
+            onClick={() => navigate("/register")}
             className="flex items-center gap-2 p-4 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left"
           >
             <span className="text-xl">📝</span>
