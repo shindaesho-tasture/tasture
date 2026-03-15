@@ -10,6 +10,9 @@ import CategorySelect from "./pages/CategorySelect.tsx";
 import StoreRegistration from "./pages/StoreRegistration.tsx";
 import ReviewFlow from "./pages/ReviewFlow.tsx";
 import Results from "./pages/Results.tsx";
+import WorldMap from "./pages/WorldMap.tsx";
+import SmartSplit from "./pages/SmartSplit.tsx";
+import Profile from "./pages/Profile.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -25,6 +28,9 @@ const AnimatedRoutes = () => {
         <Route path="/register" element={<StoreRegistration />} />
         <Route path="/review/:categoryId" element={<ReviewFlow />} />
         <Route path="/results" element={<Results />} />
+        <Route path="/world" element={<WorldMap />} />
+        <Route path="/split" element={<SmartSplit />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
