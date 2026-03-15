@@ -16,6 +16,41 @@ const ReviewFlow = () => {
   const [gateState, setGateState] = useState<Record<string, boolean>>({});
   const [subScores, setSubScores] = useState<Record<string, number | null>>({});
 
+  // Count filled metrics
+  const filledCount = useMemo(() => {
+    if (!category) return 0;
+    let count = 0;
+    category.metrics.forEach((m) => {
+      if (m.smartGate) {
+        if (gateState[m.id] !== undefined) {
+          count++;
+          if (gateState[m.id]) {
+            m.smartGate.subMetrics.forEach((sub) => {
+              if (subScores[sub.id] !== null && subScores[sub.id] !== undefined) count++;
+            });
+          }
+        }
+      } else {
+        if (scores[m.id] !== null && scores[m.id] !== undefined) count++;
+      }
+    });
+    return count;
+  }, [scores, gateState, subScores, category]);
+
+  const totalMetrics = useMemo(() => {
+    if (!category) return 0;
+    let count = 0;
+    category.metrics.forEach((m) => {
+      if (m.smartGate) {
+        count++;
+        if (gateState[m.id]) count += m.smartGate.subMetrics.length;
+      } else {
+        count++;
+      }
+    });
+    return count;
+  }, [category, gateState]);
+
   if (!category) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
