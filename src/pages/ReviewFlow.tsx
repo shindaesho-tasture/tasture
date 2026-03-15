@@ -5,6 +5,7 @@ import { ChevronLeft, Check, RotateCcw } from "lucide-react";
 import { categories, scoreTiers } from "@/lib/categories";
 import MetricRater from "@/components/MetricRater";
 import ResultCard from "@/components/ResultCard";
+import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { toast } from "@/hooks/use-toast";
 import type { ResultCardData, MetricScore } from "@/lib/scoring";
