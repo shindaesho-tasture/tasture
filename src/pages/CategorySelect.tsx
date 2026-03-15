@@ -55,7 +55,6 @@ const CategorySelect = () => {
             variants={item}
             whileTap={{ scale: 0.96 }}
             onClick={() => navigate(`/review/${cat.id}`)}
-            }}
             className="flex flex-col items-start gap-3 p-5 rounded-xl bg-surface-elevated shadow-luxury border border-border/50 text-left transition-all hover:shadow-card-elevated active:bg-secondary"
           >
             <span className="text-3xl">{cat.icon}</span>
