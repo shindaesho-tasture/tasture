@@ -1,16 +1,19 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Compass, Globe, Split, User } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const navItems = [
-  { id: "discover", label: "Discover", icon: Compass },
-  { id: "world", label: "World Map", icon: Globe },
-  { id: "split", label: "Smart Split", icon: Split },
-  { id: "profile", label: "Profile", icon: User },
+  { id: "discover", label: "Discover", icon: Compass, path: "/" },
+  { id: "world", label: "World Map", icon: Globe, path: "/world" },
+  { id: "split", label: "Smart Split", icon: Split, path: "/split" },
+  { id: "profile", label: "Profile", icon: User, path: "/profile" },
 ];
 
 const BottomNav = () => {
-  const [active, setActive] = useState("discover");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const activeId = navItems.find((item) => location.pathname === item.path)?.id ?? "discover";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
@@ -18,11 +21,11 @@ const BottomNav = () => {
         <div className="flex items-center justify-around">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = active === item.id;
+            const isActive = activeId === item.id;
             return (
               <motion.button
                 key={item.id}
-                onClick={() => setActive(item.id)}
+                onClick={() => navigate(item.path)}
                 whileTap={{ scale: 0.9 }}
                 className="flex flex-col items-center gap-1 py-1 min-w-[60px]"
               >
