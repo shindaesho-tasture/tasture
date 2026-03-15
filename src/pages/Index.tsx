@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import TastureHeader from "@/components/TastureHeader";
 import KingSwitcher from "@/components/KingSwitcher";
 import SensorySearch from "@/components/SensorySearch";
