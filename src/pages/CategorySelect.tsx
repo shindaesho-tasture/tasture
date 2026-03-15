@@ -54,8 +54,7 @@ const CategorySelect = () => {
             key={cat.id}
             variants={item}
             whileTap={{ scale: 0.96 }}
-            onClick={() => {
-              // TODO: navigate to review flow
+            onClick={() => navigate(`/review/${cat.id}`)}
             }}
             className="flex flex-col items-start gap-3 p-5 rounded-xl bg-surface-elevated shadow-luxury border border-border/50 text-left transition-all hover:shadow-card-elevated active:bg-secondary"
           >

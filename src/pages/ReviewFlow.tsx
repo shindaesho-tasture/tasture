@@ -88,39 +88,6 @@ const ReviewFlow = () => {
     }));
   };
 
-  // Count filled metrics
-  const filledCount = useMemo(() => {
-    let count = 0;
-    category.metrics.forEach((m) => {
-      if (m.smartGate) {
-        if (gateState[m.id] !== undefined) {
-          count++;
-          if (gateState[m.id]) {
-            m.smartGate.subMetrics.forEach((sub) => {
-              if (subScores[sub.id] !== null && subScores[sub.id] !== undefined) count++;
-            });
-          }
-        }
-      } else {
-        if (scores[m.id] !== null && scores[m.id] !== undefined) count++;
-      }
-    });
-    return count;
-  }, [scores, gateState, subScores, category.metrics]);
-
-  const totalMetrics = useMemo(() => {
-    let count = 0;
-    category.metrics.forEach((m) => {
-      if (m.smartGate) {
-        count++; // gate question itself
-        if (gateState[m.id]) count += m.smartGate.subMetrics.length;
-      } else {
-        count++;
-      }
-    });
-    return count;
-  }, [category.metrics, gateState]);
-
   const progress = totalMetrics > 0 ? (filledCount / totalMetrics) * 100 : 0;
 
   const handleSubmit = () => {
