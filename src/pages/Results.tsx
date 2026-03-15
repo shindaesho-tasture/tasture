@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import ResultCard from "@/components/ResultCard";
+import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { demoResults } from "@/lib/scoring";
 
