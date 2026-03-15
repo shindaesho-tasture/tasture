@@ -31,6 +31,32 @@ const Index = () => {
         <KingSwitcher />
         <SensorySearch />
         <HeroFoodCard />
+
+        {/* Quick Actions */}
+        <div className="px-6 pt-4 grid grid-cols-2 gap-3">
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={() => navigate("/categories")}
+            className="flex items-center gap-2 p-4 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left"
+          >
+            <span className="text-xl">📝</span>
+            <div>
+              <span className="text-xs font-semibold text-foreground block">เขียนรีวิว</span>
+              <span className="text-[10px] text-muted-foreground">7 Categories</span>
+            </div>
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={() => navigate("/results")}
+            className="flex items-center gap-2 p-4 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left"
+          >
+            <span className="text-xl">📊</span>
+            <div>
+              <span className="text-xs font-semibold text-foreground block">ผลรีวิว</span>
+              <span className="text-[10px] text-muted-foreground">Result Cards</span>
+            </div>
+          </motion.button>
+        </div>
       </motion.div>
 
       <BottomNav />
