@@ -4,8 +4,10 @@ import { AnimatePresence } from "framer-motion";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { StoreProvider } from "@/lib/store-context";
 import Index from "./pages/Index.tsx";
 import CategorySelect from "./pages/CategorySelect.tsx";
+import StoreRegistration from "./pages/StoreRegistration.tsx";
 import ReviewFlow from "./pages/ReviewFlow.tsx";
 import Results from "./pages/Results.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -20,6 +22,7 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
         <Route path="/categories" element={<CategorySelect />} />
+        <Route path="/register" element={<StoreRegistration />} />
         <Route path="/review/:categoryId" element={<ReviewFlow />} />
         <Route path="/results" element={<Results />} />
         <Route path="*" element={<NotFound />} />
@@ -31,11 +34,13 @@ const AnimatedRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AnimatedRoutes />
-      </BrowserRouter>
+      <StoreProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AnimatedRoutes />
+        </BrowserRouter>
+      </StoreProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
