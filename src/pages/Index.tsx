@@ -43,8 +43,8 @@ const Index = () => {
           >
             <span className="text-xl">📝</span>
             <div>
-              <span className="text-xs font-semibold text-foreground block">เขียนรีวิว</span>
-              <span className="text-[10px] text-muted-foreground">7 Categories</span>
+              <span className="text-xs font-medium text-foreground block">เขียนรีวิว</span>
+              <span className="text-[10px] font-light text-muted-foreground">7 หมวดหมู่</span>
             </div>
           </motion.button>
           <motion.button
