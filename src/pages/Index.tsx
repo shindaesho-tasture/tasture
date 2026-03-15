@@ -7,6 +7,8 @@ import HeroFoodCard from "@/components/HeroFoodCard";
 import BottomNav from "@/components/BottomNav";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <motion.div
