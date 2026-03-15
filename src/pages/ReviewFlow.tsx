@@ -217,6 +217,7 @@ const ReviewFlow = () => {
 
         <BottomNav />
       </div>
+      </PageTransition>
     );
   }
 
