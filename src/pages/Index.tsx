@@ -11,6 +11,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       <motion.div
         initial={{ opacity: 0 }}
