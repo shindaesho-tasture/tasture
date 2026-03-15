@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import ResultCard from "@/components/ResultCard";
+import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { demoResults } from "@/lib/scoring";
 
@@ -9,6 +10,7 @@ const Results = () => {
   const navigate = useNavigate();
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 glass-effect glass-border">
@@ -66,6 +68,7 @@ const Results = () => {
 
       <BottomNav />
     </div>
+    </PageTransition>
   );
 };
 

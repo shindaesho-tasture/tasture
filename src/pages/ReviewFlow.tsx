@@ -5,6 +5,7 @@ import { ChevronLeft, Check, RotateCcw } from "lucide-react";
 import { categories, scoreTiers } from "@/lib/categories";
 import MetricRater from "@/components/MetricRater";
 import ResultCard from "@/components/ResultCard";
+import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { toast } from "@/hooks/use-toast";
 import type { ResultCardData, MetricScore } from "@/lib/scoring";
@@ -159,6 +160,7 @@ const ReviewFlow = () => {
   // ─── Result View ───
   if (showResult && resultData && resultData.metrics.length > 0) {
     return (
+      <PageTransition>
       <div className="min-h-screen bg-background pb-24">
         <div className="sticky top-0 z-10 glass-effect glass-border">
           <div className="flex items-center gap-3 px-4 py-3">
@@ -215,11 +217,13 @@ const ReviewFlow = () => {
 
         <BottomNav />
       </div>
+      </PageTransition>
     );
   }
 
   // ─── Rating View ───
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-32">
       <div className="sticky top-0 z-10 glass-effect glass-border">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -294,6 +298,7 @@ const ReviewFlow = () => {
 
       <BottomNav />
     </div>
+    </PageTransition>
   );
 };
 

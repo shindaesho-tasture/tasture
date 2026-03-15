@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import KingSwitcher from "@/components/KingSwitcher";
 import SensorySearch from "@/components/SensorySearch";
@@ -10,6 +11,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-24">
       <motion.div
         initial={{ opacity: 0 }}
@@ -61,6 +63,7 @@ const Index = () => {
 
       <BottomNav />
     </div>
+    </PageTransition>
   );
 };
 
