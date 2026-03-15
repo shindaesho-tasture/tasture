@@ -22,11 +22,11 @@ const Index = () => {
 
         {/* Large Title */}
         <div className="px-6 pt-2 pb-1">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Discover
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            สำรวจ
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Explore through the lens of your senses
+          <p className="text-sm font-light text-muted-foreground mt-1">
+            สัมผัสรสชาติผ่านประสาทสัมผัสของคุณ
           </p>
         </div>
 
@@ -43,8 +43,8 @@ const Index = () => {
           >
             <span className="text-xl">📝</span>
             <div>
-              <span className="text-xs font-semibold text-foreground block">เขียนรีวิว</span>
-              <span className="text-[10px] text-muted-foreground">7 Categories</span>
+              <span className="text-xs font-medium text-foreground block">เขียนรีวิว</span>
+              <span className="text-[10px] font-light text-muted-foreground">7 หมวดหมู่</span>
             </div>
           </motion.button>
           <motion.button
@@ -54,8 +54,8 @@ const Index = () => {
           >
             <span className="text-xl">📊</span>
             <div>
-              <span className="text-xs font-semibold text-foreground block">ผลรีวิว</span>
-              <span className="text-[10px] text-muted-foreground">Result Cards</span>
+              <span className="text-xs font-medium text-foreground block">ผลรีวิว</span>
+              <span className="text-[10px] font-light text-muted-foreground">สรุปผลคะแนน</span>
             </div>
           </motion.button>
         </div>
