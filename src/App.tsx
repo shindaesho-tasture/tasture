@@ -22,6 +22,7 @@ import OrderSummary from "./pages/OrderSummary.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import MenuFeedback from "./pages/MenuFeedback.tsx";
 import DishDnaFeedback from "./pages/DishDnaFeedback.tsx";
+import PostOrderReview from "./pages/PostOrderReview.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
