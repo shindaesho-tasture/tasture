@@ -271,7 +271,7 @@ const DishDnaFeedback = () => {
                 <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
               <div>
                   <p className="text-[11px] font-medium text-foreground leading-relaxed">
-                    แตะส่วนประกอบเพื่อเปิดแท็ก แล้วเลือกแท็กที่ตรงกับความรู้สึก
+                    แตะแท็กที่ตรงกับรสชาติ แล้วให้คะแนนเลย
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
                     <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
