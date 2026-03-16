@@ -93,12 +93,14 @@ const SovereignMenuCard = ({
               const tier = getScoreTier(tag.score);
               const opacity = getIntensityOpacity(tag.count);
               const hsl = tierHsl[tier];
+              // Ensure minimum background opacity of 0.45 so text is always readable on white
+              const bgOpacity = Math.max(0.45, opacity);
 
               return (
                 <span
                   key={`${tag.icon}-${tag.label}`}
                   className="inline-flex items-center gap-1 px-2 py-[3px] rounded-full text-[10px] font-semibold leading-none text-white"
-                  style={{ backgroundColor: `hsla(${hsl},${opacity})` }}
+                  style={{ backgroundColor: `hsla(${hsl},${bgOpacity})` }}
                 >
                   <span>{tag.icon}</span>
                   <span className="truncate max-w-[80px]">{tag.label}</span>
