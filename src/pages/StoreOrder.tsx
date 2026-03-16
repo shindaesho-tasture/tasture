@@ -500,6 +500,20 @@ const StoreOrder = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Dish Detail Sheet */}
+        {detailItem && (
+          <DishDetailSheet
+            open={!!detailItem}
+            onClose={() => setDetailItem(null)}
+            menuItemId={detailItem.id}
+            dishName={detailItem.name}
+            price={detailItem.price}
+            priceSpecial={detailItem.price_special}
+            dnaTags={dnaByItem.get(detailItem.id) || []}
+            totalReviews={(menuReviewCounts.get(detailItem.id) || 0) + (dnaCounts.get(detailItem.id) || 0)}
+          />
+        )}
       </div>
     </PageTransition>
   );
