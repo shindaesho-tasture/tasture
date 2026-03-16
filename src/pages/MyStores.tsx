@@ -8,8 +8,7 @@ import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
-import { getTrustTier } from "@/lib/trust-tiers";
-import TrustTierBadge from "@/components/TrustTierBadge";
+import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 
 interface StoreWithReviews {
   id: string;
@@ -213,7 +212,7 @@ const MyStores = () => {
               {stores.map((store, i) => {
                 const cat = getCategoryInfo(store.category_id);
                 const topTags = store.metricAverages.slice(0, 4);
-                const trustTier = getTrustTier(store.reviewCount, store.verified, store.menuReviewCount);
+                const popInfo = getPopularityTierInfo(getPopularityTier(store.reviewCount));
 
                 return (
                   <motion.div
@@ -221,7 +220,7 @@ const MyStores = () => {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.06, duration: 0.4 }}
-                    className="rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 overflow-hidden"
+                    className={`rounded-2xl bg-surface-elevated border border-border/50 overflow-hidden relative ${popInfo.borderClass} ${popInfo.glowClass || 'shadow-luxury'}`}
                   >
                     <div className="px-4 pt-4 pb-3">
                       <div className="flex items-start justify-between">
@@ -234,7 +233,6 @@ const MyStores = () => {
                             </p>
                           </div>
                         </div>
-                        <TrustTierBadge tier={trustTier} compact />
                       </div>
 
                       {/* Score Tags */}
@@ -286,6 +284,11 @@ const MyStores = () => {
                         ฟีดแบคเมนู
                       </motion.button>
                     </div>
+                    {popInfo.label && (
+                      <span className="absolute bottom-2 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
+                        {popInfo.label}
+                      </span>
+                    )}
                   </motion.div>
                 );
               })}

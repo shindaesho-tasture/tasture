@@ -4,8 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
-import { getTrustTier } from "@/lib/trust-tiers";
-import TrustTierBadge from "@/components/TrustTierBadge";
+import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
@@ -279,7 +278,7 @@ const Index = () => {
             <div className="space-y-3">
               {stores.map((store, i) => {
                 const overallTier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
-                const trustTier = getTrustTier(store.reviewCount, store.verified, store.menuReviewCount);
+                const popInfo = getPopularityTierInfo(getPopularityTier(store.reviewCount));
                 const topMetrics = [...(store.metrics || [])]
                   .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
                   .slice(0, 4);
@@ -292,7 +291,7 @@ const Index = () => {
                     transition={{ delay: i * 0.06, duration: 0.4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(`/store/${store.id}/order`)}
-                    className="w-full rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left overflow-hidden"
+                    className={`w-full rounded-2xl bg-surface-elevated border border-border/50 text-left overflow-hidden relative ${popInfo.borderClass} ${popInfo.glowClass || 'shadow-luxury'}`}
                   >
                     {/* Card Header */}
                     <div className="flex items-center gap-3 p-4 pb-2">
@@ -302,15 +301,7 @@ const Index = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-foreground truncate">{store.name}</h3>
                         {store.categoryLabel && (
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <p className="text-[10px] text-muted-foreground">{store.categoryLabel}</p>
-                            <TrustTierBadge tier={trustTier} compact />
-                          </div>
-                        )}
-                        {!store.categoryLabel && (
-                          <div className="mt-0.5">
-                            <TrustTierBadge tier={trustTier} compact />
-                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{store.categoryLabel}</p>
                         )}
                         <p className="text-[9px] text-muted-foreground mt-0.5">
                           {store.menuCount} เมนู · {store.reviewCount} รีวิว
@@ -356,6 +347,11 @@ const Index = () => {
                       <div className="px-4 pb-3">
                         <p className="text-[10px] text-muted-foreground italic">ยังไม่มีรีวิว — เป็นคนแรกที่ให้ฟีดแบค!</p>
                       </div>
+                    )}
+                    {popInfo.label && (
+                      <span className="absolute bottom-2 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
+                        {popInfo.label}
+                      </span>
                     )}
                   </motion.button>
                 );
