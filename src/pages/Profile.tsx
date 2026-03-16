@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X } from "lucide-react";
+import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
@@ -160,7 +160,7 @@ const TasteDNAChart = ({ dna }: { dna: TasteDNA }) => {
 const Profile = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ display_name: string | null; email: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ display_name: string | null; email: string | null; avatar_url: string | null } | null>(null);
   const [emeraldCount, setEmeraldCount] = useState(0);
   const [storeCount, setStoreCount] = useState(0);
   const [tasteDNA, setTasteDNA] = useState<TasteDNA>({ salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 });
@@ -171,11 +171,12 @@ const Profile = () => {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const handleSaveName = async () => {
     if (!user || !nameInput.trim()) return;
     setSavingName(true);
-    const { error } = await supabase.from("profiles").update({ display_name: nameInput.trim() }).eq("id", user.id);
+    const { error } = await supabase.from("profiles").update({ display_name: nameInput.trim() } as any).eq("id", user.id);
     if (!error) {
       setProfile((p) => p ? { ...p, display_name: nameInput.trim() } : p);
     }
@@ -183,13 +184,34 @@ const Profile = () => {
     setEditingName(false);
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 2 * 1024 * 1024) return; // max 2MB
+
+    setUploadingAvatar(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/avatar.${ext}`;
+
+    // Upload (upsert)
+    const { error: uploadErr } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
+    if (uploadErr) { setUploadingAvatar(false); return; }
+
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    await supabase.from("profiles").update({ avatar_url: avatarUrl } as any).eq("id", user.id);
+    setProfile((p) => p ? { ...p, avatar_url: avatarUrl } : p);
+    setUploadingAvatar(false);
+  };
+
   useEffect(() => {
     if (!user) return;
 
     const load = async () => {
       // Profile
-      const { data: prof } = await supabase.from("profiles").select("display_name, email").eq("id", user.id).single();
-      if (prof) setProfile(prof);
+      const { data: prof } = await supabase.from("profiles").select("display_name, email, avatar_url" as any).eq("id", user.id).single();
+      if (prof) setProfile(prof as any);
 
       // Menu reviews (+2 = emerald)
       const { data: reviews } = await supabase.from("menu_reviews").select("id, score, menu_item_id, created_at").eq("user_id", user.id);
@@ -354,14 +376,27 @@ const Profile = () => {
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <div
-              className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center"
-              style={{
-                boxShadow: "0 0 0 3px hsl(163,78%,20%), 0 0 24px hsla(163,78%,20%,0.35)",
-              }}
-            >
-              <Crown size={32} strokeWidth={1.5} className="text-score-emerald" />
-            </div>
+            <label className="cursor-pointer block">
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+              <div
+                className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center overflow-hidden"
+                style={{
+                  boxShadow: "0 0 0 3px hsl(163,78%,20%), 0 0 24px hsla(163,78%,20%,0.35)",
+                }}
+              >
+                {uploadingAvatar ? (
+                  <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+                ) : profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <Crown size={32} strokeWidth={1.5} className="text-score-emerald" />
+                )}
+              </div>
+              {/* Camera badge */}
+              <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-card shadow-luxury flex items-center justify-center border-2 border-background">
+                <Camera size={12} className="text-muted-foreground" />
+              </div>
+            </label>
           </motion.div>
 
           <motion.div
