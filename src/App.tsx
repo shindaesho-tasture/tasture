@@ -14,6 +14,7 @@ import WorldMap from "./pages/WorldMap.tsx";
 import SmartSplit from "./pages/SmartSplit.tsx";
 import Profile from "./pages/Profile.tsx";
 import Auth from "./pages/Auth.tsx";
+import MyStores from "./pages/MyStores.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
