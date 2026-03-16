@@ -302,7 +302,15 @@ const Index = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-foreground truncate">{store.name}</h3>
                         {store.categoryLabel && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{store.categoryLabel}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <p className="text-[10px] text-muted-foreground">{store.categoryLabel}</p>
+                            <TrustTierBadge tier={trustTier} compact />
+                          </div>
+                        )}
+                        {!store.categoryLabel && (
+                          <div className="mt-0.5">
+                            <TrustTierBadge tier={trustTier} compact />
+                          </div>
                         )}
                         <p className="text-[9px] text-muted-foreground mt-0.5">
                           {store.menuCount} เมนู · {store.reviewCount} รีวิว
