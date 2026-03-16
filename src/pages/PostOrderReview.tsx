@@ -50,6 +50,7 @@ const PostOrderReview = () => {
   const { items, storeId, storeName, clearOrder } = useOrder();
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
 
