@@ -58,6 +58,8 @@ const PostOrderReview = () => {
   const [storeScores, setStoreScores] = useState<Record<string, number | null>>({});
   const [gateState, setGateState] = useState<Record<string, boolean>>({});
   const [subScores, setSubScores] = useState<Record<string, number | null>>({});
+  const [hasPreviousReview, setHasPreviousReview] = useState(false);
+  const [storeReviewChoice, setStoreReviewChoice] = useState<"same" | "changed" | null>(null);
 
   // Dish DNA state per menu item
   const [dnaComponents, setDnaComponents] = useState<Record<string, DishComponent[]>>({});
