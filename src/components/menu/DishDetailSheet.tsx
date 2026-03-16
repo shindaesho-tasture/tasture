@@ -213,9 +213,16 @@ const DishDetailSheet = ({
                   </h3>
                   <div className="space-y-3">
                     {dnaTags.map((tag) => {
-                      const opacity = Math.min(1, 0.2 + (tag.count / 100) * 0.8);
-                      const isPositive = tag.selected_score >= 1;
-                      const isNegative = tag.selected_score <= -1;
+                      const tier = getScoreTier(tag.selected_score);
+                      const opacity = getIntensityOpacity(tag.count);
+                      const tierHsl: Record<ScoreTier, string> = {
+                        emerald: "163,78%,20%",
+                        mint: "105,24%,70%",
+                        slate: "215,16%,47%",
+                        amber: "32,95%,44%",
+                        ruby: "0,68%,35%",
+                      };
+                      const hsl = tierHsl[tier];
 
                       return (
                         <div
@@ -230,13 +237,7 @@ const DishDetailSheet = ({
                               </span>
                               <span
                                 className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold text-white leading-none"
-                                style={{
-                                  backgroundColor: isPositive
-                                    ? `hsla(163,78%,20%,${opacity})`
-                                    : isNegative
-                                      ? `hsla(0,68%,35%,${opacity})`
-                                      : `hsla(215,16%,47%,${opacity})`,
-                                }}
+                                style={{ backgroundColor: `hsla(${hsl},${opacity})` }}
                               >
                                 {tag.selected_tag}
                                 {tag.count > 1 && (
