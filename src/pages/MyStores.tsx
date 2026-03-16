@@ -71,6 +71,32 @@ const MyStores = () => {
         .select("store_id, metric_id, score")
         .in("store_id", storeIds);
 
+      // Fetch menu items for stores to get menu review counts
+      const { data: menuItemsData } = await supabase
+        .from("menu_items")
+        .select("id, store_id")
+        .in("store_id", storeIds);
+
+      const menuItemIds = (menuItemsData || []).map((mi) => mi.id);
+      let menuReviewsData: { menu_item_id: string }[] = [];
+      if (menuItemIds.length > 0) {
+        const { data } = await supabase
+          .from("menu_reviews")
+          .select("menu_item_id")
+          .in("menu_item_id", menuItemIds);
+        menuReviewsData = data || [];
+      }
+
+      // Map menu items to stores for counting
+      const menuItemStoreMap = new Map<string, string>();
+      (menuItemsData || []).forEach((mi) => menuItemStoreMap.set(mi.id, mi.store_id));
+
+      const menuReviewCountByStore = new Map<string, number>();
+      menuReviewsData.forEach((mr) => {
+        const sid = menuItemStoreMap.get(mr.menu_item_id);
+        if (sid) menuReviewCountByStore.set(sid, (menuReviewCountByStore.get(sid) || 0) + 1);
+      });
+
       // Compute averages per store per metric
       const avgMap = new Map<string, Map<string, { total: number; count: number }>>();
       (reviewsData || []).forEach((r) => {
@@ -97,7 +123,8 @@ const MyStores = () => {
         // Sort by extremity
         metricAverages.sort((a, b) => Math.abs(b.avg_score) - Math.abs(a.avg_score));
         const reviewCount = metricAverages.reduce((max, m) => Math.max(max, m.count), 0);
-        return { ...s, metricAverages, reviewCount };
+        const menuReviewCount = menuReviewCountByStore.get(s.id) || 0;
+        return { ...s, metricAverages, reviewCount, menuReviewCount };
       });
 
       setStores(result);
