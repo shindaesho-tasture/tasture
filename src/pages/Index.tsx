@@ -348,6 +348,11 @@ const Index = () => {
                         <p className="text-[10px] text-muted-foreground italic">ยังไม่มีรีวิว — เป็นคนแรกที่ให้ฟีดแบค!</p>
                       </div>
                     )}
+                    {popInfo.label && (
+                      <span className="absolute bottom-2 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
+                        {popInfo.label}
+                      </span>
+                    )}
                   </motion.button>
                 );
               })}
