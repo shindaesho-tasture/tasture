@@ -59,6 +59,7 @@ const PostOrderReview = () => {
   const [gateState, setGateState] = useState<Record<string, boolean>>({});
   const [subScores, setSubScores] = useState<Record<string, number | null>>({});
   const [hasPreviousReview, setHasPreviousReview] = useState(false);
+  const [previousReviewRows, setPreviousReviewRows] = useState<{ metric_id: string; score: number }[]>([]);
   const [storeReviewChoice, setStoreReviewChoice] = useState<"same" | "changed" | null>(null);
 
   // Dish DNA state per menu item
