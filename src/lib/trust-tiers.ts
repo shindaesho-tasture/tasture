@@ -1,0 +1,73 @@
+export type TrustTier = 1 | 2 | 3 | 4 | 5;
+
+export interface TrustTierInfo {
+  tier: TrustTier;
+  label: string;
+  labelTh: string;
+  icon: string;
+  description: string;
+  colorClass: string;
+  bgClass: string;
+  borderClass: string;
+}
+
+const tierMap: Record<TrustTier, Omit<TrustTierInfo, "tier">> = {
+  1: {
+    label: "Gold",
+    labelTh: "ระดับทอง",
+    icon: "🏆",
+    description: "50+ รีวิว · ยืนยันแล้ว",
+    colorClass: "text-gold",
+    bgClass: "bg-gold/15",
+    borderClass: "border-gold/30",
+  },
+  2: {
+    label: "Silver",
+    labelTh: "ระดับเงิน",
+    icon: "✅",
+    description: "20+ รีวิว · ยืนยันแล้ว",
+    colorClass: "text-score-emerald",
+    bgClass: "bg-score-emerald/15",
+    borderClass: "border-score-emerald/30",
+  },
+  3: {
+    label: "Bronze",
+    labelTh: "ระดับทองแดง",
+    icon: "🔵",
+    description: "<20 รีวิว · ยืนยันแล้ว",
+    colorClass: "text-score-slate",
+    bgClass: "bg-score-slate/15",
+    borderClass: "border-score-slate/30",
+  },
+  4: {
+    label: "Pending",
+    labelTh: "รอยืนยัน",
+    icon: "⏳",
+    description: "ยังไม่ได้ยืนยัน",
+    colorClass: "text-score-amber",
+    bgClass: "bg-score-amber/15",
+    borderClass: "border-score-amber/30",
+  },
+  5: {
+    label: "New",
+    labelTh: "ร้านใหม่",
+    icon: "🆕",
+    description: "ยังไม่มีรีวิว",
+    colorClass: "text-muted-foreground",
+    bgClass: "bg-secondary",
+    borderClass: "border-border",
+  },
+};
+
+export function getTrustTier(reviewCount: number, verified: boolean): TrustTier {
+  if (!verified) {
+    return reviewCount === 0 ? 5 : 4;
+  }
+  if (reviewCount >= 50) return 1;
+  if (reviewCount >= 20) return 2;
+  return 3;
+}
+
+export function getTrustTierInfo(tier: TrustTier): TrustTierInfo {
+  return { tier, ...tierMap[tier] };
+}

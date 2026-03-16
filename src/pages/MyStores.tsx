@@ -8,11 +8,16 @@ import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
+import { getTrustTier } from "@/lib/trust-tiers";
+import TrustTierBadge from "@/components/TrustTierBadge";
+
 interface StoreWithReviews {
   id: string;
   name: string;
   category_id: string | null;
   created_at: string;
+  verified: boolean;
+  reviewCount: number;
   metricAverages: { metric_id: string; avg_score: number; count: number }[];
 }
 
@@ -46,7 +51,7 @@ const MyStores = () => {
       // Fetch user's stores
       const { data: storesData, error: storesErr } = await supabase
         .from("stores")
-        .select("id, name, category_id, created_at")
+        .select("id, name, category_id, created_at, verified")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -90,7 +95,8 @@ const MyStores = () => {
         }
         // Sort by extremity
         metricAverages.sort((a, b) => Math.abs(b.avg_score) - Math.abs(a.avg_score));
-        return { ...s, metricAverages };
+        const reviewCount = metricAverages.reduce((max, m) => Math.max(max, m.count), 0);
+        return { ...s, metricAverages, reviewCount };
       });
 
       setStores(result);
@@ -179,6 +185,7 @@ const MyStores = () => {
               {stores.map((store, i) => {
                 const cat = getCategoryInfo(store.category_id);
                 const topTags = store.metricAverages.slice(0, 4);
+                const trustTier = getTrustTier(store.reviewCount, store.verified);
 
                 return (
                   <motion.div
@@ -199,6 +206,7 @@ const MyStores = () => {
                             </p>
                           </div>
                         </div>
+                        <TrustTierBadge tier={trustTier} compact />
                       </div>
 
                       {/* Score Tags */}
