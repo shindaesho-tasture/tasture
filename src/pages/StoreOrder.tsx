@@ -32,6 +32,7 @@ const StoreOrder = () => {
   const [menuItems, setMenuItems] = useState<MenuItemRow[]>([]);
   const [storeName, setStoreName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [dnaByItem, setDnaByItem] = useState<Map<string, DnaTag[]>>(new Map());
 
   // Noodle options popup state
   const [optionsItem, setOptionsItem] = useState<MenuItemRow | null>(null);
