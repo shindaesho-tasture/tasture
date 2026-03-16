@@ -283,6 +283,11 @@ const StoreOrder = () => {
                         {/* Show selected options */}
                         {orderItem?.selectedOptions && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
+                            {orderItem.selectedOptions.size && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-gold/15 text-gold font-medium">
+                                {orderItem.selectedOptions.size}
+                              </span>
+                            )}
                             {orderItem.selectedOptions.noodleType && (
                               <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
                                 {orderItem.selectedOptions.noodleType}
