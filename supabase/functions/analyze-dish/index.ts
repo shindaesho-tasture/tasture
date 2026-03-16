@@ -6,6 +6,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SYSTEM_PROMPT = `คุณคือ Sovereign Culinary AI ของแอป TASTURE หน้าที่ของคุณคือวิเคราะห์ชื่ออาหารไทยและ 'ชำแหละ' ออกเป็นส่วนประกอบ (Components) พร้อมเสนอแท็กสัมผัส (Texture Tags) ที่สื่อถึงอารมณ์และเข้าใจง่าย
+
+เกณฑ์การให้แท็ก:
+- Emerald (+2): ภาษาที่สื่อถึงความฟิน ความประทับใจ สุดยอด — ให้ 2 แท็ก
+- Neutral (0): ภาษาที่สื่อถึงความปกติ มาตรฐานทั่วไป — ให้ 2 แท็ก
+- Ruby (-2): ภาษาที่สื่อถึงความผิดหวัง หรือข้อผิดพลาด — ให้ 2 แท็ก
+
+กฎ:
+1. แยกส่วนประกอบหลักๆ ออกมา 2-5 ส่วน
+2. แต่ละส่วนต้องมีไอคอนอิโมจิที่เหมาะสม
+3. แต่ละส่วนต้องมีแท็ก 3 ระดับ: emerald (+2), neutral (0), ruby (-2)
+4. แต่ละระดับต้องมี 2 แท็กให้เลือก (array ของ string 2 ตัว)
+5. แท็กต้องเป็นภาษาไทยที่สื่ออารมณ์ เข้าใจง่าย กระชับ (ไม่เกิน 20 ตัวอักษร)
+6. แท็กในระดับเดียวกันต้องสื่อมุมมองที่ต่างกัน เช่น emerald: ["หอมฟุ้งถึงจมูก", "เครื่องเทศลงตัว"]
+7. ให้แท็กที่มีสีสัน สร้างสรรค์ ไม่ซ้ำซากจำเจ`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -30,26 +46,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          {
-            role: "system",
-            content: `คุณคือ Sovereign Culinary AI ของแอป TASTURE หน้าที่ของคุณคือวิเคราะห์ชื่ออาหารไทยและ 'ชำแหละ' ออกเป็นส่วนประกอบ (Components) พร้อมเสนอแท็กสัมผัส (Texture Tags) ที่สื่อถึงอารมณ์และเข้าใจง่าย
-
-เกณฑ์การให้แท็ก:
-- Emerald (+2): ภาษาที่สื่อถึงความฟิน ความประทับใจ สุดยอด
-- Neutral (0): ภาษาที่สื่อถึงความปกติ มาตรฐานทั่วไป
-- Ruby (-2): ภาษาที่สื่อถึงความผิดหวัง หรือข้อผิดพลาด
-
-กฎ:
-1. แยกส่วนประกอบหลักๆ ออกมา 2-5 ส่วน
-2. แต่ละส่วนต้องมีไอคอนอิโมจิที่เหมาะสม
-3. แต่ละส่วนต้องมีแท็ก 3 ระดับ: emerald (+2), neutral (0), ruby (-2)
-4. แท็กต้องเป็นภาษาไทยที่สื่ออารมณ์ เข้าใจง่าย กระชับ (ไม่เกิน 25 ตัวอักษร)
-5. ให้แท็กที่มีสีสัน สร้างสรรค์ ไม่ซ้ำซากจำเจ`,
-          },
-          {
-            role: "user",
-            content: `วิเคราะห์อาหาร: "${dishName}"`,
-          },
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: `วิเคราะห์อาหาร: "${dishName}"` },
         ],
         tools: [
           {
@@ -66,22 +64,25 @@ serve(async (req) => {
                     items: {
                       type: "object",
                       properties: {
-                        name: { type: "string", description: "Component name in Thai (e.g. ข้าว, ไก่, น้ำจิ้ม)" },
-                        icon: { type: "string", description: "Single emoji icon for this component" },
+                        name: { type: "string", description: "Component name in Thai" },
+                        icon: { type: "string", description: "Single emoji icon" },
                         tags: {
                           type: "object",
                           properties: {
                             emerald: {
-                              type: "string",
-                              description: "Emotional Thai tag for +2 (ฟิน, ประทับใจ)",
+                              type: "array",
+                              items: { type: "string" },
+                              description: "2 emotional Thai tags for +2 (ฟิน, ประทับใจ)",
                             },
                             neutral: {
-                              type: "string",
-                              description: "Emotional Thai tag for 0 (ปกติ, มาตรฐาน)",
+                              type: "array",
+                              items: { type: "string" },
+                              description: "2 emotional Thai tags for 0 (ปกติ, มาตรฐาน)",
                             },
                             ruby: {
-                              type: "string",
-                              description: "Emotional Thai tag for -2 (ผิดหวัง, แย่)",
+                              type: "array",
+                              items: { type: "string" },
+                              description: "2 emotional Thai tags for -2 (ผิดหวัง, แย่)",
                             },
                           },
                           required: ["emerald", "neutral", "ruby"],
@@ -106,21 +107,18 @@ serve(async (req) => {
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Payment required. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const text = await response.text();
       console.error("AI gateway error:", response.status, text);
       return new Response(JSON.stringify({ error: "AI processing failed" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -129,13 +127,11 @@ serve(async (req) => {
 
     if (!toolCall?.function?.arguments) {
       return new Response(JSON.stringify({ error: "Failed to analyze dish", components: [] }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const extracted = JSON.parse(toolCall.function.arguments);
-
     return new Response(JSON.stringify(extracted), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

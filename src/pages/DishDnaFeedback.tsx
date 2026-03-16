@@ -220,7 +220,7 @@ const DishDnaFeedback = () => {
                 {dishName || "Dish DNA"}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
-                dish dna analysis
+                เลือกแท็กที่ตรงกับความรู้สึก
               </p>
             </div>
             {!analyzing && totalComponents > 0 && (
@@ -269,14 +269,14 @@ const DishDnaFeedback = () => {
             >
               <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                 <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
-                <div>
+              <div>
                   <p className="text-[11px] font-medium text-foreground leading-relaxed">
-                    เลือกแท็กที่ตรงกับรสสัมผัสจริง แต่ละส่วนประกอบ
+                    แตะแท็กที่ตรงกับความรู้สึกของคุณ ส่วนประกอบละ 1 แท็ก
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    <span className="text-score-emerald">💎 Emerald</span> = สุดยอด ·
-                    <span className="text-score-slate ml-1">⚪ Neutral</span> = ปกติ ·
-                    <span className="text-score-ruby ml-1">🔴 Ruby</span> = ผิดหวัง
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
                   </p>
                 </div>
               </div>

@@ -2,9 +2,9 @@ export interface DishComponent {
   name: string;
   icon: string;
   tags: {
-    emerald: string; // +2
-    neutral: string; // 0
-    ruby: string;    // -2
+    emerald: string[]; // +2 (2 tags)
+    neutral: string[]; // 0 (2 tags)
+    ruby: string[];    // -2 (2 tags)
   };
 }
 

@@ -9,130 +9,127 @@ interface DishDnaCardProps {
   index: number;
 }
 
-const scoreConfig = {
-  "2": {
-    key: "emerald" as const,
-    bg: "bg-score-emerald",
-    bgLight: "bg-score-emerald/8",
+interface TagConfig {
+  score: -2 | 0 | 2;
+  bg: string;
+  bgSelected: string;
+  text: string;
+  ring: string;
+  dot: string;
+}
+
+const tagConfigs: TagConfig[] = [
+  {
+    score: 2,
+    bg: "bg-score-emerald/6 border-score-emerald/12 hover:bg-score-emerald/12",
+    bgSelected: "bg-score-emerald/15 border-score-emerald/30 shadow-[0_0_16px_hsla(163,78%,20%,0.15)]",
     text: "text-score-emerald",
-    ring: "ring-score-emerald/30",
-    glow: "shadow-[0_0_24px_hsla(163,78%,20%,0.2)]",
-    label: "+2",
-    border: "border-score-emerald/20",
+    ring: "ring-score-emerald/40",
+    dot: "bg-score-emerald",
   },
-  "0": {
-    key: "neutral" as const,
-    bg: "bg-score-slate",
-    bgLight: "bg-score-slate/8",
+  {
+    score: 0,
+    bg: "bg-score-slate/6 border-score-slate/12 hover:bg-score-slate/12",
+    bgSelected: "bg-score-slate/15 border-score-slate/30 shadow-[0_0_16px_hsla(215,16%,47%,0.12)]",
     text: "text-score-slate",
-    ring: "ring-score-slate/30",
-    glow: "shadow-[0_0_24px_hsla(215,16%,47%,0.15)]",
-    label: "0",
-    border: "border-score-slate/20",
+    ring: "ring-score-slate/40",
+    dot: "bg-score-slate",
   },
-  "-2": {
-    key: "ruby" as const,
-    bg: "bg-score-ruby",
-    bgLight: "bg-score-ruby/8",
+  {
+    score: -2,
+    bg: "bg-score-ruby/6 border-score-ruby/12 hover:bg-score-ruby/12",
+    bgSelected: "bg-score-ruby/15 border-score-ruby/30 shadow-[0_0_16px_hsla(0,68%,35%,0.15)]",
     text: "text-score-ruby",
-    ring: "ring-score-ruby/30",
-    glow: "shadow-[0_0_24px_hsla(0,68%,35%,0.2)]",
-    label: "-2",
-    border: "border-score-ruby/20",
+    ring: "ring-score-ruby/40",
+    dot: "bg-score-ruby",
   },
+];
+
+const scoreKeyMap: Record<string, "emerald" | "neutral" | "ruby"> = {
+  "2": "emerald",
+  "0": "neutral",
+  "-2": "ruby",
 };
 
 const DishDnaCard = ({ component, selection, onSelect, index }: DishDnaCardProps) => {
-  const scores: Array<-2 | 0 | 2> = [2, 0, -2];
+  // Flatten all tags into a single list with their config
+  const allTags: Array<{ tag: string; config: TagConfig }> = [];
+
+  for (const cfg of tagConfigs) {
+    const key = scoreKeyMap[String(cfg.score)];
+    const tags = component.tags[key];
+    // Support both old (string) and new (string[]) format
+    const tagArray = Array.isArray(tags) ? tags : [tags];
+    for (const tag of tagArray) {
+      if (tag) allTags.push({ tag, config: cfg });
+    }
+  }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.55,
-        delay: index * 0.1,
+        duration: 0.45,
+        delay: index * 0.08,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      className="bg-surface-elevated rounded-[22px] shadow-luxury overflow-hidden"
+      className="bg-surface-elevated rounded-[20px] shadow-luxury overflow-hidden"
     >
       {/* Component Header */}
-      <div className="px-5 pt-5 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-secondary flex items-center justify-center text-xl">
-            {component.icon}
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-foreground tracking-tight">
-              {component.name}
-            </h3>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
-              เลือกแท็กที่ตรงกับความรู้สึก
-            </p>
-          </div>
+      <div className="px-5 pt-4 pb-2">
+        <div className="flex items-center gap-2.5">
+          <span className="text-lg">{component.icon}</span>
+          <h3 className="text-[15px] font-semibold text-foreground tracking-tight">
+            {component.name}
+          </h3>
+          <AnimatePresence>
+            {selection && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                className="ml-auto w-5 h-5 rounded-full bg-score-emerald flex items-center justify-center"
+              >
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* Tag Options */}
-      <div className="px-4 pb-5 space-y-2">
-        {scores.map((score) => {
-          const config = scoreConfig[String(score) as keyof typeof scoreConfig];
-          const tag = component.tags[config.key];
-          const isSelected = selection?.selected_score === score;
+      {/* Horizontal Tag Chips */}
+      <div className="px-4 pb-4 pt-1">
+        <div className="flex flex-wrap gap-2">
+          {allTags.map(({ tag, config }) => {
+            const isSelected = selection?.selected_tag === tag && selection?.selected_score === config.score;
 
-          return (
-            <motion.button
-              key={score}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => onSelect(score, tag)}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 text-left",
-                isSelected
-                  ? cn(config.bgLight, "ring-2", config.ring, config.glow, config.border, "border")
-                  : "bg-secondary/60 hover:bg-secondary border border-transparent"
-              )}
-            >
-              {/* Score Badge */}
-              <div
+            return (
+              <motion.button
+                key={`${config.score}-${tag}`}
+                whileTap={{ scale: 0.93 }}
+                onClick={() => onSelect(config.score, tag)}
                 className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-300",
+                  "inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[12px] font-medium transition-all duration-200 leading-none",
                   isSelected
-                    ? cn(config.bg, "text-primary-foreground")
-                    : "bg-muted text-muted-foreground"
+                    ? cn(config.bgSelected, config.text, "ring-1", config.ring)
+                    : cn(config.bg, "text-foreground/65")
                 )}
               >
-                {config.label}
-              </div>
-
-              {/* Tag Text */}
-              <span
-                className={cn(
-                  "text-[13px] font-medium leading-snug flex-1 transition-colors duration-300",
-                  isSelected ? config.text : "text-foreground/70"
-                )}
-              >
-                {tag}
-              </span>
-
-              {/* Selected Check */}
-              <AnimatePresence>
-                {isSelected && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                    className={cn("w-6 h-6 rounded-full flex items-center justify-center shrink-0", config.bg)}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          );
-        })}
+                <span
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full shrink-0 transition-all",
+                    isSelected ? config.dot : "bg-muted-foreground/30"
+                  )}
+                />
+                <span className="whitespace-nowrap">{tag}</span>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );
