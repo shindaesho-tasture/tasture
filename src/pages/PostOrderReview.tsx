@@ -420,13 +420,24 @@ const PostOrderReview = () => {
         </div>
 
         {/* ─── Step Content ─── */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            custom={direction}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            variants={{
+              enter: (d: number) => ({ x: `${d * 60}%`, opacity: 0 }),
+              center: { x: 0, opacity: 1 },
+              exit: (d: number) => ({ x: `${d * -30}%`, opacity: 0 }),
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 380,
+              damping: 34,
+              mass: 0.8,
+            }}
           >
             {/* Store Review */}
             {step?.type === "store-review" && category && (
