@@ -69,6 +69,9 @@ const PostOrderReview = () => {
   const [sensoryValues, setSensoryValues] = useState<Record<string, Record<string, number>>>({});
   const [sensoryLoading, setSensoryLoading] = useState<Record<string, boolean>>({});
 
+  // Taste satisfaction gate per menu item
+  const [tasteSatisfaction, setTasteSatisfaction] = useState<Record<string, "perfect" | "ok" | "bad">>({});
+
   const [saving, setSaving] = useState(false);
 
   // Build steps
