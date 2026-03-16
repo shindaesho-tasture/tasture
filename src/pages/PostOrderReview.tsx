@@ -66,6 +66,9 @@ const PostOrderReview = () => {
   const [dnaComponents, setDnaComponents] = useState<Record<string, DishComponent[]>>({});
   const [dnaSelections, setDnaSelections] = useState<Record<string, Record<string, DishDnaSelection>>>({});
   const [dnaLoading, setDnaLoading] = useState<Record<string, boolean>>({});
+  const [hasPreviousDna, setHasPreviousDna] = useState<Record<string, boolean>>({});
+  const [previousDnaRows, setPreviousDnaRows] = useState<Record<string, { component_name: string; component_icon: string; selected_score: number; selected_tag: string }[]>>({});
+  const [dnaReviewChoice, setDnaReviewChoice] = useState<Record<string, "same" | "changed" | null>>({});
 
   // Sensory state per menu item
   const [sensoryAxes, setSensoryAxes] = useState<Record<string, SensoryAxis[]>>({});
