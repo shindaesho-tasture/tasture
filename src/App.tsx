@@ -17,6 +17,7 @@ import Auth from "./pages/Auth.tsx";
 import MyStores from "./pages/MyStores.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import MenuFeedback from "./pages/MenuFeedback.tsx";
+import DishDnaFeedback from "./pages/DishDnaFeedback.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
