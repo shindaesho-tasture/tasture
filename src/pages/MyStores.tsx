@@ -8,11 +8,16 @@ import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
+import { getTrustTier } from "@/lib/trust-tiers";
+import TrustTierBadge from "@/components/TrustTierBadge";
+
 interface StoreWithReviews {
   id: string;
   name: string;
   category_id: string | null;
   created_at: string;
+  verified: boolean;
+  reviewCount: number;
   metricAverages: { metric_id: string; avg_score: number; count: number }[];
 }
 
