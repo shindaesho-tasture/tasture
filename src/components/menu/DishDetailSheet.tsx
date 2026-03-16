@@ -1,0 +1,291 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import BalanceSpiderChart from "./BalanceSpiderChart";
+import type { SensoryAxis } from "@/lib/sensory-types";
+
+interface DnaTag {
+  component_icon: string;
+  component_name: string;
+  selected_tag: string;
+  selected_score: number;
+  count: number;
+}
+
+interface DishDetailSheetProps {
+  open: boolean;
+  onClose: () => void;
+  menuItemId: string;
+  dishName: string;
+  price: number;
+  priceSpecial?: number | null;
+  imageUrl?: string;
+  dnaTags: DnaTag[];
+  totalReviews: number;
+}
+
+/** Compute a simple emerald seal: avg score ≥ 1.0 and reviews ≥ 5 */
+const hasEmeraldSeal = (tags: DnaTag[], reviews: number) => {
+  if (reviews < 5 || tags.length === 0) return false;
+  const avg = tags.reduce((s, t) => s + t.selected_score, 0) / tags.length;
+  return avg >= 1.0;
+};
+
+const DishDetailSheet = ({
+  open,
+  onClose,
+  menuItemId,
+  dishName,
+  price,
+  priceSpecial,
+  imageUrl,
+  dnaTags,
+  totalReviews,
+}: DishDetailSheetProps) => {
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({});
+  const [loadingDesc, setLoadingDesc] = useState(false);
+  const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
+  const [sensoryValues, setSensoryValues] = useState<Record<string, number>>({});
+
+  const emerald = hasEmeraldSeal(dnaTags, totalReviews);
+
+  // Fetch AI descriptions when opening
+  useEffect(() => {
+    if (!open || dnaTags.length === 0) return;
+    fetchDescriptions();
+  }, [open, menuItemId]);
+
+  const fetchDescriptions = async () => {
+    setLoadingDesc(true);
+    try {
+      const tagsPayload = dnaTags.map((t) => ({
+        ingredient: t.component_name,
+        icon: t.component_icon,
+        tag: t.selected_tag,
+        score: t.selected_score,
+      }));
+
+      const { data, error } = await supabase.functions.invoke("describe-dish", {
+        body: { dish_name: dishName, tags: tagsPayload },
+      });
+
+      if (!error && data?.descriptions) {
+        const descMap: Record<string, string> = {};
+        (data.descriptions as Array<{ ingredient: string; description: string }>).forEach(
+          (d) => (descMap[d.ingredient] = d.description)
+        );
+        setDescriptions(descMap);
+      }
+    } catch (e) {
+      console.error("describe-dish error:", e);
+    } finally {
+      setLoadingDesc(false);
+    }
+  };
+
+  // Build pseudo spider chart from DNA scores
+  useEffect(() => {
+    if (dnaTags.length === 0) return;
+    // Group by component, compute average score
+    const compMap = new Map<string, { icon: string; scores: number[] }>();
+    dnaTags.forEach((t) => {
+      if (!compMap.has(t.component_name)) {
+        compMap.set(t.component_name, { icon: t.component_icon, scores: [] });
+      }
+      compMap.get(t.component_name)!.scores.push(t.selected_score);
+    });
+
+    const axes: SensoryAxis[] = [];
+    const values: Record<string, number> = {};
+    compMap.forEach((val, name) => {
+      const avg = val.scores.reduce((s, v) => s + v, 0) / val.scores.length;
+      // Map -2..+2 → 1..5
+      const level = Math.round(((avg + 2) / 4) * 4) + 1;
+      axes.push({
+        name,
+        icon: val.icon,
+        labels: ["", "", "", "", ""] as [string, string, string, string, string],
+      });
+      values[name] = Math.max(1, Math.min(5, level));
+    });
+
+    setSensoryAxes(axes);
+    setSensoryValues(values);
+  }, [dnaTags]);
+
+  // Consistency placeholder based on score variance
+  const getConsistency = () => {
+    if (dnaTags.length < 3) return null;
+    const scores = dnaTags.map((t) => t.selected_score);
+    const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
+    const variance = scores.reduce((s, v) => s + (v - avg) ** 2, 0) / scores.length;
+    return variance < 1.5 ? "เสน่ห์คงเดิม" : "รสชาติมีความแปรปรวน";
+  };
+
+  const consistency = getConsistency();
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 bg-foreground/40"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.8 }}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute bottom-0 left-0 right-0 bg-background rounded-t-3xl shadow-luxury max-h-[88vh] overflow-hidden flex flex-col"
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-muted" />
+            </div>
+
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 pb-8">
+              {/* Hero Image */}
+              <div className="relative w-full aspect-[16/9] bg-secondary overflow-hidden">
+                {imageUrl ? (
+                  <img src={imageUrl} alt={dishName} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-6xl bg-gradient-to-br from-secondary to-muted">
+                    🍽️
+                  </div>
+                )}
+
+                {/* Close button */}
+                <button
+                  onClick={onClose}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full glass-effect glass-border flex items-center justify-center"
+                >
+                  <X size={16} strokeWidth={2} className="text-foreground" />
+                </button>
+
+                {/* Emerald seal */}
+                {emerald && (
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-score-emerald text-white text-[11px] font-bold shadow-lg">
+                    💎 มรกตรับรอง
+                  </div>
+                )}
+              </div>
+
+              {/* Title section */}
+              <div className="px-5 pt-4 pb-3">
+                <h2 className="text-xl font-bold text-foreground">{dishName}</h2>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-base font-semibold text-score-emerald">฿{price}</span>
+                  {priceSpecial != null && (
+                    <span className="text-sm font-light text-muted-foreground">
+                      พิเศษ ฿{priceSpecial}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-muted-foreground ml-auto">
+                    {totalReviews} รีวิว
+                  </span>
+                </div>
+              </div>
+
+              {/* Balance Spider Chart */}
+              {sensoryAxes.length >= 3 && (
+                <div className="px-5 py-3">
+                  <h3 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">
+                    ⚖️ ระดับความสมดุล
+                  </h3>
+                  <BalanceSpiderChart axes={sensoryAxes} values={sensoryValues} />
+                </div>
+              )}
+
+              {/* Sensory Explainer */}
+              {dnaTags.length > 0 && (
+                <div className="px-5 py-3">
+                  <h3 className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wider">
+                    📖 คัมภีร์รสชาติ
+                  </h3>
+                  <div className="space-y-3">
+                    {dnaTags.map((tag) => {
+                      const opacity = Math.min(1, 0.2 + (tag.count / 100) * 0.8);
+                      const isPositive = tag.selected_score >= 1;
+                      const isNegative = tag.selected_score <= -1;
+
+                      return (
+                        <div
+                          key={`${tag.component_name}-${tag.selected_tag}`}
+                          className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/30"
+                        >
+                          <span className="text-2xl flex-shrink-0 mt-0.5">{tag.component_icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-foreground">
+                                {tag.component_name}
+                              </span>
+                              <span
+                                className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold text-white leading-none"
+                                style={{
+                                  backgroundColor: isPositive
+                                    ? `hsla(163,78%,20%,${opacity})`
+                                    : isNegative
+                                      ? `hsla(0,68%,35%,${opacity})`
+                                      : `hsla(215,16%,47%,${opacity})`,
+                                }}
+                              >
+                                {tag.selected_tag}
+                                {tag.count > 1 && (
+                                  <span className="ml-1 opacity-70">×{tag.count}</span>
+                                )}
+                              </span>
+                            </div>
+
+                            {/* AI description */}
+                            {loadingDesc ? (
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <Loader2 size={10} className="animate-spin text-muted-foreground" />
+                                <span className="text-[10px] text-muted-foreground">
+                                  กำลังเขียนคำบรรยาย...
+                                </span>
+                              </div>
+                            ) : descriptions[tag.component_name] ? (
+                              <p className="text-[12px] text-muted-foreground leading-relaxed mt-1.5 italic">
+                                "{descriptions[tag.component_name]}"
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Consistency */}
+              {consistency && (
+                <div className="px-5 py-3">
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-surface border border-border/30">
+                    <span className="text-lg">
+                      {consistency === "เสน่ห์คงเดิม" ? "✨" : "🎲"}
+                    </span>
+                    <div>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                        ความคงที่
+                      </span>
+                      <p className="text-sm font-medium text-foreground">{consistency}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default DishDetailSheet;
