@@ -59,6 +59,7 @@ const PostOrderReview = () => {
   const [gateState, setGateState] = useState<Record<string, boolean>>({});
   const [subScores, setSubScores] = useState<Record<string, number | null>>({});
   const [hasPreviousReview, setHasPreviousReview] = useState(false);
+  const [previousReviewRows, setPreviousReviewRows] = useState<{ metric_id: string; score: number }[]>([]);
   const [storeReviewChoice, setStoreReviewChoice] = useState<"same" | "changed" | null>(null);
 
   // Dish DNA state per menu item
@@ -107,7 +108,7 @@ const PostOrderReview = () => {
       setLoading(true);
       const [{ data: storeData }, { data: prevReviews }] = await Promise.all([
         supabase.from("stores").select("category_id").eq("id", storeId).single(),
-        supabase.from("reviews").select("id").eq("store_id", storeId).eq("user_id", user.id).limit(1),
+        supabase.from("reviews").select("metric_id, score").eq("store_id", storeId).eq("user_id", user.id),
       ]);
       if (storeData?.category_id) {
         const cat = categories.find((c) => c.id === storeData.category_id);
@@ -115,7 +116,10 @@ const PostOrderReview = () => {
       } else {
         setCategory(categories[0]);
       }
-      setHasPreviousReview((prevReviews || []).length > 0);
+      if (prevReviews && prevReviews.length > 0) {
+        setHasPreviousReview(true);
+        setPreviousReviewRows(prevReviews);
+      }
       setLoading(false);
     })();
   }, [storeId, user]);
@@ -296,28 +300,39 @@ const PostOrderReview = () => {
     setSaving(true);
     try {
       // Save store reviews
-      const storeRows: { store_id: string; user_id: string; metric_id: string; score: number }[] = [];
-      if (category) {
-        category.metrics.forEach((m) => {
-          if (m.smartGate) {
-            if (gateState[m.id]) {
-              m.smartGate.subMetrics.forEach((sub) => {
-                const v = subScores[sub.id];
-                if (v !== null && v !== undefined) {
-                  storeRows.push({ store_id: storeId, user_id: user.id, metric_id: sub.id, score: v });
-                }
-              });
+      if (storeReviewChoice === "same" && previousReviewRows.length > 0 && storeId) {
+        // Re-upsert previous scores to update timestamp
+        const reRows = previousReviewRows.map((r) => ({
+          store_id: storeId,
+          user_id: user.id,
+          metric_id: r.metric_id,
+          score: r.score,
+        }));
+        await supabase.from("reviews").upsert(reRows, { onConflict: "store_id,user_id,metric_id" });
+      } else {
+        const storeRows: { store_id: string; user_id: string; metric_id: string; score: number }[] = [];
+        if (category) {
+          category.metrics.forEach((m) => {
+            if (m.smartGate) {
+              if (gateState[m.id]) {
+                m.smartGate.subMetrics.forEach((sub) => {
+                  const v = subScores[sub.id];
+                  if (v !== null && v !== undefined) {
+                    storeRows.push({ store_id: storeId, user_id: user.id, metric_id: sub.id, score: v });
+                  }
+                });
+              }
+            } else {
+              const v = storeScores[m.id];
+              if (v !== null && v !== undefined) {
+                storeRows.push({ store_id: storeId, user_id: user.id, metric_id: m.id, score: v });
+              }
             }
-          } else {
-            const v = storeScores[m.id];
-            if (v !== null && v !== undefined) {
-              storeRows.push({ store_id: storeId, user_id: user.id, metric_id: m.id, score: v });
-            }
-          }
-        });
-      }
-      if (storeRows.length > 0) {
-        await supabase.from("reviews").upsert(storeRows, { onConflict: "store_id,user_id,metric_id" });
+          });
+        }
+        if (storeRows.length > 0) {
+          await supabase.from("reviews").upsert(storeRows, { onConflict: "store_id,user_id,metric_id" });
+        }
       }
 
       // Save dish DNA per item
