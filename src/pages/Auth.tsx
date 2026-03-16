@@ -24,13 +24,18 @@ const Auth = () => {
         toast({ title: "เข้าสู่ระบบสำเร็จ" });
         navigate("/register");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast({ title: "สมัครสมาชิกสำเร็จ", description: "กรุณายืนยันอีเมลของคุณ" });
+        if (data.session) {
+          toast({ title: "สมัครสมาชิกสำเร็จ" });
+          navigate("/register");
+        } else {
+          toast({ title: "สมัครสมาชิกสำเร็จ", description: "กรุณายืนยันอีเมลของคุณ" });
+        }
       }
     } catch (err: any) {
       toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: "destructive" });
