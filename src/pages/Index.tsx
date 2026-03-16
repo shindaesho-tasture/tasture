@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { getScoreTier, type ScoreTier } from "@/lib/categories";
+import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
+import { getIntensityOpacity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
@@ -12,6 +13,15 @@ import SensorySearch from "@/components/SensorySearch";
 import HeroFoodCard from "@/components/HeroFoodCard";
 import BottomNav from "@/components/BottomNav";
 
+/* ─── Types ─── */
+interface MetricAvg {
+  id: string;
+  label: string;
+  icon: string;
+  score: number;
+  count: number;
+}
+
 interface StoreCard {
   id: string;
   name: string;
@@ -19,14 +29,17 @@ interface StoreCard {
   avgScore: number | null;
   reviewCount: number;
   menuCount: number;
+  metrics: MetricAvg[];
+  dnaCount: number;
+  menuReviewCount: number;
 }
 
-const tierBg: Record<ScoreTier, string> = {
-  emerald: "bg-score-emerald",
-  mint: "bg-score-mint",
-  slate: "bg-score-slate",
-  amber: "bg-score-amber",
-  ruby: "bg-score-ruby",
+const tierColors: Record<ScoreTier, { bg: string; text: string }> = {
+  emerald: { bg: "bg-score-emerald", text: "text-score-emerald" },
+  mint: { bg: "bg-score-mint", text: "text-score-mint" },
+  slate: { bg: "bg-score-slate", text: "text-score-slate" },
+  amber: { bg: "bg-score-amber", text: "text-score-amber" },
+  ruby: { bg: "bg-score-ruby", text: "text-score-ruby" },
 };
 
 const categoryEmoji: Record<string, string> = {
@@ -37,6 +50,37 @@ const categoryEmoji: Record<string, string> = {
   "fine-dining": "👑",
   omakase: "🍣",
   bar: "🍸",
+};
+
+/* ─── Mini Score Bar ─── */
+const MiniScoreBar = ({ metric }: { metric: MetricAvg }) => {
+  const tier = getScoreTier(metric.score);
+  const opacity = getIntensityOpacity(metric.count);
+  const colors = tierColors[tier];
+  const pct = ((metric.score + 2) / 4) * 100;
+
+  return (
+    <div className="space-y-0.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <span className="text-[10px]">{metric.icon}</span>
+          <span className="text-[9px] font-medium text-foreground truncate">{metric.label}</span>
+        </div>
+        <span className={cn("text-[9px] font-semibold tabular-nums", colors.text)}>
+          {metric.score > 0 ? "+" : ""}{metric.score.toFixed(1)}
+        </span>
+      </div>
+      <div className="h-1 rounded-full bg-secondary overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className={cn("h-full rounded-full", colors.bg)}
+          style={{ opacity }}
+        />
+      </div>
+    </div>
+  );
 };
 
 const Index = () => {
@@ -62,31 +106,88 @@ const Index = () => {
 
       const storeIds = allStores.map((s) => s.id);
 
-      const [reviewsRes, menuRes] = await Promise.all([
-        supabase.from("reviews").select("store_id, score").in("store_id", storeIds),
+      // Fetch reviews (with metric_id), menu_items, dish_dna, menu_reviews in parallel
+      const [reviewsRes, menuRes, dnaRes, menuRevRes] = await Promise.all([
+        supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
         supabase.from("menu_items").select("id, store_id").in("store_id", storeIds),
+        supabase.from("dish_dna").select("menu_item_id"),
+        supabase.from("menu_reviews").select("menu_item_id"),
       ]);
 
-      const avgMap = new Map<string, { total: number; count: number }>();
+      // Build menu→store map
+      const menuToStore = new Map<string, string>();
+      (menuRes.data || []).forEach((m) => menuToStore.set(m.id, m.store_id));
+
+      const menuCountMap = new Map<string, number>();
+      (menuRes.data || []).forEach((m) => {
+        menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
+      });
+
+      // Per-metric averages per store
+      const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
       (reviewsRes.data || []).forEach((r) => {
-        if (!avgMap.has(r.store_id)) avgMap.set(r.store_id, { total: 0, count: 0 });
-        const m = avgMap.get(r.store_id)!;
+        if (!metricMap.has(r.store_id)) metricMap.set(r.store_id, new Map());
+        const sm = metricMap.get(r.store_id)!;
+        if (!sm.has(r.metric_id)) sm.set(r.metric_id, { total: 0, count: 0 });
+        const m = sm.get(r.metric_id)!;
         m.total += r.score;
         m.count++;
       });
 
-      const menuMap = new Map<string, number>();
-      (menuRes.data || []).forEach((m) => {
-        menuMap.set(m.store_id, (menuMap.get(m.store_id) || 0) + 1);
+      // DNA count per store
+      const dnaCountMap = new Map<string, number>();
+      (dnaRes.data || []).forEach((d) => {
+        const sid = menuToStore.get(d.menu_item_id);
+        if (sid) dnaCountMap.set(sid, (dnaCountMap.get(sid) || 0) + 1);
+      });
+
+      // Menu review count per store
+      const menuRevCountMap = new Map<string, number>();
+      (menuRevRes.data || []).forEach((r) => {
+        const sid = menuToStore.get(r.menu_item_id);
+        if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
 
       setStores(allStores.map((s) => {
-        const avg = avgMap.get(s.id);
+        const sm = metricMap.get(s.id);
+        const cat = categories.find((c) => c.id === s.category_id);
+
+        // Build metric averages
+        const metrics: MetricAvg[] = [];
+        let totalScore = 0;
+        let totalCount = 0;
+
+        if (sm && cat) {
+          // Flatten category metrics (including sub-metrics from smartGates)
+          const allMetrics = cat.metrics.flatMap((m) =>
+            m.smartGate ? m.smartGate.subMetrics : [m]
+          );
+          allMetrics.forEach((cm) => {
+            const data = sm.get(cm.id);
+            if (data) {
+              const avg = data.total / data.count;
+              metrics.push({ id: cm.id, label: cm.label, icon: cm.icon, score: Math.round(avg * 10) / 10, count: data.count });
+              totalScore += data.total;
+              totalCount += data.count;
+            }
+          });
+        } else if (sm) {
+          sm.forEach((data, metricId) => {
+            const avg = data.total / data.count;
+            metrics.push({ id: metricId, label: metricId, icon: "📊", score: Math.round(avg * 10) / 10, count: data.count });
+            totalScore += data.total;
+            totalCount += data.count;
+          });
+        }
+
         return {
           ...s,
-          avgScore: avg ? Math.round((avg.total / avg.count) * 10) / 10 : null,
-          reviewCount: avg?.count || 0,
-          menuCount: menuMap.get(s.id) || 0,
+          avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
+          reviewCount: totalCount,
+          menuCount: menuCountMap.get(s.id) || 0,
+          metrics,
+          dnaCount: dnaCountMap.get(s.id) || 0,
+          menuReviewCount: menuRevCountMap.get(s.id) || 0,
         };
       }));
     } catch (err) {
@@ -169,33 +270,77 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">ยังไม่มีร้านอาหาร</p>
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {stores.map((store, i) => {
-                const tier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
+                const overallTier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
+                const topMetrics = [...store.metrics]
+                  .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+                  .slice(0, 3);
+
                 return (
                   <motion.button
                     key={store.id}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05, duration: 0.35 }}
+                    transition={{ delay: i * 0.06, duration: 0.4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(`/store/${store.id}/order`)}
-                    className="w-full flex items-center gap-3 p-4 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left"
+                    className="w-full rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left overflow-hidden"
                   >
-                    <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-xl shrink-0">
-                      {categoryEmoji[store.category_id || ""] || "🍽️"}
+                    {/* Card Header */}
+                    <div className="flex items-center gap-3 p-4 pb-2">
+                      <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-xl shrink-0">
+                        {categoryEmoji[store.category_id || ""] || "🍽️"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-foreground truncate">{store.name}</h3>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {store.menuCount} เมนู · {store.reviewCount} รีวิว
+                          {store.dnaCount > 0 && <> · 🧬 {store.dnaCount}</>}
+                          {store.menuReviewCount > 0 && <> · ⭐ {store.menuReviewCount}</>}
+                        </p>
+                      </div>
+                      {overallTier && store.avgScore !== null && (
+                        <div className={cn("px-2.5 py-1.5 rounded-xl", tierColors[overallTier].bg)}>
+                          <span className="text-xs font-bold text-primary-foreground tabular-nums">
+                            {store.avgScore > 0 ? "+" : ""}{store.avgScore.toFixed(1)}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-foreground truncate">{store.name}</h3>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {store.menuCount} เมนู · {store.reviewCount} รีวิว
-                      </p>
-                    </div>
-                    {tier && store.avgScore !== null && (
-                      <div className={cn("px-2.5 py-1 rounded-xl", tierBg[tier])}>
-                        <span className="text-[11px] font-bold text-primary-foreground tabular-nums">
-                          {store.avgScore > 0 ? "+" : ""}{store.avgScore.toFixed(1)}
-                        </span>
+
+                    {/* Top Tags */}
+                    {topMetrics.length > 0 && (
+                      <div className="flex flex-wrap gap-1 px-4 pb-1.5">
+                        {topMetrics.map((m) => {
+                          const t = getScoreTier(m.score);
+                          const opacity = getIntensityOpacity(m.count);
+                          return (
+                            <span
+                              key={m.id}
+                              className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[9px] font-semibold text-primary-foreground", tierColors[t].bg)}
+                              style={{ opacity }}
+                            >
+                              {m.icon} {m.score > 0 ? "+" : ""}{m.score.toFixed(1)}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Score Bars */}
+                    {store.metrics.length > 0 && (
+                      <div className="px-4 pb-3 pt-1 space-y-1.5">
+                        {store.metrics.slice(0, 4).map((m) => (
+                          <MiniScoreBar key={m.id} metric={m} />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* No reviews yet */}
+                    {store.metrics.length === 0 && (
+                      <div className="px-4 pb-3">
+                        <p className="text-[10px] text-muted-foreground italic">ยังไม่มีรีวิว — เป็นคนแรกที่ให้ฟีดแบค!</p>
                       </div>
                     )}
                   </motion.button>
