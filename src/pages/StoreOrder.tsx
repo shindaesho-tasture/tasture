@@ -17,6 +17,14 @@ interface MenuItemRow {
   toppings: string[] | null;
 }
 
+interface DnaTag {
+  component_icon: string;
+  component_name: string;
+  selected_tag: string;
+  selected_score: number;
+  count: number;
+}
+
 const StoreOrder = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
