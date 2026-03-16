@@ -61,7 +61,47 @@ const StoreOrder = () => {
         setStoreName(storeRes.data.name);
         setOrderStore(storeId!, storeRes.data.name);
       }
-      setMenuItems(menuRes.data || []);
+      const menuData = menuRes.data || [];
+      setMenuItems(menuData);
+
+      // Fetch Dish DNA for these menu items
+      if (menuData.length > 0) {
+        const menuIds = menuData.map((m) => m.id);
+        const { data: dnaRows } = await supabase
+          .from("dish_dna")
+          .select("menu_item_id, component_icon, component_name, selected_tag, selected_score")
+          .in("menu_item_id", menuIds);
+
+        if (dnaRows) {
+          // Aggregate: group by menu_item_id + selected_tag, count occurrences
+          const tagMap = new Map<string, Map<string, DnaTag>>();
+          dnaRows.forEach((r) => {
+            if (!tagMap.has(r.menu_item_id)) tagMap.set(r.menu_item_id, new Map());
+            const itemMap = tagMap.get(r.menu_item_id)!;
+            const key = `${r.component_name}::${r.selected_tag}`;
+            if (!itemMap.has(key)) {
+              itemMap.set(key, {
+                component_icon: r.component_icon,
+                component_name: r.component_name,
+                selected_tag: r.selected_tag,
+                selected_score: r.selected_score,
+                count: 0,
+              });
+            }
+            itemMap.get(key)!.count++;
+          });
+
+          // Convert to sorted arrays (top polarized first, max 3)
+          const result = new Map<string, DnaTag[]>();
+          tagMap.forEach((itemMap, menuItemId) => {
+            const tags = Array.from(itemMap.values())
+              .sort((a, b) => Math.abs(b.selected_score) - Math.abs(a.selected_score) || b.count - a.count)
+              .slice(0, 3);
+            result.set(menuItemId, tags);
+          });
+          setDnaByItem(result);
+        }
+      }
     } catch (err) {
       console.error("Failed to fetch:", err);
     } finally {
