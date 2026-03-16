@@ -13,6 +13,7 @@ import ReviewFlow from "./pages/ReviewFlow.tsx";
 import Results from "./pages/Results.tsx";
 import WorldMap from "./pages/WorldMap.tsx";
 import SmartSplit from "./pages/SmartSplit.tsx";
+import OrderHistory from "./pages/OrderHistory.tsx";
 import Profile from "./pages/Profile.tsx";
 import Auth from "./pages/Auth.tsx";
 import MyStores from "./pages/MyStores.tsx";
