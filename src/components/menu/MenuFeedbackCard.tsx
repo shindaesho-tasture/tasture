@@ -100,6 +100,9 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
   const config = typeConfig[item.type] || typeConfig.standard;
   const [topTags, setTopTags] = useState<DnaTag[]>([]);
   
+  // Taste satisfaction gate
+  const [tasteSatisfaction, setTasteSatisfaction] = useState<"perfect" | "ok" | "bad" | null>(null);
+
   // Sensory feedback state
   const [sensoryExpanded, setSensoryExpanded] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
