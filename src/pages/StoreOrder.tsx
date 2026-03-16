@@ -5,8 +5,7 @@ import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
-import TrustTierBadge from "@/components/TrustTierBadge";
-import { getMenuTrustTier } from "@/lib/trust-tiers";
+import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 
 interface MenuItemRow {
   id: string;
