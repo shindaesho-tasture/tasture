@@ -46,6 +46,9 @@ const StoreOrder = () => {
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [selectedSize, setSelectedSize] = useState<"ธรรมดา" | "พิเศษ">("ธรรมดา");
 
+  // Detail sheet state
+  const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
+
   useEffect(() => {
     if (!storeId) return;
     fetchData();
