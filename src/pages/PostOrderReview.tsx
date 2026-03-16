@@ -338,7 +338,7 @@ const PostOrderReview = () => {
             // Map to allowed values: {-2, 0, 2}
             const score = balanceDistance <= 0.5 ? 2 : balanceDistance <= 1.5 ? 0 : -2;
             await supabase.from("menu_reviews").upsert(
-              { menu_item_id: item.menuItemId, user_id: user.id, score: clamped },
+              { menu_item_id: item.menuItemId, user_id: user.id, score },
               { onConflict: "menu_item_id,user_id" }
             );
           }
