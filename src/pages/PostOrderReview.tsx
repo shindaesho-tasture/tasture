@@ -360,17 +360,27 @@ const PostOrderReview = () => {
     navigate("/");
   };
 
+  const haptic = () => {
+    if (navigator.vibrate) navigator.vibrate(8);
+  };
+
   const goNext = () => {
     if (currentStep < totalSteps - 1) {
-      // Auto-save on results step
       if (steps[currentStep + 1].type === "results") handleSaveAll();
+      haptic();
+      setDirection(1);
       setCurrentStep((s) => s + 1);
     }
   };
 
   const goBack = () => {
-    if (currentStep > 0) setCurrentStep((s) => s - 1);
-    else navigate(-1);
+    haptic();
+    if (currentStep > 0) {
+      setDirection(-1);
+      setCurrentStep((s) => s - 1);
+    } else {
+      navigate(-1);
+    }
   };
 
   if (loading || authLoading) {
