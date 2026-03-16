@@ -263,8 +263,8 @@ const MyStores = () => {
                       )}
                     </div>
 
-                    {/* Action: Add Feedback */}
-                    <div className="px-4 pb-4">
+                    {/* Actions */}
+                    <div className="px-4 pb-4 flex gap-2">
                       <motion.button
                         whileTap={{ scale: 0.97 }}
                         onClick={() => {
@@ -272,10 +272,18 @@ const MyStores = () => {
                             navigate(`/review/${store.category_id}?store=${store.id}`);
                           }
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-muted transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-muted transition-colors"
                       >
                         <MessageSquarePlus size={14} strokeWidth={1.5} />
-                        เพิ่มฟีดแบค
+                        ฟีดแบคร้าน
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/menu-feedback/${store.id}`)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-score-emerald/15 text-score-emerald text-[11px] font-medium uppercase tracking-wider hover:bg-score-emerald/25 transition-colors"
+                      >
+                        <UtensilsCrossed size={14} strokeWidth={1.5} />
+                        ฟีดแบคเมนู
                       </motion.button>
                     </div>
                   </motion.div>

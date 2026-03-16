@@ -38,6 +38,7 @@ const AnimatedRoutes = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/my-stores" element={<MyStores />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/menu-feedback/:storeId" element={<MenuFeedback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
