@@ -243,29 +243,24 @@ const StoreOrder = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04, duration: 0.35 }}
-                    className={`rounded-2xl border overflow-hidden transition-all ${
-                      qty > 0
-                        ? "bg-score-emerald/5 border-score-emerald/30 shadow-md"
-                        : "bg-surface-elevated border-border/50 shadow-luxury"
-                    }`}
+                    className={(() => {
+                      const totalReviews = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
+                      const popInfo = getPopularityTierInfo(getPopularityTier(totalReviews));
+                      const base = "rounded-2xl border overflow-hidden transition-all relative";
+                      const activeClass = qty > 0
+                        ? "bg-score-emerald/5 border-score-emerald/30"
+                        : "bg-surface-elevated border-border/50";
+                      return `${base} ${activeClass} ${popInfo.borderClass} ${popInfo.glowClass}`;
+                    })()}
                   >
                     <div className="px-4 py-3 flex items-center gap-3">
                       <span className="text-xl flex-shrink-0">
                         {typeEmoji[item.type] || "🍽️"}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="text-sm font-semibold text-foreground truncate">
-                            {item.name}
-                          </h3>
-                          <TrustTierBadge
-                            tier={getMenuTrustTier(
-                              menuReviewCounts.get(item.id) || 0,
-                              dnaCounts.get(item.id) || 0,
-                            )}
-                            compact
-                          />
-                        </div>
+                        <h3 className="text-sm font-semibold text-foreground truncate">
+                          {item.name}
+                        </h3>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-bold text-score-emerald">
                             ฿{item.price}
@@ -361,6 +356,16 @@ const StoreOrder = () => {
                         </div>
                       )}
                     </div>
+                    {/* Tier Status label */}
+                    {(() => {
+                      const totalReviews = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
+                      const popInfo = getPopularityTierInfo(getPopularityTier(totalReviews));
+                      return popInfo.label ? (
+                        <span className="absolute bottom-1.5 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
+                          {popInfo.label}
+                        </span>
+                      ) : null;
+                    })()}
                   </motion.div>
                 );
               })}
