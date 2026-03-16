@@ -364,14 +364,41 @@ const Profile = () => {
             </div>
           </motion.div>
 
-          <motion.h1
+          <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.15 }}
-            className="mt-4 text-lg font-semibold text-foreground"
+            className="mt-4 flex items-center gap-1.5"
           >
-            {displayName}
-          </motion.h1>
+            {editingName ? (
+              <div className="flex items-center gap-1.5">
+                <input
+                  autoFocus
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+                  className="text-lg font-semibold text-foreground bg-transparent border-b-2 border-score-emerald outline-none text-center w-40 pb-0.5"
+                  maxLength={30}
+                />
+                <button onClick={handleSaveName} disabled={savingName} className="w-7 h-7 rounded-full bg-score-emerald/10 flex items-center justify-center">
+                  <Check size={14} className="text-score-emerald" />
+                </button>
+                <button onClick={() => setEditingName(false)} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+                  <X size={14} className="text-muted-foreground" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-lg font-semibold text-foreground">{displayName}</h1>
+                <button
+                  onClick={() => { setNameInput(profile?.display_name || ""); setEditingName(true); }}
+                  className="w-6 h-6 rounded-full bg-muted flex items-center justify-center"
+                >
+                  <Pencil size={11} className="text-muted-foreground" />
+                </button>
+              </>
+            )}
+          </motion.div>
 
           <motion.p
             initial={{ y: 10, opacity: 0 }}
