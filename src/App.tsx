@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/lib/store-context";
+import { OrderProvider } from "@/lib/order-context";
 import Index from "./pages/Index.tsx";
 import CategorySelect from "./pages/CategorySelect.tsx";
 import StoreRegistration from "./pages/StoreRegistration.tsx";
@@ -15,6 +16,9 @@ import SmartSplit from "./pages/SmartSplit.tsx";
 import Profile from "./pages/Profile.tsx";
 import Auth from "./pages/Auth.tsx";
 import MyStores from "./pages/MyStores.tsx";
+import StoreList from "./pages/StoreList.tsx";
+import StoreOrder from "./pages/StoreOrder.tsx";
+import OrderSummary from "./pages/OrderSummary.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import MenuFeedback from "./pages/MenuFeedback.tsx";
 import DishDnaFeedback from "./pages/DishDnaFeedback.tsx";
@@ -38,6 +42,9 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/my-stores" element={<MyStores />} />
+        <Route path="/store-list" element={<StoreList />} />
+        <Route path="/store/:storeId/order" element={<StoreOrder />} />
+        <Route path="/order-summary" element={<OrderSummary />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/menu-feedback/:storeId" element={<MenuFeedback />} />
         <Route path="/dish-dna/:menuItemId" element={<DishDnaFeedback />} />
@@ -51,11 +58,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <StoreProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
+        <OrderProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AnimatedRoutes />
+          </BrowserRouter>
+        </OrderProvider>
       </StoreProvider>
     </TooltipProvider>
   </QueryClientProvider>
