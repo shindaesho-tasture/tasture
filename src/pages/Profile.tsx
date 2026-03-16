@@ -183,6 +183,7 @@ const Profile = () => {
 
       const emeralds = reviews.filter((r) => r.score === 2);
       setEmeraldCount(emeralds.length);
+      setTotalReviews(reviews.length);
 
       // Get all reviewed item IDs
       const itemIds = [...new Set(reviews.map((r) => r.menu_item_id))];
