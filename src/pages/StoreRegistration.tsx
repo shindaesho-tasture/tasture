@@ -3,17 +3,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, MapPin, Camera, Check, Loader2 } from "lucide-react";
 import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+import { supabase } from "@/integrations/supabase/client";
 import { categories } from "@/lib/categories";
 import { useStore } from "@/lib/store-context";
+import type { MenuItem } from "@/lib/menu-types";
 import { GOOGLE_MAPS_API_KEY, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
+import ScanningOverlay from "@/components/menu/ScanningOverlay";
+import MenuCardList from "@/components/menu/MenuCardList";
+import { useToast } from "@/hooks/use-toast";
 
 const mapContainerStyle = { width: "100%", height: "100%" };
 
 const StoreRegistration = () => {
   const navigate = useNavigate();
   const { store, setStore } = useStore();
+  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
@@ -22,46 +28,62 @@ const StoreRegistration = () => {
   const [pinLocation, setPinLocation] = useState(store.pinLocation);
   const [menuPhoto, setMenuPhoto] = useState<string | null>(store.menuPhoto);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(store.categoryId);
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-  });
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_API_KEY });
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-  }, []);
+  const onMapLoad = useCallback((map: google.maps.Map) => { mapRef.current = map; }, []);
 
   const handleDropPin = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          setPinLocation(loc);
-          setPinned(true);
-          mapRef.current?.panTo(loc);
-          mapRef.current?.setZoom(17);
+          setPinLocation(loc); setPinned(true);
+          mapRef.current?.panTo(loc); mapRef.current?.setZoom(17);
         },
-        () => {
-          setPinLocation(DEFAULT_CENTER);
-          setPinned(true);
-        }
+        () => { setPinLocation(DEFAULT_CENTER); setPinned(true); }
       );
-    } else {
-      setPinLocation(DEFAULT_CENTER);
-      setPinned(true);
-    }
+    } else { setPinLocation(DEFAULT_CENTER); setPinned(true); }
   };
 
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
-    if (e.latLng) {
-      const loc = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-      setPinLocation(loc);
-      setPinned(true);
-    }
+    if (e.latLng) { setPinLocation({ lat: e.latLng.lat(), lng: e.latLng.lng() }); setPinned(true); }
   };
 
   const handlePhotoCapture = () => fileInputRef.current?.click();
+
+  const scanMenuWithAI = async (base64: string) => {
+    setScanning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("scan-menu", {
+        body: { imageBase64: base64 },
+      });
+
+      if (error) throw error;
+
+      const items: MenuItem[] = (data.items || []).map((item: any, idx: number) => ({
+        id: `item-${idx}-${Date.now()}`,
+        name: item.name || "",
+        type: item.type || "standard",
+        price: item.price || 0,
+        price_special: item.price_special || undefined,
+        noodle_types: item.noodle_types || [],
+        noodle_styles: item.noodle_styles || [],
+        toppings: item.toppings || [],
+      }));
+
+      setMenuItems(items);
+      toast({ title: `สแกนสำเร็จ`, description: `พบ ${items.length} รายการ` });
+    } catch (err: any) {
+      console.error("Scan error:", err);
+      toast({ title: "สแกนไม่สำเร็จ", description: err.message || "กรุณาลองใหม่อีกครั้ง", variant: "destructive" });
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,19 +91,24 @@ const StoreRegistration = () => {
     setPhotoLoading(true);
     const reader = new FileReader();
     reader.onload = () => {
-      setTimeout(() => {
-        setMenuPhoto(reader.result as string);
-        setPhotoLoading(false);
-      }, 1200);
+      const base64 = reader.result as string;
+      setMenuPhoto(base64);
+      setPhotoLoading(false);
+      // Auto-trigger OCR scan
+      scanMenuWithAI(base64);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleItemChange = (index: number, updated: MenuItem) => {
+    setMenuItems((prev) => prev.map((item, i) => (i === index ? updated : item)));
   };
 
   const canProceed = name.trim().length > 0 && selectedCategory;
 
   const handleProceed = () => {
     if (!canProceed) return;
-    setStore({ name: name.trim(), pinLocation, menuPhoto, categoryId: selectedCategory });
+    setStore({ name: name.trim(), pinLocation, menuPhoto, categoryId: selectedCategory, menuItems });
     navigate(`/review/${selectedCategory}`);
   };
 
@@ -156,8 +183,6 @@ const StoreRegistration = () => {
                   </div>
                 )}
               </div>
-
-              {/* Drop Pin Button */}
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handleDropPin}
@@ -185,12 +210,12 @@ const StoreRegistration = () => {
             </div>
           </motion.section>
 
-          {/* Input 3: Menu Photo */}
+          {/* Input 3: Menu Photo + Smart Digitizer */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">ถ่ายรูปเมนู</label>
+            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">📷 Smart Menu Digitizer</label>
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
 
-            {!menuPhoto && !photoLoading && (
+            {!menuPhoto && !photoLoading && !scanning && (
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handlePhotoCapture}
@@ -201,7 +226,7 @@ const StoreRegistration = () => {
                 </div>
                 <div className="text-center">
                   <span className="text-xs font-medium text-foreground tracking-wide block uppercase">Capture Full Menu</span>
-                  <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">ถ่ายรูปเมนูภาษาไทยที่นี่</span>
+                  <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">ถ่ายรูปเมนูเพื่อสแกนอัตโนมัติ</span>
                 </div>
               </motion.button>
             )}
@@ -211,22 +236,62 @@ const StoreRegistration = () => {
                 <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-14 h-14 rounded-2xl bg-score-emerald/10 flex items-center justify-center">
                   <Loader2 size={24} className="text-score-emerald animate-spin" />
                 </motion.div>
-                <span className="text-xs font-light text-muted-foreground">กำลังประมวลผลภาพ...</span>
+                <span className="text-xs font-light text-muted-foreground">กำลังโหลดภาพ...</span>
               </div>
             )}
 
-            {menuPhoto && !photoLoading && (
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative rounded-2xl overflow-hidden shadow-luxury">
-                <img src={menuPhoto} alt="เมนูอาหาร" className="w-full h-40 object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/20 to-transparent" />
-                <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-score-emerald/90">
-                  <Check size={12} className="text-primary-foreground" />
-                  <span className="text-[10px] font-medium text-primary-foreground">ถ่ายรูปแล้ว</span>
-                </div>
-                <button onClick={handlePhotoCapture} className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm text-[10px] font-medium text-foreground">ถ่ายใหม่</button>
-              </motion.div>
+            {menuPhoto && (
+              <div className="space-y-4">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative rounded-2xl overflow-hidden shadow-luxury">
+                  <img src={menuPhoto} alt="เมนูอาหาร" className="w-full h-52 object-cover" />
+
+                  {/* Scanning overlay */}
+                  {scanning && <ScanningOverlay />}
+
+                  {/* Status badges */}
+                  {!scanning && (
+                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-score-emerald/90">
+                      <Check size={12} className="text-primary-foreground" />
+                      <span className="text-[10px] font-medium text-primary-foreground">
+                        {menuItems.length > 0 ? `${menuItems.length} รายการ` : "ถ่ายรูปแล้ว"}
+                      </span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handlePhotoCapture}
+                    className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm text-[10px] font-medium text-foreground"
+                  >
+                    ถ่ายใหม่
+                  </button>
+                </motion.div>
+
+                {/* Rescan button */}
+                {!scanning && menuPhoto && (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => scanMenuWithAI(menuPhoto)}
+                    className="w-full py-2.5 rounded-xl bg-secondary text-[11px] font-medium text-foreground uppercase tracking-wider hover:bg-muted transition-colors"
+                  >
+                    🔄 สแกนเมนูอีกครั้ง
+                  </motion.button>
+                )}
+              </div>
             )}
           </motion.section>
+
+          {/* Menu Cards */}
+          <AnimatePresence>
+            {menuItems.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <MenuCardList items={menuItems} onItemChange={handleItemChange} />
+              </motion.section>
+            )}
+          </AnimatePresence>
 
           {/* Category Selector */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
