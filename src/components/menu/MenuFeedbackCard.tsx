@@ -100,6 +100,9 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
   const config = typeConfig[item.type] || typeConfig.standard;
   const [topTags, setTopTags] = useState<DnaTag[]>([]);
   
+  // Taste satisfaction gate
+  const [tasteSatisfaction, setTasteSatisfaction] = useState<"perfect" | "ok" | "bad" | null>(null);
+
   // Sensory feedback state
   const [sensoryExpanded, setSensoryExpanded] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
@@ -130,15 +133,22 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
     })();
   }, [item.id]);
 
-  const handleExpandSensory = async () => {
-    if (sensoryExpanded) {
+  const handleTasteSatisfaction = async (choice: "perfect" | "ok" | "bad") => {
+    setTasteSatisfaction(choice);
+    if (choice === "perfect") {
+      // Auto-set all sensory to level 3 (perfect) and don't show sliders
       setSensoryExpanded(false);
-      return;
+      // Auto-rate as +2 (perfect taste)
+      onRate(2);
+    } else {
+      // Show sensory feedback for adjustment
+      await loadSensoryData();
+      setSensoryExpanded(true);
     }
-    setSensoryExpanded(true);
-    
+  };
+
+  const loadSensoryData = async () => {
     if (sensoryLoaded) return;
-    
     setLoadingSensory(true);
     try {
       const { data, error } = await supabase.functions.invoke("analyze-sensory", {
@@ -147,7 +157,6 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
       if (error) throw error;
       if (data?.axes) {
         setSensoryAxes(data.axes);
-        // Set all defaults to level 3 (perfect balance)
         const defaults: Record<string, number> = {};
         data.axes.forEach((a: SensoryAxis) => { defaults[a.name] = 3; });
         setSensoryValues(defaults);
@@ -158,6 +167,15 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
     } finally {
       setLoadingSensory(false);
     }
+  };
+
+  const handleExpandSensory = async () => {
+    if (sensoryExpanded) {
+      setSensoryExpanded(false);
+      return;
+    }
+    setSensoryExpanded(true);
+    await loadSensoryData();
   };
 
   const handleSensoryChange = (axisName: string, level: number) => {
@@ -262,28 +280,62 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
 
         <div className="h-px bg-border/60" />
 
-        {/* ─── Sensory Feedback Button ─── */}
+        {/* ─── Taste Satisfaction Gate ─── */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleExpandSensory}
-              className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-score-emerald/8 text-score-emerald hover:bg-score-emerald/15 transition-colors"
-            >
-              <span className="text-sm">🎯</span>
-              <span className="text-[11px] font-semibold">Sensory Feedback</span>
-              {sensoryExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </motion.button>
-
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              onClick={() => navigate(`/dish-dna/${item.id}?storeId=${item.id}`)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-secondary text-muted-foreground text-[10px] font-medium hover:bg-muted transition-colors"
-            >
-              <Dna size={12} strokeWidth={2} />
-              <span>Dish DNA</span>
-            </motion.button>
+          <p className="text-[11px] font-medium text-muted-foreground">ความพอใจรสชาติ</p>
+          <div className="flex gap-2">
+            {([
+              { key: "perfect" as const, label: "รสสมบูรณ์แบบ", emoji: "🤩", activeBg: "bg-score-emerald", activeText: "text-primary-foreground" },
+              { key: "ok" as const, label: "ธรรมดาพอกินได้", emoji: "😐", activeBg: "bg-score-slate", activeText: "text-primary-foreground" },
+              { key: "bad" as const, label: "ไม่ถูกปาก", emoji: "😔", activeBg: "bg-score-ruby", activeText: "text-primary-foreground" },
+            ]).map((opt) => {
+              const isActive = tasteSatisfaction === opt.key;
+              return (
+                <motion.button
+                  key={opt.key}
+                  whileTap={{ scale: 0.93 }}
+                  onClick={() => handleTasteSatisfaction(opt.key)}
+                  className={cn(
+                    "flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-2xl text-center transition-all duration-200",
+                    isActive
+                      ? cn(opt.activeBg, opt.activeText, "shadow-lg")
+                      : "bg-secondary text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  <span className="text-lg">{opt.emoji}</span>
+                  <span className="text-[9px] font-semibold leading-tight">{opt.label}</span>
+                </motion.button>
+              );
+            })}
           </div>
+
+          {/* Sensory + DNA buttons (show after non-perfect selection) */}
+          {tasteSatisfaction && tasteSatisfaction !== "perfect" && (
+            <div className="flex items-center justify-between">
+              <motion.button
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExpandSensory}
+                className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-score-emerald/8 text-score-emerald hover:bg-score-emerald/15 transition-colors"
+              >
+                <span className="text-sm">🎯</span>
+                <span className="text-[11px] font-semibold">Sensory Feedback</span>
+                {sensoryExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </motion.button>
+
+              <motion.button
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => navigate(`/dish-dna/${item.id}?storeId=${item.id}`)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-secondary text-muted-foreground text-[10px] font-medium hover:bg-muted transition-colors"
+              >
+                <Dna size={12} strokeWidth={2} />
+                <span>Dish DNA</span>
+              </motion.button>
+            </div>
+          )}
 
           {/* ─── Expanded Sensory Dashboard ─── */}
           <AnimatePresence>
