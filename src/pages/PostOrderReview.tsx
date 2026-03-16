@@ -353,18 +353,34 @@ const PostOrderReview = () => {
 
       // Save dish DNA per item
       for (const item of items) {
-        const sel = dnaSelections[item.menuItemId] || {};
-        const rows = Object.values(sel).map((s) => ({
-          menu_item_id: item.menuItemId,
-          user_id: user.id,
-          component_name: s.component_name,
-          component_icon: s.component_icon,
-          selected_score: s.selected_score,
-          selected_tag: s.selected_tag,
-        }));
-        if (rows.length > 0) {
-          await supabase.from("dish_dna").delete().eq("menu_item_id", item.menuItemId).eq("user_id", user.id);
-          await supabase.from("dish_dna").insert(rows);
+        const id = item.menuItemId;
+        if (dnaReviewChoice[id] === "same" && previousDnaRows[id]?.length > 0) {
+          // Re-upsert previous DNA to update timestamp
+          await supabase.from("dish_dna").delete().eq("menu_item_id", id).eq("user_id", user.id);
+          await supabase.from("dish_dna").insert(
+            previousDnaRows[id].map((r) => ({
+              menu_item_id: id,
+              user_id: user.id,
+              component_name: r.component_name,
+              component_icon: r.component_icon,
+              selected_score: r.selected_score,
+              selected_tag: r.selected_tag,
+            }))
+          );
+        } else {
+          const sel = dnaSelections[id] || {};
+          const rows = Object.values(sel).map((s) => ({
+            menu_item_id: id,
+            user_id: user.id,
+            component_name: s.component_name,
+            component_icon: s.component_icon,
+            selected_score: s.selected_score,
+            selected_tag: s.selected_tag,
+          }));
+          if (rows.length > 0) {
+            await supabase.from("dish_dna").delete().eq("menu_item_id", id).eq("user_id", user.id);
+            await supabase.from("dish_dna").insert(rows);
+          }
         }
       }
 
