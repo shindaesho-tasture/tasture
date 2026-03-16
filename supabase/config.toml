@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.batch-analyze]
 verify_jwt = false
+
+[functions.analyze-sensory]
+verify_jwt = false
