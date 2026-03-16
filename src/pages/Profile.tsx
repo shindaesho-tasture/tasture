@@ -376,14 +376,27 @@ const Profile = () => {
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <div
-              className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center"
-              style={{
-                boxShadow: "0 0 0 3px hsl(163,78%,20%), 0 0 24px hsla(163,78%,20%,0.35)",
-              }}
-            >
-              <Crown size={32} strokeWidth={1.5} className="text-score-emerald" />
-            </div>
+            <label className="cursor-pointer block">
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+              <div
+                className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center overflow-hidden"
+                style={{
+                  boxShadow: "0 0 0 3px hsl(163,78%,20%), 0 0 24px hsla(163,78%,20%,0.35)",
+                }}
+              >
+                {uploadingAvatar ? (
+                  <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+                ) : profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <Crown size={32} strokeWidth={1.5} className="text-score-emerald" />
+                )}
+              </div>
+              {/* Camera badge */}
+              <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-card shadow-luxury flex items-center justify-center border-2 border-background">
+                <Camera size={12} className="text-muted-foreground" />
+              </div>
+            </label>
           </motion.div>
 
           <motion.div
