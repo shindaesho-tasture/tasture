@@ -213,7 +213,7 @@ const MyStores = () => {
               {stores.map((store, i) => {
                 const cat = getCategoryInfo(store.category_id);
                 const topTags = store.metricAverages.slice(0, 4);
-                const trustTier = getTrustTier(store.reviewCount, store.verified);
+                const trustTier = getTrustTier(store.reviewCount, store.verified, store.menuReviewCount);
 
                 return (
                   <motion.div
