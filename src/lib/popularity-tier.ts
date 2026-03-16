@@ -20,29 +20,29 @@ export function getPopularityTierInfo(tier: PopularityTier): PopularityTierInfo 
     case 5:
       return {
         tier: 5,
-        label: "Tier 5 Status",
+        label: "Sovereign Legend",
         borderClass: "border-l-[8px] border-l-score-emerald",
-        glowClass: "shadow-[0_0_20px_4px_hsl(var(--score-emerald)/0.35),0_0_40px_8px_hsl(var(--score-emerald)/0.15)]",
+        glowClass: "animate-sovereign-pulse",
       };
     case 4:
       return {
         tier: 4,
-        label: "Tier 4 Status",
+        label: "Tier 4 Elite",
         borderClass: "border-l-[6px] border-l-score-emerald",
         glowClass: "shadow-[0_0_12px_2px_hsl(var(--score-emerald)/0.2)]",
       };
     case 3:
       return {
         tier: 3,
-        label: "Tier 3 Status",
+        label: "Tier 3 Rising",
         borderClass: "border-l-[4px] border-l-score-emerald",
         glowClass: "shadow-[0_2px_12px_hsl(var(--shadow-card))]",
       };
     case 2:
       return {
         tier: 2,
-        label: "Tier 2 Status",
-        borderClass: "border-l-[2px] border-l-score-emerald",
+        label: "Tier 2",
+        borderClass: "border-l-[2px] border-l-score-emerald/60",
         glowClass: "",
       };
     case 1:

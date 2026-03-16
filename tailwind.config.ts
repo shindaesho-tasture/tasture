@@ -108,6 +108,10 @@ export default {
           "0%": { transform: "translateX(100%)" },
           "100%": { transform: "translateX(0)" },
         },
+        "sovereign-pulse": {
+          "0%, 100%": { boxShadow: "0 0 20px 4px hsla(163,78%,20%,0.35), 0 0 40px 8px hsla(163,78%,20%,0.15)" },
+          "50%": { boxShadow: "0 0 28px 8px hsla(163,78%,20%,0.5), 0 0 56px 14px hsla(163,78%,20%,0.25)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -116,6 +120,7 @@ export default {
         "fade-out": "fade-out 0.3s ease-out",
         "scale-in": "scale-in 0.3s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
+        "sovereign-pulse": "sovereign-pulse 2.5s cubic-bezier(0.4,0,0.6,1) infinite",
       },
     },
   },

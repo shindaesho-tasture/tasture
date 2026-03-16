@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Store, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories } from "@/lib/categories";
+import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
@@ -14,6 +15,7 @@ interface StoreItem {
   category_id: string | null;
   created_at: string;
   menuCount: number;
+  totalReviews: number;
 }
 
 const StoreList = () => {
@@ -49,20 +51,45 @@ const StoreList = () => {
       }
 
       const storeIds = storesData.map((s) => s.id);
-      const { data: menuData } = await supabase
-        .from("menu_items")
-        .select("id, store_id")
-        .in("store_id", storeIds);
+      const [menuRes, reviewRes] = await Promise.all([
+        supabase.from("menu_items").select("id, store_id").in("store_id", storeIds),
+        supabase.from("reviews").select("store_id").in("store_id", storeIds),
+      ]);
 
       const menuCountMap = new Map<string, number>();
-      (menuData || []).forEach((mi) => {
+      const menuToStore = new Map<string, string>();
+      (menuRes.data || []).forEach((mi) => {
         menuCountMap.set(mi.store_id, (menuCountMap.get(mi.store_id) || 0) + 1);
+        menuToStore.set(mi.id, mi.store_id);
       });
+
+      const reviewCountMap = new Map<string, number>();
+      (reviewRes.data || []).forEach((r) => {
+        reviewCountMap.set(r.store_id, (reviewCountMap.get(r.store_id) || 0) + 1);
+      });
+
+      // Also count menu reviews and DNA
+      const menuIds = (menuRes.data || []).map((m) => m.id);
+      if (menuIds.length > 0) {
+        const [menuRevRes, dnaRes] = await Promise.all([
+          supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds),
+          supabase.from("dish_dna").select("menu_item_id").in("menu_item_id", menuIds),
+        ]);
+        (menuRevRes.data || []).forEach((r) => {
+          const sid = menuToStore.get(r.menu_item_id);
+          if (sid) reviewCountMap.set(sid, (reviewCountMap.get(sid) || 0) + 1);
+        });
+        (dnaRes.data || []).forEach((d) => {
+          const sid = menuToStore.get(d.menu_item_id);
+          if (sid) reviewCountMap.set(sid, (reviewCountMap.get(sid) || 0) + 1);
+        });
+      }
 
       setStores(
         storesData.map((s) => ({
           ...s,
           menuCount: menuCountMap.get(s.id) || 0,
+          totalReviews: reviewCountMap.get(s.id) || 0,
         }))
       );
     } catch (err) {
@@ -138,30 +165,38 @@ const StoreList = () => {
             </motion.div>
           ) : (
             <AnimatePresence>
-              {stores.map((store, i) => (
-                <motion.button
-                  key={store.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06, duration: 0.4 }}
-                  onClick={() => navigate(`/store/${store.id}/order`)}
-                  className="w-full rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 overflow-hidden text-left"
-                >
-                  <div className="px-4 py-4 flex items-center gap-3">
-                    <span className="text-3xl flex-shrink-0">{getCategoryIcon(store.category_id)}</span>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-bold text-foreground truncate">{store.name}</h3>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                        {getCategoryLabel(store.category_id)}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {store.menuCount} เมนู
-                      </p>
+              {stores.map((store, i) => {
+                const popInfo = getPopularityTierInfo(getPopularityTier(store.totalReviews));
+                return (
+                  <motion.button
+                    key={store.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.06, duration: 0.4 }}
+                    onClick={() => navigate(`/store/${store.id}/order`)}
+                    className={`w-full rounded-2xl bg-surface-elevated border border-border/50 overflow-hidden text-left relative ${popInfo.borderClass} ${popInfo.glowClass || 'shadow-luxury'}`}
+                  >
+                    <div className="px-4 py-4 flex items-center gap-3">
+                      <span className="text-3xl flex-shrink-0">{getCategoryIcon(store.category_id)}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-foreground truncate">{store.name}</h3>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
+                          {getCategoryLabel(store.category_id)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {store.menuCount} เมนู · {store.totalReviews} รีวิว
+                        </p>
+                      </div>
+                      <ChevronRight size={18} strokeWidth={1.5} className="text-muted-foreground flex-shrink-0" />
                     </div>
-                    <ChevronRight size={18} strokeWidth={1.5} className="text-muted-foreground flex-shrink-0" />
-                  </div>
-                </motion.button>
-              ))}
+                    {popInfo.label && (
+                      <span className="absolute bottom-2 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
+                        {popInfo.label}
+                      </span>
+                    )}
+                  </motion.button>
+                );
+              })}
             </AnimatePresence>
           )}
         </div>
