@@ -503,41 +503,102 @@ const PostOrderReview = () => {
             {/* Sensory Feedback */}
             {step?.type === "sensory" && step.menuItemId && (
               <div className="px-4 pt-4 space-y-4">
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
-                  <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
-                  <div>
-                    <p className="text-[11px] font-medium text-foreground">ปรับระดับรสชาติ</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Level 3 = สมดุลพอดี (เขียวมรกต)</p>
+                {/* ─── Taste Satisfaction Gate ─── */}
+                <div className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury p-4 space-y-3">
+                  <p className="text-[11px] font-semibold text-foreground">ความพอใจรสชาติโดยรวม</p>
+                  <div className="flex gap-2">
+                    {([
+                      { key: "perfect" as const, label: "รสสมบูรณ์แบบ", emoji: "🤩", activeBg: "bg-score-emerald", activeText: "text-primary-foreground" },
+                      { key: "ok" as const, label: "ธรรมดาพอกินได้", emoji: "😐", activeBg: "bg-score-slate", activeText: "text-primary-foreground" },
+                      { key: "bad" as const, label: "ไม่ถูกปาก", emoji: "😔", activeBg: "bg-score-ruby", activeText: "text-primary-foreground" },
+                    ]).map((opt) => {
+                      const isActive = tasteSatisfaction[step.menuItemId!] === opt.key;
+                      return (
+                        <motion.button
+                          key={opt.key}
+                          whileTap={{ scale: 0.93 }}
+                          onClick={() => {
+                            setTasteSatisfaction((prev) => ({ ...prev, [step.menuItemId!]: opt.key }));
+                            if (opt.key === "perfect") {
+                              // Auto-set all sensory to level 3 (perfect balance)
+                              const axes = sensoryAxes[step.menuItemId!] || [];
+                              const defaults: Record<string, number> = {};
+                              axes.forEach((a) => { defaults[a.name] = 3; });
+                              setSensoryValues((prev) => ({ ...prev, [step.menuItemId!]: defaults }));
+                            }
+                          }}
+                          className={cn(
+                            "flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl text-center transition-all duration-200",
+                            isActive
+                              ? cn(opt.activeBg, opt.activeText, "shadow-lg")
+                              : "bg-secondary text-muted-foreground hover:bg-muted"
+                          )}
+                        >
+                          <span className="text-xl">{opt.emoji}</span>
+                          <span className="text-[9px] font-semibold leading-tight">{opt.label}</span>
+                        </motion.button>
+                      );
+                    })}
                   </div>
+                  {tasteSatisfaction[step.menuItemId] === "perfect" && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-[10px] text-score-emerald font-medium text-center"
+                    >
+                      ✅ ตั้งค่ารสชาติทั้งหมดเป็นสมดุลพอดีแล้ว
+                    </motion.p>
+                  )}
                 </div>
-                {sensoryLoading[step.menuItemId] ? (
-                  <AnalyzingSpinner label="AI กำลังวิเคราะห์แกนรสชาติ..." />
-                ) : (sensoryAxes[step.menuItemId] || []).length === 0 ? (
-                  <EmptyState label="ไม่สามารถวิเคราะห์ได้" />
-                ) : (
-                  <>
-                    {(sensoryAxes[step.menuItemId] || []).length >= 3 && (
-                      <div className="bg-secondary/30 rounded-2xl p-4">
-                        <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.15em] mb-2 text-center">
-                          Balance Spider Chart
-                        </p>
-                        <BalanceSpiderChart
-                          axes={sensoryAxes[step.menuItemId] || []}
-                          values={sensoryValues[step.menuItemId] || {}}
-                        />
+
+                {/* Show sensory sliders only for non-perfect */}
+                <AnimatePresence>
+                  {tasteSatisfaction[step.menuItemId] && tasteSatisfaction[step.menuItemId] !== "perfect" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                      className="space-y-4 overflow-hidden"
+                    >
+                      <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+                        <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
+                        <div>
+                          <p className="text-[11px] font-medium text-foreground">ปรับระดับรสชาติ</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">Level 3 = สมดุลพอดี (เขียวมรกต)</p>
+                        </div>
                       </div>
-                    )}
-                    {(sensoryAxes[step.menuItemId] || []).map((axis, i) => (
-                      <SensorySliderCard
-                        key={axis.name}
-                        axis={axis}
-                        value={(sensoryValues[step.menuItemId!] || {})[axis.name] ?? 3}
-                        onChange={(level) => handleSensoryChange(step.menuItemId!, axis.name, level)}
-                        index={i}
-                      />
-                    ))}
-                  </>
-                )}
+                      {sensoryLoading[step.menuItemId] ? (
+                        <AnalyzingSpinner label="AI กำลังวิเคราะห์แกนรสชาติ..." />
+                      ) : (sensoryAxes[step.menuItemId] || []).length === 0 ? (
+                        <EmptyState label="ไม่สามารถวิเคราะห์ได้" />
+                      ) : (
+                        <>
+                          {(sensoryAxes[step.menuItemId] || []).map((axis, i) => (
+                            <SensorySliderCard
+                              key={axis.name}
+                              axis={axis}
+                              value={(sensoryValues[step.menuItemId!] || {})[axis.name] ?? 3}
+                              onChange={(level) => handleSensoryChange(step.menuItemId!, axis.name, level)}
+                              index={i}
+                            />
+                          ))}
+                          {(sensoryAxes[step.menuItemId] || []).length >= 3 && (
+                            <div className="bg-secondary/30 rounded-2xl p-4">
+                              <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.15em] mb-2 text-center">
+                                Balance Spider Chart
+                              </p>
+                              <BalanceSpiderChart
+                                axes={sensoryAxes[step.menuItemId] || []}
+                                values={sensoryValues[step.menuItemId] || {}}
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 
