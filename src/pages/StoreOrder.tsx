@@ -267,6 +267,31 @@ const StoreOrder = () => {
                             ))}
                           </div>
                         )}
+                        {/* Dish DNA Tags */}
+                        {dnaByItem.get(item.id) && dnaByItem.get(item.id)!.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            <span className="text-[8px] text-muted-foreground mr-0.5">🧬</span>
+                            {dnaByItem.get(item.id)!.map((tag) => {
+                              const scoreColor =
+                                tag.selected_score >= 2
+                                  ? "bg-score-emerald/15 text-score-emerald"
+                                  : tag.selected_score <= -2
+                                    ? "bg-score-ruby/15 text-score-ruby"
+                                    : "bg-score-slate/15 text-score-slate";
+                              return (
+                                <span
+                                  key={`${tag.component_name}-${tag.selected_tag}`}
+                                  className={`text-[9px] px-1.5 py-0.5 rounded-md font-medium ${scoreColor}`}
+                                >
+                                  {tag.component_icon} {tag.selected_tag}
+                                  {tag.count > 1 && (
+                                    <span className="ml-0.5 opacity-60">×{tag.count}</span>
+                                  )}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
                       {/* Quantity controls */}
