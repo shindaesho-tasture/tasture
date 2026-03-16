@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Check, Loader2 } from "lucide-react";
+import { ChevronLeft, Check, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
@@ -23,6 +23,48 @@ interface MenuItemWithAvg {
   my_score: number | null;
 }
 
+/* ─── Circular Progress Ring ─── */
+const ProgressRing = ({ progress, rated, total }: { progress: number; rated: number; total: number }) => {
+  const r = 28;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (progress / 100) * circ;
+
+  return (
+    <div className="relative">
+      <svg width="68" height="68" className="-rotate-90">
+        <circle cx="34" cy="34" r={r} fill="none" strokeWidth="4" className="stroke-border" />
+        <motion.circle
+          cx="34" cy="34" r={r} fill="none" strokeWidth="4"
+          strokeLinecap="round"
+          className="stroke-score-emerald"
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          strokeDasharray={circ}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-base font-bold text-foreground tabular-nums leading-none">{rated}</span>
+        <span className="text-[8px] text-muted-foreground font-light">/ {total}</span>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Section Divider ─── */
+const SectionHeader = ({ icon, label, count }: { icon: string; label: string; count: number }) => (
+  <div className="flex items-center gap-3 pt-2">
+    <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-sm">
+      {icon}
+    </div>
+    <div className="flex-1">
+      <span className="text-[11px] font-medium text-foreground tracking-wide">{label}</span>
+      <span className="text-[9px] text-muted-foreground ml-2">{count} รายการ</span>
+    </div>
+    <div className="h-px flex-1 bg-border/50" />
+  </div>
+);
+
 const MenuFeedback = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
@@ -32,6 +74,7 @@ const MenuFeedback = () => {
   const [storeName, setStoreName] = useState("");
   const [userScores, setUserScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -43,29 +86,22 @@ const MenuFeedback = () => {
     if (!storeId) return;
     setLoading(true);
     try {
-      // Fetch store name
       const { data: store } = await supabase
-        .from("stores")
-        .select("name")
-        .eq("id", storeId)
-        .single();
+        .from("stores").select("name").eq("id", storeId).single();
       if (store) setStoreName(store.name);
 
-      // Fetch menu items
       const { data: menuItems, error: menuErr } = await supabase
         .from("menu_items")
         .select("id, name, type, price, price_special, noodle_types, noodle_styles, toppings")
         .eq("store_id", storeId);
       if (menuErr) throw menuErr;
 
-      // Fetch all menu reviews for these items
       const itemIds = (menuItems || []).map((i) => i.id);
       const { data: allReviews } = await supabase
         .from("menu_reviews")
         .select("menu_item_id, user_id, score")
         .in("menu_item_id", itemIds);
 
-      // Compute averages and user's own scores
       const avgMap = new Map<string, { total: number; count: number }>();
       const myMap = new Map<string, number>();
       (allReviews || []).forEach((r) => {
@@ -73,9 +109,7 @@ const MenuFeedback = () => {
         const m = avgMap.get(r.menu_item_id)!;
         m.total += r.score;
         m.count += 1;
-        if (user && r.user_id === user.id) {
-          myMap.set(r.menu_item_id, r.score);
-        }
+        if (user && r.user_id === user.id) myMap.set(r.menu_item_id, r.score);
       });
 
       const result: MenuItemWithAvg[] = (menuItems || []).map((item) => {
@@ -89,12 +123,8 @@ const MenuFeedback = () => {
       });
 
       setItems(result);
-
-      // Init user scores
       const scores: Record<string, number | null> = {};
-      result.forEach((item) => {
-        scores[item.id] = item.my_score;
-      });
+      result.forEach((item) => { scores[item.id] = item.my_score; });
       setUserScores(scores);
     } catch (err) {
       console.error("MenuFeedback fetch error:", err);
@@ -110,19 +140,18 @@ const MenuFeedback = () => {
     }));
   };
 
-  const changedCount = useMemo(() => {
-    return items.filter((item) => userScores[item.id] !== item.my_score).length;
-  }, [userScores, items]);
+  const changedCount = useMemo(() =>
+    items.filter((item) => userScores[item.id] !== item.my_score).length,
+  [userScores, items]);
 
-  const ratedCount = useMemo(() => {
-    return Object.values(userScores).filter((v) => v !== null && v !== undefined).length;
-  }, [userScores]);
+  const ratedCount = useMemo(() =>
+    Object.values(userScores).filter((v) => v !== null && v !== undefined).length,
+  [userScores]);
+
+  const progress = items.length > 0 ? (ratedCount / items.length) * 100 : 0;
 
   const handleSubmit = async () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    if (!user) { navigate("/auth"); return; }
     setSaving(true);
     try {
       const upsertRows: { menu_item_id: string; user_id: string; score: number }[] = [];
@@ -156,8 +185,10 @@ const MenuFeedback = () => {
         if (error) throw error;
       }
 
-      toast({ title: "✅ บันทึกสำเร็จ", description: `ให้คะแนน ${ratedCount} รายการ` });
-      fetchData(); // refresh averages
+      setSaveSuccess(true);
+      toast({ title: "✅ บันทึกสำเร็จ", description: `ให้คะแนน ${ratedCount} เมนู` });
+      setTimeout(() => setSaveSuccess(false), 2000);
+      fetchData();
     } catch (err: any) {
       console.error("Save menu reviews error:", err);
       toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
@@ -166,93 +197,174 @@ const MenuFeedback = () => {
     }
   };
 
-  // Group items by type
   const noodles = items.filter((i) => i.type === "noodle");
   const dualPrice = items.filter((i) => i.type === "dual_price");
   const standard = items.filter((i) => i.type === "standard");
 
-  const renderSection = (label: string, sectionItems: MenuItemWithAvg[]) => {
+  let cardIndex = 0;
+  const renderSection = (icon: string, label: string, sectionItems: MenuItemWithAvg[]) => {
     if (sectionItems.length === 0) return null;
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
-          <span className="text-[10px] font-light text-muted-foreground">{sectionItems.length} รายการ</span>
-        </div>
-        {sectionItems.map((item) => (
-          <MenuFeedbackCard
-            key={item.id}
-            item={item}
-            myScore={userScores[item.id] ?? null}
-            onRate={(v) => handleRate(item.id, v)}
-          />
-        ))}
+      <div className="space-y-2.5">
+        <SectionHeader icon={icon} label={label} count={sectionItems.length} />
+        {sectionItems.map((item) => {
+          const ci = cardIndex++;
+          return (
+            <MenuFeedbackCard
+              key={item.id}
+              item={item}
+              myScore={userScores[item.id] ?? null}
+              onRate={(v) => handleRate(item.id, v)}
+              index={ci}
+            />
+          );
+        })}
       </div>
     );
   };
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background pb-32">
-        {/* Header */}
-        <div className="sticky top-0 z-10 glass-effect glass-border">
+      <div className="min-h-screen bg-background pb-36">
+        {/* ─── Glassmorphic Header ─── */}
+        <div className="sticky top-0 z-20 glass-effect glass-border">
           <div className="flex items-center gap-3 px-4 py-3">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={() => navigate(-1)}
               className="p-2 -ml-2 rounded-xl hover:bg-secondary transition-colors"
             >
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
-            </button>
+            </motion.button>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
                 {storeName || "ฟีดแบคเมนู"}
               </h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                Menu Feedback · {items.length} รายการ
+              <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
+                menu feedback
               </p>
             </div>
-            <span className="text-xs font-medium text-muted-foreground tabular-nums">
-              {ratedCount}/{items.length}
-            </span>
+            {items.length > 0 && (
+              <ProgressRing progress={progress} rated={ratedCount} total={items.length} />
+            )}
           </div>
         </div>
 
+        {/* ─── Hero Description ─── */}
+        {!loading && items.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="px-5 pt-5 pb-2"
+          >
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+              <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-[11px] font-medium text-foreground leading-relaxed">
+                  กดเลือก <span className="text-score-ruby">😔</span> <span className="text-score-slate">😐</span> <span className="text-score-emerald">🤩</span> เพื่อให้คะแนนแต่ละเมนู
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  ค่าเฉลี่ยจากทุกคนจะแสดงที่วงกลมด้านขวา
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ─── Content ─── */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-            <span className="text-xs text-muted-foreground">กำลังโหลดเมนู...</span>
+          <div className="flex flex-col items-center justify-center py-28 gap-4">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 rounded-full border-[3px] border-border border-t-score-emerald"
+            />
+            <div className="text-center">
+              <p className="text-xs font-medium text-foreground">กำลังโหลดเมนู</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">loading menu items...</p>
+            </div>
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <span className="text-4xl">🍽️</span>
-            <p className="text-sm text-muted-foreground">ยังไม่มีเมนูในร้านนี้</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center py-28 gap-5"
+          >
+            <div className="w-20 h-20 rounded-3xl bg-secondary flex items-center justify-center">
+              <span className="text-4xl">🍽️</span>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-foreground">ยังไม่มีเมนูในร้านนี้</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                เมนูจะปรากฏหลังจากสแกนป้ายเมนู
+              </p>
+            </div>
+          </motion.div>
         ) : (
-          <div className="px-4 pt-4 space-y-5">
-            {renderSection("🍜 ก๋วยเตี๋ยว / Noodles", noodles)}
-            {renderSection("💰 ราคาคู่ / Dual Price", dualPrice)}
-            {renderSection("🍽️ เมนูทั่วไป / Standard", standard)}
+          <div className="px-4 pt-3 space-y-5">
+            {renderSection("🍜", "ก๋วยเตี๋ยว", noodles)}
+            {renderSection("💰", "ราคาคู่", dualPrice)}
+            {renderSection("🍽️", "เมนูทั่วไป", standard)}
           </div>
         )}
 
-        {/* Submit Button */}
-        {items.length > 0 && (
-          <div className="fixed bottom-20 left-0 right-0 px-4 z-10">
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={handleSubmit}
-              disabled={changedCount === 0 || saving}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-foreground text-background font-semibold text-sm shadow-luxury transition-opacity disabled:opacity-30"
+        {/* ─── Floating Submit ─── */}
+        <AnimatePresence>
+          {items.length > 0 && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed bottom-20 left-0 right-0 px-4 z-10"
             >
-              {saving ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Check size={18} strokeWidth={2} />
-              )}
-              บันทึกฟีดแบค {changedCount > 0 && `(${changedCount} เปลี่ยน)`}
-            </motion.button>
-          </div>
-        )}
+              <div className="p-1 rounded-[22px] bg-surface-elevated shadow-card-elevated border border-border/30">
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleSubmit}
+                  disabled={changedCount === 0 || saving}
+                  className="w-full flex items-center justify-center gap-2.5 py-4 rounded-[18px] bg-foreground text-background font-semibold text-sm transition-all disabled:opacity-25"
+                >
+                  <AnimatePresence mode="wait">
+                    {saving ? (
+                      <motion.div key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <Loader2 size={18} className="animate-spin" />
+                      </motion.div>
+                    ) : saveSuccess ? (
+                      <motion.div
+                        key="success"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="flex items-center gap-2"
+                      >
+                        <Check size={18} strokeWidth={2.5} />
+                        <span>สำเร็จ!</span>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="default"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center gap-2"
+                      >
+                        <Check size={18} strokeWidth={2} />
+                        <span>
+                          บันทึกฟีดแบค
+                          {changedCount > 0 && (
+                            <span className="ml-1 opacity-60">({changedCount} เปลี่ยน)</span>
+                          )}
+                        </span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <BottomNav />
       </div>

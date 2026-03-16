@@ -1,7 +1,6 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
-import MenuRatingButtons from "./MenuRatingButtons";
 
 interface MenuFeedbackItem {
   id: string;
@@ -17,6 +16,7 @@ interface MenuFeedbackCardProps {
   item: MenuFeedbackItem;
   myScore: number | null;
   onRate: (value: number) => void;
+  index?: number;
 }
 
 const tierColorMap: Record<ScoreTier, string> = {
@@ -27,63 +27,201 @@ const tierColorMap: Record<ScoreTier, string> = {
   ruby: "text-score-ruby",
 };
 
-const tierBgMap: Record<ScoreTier, string> = {
-  emerald: "bg-score-emerald/15",
-  mint: "bg-score-mint/15",
-  slate: "bg-score-slate/15",
-  amber: "bg-score-amber/15",
-  ruby: "bg-score-ruby/15",
+const tierStrokeMap: Record<ScoreTier, string> = {
+  emerald: "stroke-score-emerald",
+  mint: "stroke-score-mint",
+  slate: "stroke-score-slate",
+  amber: "stroke-score-amber",
+  ruby: "stroke-score-ruby",
 };
 
-const typeIcon: Record<string, string> = {
-  noodle: "🍜",
-  dual_price: "💰",
-  standard: "🍽️",
+const typeConfig: Record<string, { icon: string; accent: string }> = {
+  noodle: { icon: "🍜", accent: "bg-score-emerald/8" },
+  dual_price: { icon: "💰", accent: "bg-gold/8" },
+  standard: { icon: "🍽️", accent: "bg-score-slate/8" },
 };
 
-const MenuFeedbackCard = ({ item, myScore, onRate }: MenuFeedbackCardProps) => {
+const ratingOptions = [
+  {
+    value: -2,
+    emoji: "😔",
+    label: "ไม่โอเค",
+    color: "bg-score-ruby",
+    ring: "ring-score-ruby/30",
+    glow: "shadow-[0_0_20px_hsla(0,68%,35%,0.25)]",
+  },
+  {
+    value: 0,
+    emoji: "😐",
+    label: "ปกติ",
+    color: "bg-score-slate",
+    ring: "ring-score-slate/30",
+    glow: "shadow-[0_0_20px_hsla(215,16%,47%,0.2)]",
+  },
+  {
+    value: 2,
+    emoji: "🤩",
+    label: "สุดยอด",
+    color: "bg-score-emerald",
+    ring: "ring-score-emerald/30",
+    glow: "shadow-[0_0_20px_hsla(163,78%,20%,0.25)]",
+  },
+];
+
+/** Mini circular gauge for average score */
+const ScoreGauge = ({ score, count, tier }: { score: number; count: number; tier: ScoreTier }) => {
+  // Map -2..+2 to 0..100
+  const pct = ((score + 2) / 4) * 100;
+  const r = 18;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+
+  return (
+    <div className="relative flex flex-col items-center">
+      <svg width="48" height="48" className="-rotate-90">
+        <circle cx="24" cy="24" r={r} fill="none" strokeWidth="3" className="stroke-border" />
+        <motion.circle
+          cx="24" cy="24" r={r} fill="none" strokeWidth="3"
+          strokeLinecap="round"
+          className={tierStrokeMap[tier]}
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.3 }}
+          strokeDasharray={circ}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className={cn("text-[11px] font-bold tabular-nums", tierColorMap[tier])}>
+          {score > 0 ? "+" : ""}{score.toFixed(1)}
+        </span>
+      </div>
+      <span className="text-[7px] font-light text-muted-foreground mt-0.5 tabular-nums">
+        {count} คน
+      </span>
+    </div>
+  );
+};
+
+const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCardProps) => {
   const hasAvg = item.avg_score !== null;
   const avgTier = hasAvg ? getScoreTier(item.avg_score!) : null;
+  const config = typeConfig[item.type] || typeConfig.standard;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-surface-elevated rounded-2xl shadow-luxury p-4 space-y-3"
+      layout
+      initial={{ opacity: 0, y: 24, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.5,
+        delay: index * 0.06,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
+      className="bg-surface-elevated rounded-[20px] shadow-luxury overflow-hidden"
     >
-      {/* Top row: name + price + avg */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm">{typeIcon[item.type] || "🍽️"}</span>
-            <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
+      {/* Card Content */}
+      <div className="p-4 space-y-3.5">
+        {/* Top: Info + Gauge */}
+        <div className="flex items-start gap-3">
+          {/* Icon + Name + Price */}
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center text-sm", config.accent)}>
+                {config.icon}
+              </div>
+              <h3 className="text-[15px] font-medium text-foreground leading-snug truncate">
+                {item.name}
+              </h3>
+            </div>
+
+            {/* Price Row */}
+            <div className="flex items-baseline gap-2 pl-10">
+              <span className="text-sm font-semibold text-foreground tabular-nums">
+                ฿{item.price}
+              </span>
+              {item.type === "dual_price" && item.price_special != null && (
+                <>
+                  <span className="text-[10px] text-muted-foreground">/</span>
+                  <span className="text-sm font-semibold text-score-emerald tabular-nums">
+                    ฿{item.price_special}
+                  </span>
+                  <span className="text-[8px] font-medium text-score-emerald uppercase tracking-wider">
+                    พิเศษ
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs text-muted-foreground">฿{item.price}</span>
-            {item.type === "dual_price" && item.price_special && (
-              <span className="text-xs text-score-emerald">พิเศษ ฿{item.price_special}</span>
-            )}
-          </div>
+
+          {/* Score Gauge */}
+          {hasAvg && avgTier && (
+            <ScoreGauge score={item.avg_score!} count={item.review_count} tier={avgTier} />
+          )}
+          {!hasAvg && (
+            <div className="flex flex-col items-center opacity-40">
+              <div className="w-12 h-12 rounded-full border-2 border-dashed border-border flex items-center justify-center">
+                <span className="text-[9px] font-light text-muted-foreground">ยังไม่มี</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Average Badge */}
-        {hasAvg && avgTier && (
-          <div className={cn("flex flex-col items-center px-2.5 py-1.5 rounded-xl", tierBgMap[avgTier])}>
-            <span className={cn("text-base font-bold tabular-nums leading-none", tierColorMap[avgTier])}>
-              {item.avg_score! > 0 ? "+" : ""}
-              {item.avg_score!.toFixed(1)}
-            </span>
-            <span className="text-[8px] text-muted-foreground mt-0.5">
-              {item.review_count} รีวิว
-            </span>
-          </div>
-        )}
-      </div>
+        {/* Divider */}
+        <div className="h-px bg-border/60" />
 
-      {/* Rating row */}
-      <div className="flex items-center justify-between">
-        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">ให้คะแนน</span>
-        <MenuRatingButtons rating={myScore ?? undefined} onRate={onRate} />
+        {/* Rating Section */}
+        <div className="space-y-2">
+          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.15em]">
+            ให้คะแนนเมนูนี้
+          </span>
+
+          <div className="flex items-center gap-2">
+            {ratingOptions.map((opt) => {
+              const isActive = myScore === opt.value;
+              return (
+                <motion.button
+                  key={opt.value}
+                  whileTap={{ scale: 0.88 }}
+                  whileHover={{ scale: 1.03 }}
+                  onClick={() => onRate(opt.value)}
+                  className={cn(
+                    "flex-1 relative flex flex-col items-center gap-1 py-2.5 rounded-2xl transition-all duration-300",
+                    isActive
+                      ? cn(opt.color, "text-primary-foreground ring-2", opt.ring, opt.glow)
+                      : "bg-secondary text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  <motion.span
+                    className="text-lg leading-none"
+                    animate={isActive ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {opt.emoji}
+                  </motion.span>
+                  <span className={cn(
+                    "text-[9px] font-medium tracking-wide",
+                    isActive ? "text-primary-foreground" : "text-muted-foreground"
+                  )}>
+                    {opt.label}
+                  </span>
+
+                  {/* Active indicator dot */}
+                  <AnimatePresence>
+                    {isActive && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary-foreground border-2 border-current"
+                        style={{ borderColor: "inherit" }}
+                      />
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </motion.div>
   );
