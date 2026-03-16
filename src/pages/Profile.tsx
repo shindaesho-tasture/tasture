@@ -290,6 +290,10 @@ const Profile = () => {
   const palateLevel = Math.min(99, Math.floor((emeraldCount * 3 + storeCount * 2) * 1.5));
   const hasTasteDNA = Object.values(tasteDNA).some((v) => v > 0);
 
+  const achievementCtx: AchievementCtx = { emeraldCount, storeCount, totalReviews, tasteDNA, dnaEntryCount };
+  const unlockedBadges = ACHIEVEMENTS.filter((a) => a.check(achievementCtx));
+  const lockedBadges = ACHIEVEMENTS.filter((a) => !a.check(achievementCtx));
+
   if (loading) {
     return (
       <PageTransition>
