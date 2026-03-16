@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
+import { getTrustTier } from "@/lib/trust-tiers";
+import TrustTierBadge from "@/components/TrustTierBadge";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
@@ -27,6 +29,7 @@ interface StoreCard {
   name: string;
   category_id: string | null;
   categoryLabel: string | null;
+  verified: boolean;
   avgScore: number | null;
   reviewCount: number;
   menuCount: number;
@@ -99,7 +102,7 @@ const Index = () => {
     try {
       const { data: allStores } = await supabase
         .from("stores")
-        .select("id, name, category_id")
+        .select("id, name, category_id, verified")
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -184,6 +187,7 @@ const Index = () => {
         return {
           ...s,
           categoryLabel: cat?.labelTh || null,
+          verified: s.verified ?? false,
           avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
           reviewCount: totalCount,
           menuCount: menuCountMap.get(s.id) || 0,
@@ -275,6 +279,7 @@ const Index = () => {
             <div className="space-y-3">
               {stores.map((store, i) => {
                 const overallTier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
+                const trustTier = getTrustTier(store.reviewCount, store.verified, store.menuReviewCount);
                 const topMetrics = [...(store.metrics || [])]
                   .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
                   .slice(0, 4);
@@ -297,7 +302,15 @@ const Index = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-foreground truncate">{store.name}</h3>
                         {store.categoryLabel && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{store.categoryLabel}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <p className="text-[10px] text-muted-foreground">{store.categoryLabel}</p>
+                            <TrustTierBadge tier={trustTier} compact />
+                          </div>
+                        )}
+                        {!store.categoryLabel && (
+                          <div className="mt-0.5">
+                            <TrustTierBadge tier={trustTier} compact />
+                          </div>
                         )}
                         <p className="text-[9px] text-muted-foreground mt-0.5">
                           {store.menuCount} เมนู · {store.reviewCount} รีวิว
