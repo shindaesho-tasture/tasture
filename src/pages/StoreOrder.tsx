@@ -42,6 +42,7 @@ const StoreOrder = () => {
   const [selectedNoodleType, setSelectedNoodleType] = useState<string>("");
   const [selectedNoodleStyle, setSelectedNoodleStyle] = useState<string>("");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
+  const [selectedSize, setSelectedSize] = useState<"ธรรมดา" | "พิเศษ">("ธรรมดา");
 
   useEffect(() => {
     if (!storeId) return;
@@ -138,6 +139,7 @@ const StoreOrder = () => {
 
   const hasOptions = (item: MenuItemRow) => {
     return (
+      (item.price_special != null) ||
       (item.noodle_types && item.noodle_types.length > 0) ||
       (item.noodle_styles && item.noodle_styles.length > 0) ||
       (item.toppings && item.toppings.length > 0)
@@ -149,17 +151,20 @@ const StoreOrder = () => {
     setSelectedNoodleType(item.noodle_types?.[0] || "");
     setSelectedNoodleStyle(item.noodle_styles?.[0] || "");
     setSelectedToppings([]);
+    setSelectedSize("ธรรมดา");
   };
 
   const handleAddWithOptions = () => {
     if (!optionsItem) return;
+    const useSpecial = selectedSize === "พิเศษ" && optionsItem.price_special != null;
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
-      price: optionsItem.price,
+      price: useSpecial ? optionsItem.price_special! : optionsItem.price,
       quantity: 1,
       type: optionsItem.type,
       selectedOptions: {
+        size: optionsItem.price_special != null ? selectedSize : undefined,
         noodleType: selectedNoodleType || undefined,
         noodleStyle: selectedNoodleStyle || undefined,
         toppings: selectedToppings.length > 0 ? selectedToppings : undefined,
@@ -169,6 +174,10 @@ const StoreOrder = () => {
   };
 
   const handleAddSimple = (item: MenuItemRow) => {
+    if (item.price_special != null) {
+      openOptionsPopup(item);
+      return;
+    }
     addItem({
       menuItemId: item.id,
       name: item.name,
@@ -274,6 +283,11 @@ const StoreOrder = () => {
                         {/* Show selected options */}
                         {orderItem?.selectedOptions && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
+                            {orderItem.selectedOptions.size && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-gold/15 text-gold font-medium">
+                                {orderItem.selectedOptions.size}
+                              </span>
+                            )}
                             {orderItem.selectedOptions.noodleType && (
                               <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
                                 {orderItem.selectedOptions.noodleType}
@@ -396,7 +410,7 @@ const StoreOrder = () => {
                   <div>
                     <h3 className="text-base font-bold text-foreground">{optionsItem.name}</h3>
                     <p className="text-xs text-score-emerald font-semibold mt-0.5">
-                      ฿{optionsItem.price}
+                      ฿{selectedSize === "พิเศษ" && optionsItem.price_special ? optionsItem.price_special : optionsItem.price}
                     </p>
                   </div>
                   <button
@@ -408,6 +422,40 @@ const StoreOrder = () => {
                 </div>
 
                 <div className="px-5 pb-6 space-y-5 max-h-[60vh] overflow-y-auto">
+                  {/* Size Selection (ธรรมดา / พิเศษ) */}
+                  {optionsItem.price_special != null && (
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        💰 เลือกขนาด
+                      </p>
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileTap={{ scale: 0.93 }}
+                          onClick={() => setSelectedSize("ธรรมดา")}
+                          className={`flex-1 px-3 py-3 rounded-xl text-xs font-medium border transition-all text-center ${
+                            selectedSize === "ธรรมดา"
+                              ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
+                              : "bg-surface-elevated text-foreground border-border/50"
+                          }`}
+                        >
+                          <span className="block font-bold">ธรรมดา</span>
+                          <span className="block text-[10px] mt-0.5 opacity-80">฿{optionsItem.price}</span>
+                        </motion.button>
+                        <motion.button
+                          whileTap={{ scale: 0.93 }}
+                          onClick={() => setSelectedSize("พิเศษ")}
+                          className={`flex-1 px-3 py-3 rounded-xl text-xs font-medium border transition-all text-center ${
+                            selectedSize === "พิเศษ"
+                              ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
+                              : "bg-surface-elevated text-foreground border-border/50"
+                          }`}
+                        >
+                          <span className="block font-bold">พิเศษ</span>
+                          <span className="block text-[10px] mt-0.5 opacity-80">฿{optionsItem.price_special}</span>
+                        </motion.button>
+                      </div>
+                    </div>
+                  )}
                   {/* Noodle Types */}
                   {optionsItem.noodle_types && optionsItem.noodle_types.length > 0 && (
                     <div>
