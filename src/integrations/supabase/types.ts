@@ -55,6 +55,30 @@ export type Database = {
           },
         ]
       }
+      dish_templates: {
+        Row: {
+          components: Json
+          created_at: string
+          dish_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          components?: Json
+          created_at?: string
+          dish_name: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          components?: Json
+          created_at?: string
+          dish_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_items: {
         Row: {
           created_at: string

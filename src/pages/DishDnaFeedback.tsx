@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import DishDnaCard from "@/components/menu/DishDnaCard";
-import type { DishAnalysis, DishDnaSelection } from "@/lib/dish-dna-types";
+import type { DishAnalysis, DishDnaSelection, DishComponent } from "@/lib/dish-dna-types";
 
 /* ─── Analyzing Animation ─── */
 const AnalyzingOverlay = ({ dishName }: { dishName: string }) => (
@@ -41,29 +41,63 @@ const DishDnaFeedback = () => {
   const navigate = useNavigate();
   const { menuItemId } = useParams<{ menuItemId: string }>();
   const [searchParams] = useSearchParams();
-  const storeId = searchParams.get("storeId");
   const { user, loading: authLoading } = useAuth();
 
   const [dishName, setDishName] = useState("");
-  const [analysis, setAnalysis] = useState<DishAnalysis | null>(null);
+  const [components, setComponents] = useState<DishComponent[]>([]);
   const [analyzing, setAnalyzing] = useState(true);
   const [selections, setSelections] = useState<Record<string, DishDnaSelection>>({});
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [existingDna, setExistingDna] = useState<Record<string, DishDnaSelection>>({});
 
-  // Fetch dish name and existing DNA
   useEffect(() => {
     if (!menuItemId || authLoading) return;
-    (async () => {
+    loadData();
+  }, [menuItemId, user, authLoading]);
+
+  const loadData = async () => {
+    if (!menuItemId) return;
+    setAnalyzing(true);
+
+    try {
+      // Get menu item name
       const { data: item } = await supabase
         .from("menu_items")
         .select("name")
         .eq("id", menuItemId)
         .single();
-      if (item) {
-        setDishName(item.name);
-        analyzeDish(item.name);
+      if (!item) return;
+      setDishName(item.name);
+
+      // Try to load cached template first
+      const { data: template } = await supabase
+        .from("dish_templates")
+        .select("components")
+        .eq("dish_name", item.name.trim())
+        .single();
+
+      if (template?.components) {
+        // Use cached template
+        const comps = template.components as unknown as DishComponent[];
+        setComponents(comps);
+      } else {
+        // No cache - call analyze-dish and cache result
+        const { data, error } = await supabase.functions.invoke("analyze-dish", {
+          body: { dishName: item.name },
+        });
+        if (error) throw error;
+        if (data?.components) {
+          setComponents(data.components);
+          // Cache it
+          await supabase.from("dish_templates").upsert(
+            {
+              dish_name: item.name.trim(),
+              components: data.components,
+            },
+            { onConflict: "dish_name" }
+          );
+        }
       }
 
       // Load existing user DNA
@@ -87,23 +121,8 @@ const DishDnaFeedback = () => {
           setSelections(map);
         }
       }
-    })();
-  }, [menuItemId, user, authLoading]);
-
-  const analyzeDish = async (name: string) => {
-    setAnalyzing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("analyze-dish", {
-        body: { dishName: name },
-      });
-      if (error) throw error;
-      if (data?.components) {
-        setAnalysis(data as DishAnalysis);
-      } else {
-        toast({ title: "วิเคราะห์ไม่สำเร็จ", description: "ลองอีกครั้ง", variant: "destructive" });
-      }
     } catch (err: any) {
-      console.error("analyze-dish error:", err);
+      console.error("DishDnaFeedback load error:", err);
       toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: "destructive" });
     } finally {
       setAnalyzing(false);
@@ -113,7 +132,6 @@ const DishDnaFeedback = () => {
   const handleSelect = (componentName: string, componentIcon: string, score: -2 | 0 | 2, tag: string) => {
     setSelections((prev) => {
       const current = prev[componentName];
-      // Toggle off if same
       if (current?.selected_score === score) {
         const next = { ...prev };
         delete next[componentName];
@@ -132,18 +150,17 @@ const DishDnaFeedback = () => {
   };
 
   const changedCount = useMemo(() => {
-    if (!analysis) return 0;
     let count = 0;
-    analysis.components.forEach((c) => {
+    components.forEach((c) => {
       const newSel = selections[c.name];
       const oldSel = existingDna[c.name];
       if (JSON.stringify(newSel) !== JSON.stringify(oldSel)) count++;
     });
     return count;
-  }, [selections, existingDna, analysis]);
+  }, [selections, existingDna, components]);
 
   const selectedCount = Object.keys(selections).length;
-  const totalComponents = analysis?.components.length || 0;
+  const totalComponents = components.length;
   const progress = totalComponents > 0 ? (selectedCount / totalComponents) * 100 : 0;
 
   const handleSubmit = async () => {
@@ -151,14 +168,12 @@ const DishDnaFeedback = () => {
     if (!menuItemId) return;
     setSaving(true);
     try {
-      // Delete existing DNA for this item+user
       await supabase
         .from("dish_dna")
         .delete()
         .eq("menu_item_id", menuItemId)
         .eq("user_id", user.id);
 
-      // Insert new selections
       const rows = Object.values(selections).map((s) => ({
         menu_item_id: menuItemId,
         user_id: user.id,
@@ -230,7 +245,7 @@ const DishDnaFeedback = () => {
         {/* ─── Content ─── */}
         {analyzing ? (
           <AnalyzingOverlay dishName={dishName} />
-        ) : !analysis || analysis.components.length === 0 ? (
+        ) : components.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -246,7 +261,6 @@ const DishDnaFeedback = () => {
           </motion.div>
         ) : (
           <>
-            {/* Hero Info */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -268,9 +282,8 @@ const DishDnaFeedback = () => {
               </div>
             </motion.div>
 
-            {/* Component Cards */}
             <div className="px-4 pt-3 space-y-4">
-              {analysis.components.map((comp, i) => (
+              {components.map((comp, i) => (
                 <DishDnaCard
                   key={comp.name}
                   component={comp}
@@ -285,7 +298,7 @@ const DishDnaFeedback = () => {
 
         {/* ─── Floating Submit ─── */}
         <AnimatePresence>
-          {!analyzing && analysis && analysis.components.length > 0 && (
+          {!analyzing && components.length > 0 && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -306,30 +319,16 @@ const DishDnaFeedback = () => {
                         <Loader2 size={18} className="animate-spin" />
                       </motion.div>
                     ) : saveSuccess ? (
-                      <motion.div
-                        key="success"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="flex items-center gap-2"
-                      >
+                      <motion.div key="success" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex items-center gap-2">
                         <Check size={18} strokeWidth={2.5} />
                         <span>สำเร็จ!</span>
                       </motion.div>
                     ) : (
-                      <motion.div
-                        key="default"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center gap-2"
-                      >
+                      <motion.div key="default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
                         <Dna size={18} strokeWidth={2} />
                         <span>
                           บันทึก Dish DNA
-                          {changedCount > 0 && (
-                            <span className="ml-1 opacity-60">({changedCount} เปลี่ยน)</span>
-                          )}
+                          {changedCount > 0 && <span className="ml-1 opacity-60">({changedCount} เปลี่ยน)</span>}
                         </span>
                       </motion.div>
                     )}
