@@ -26,6 +26,7 @@ interface StoreCard {
   id: string;
   name: string;
   category_id: string | null;
+  categoryLabel: string | null;
   avgScore: number | null;
   reviewCount: number;
   menuCount: number;
@@ -182,6 +183,7 @@ const Index = () => {
 
         return {
           ...s,
+          categoryLabel: cat?.labelTh || null,
           avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
           reviewCount: totalCount,
           menuCount: menuCountMap.get(s.id) || 0,
@@ -294,7 +296,10 @@ const Index = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-foreground truncate">{store.name}</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {store.categoryLabel && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{store.categoryLabel}</p>
+                        )}
+                        <p className="text-[9px] text-muted-foreground mt-0.5">
                           {store.menuCount} เมนู · {store.reviewCount} รีวิว
                           {store.dnaCount > 0 && <> · 🧬 {store.dnaCount}</>}
                           {store.menuReviewCount > 0 && <> · ⭐ {store.menuReviewCount}</>}
