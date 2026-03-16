@@ -210,8 +210,8 @@ const Profile = () => {
 
     const load = async () => {
       // Profile
-      const { data: prof } = await supabase.from("profiles").select("display_name, email").eq("id", user.id).single();
-      if (prof) setProfile({ ...prof, avatar_url: (prof as any).avatar_url ?? null });
+      const { data: prof } = await supabase.from("profiles").select("display_name, email, avatar_url" as any).eq("id", user.id).single();
+      if (prof) setProfile(prof as any);
 
       // Menu reviews (+2 = emerald)
       const { data: reviews } = await supabase.from("menu_reviews").select("id, score, menu_item_id, created_at").eq("user_id", user.id);
