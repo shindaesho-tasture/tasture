@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
+import SovereignMenuCard from "@/components/menu/SovereignMenuCard";
+import DishDetailSheet from "@/components/menu/DishDetailSheet";
 
 interface MenuItemRow {
   id: string;
@@ -43,6 +45,9 @@ const StoreOrder = () => {
   const [selectedNoodleStyle, setSelectedNoodleStyle] = useState<string>("");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [selectedSize, setSelectedSize] = useState<"ธรรมดา" | "พิเศษ">("ธรรมดา");
+
+  // Detail sheet state
+  const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
 
   useEffect(() => {
     if (!storeId) return;
@@ -202,11 +207,7 @@ const StoreOrder = () => {
     );
   };
 
-  const typeEmoji: Record<string, string> = {
-    noodle: "🍜",
-    dual_price: "💰",
-    standard: "🍽️",
-  };
+  // typeEmoji not needed anymore with SovereignMenuCard
 
   return (
     <PageTransition>
@@ -245,142 +246,63 @@ const StoreOrder = () => {
             <AnimatePresence>
               {menuItems.map((item, i) => {
                 const qty = getItemQuantity(item.id);
-                const orderItem = items.find((oi) => oi.menuItemId === item.id);
-                return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04, duration: 0.35 }}
-                    className={(() => {
-                      const totalReviews = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
-                      const popInfo = getPopularityTierInfo(getPopularityTier(totalReviews));
-                      const base = "rounded-2xl border overflow-hidden transition-all relative";
-                      const activeClass = qty > 0
-                        ? "bg-score-emerald/5 border-score-emerald/30"
-                        : "bg-surface-elevated border-border/50";
-                      return `${base} ${activeClass} ${popInfo.borderClass} ${popInfo.glowClass}`;
-                    })()}
-                  >
-                    <div className="px-4 py-3 flex items-center gap-3">
-                      <span className="text-xl flex-shrink-0">
-                        {typeEmoji[item.type] || "🍽️"}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate">
-                          {item.name}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs font-bold text-score-emerald">
-                            ฿{item.price}
-                          </span>
-                          {item.price_special && (
-                            <span className="text-[10px] text-muted-foreground">
-                              พิเศษ ฿{item.price_special}
-                            </span>
-                          )}
-                        </div>
-                        {/* Show selected options */}
-                        {orderItem?.selectedOptions && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {orderItem.selectedOptions.size && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-gold/15 text-gold font-medium">
-                                {orderItem.selectedOptions.size}
-                              </span>
-                            )}
-                            {orderItem.selectedOptions.noodleType && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
-                                {orderItem.selectedOptions.noodleType}
-                              </span>
-                            )}
-                            {orderItem.selectedOptions.noodleStyle && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
-                                {orderItem.selectedOptions.noodleStyle}
-                              </span>
-                            )}
-                            {orderItem.selectedOptions.toppings?.map((t) => (
-                              <span
-                                key={t}
-                                className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-emerald/10 text-score-emerald"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {/* Dish DNA Tags */}
-                        {dnaByItem.get(item.id) && dnaByItem.get(item.id)!.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            <span className="text-[8px] text-muted-foreground mr-0.5">🧬</span>
-                            {dnaByItem.get(item.id)!.map((tag) => {
-                              const scoreColor =
-                                tag.selected_score >= 2
-                                  ? "bg-score-emerald/15 text-score-emerald"
-                                  : tag.selected_score <= -2
-                                    ? "bg-score-ruby/15 text-score-ruby"
-                                    : "bg-score-slate/15 text-score-slate";
-                              return (
-                                <span
-                                  key={`${tag.component_name}-${tag.selected_tag}`}
-                                  className={`text-[9px] px-1.5 py-0.5 rounded-md font-medium ${scoreColor}`}
-                                >
-                                  {tag.component_icon} {tag.selected_tag}
-                                  {tag.count > 1 && (
-                                    <span className="ml-0.5 opacity-60">×{tag.count}</span>
-                                  )}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
+                const tags = (dnaByItem.get(item.id) || []).map((t) => ({
+                  icon: t.component_icon,
+                  label: t.selected_tag,
+                  score: t.selected_score,
+                  count: t.count,
+                }));
+                const totalRevs = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
 
-                      {/* Quantity controls */}
+                return (
+                  <div key={item.id} className="relative">
+                    <SovereignMenuCard
+                      name={item.name}
+                      price={item.price}
+                      priceSpecial={item.price_special}
+                      tags={tags}
+                      totalReviews={totalRevs}
+                      onPress={() => setDetailItem(item)}
+                      index={i}
+                    />
+
+                    {/* Quantity overlay */}
+                    <div className="absolute top-2 right-2 z-10">
                       {qty === 0 ? (
                         <motion.button
                           whileTap={{ scale: 0.85 }}
-                          onClick={() =>
-                            hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item)
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item);
+                          }}
                           className="w-9 h-9 rounded-xl bg-score-emerald flex items-center justify-center shadow-sm"
                         >
                           <Plus size={16} strokeWidth={2.5} className="text-primary-foreground" />
                         </motion.button>
                       ) : (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 bg-background/90 rounded-xl px-1.5 py-1 shadow-sm border border-border/40">
                           <motion.button
                             whileTap={{ scale: 0.85 }}
-                            onClick={() => handleMinus(item.id)}
-                            className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center"
+                            onClick={(e) => { e.stopPropagation(); handleMinus(item.id); }}
+                            className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center"
                           >
-                            <Minus size={14} strokeWidth={2} className="text-foreground" />
+                            <Minus size={12} strokeWidth={2} className="text-foreground" />
                           </motion.button>
-                          <span className="text-sm font-bold text-foreground w-5 text-center">
-                            {qty}
-                          </span>
+                          <span className="text-xs font-bold text-foreground w-4 text-center">{qty}</span>
                           <motion.button
                             whileTap={{ scale: 0.85 }}
-                            onClick={() =>
-                              hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item)
-                            }
-                            className="w-8 h-8 rounded-lg bg-score-emerald flex items-center justify-center"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item);
+                            }}
+                            className="w-7 h-7 rounded-lg bg-score-emerald flex items-center justify-center"
                           >
-                            <Plus size={14} strokeWidth={2} className="text-primary-foreground" />
+                            <Plus size={12} strokeWidth={2} className="text-primary-foreground" />
                           </motion.button>
                         </div>
                       )}
                     </div>
-                    {/* Tier Status label */}
-                    {(() => {
-                      const totalReviews = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
-                      const popInfo = getPopularityTierInfo(getPopularityTier(totalReviews));
-                      return popInfo.label ? (
-                        <span className="absolute bottom-1.5 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
-                          {popInfo.label}
-                        </span>
-                      ) : null;
-                    })()}
-                  </motion.div>
+                  </div>
                 );
               })}
             </AnimatePresence>
@@ -578,6 +500,20 @@ const StoreOrder = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Dish Detail Sheet */}
+        {detailItem && (
+          <DishDetailSheet
+            open={!!detailItem}
+            onClose={() => setDetailItem(null)}
+            menuItemId={detailItem.id}
+            dishName={detailItem.name}
+            price={detailItem.price}
+            priceSpecial={detailItem.price_special}
+            dnaTags={dnaByItem.get(detailItem.id) || []}
+            totalReviews={(menuReviewCounts.get(detailItem.id) || 0) + (dnaCounts.get(detailItem.id) || 0)}
+          />
+        )}
       </div>
     </PageTransition>
   );
