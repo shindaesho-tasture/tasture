@@ -404,7 +404,63 @@ const Profile = () => {
           ))}
         </motion.div>
 
-        {/* ── Taste DNA ── */}
+        {/* ── Achievement Badges ── */}
+        <motion.section
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.45 }}
+          className="mx-6 mb-8"
+        >
+          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <span className="text-base">🏆</span>
+            Achievements
+            <span className="text-[10px] text-muted-foreground font-normal">
+              {unlockedBadges.length}/{ACHIEVEMENTS.length}
+            </span>
+          </h2>
+
+          {/* Unlocked */}
+          {unlockedBadges.length > 0 && (
+            <div className="grid grid-cols-4 gap-2.5 mb-3">
+              {unlockedBadges.map((badge, i) => {
+                const tierColors = {
+                  emerald: { bg: "bg-score-emerald/10", ring: "shadow-[0_0_0_1.5px_hsl(163,78%,20%),0_0_12px_hsla(163,78%,20%,0.2)]" },
+                  gold: { bg: "bg-gold/10", ring: "shadow-[0_0_0_1.5px_hsl(43,74%,49%),0_0_12px_hsla(43,74%,49%,0.2)]" },
+                  ruby: { bg: "bg-score-ruby/10", ring: "shadow-[0_0_0_1.5px_hsl(0,68%,35%),0_0_12px_hsla(0,68%,35%,0.2)]" },
+                };
+                const tc = tierColors[badge.tier];
+                return (
+                  <motion.div
+                    key={badge.id}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.5 + i * 0.06, type: "spring", stiffness: 400, damping: 20 }}
+                    className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc.ring}`}
+                  >
+                    <span className="text-xl mb-1">{badge.icon}</span>
+                    <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{badge.titleTh}</span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Locked */}
+          {lockedBadges.length > 0 && (
+            <div className="grid grid-cols-4 gap-2.5">
+              {lockedBadges.map((badge) => (
+                <div
+                  key={badge.id}
+                  className="flex flex-col items-center py-3 rounded-2xl bg-muted/50 opacity-40"
+                >
+                  <span className="text-xl mb-1 grayscale">🔒</span>
+                  <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{badge.titleTh}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.section>
+
         <motion.section
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
