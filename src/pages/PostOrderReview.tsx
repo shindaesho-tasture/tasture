@@ -451,26 +451,91 @@ const PostOrderReview = () => {
             {/* Store Review */}
             {step?.type === "store-review" && category && (
               <div className="px-4 pt-4 space-y-3">
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
-                  <Store size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
-                  <div>
-                    <p className="text-[11px] font-medium text-foreground">{category.labelTh}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">ให้คะแนนประสบการณ์ร้านอาหาร</p>
-                  </div>
-                </div>
-                {category.metrics.map((metric, i) => (
-                  <motion.div key={metric.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                    <MetricRater
-                      metric={metric}
-                      value={storeScores[metric.id] ?? null}
-                      onChange={handleStoreScore}
-                      gateState={gateState}
-                      onGateChange={handleGate}
-                      subValues={subScores}
-                      onSubChange={handleSubScore}
-                    />
+                {hasPreviousReview && storeReviewChoice === null ? (
+                  /* ─── Previous Review Gate ─── */
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+                      <Store size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
+                      <div>
+                        <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิวร้านนี้แล้ว</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">ประสบการณ์ร้านเปลี่ยนไปหรือเปล่า?</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          setStoreReviewChoice("same");
+                        }}
+                        className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
+                      >
+                        <span className="text-3xl">👍</span>
+                        <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
+                        <span className="text-[9px] text-muted-foreground">ข้ามไปรีวิวเมนูเลย</span>
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          setStoreReviewChoice("changed");
+                        }}
+                        className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
+                      >
+                        <span className="text-3xl">🔄</span>
+                        <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
+                        <span className="text-[9px] text-muted-foreground">รีวิวร้านใหม่</span>
+                      </motion.button>
+                    </div>
                   </motion.div>
-                ))}
+                ) : (
+                  /* ─── Full Store Review (new user or chose "changed") ─── */
+                  <>
+                    {hasPreviousReview && storeReviewChoice === "same" ? (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex flex-col items-center py-8 gap-3"
+                      >
+                        <span className="text-5xl">✅</span>
+                        <p className="text-sm font-semibold text-foreground">ใช้รีวิวร้านเดิม</p>
+                        <p className="text-[10px] text-muted-foreground">กด "ถัดไป" เพื่อรีวิวเมนู</p>
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setStoreReviewChoice(null)}
+                          className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
+                        >
+                          เปลี่ยนใจ
+                        </motion.button>
+                      </motion.div>
+                    ) : (
+                      <>
+                        <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+                          <Store size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
+                          <div>
+                            <p className="text-[11px] font-medium text-foreground">{category.labelTh}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">ให้คะแนนประสบการณ์ร้านอาหาร</p>
+                          </div>
+                        </div>
+                        {category.metrics.map((metric, i) => (
+                          <motion.div key={metric.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                            <MetricRater
+                              metric={metric}
+                              value={storeScores[metric.id] ?? null}
+                              onChange={handleStoreScore}
+                              gateState={gateState}
+                              onGateChange={handleGate}
+                              subValues={subScores}
+                              onSubChange={handleSubScore}
+                            />
+                          </motion.div>
+                        ))}
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
