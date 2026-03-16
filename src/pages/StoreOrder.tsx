@@ -71,13 +71,34 @@ const StoreOrder = () => {
       // Fetch Dish DNA for these menu items
       if (menuData.length > 0) {
         const menuIds = menuData.map((m) => m.id);
-        const { data: dnaRows } = await supabase
-          .from("dish_dna")
-          .select("menu_item_id, component_icon, component_name, selected_tag, selected_score")
-          .in("menu_item_id", menuIds);
+        const [dnaRes, menuRevRes] = await Promise.all([
+          supabase
+            .from("dish_dna")
+            .select("menu_item_id, component_icon, component_name, selected_tag, selected_score")
+            .in("menu_item_id", menuIds),
+          supabase
+            .from("menu_reviews")
+            .select("menu_item_id")
+            .in("menu_item_id", menuIds),
+        ]);
 
-        if (dnaRows) {
-          // Aggregate: group by menu_item_id + selected_tag, count occurrences
+        // Menu review counts
+        const revCounts = new Map<string, number>();
+        (menuRevRes.data || []).forEach((r) => {
+          revCounts.set(r.menu_item_id, (revCounts.get(r.menu_item_id) || 0) + 1);
+        });
+        setMenuReviewCounts(revCounts);
+
+        // DNA counts per item
+        const dnaCountMap = new Map<string, number>();
+        const dnaRows = dnaRes.data || [];
+        dnaRows.forEach((r) => {
+          dnaCountMap.set(r.menu_item_id, (dnaCountMap.get(r.menu_item_id) || 0) + 1);
+        });
+        setDnaCounts(dnaCountMap);
+
+        // Aggregate DNA tags
+        if (dnaRows.length > 0) {
           const tagMap = new Map<string, Map<string, DnaTag>>();
           dnaRows.forEach((r) => {
             if (!tagMap.has(r.menu_item_id)) tagMap.set(r.menu_item_id, new Map());
@@ -95,7 +116,6 @@ const StoreOrder = () => {
             itemMap.get(key)!.count++;
           });
 
-          // Convert to sorted arrays (top polarized first, max 3)
           const result = new Map<string, DnaTag[]>();
           tagMap.forEach((itemMap, menuItemId) => {
             const tags = Array.from(itemMap.values())
