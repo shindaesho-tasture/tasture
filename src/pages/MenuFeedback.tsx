@@ -277,8 +277,48 @@ const MenuFeedback = () => {
           </div>
         </div>
 
+        {/* ─── Previous Review Gate ─── */}
+        {!loading && items.length > 0 && hasPreviousMenuReview && menuReviewChoice === null && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-4 pt-5 space-y-4"
+          >
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+              <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิวเมนูร้านนี้แล้ว</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติเมนูเปลี่ยนไปหรือเปล่า?</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setMenuReviewChoice("same");
+                  handleSameReview();
+                }}
+                className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
+              >
+                <span className="text-3xl">👍</span>
+                <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
+                <span className="text-[9px] text-muted-foreground">บันทึกคะแนนเดิมอีกครั้ง</span>
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setMenuReviewChoice("changed")}
+                className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
+              >
+                <span className="text-3xl">🔄</span>
+                <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
+                <span className="text-[9px] text-muted-foreground">รีวิวเมนูใหม่</span>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+
         {/* ─── Hero Description ─── */}
-        {!loading && items.length > 0 && (
+        {!loading && items.length > 0 && (!hasPreviousMenuReview || menuReviewChoice === "changed") && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
