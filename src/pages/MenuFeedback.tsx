@@ -75,6 +75,8 @@ const MenuFeedback = () => {
   const [userScores, setUserScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [menuReviewChoice, setMenuReviewChoice] = useState<"same" | "changed" | null>(null);
+  const [hasPreviousMenuReview, setHasPreviousMenuReview] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
