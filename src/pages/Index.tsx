@@ -43,19 +43,19 @@ const Index = () => {
           >
             <span className="text-xl">📝</span>
             <div>
-              <span className="text-xs font-medium text-foreground block">เขียนรีวิว</span>
-              <span className="text-[10px] font-light text-muted-foreground">7 หมวดหมู่</span>
+              <span className="text-xs font-medium text-foreground block">เพิ่มร้านใหม่</span>
+              <span className="text-[10px] font-light text-muted-foreground">ลงทะเบียนร้าน</span>
             </div>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.96 }}
-            onClick={() => navigate("/results")}
+            onClick={() => navigate("/my-stores")}
             className="flex items-center gap-2 p-4 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left"
           >
-            <span className="text-xl">📊</span>
+            <span className="text-xl">🏪</span>
             <div>
-              <span className="text-xs font-medium text-foreground block">ผลรีวิว</span>
-              <span className="text-[10px] font-light text-muted-foreground">สรุปผลคะแนน</span>
+              <span className="text-xs font-medium text-foreground block">ร้านของฉัน</span>
+              <span className="text-[10px] font-light text-muted-foreground">ดูร้าน & ฟีดแบค</span>
             </div>
           </motion.button>
         </div>

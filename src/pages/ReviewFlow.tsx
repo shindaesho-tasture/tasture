@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Check, RotateCcw } from "lucide-react";
 import { categories, scoreTiers } from "@/lib/categories";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import MetricRater from "@/components/MetricRater";
 import ResultCard from "@/components/ResultCard";
 import PageTransition from "@/components/PageTransition";
@@ -13,6 +15,9 @@ import type { ResultCardData, MetricScore } from "@/lib/scoring";
 const ReviewFlow = () => {
   const navigate = useNavigate();
   const { categoryId } = useParams<{ categoryId: string }>();
+  const [searchParams] = useSearchParams();
+  const storeId = searchParams.get("store");
+  const { user } = useAuth();
   const category = categories.find((c) => c.id === categoryId);
 
   const [scores, setScores] = useState<Record<string, number | null>>({});
@@ -142,7 +147,43 @@ const ReviewFlow = () => {
 
   const progress = totalMetrics > 0 ? (filledCount / totalMetrics) * 100 : 0;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Save reviews to database if we have a store and user
+    if (storeId && user) {
+      try {
+        const reviewRows: { store_id: string; user_id: string; metric_id: string; score: number }[] = [];
+        
+        category.metrics.forEach((m) => {
+          if (m.smartGate) {
+            if (gateState[m.id]) {
+              m.smartGate.subMetrics.forEach((sub) => {
+                const val = subScores[sub.id];
+                if (val !== null && val !== undefined) {
+                  reviewRows.push({ store_id: storeId, user_id: user.id, metric_id: sub.id, score: val });
+                }
+              });
+            }
+          } else {
+            const val = scores[m.id];
+            if (val !== null && val !== undefined) {
+              reviewRows.push({ store_id: storeId, user_id: user.id, metric_id: m.id, score: val });
+            }
+          }
+        });
+
+        if (reviewRows.length > 0) {
+          const { error } = await supabase
+            .from("reviews")
+            .upsert(reviewRows, { onConflict: "store_id,user_id,metric_id" });
+          if (error) throw error;
+        }
+      } catch (err: any) {
+        console.error("Save reviews error:", err);
+        toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+        return;
+      }
+    }
+
     toast({
       title: "✅ บันทึกรีวิวสำเร็จ",
       description: `${category.labelTh} — ${filledCount}/${totalMetrics} metrics rated`,
@@ -208,10 +249,10 @@ const ReviewFlow = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/categories")}
+            onClick={() => storeId ? navigate("/my-stores") : navigate("/categories")}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-foreground text-background font-semibold text-sm shadow-luxury"
           >
-            กลับหน้าหมวดหมู่
+            {storeId ? "กลับหน้าร้านของฉัน" : "กลับหน้าหมวดหมู่"}
           </motion.button>
         </div>
 
