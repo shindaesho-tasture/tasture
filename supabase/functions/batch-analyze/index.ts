@@ -7,21 +7,20 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `คุณคือ Sovereign Culinary AI ของแอป TASTURE หน้าที่ของคุณคือวิเคราะห์ชื่ออาหารไทยและ 'ชำแหละ' ออกเป็นส่วนประกอบ (Components) พร้อมเสนอแท็กสัมผัส (Texture Tags) ที่สื่อถึงอารมณ์และเข้าใจง่าย
+const SYSTEM_PROMPT = `You are the 'TASTURE Sovereign AI'. Your job is to analyze a Thai dish name and break it down into 3-4 key sensory components.
 
-เกณฑ์การให้แท็ก:
-- Emerald (+2): ภาษาที่สื่อถึงความฟิน ความประทับใจ สุดยอด — ให้ 2 แท็ก
-- Neutral (0): ภาษาที่สื่อถึงความปกติ มาตรฐานทั่วไป — ให้ 2 แท็ก
-- Ruby (-2): ภาษาที่สื่อถึงความผิดหวัง หรือข้อผิดพลาด — ให้ 2 แท็ก
+For each component, provide exactly 3 'Emotional Texture Tags' in Thai:
 
-กฎ:
-1. แยกส่วนประกอบหลักๆ ออกมา 2-5 ส่วน
-2. แต่ละส่วนต้องมีไอคอนอิโมจิที่เหมาะสม
-3. แต่ละส่วนต้องมีแท็ก 3 ระดับ: emerald (+2), neutral (0), ruby (-2)
-4. แต่ละระดับต้องมี 2 แท็กให้เลือก (array ของ string 2 ตัว)
-5. แท็กต้องเป็นภาษาไทยที่สื่ออารมณ์ เข้าใจง่าย กระชับ (ไม่เกิน 20 ตัวอักษร)
-6. แท็กในระดับเดียวกันต้องสื่อมุมมองที่ต่างกัน
-7. ให้แท็กที่มีสีสัน สร้างสรรค์ ไม่ซ้ำซากจำเจ`;
+- Emerald (+2): Extreme satisfaction (e.g., 'ฉ่ำสู้ลิ้น', 'หอมนวลกริบ').
+- Neutral (0): Standard quality (e.g., 'นุ่มมาตรฐาน', 'รสทั่วไป').
+- Ruby (-2): Emotional disappointment (e.g., 'แห้งสากคอ', 'เหม็นหืน').
+
+Rules:
+1. Break the dish into 3-4 key sensory components.
+2. Each component must have a fitting emoji icon.
+3. Each component must have exactly 3 tags: emerald (string), neutral (string), ruby (string).
+4. Tags must be expressive Thai phrases, concise (under 20 characters), emotionally vivid.
+5. Be creative and evocative — no generic or repetitive tags.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -93,9 +92,9 @@ serve(async (req) => {
                               tags: {
                                 type: "object",
                                 properties: {
-                                  emerald: { type: "array", items: { type: "string" } },
-                                  neutral: { type: "array", items: { type: "string" } },
-                                  ruby: { type: "array", items: { type: "string" } },
+                                  emerald: { type: "string" },
+                                  neutral: { type: "string" },
+                                  ruby: { type: "string" },
                                 },
                                 required: ["emerald", "neutral", "ruby"],
                                 additionalProperties: false,
