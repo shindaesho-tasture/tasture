@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ShoppingBag, Plus, Minus } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
@@ -24,6 +24,12 @@ const StoreOrder = () => {
   const [menuItems, setMenuItems] = useState<MenuItemRow[]>([]);
   const [storeName, setStoreName] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Noodle options popup state
+  const [optionsItem, setOptionsItem] = useState<MenuItemRow | null>(null);
+  const [selectedNoodleType, setSelectedNoodleType] = useState<string>("");
+  const [selectedNoodleStyle, setSelectedNoodleStyle] = useState<string>("");
+  const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
 
   useEffect(() => {
     if (!storeId) return;
@@ -58,7 +64,39 @@ const StoreOrder = () => {
     return items.find((i) => i.menuItemId === menuItemId)?.quantity || 0;
   };
 
-  const handleAdd = (item: MenuItemRow) => {
+  const hasOptions = (item: MenuItemRow) => {
+    return (
+      (item.noodle_types && item.noodle_types.length > 0) ||
+      (item.noodle_styles && item.noodle_styles.length > 0) ||
+      (item.toppings && item.toppings.length > 0)
+    );
+  };
+
+  const openOptionsPopup = (item: MenuItemRow) => {
+    setOptionsItem(item);
+    setSelectedNoodleType(item.noodle_types?.[0] || "");
+    setSelectedNoodleStyle(item.noodle_styles?.[0] || "");
+    setSelectedToppings([]);
+  };
+
+  const handleAddWithOptions = () => {
+    if (!optionsItem) return;
+    addItem({
+      menuItemId: optionsItem.id,
+      name: optionsItem.name,
+      price: optionsItem.price,
+      quantity: 1,
+      type: optionsItem.type,
+      selectedOptions: {
+        noodleType: selectedNoodleType || undefined,
+        noodleStyle: selectedNoodleStyle || undefined,
+        toppings: selectedToppings.length > 0 ? selectedToppings : undefined,
+      },
+    });
+    setOptionsItem(null);
+  };
+
+  const handleAddSimple = (item: MenuItemRow) => {
     addItem({
       menuItemId: item.id,
       name: item.name,
@@ -75,6 +113,12 @@ const StoreOrder = () => {
     } else {
       updateQuantity(menuItemId, qty - 1);
     }
+  };
+
+  const toggleTopping = (t: string) => {
+    setSelectedToppings((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+    );
   };
 
   const typeEmoji: Record<string, string> = {
@@ -120,6 +164,7 @@ const StoreOrder = () => {
             <AnimatePresence>
               {menuItems.map((item, i) => {
                 const qty = getItemQuantity(item.id);
+                const orderItem = items.find((oi) => oi.menuItemId === item.id);
                 return (
                   <motion.div
                     key={item.id}
@@ -150,13 +195,38 @@ const StoreOrder = () => {
                             </span>
                           )}
                         </div>
+                        {/* Show selected options */}
+                        {orderItem?.selectedOptions && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {orderItem.selectedOptions.noodleType && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                                {orderItem.selectedOptions.noodleType}
+                              </span>
+                            )}
+                            {orderItem.selectedOptions.noodleStyle && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                                {orderItem.selectedOptions.noodleStyle}
+                              </span>
+                            )}
+                            {orderItem.selectedOptions.toppings?.map((t) => (
+                              <span
+                                key={t}
+                                className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-emerald/10 text-score-emerald"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Quantity controls */}
                       {qty === 0 ? (
                         <motion.button
                           whileTap={{ scale: 0.85 }}
-                          onClick={() => handleAdd(item)}
+                          onClick={() =>
+                            hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item)
+                          }
                           className="w-9 h-9 rounded-xl bg-score-emerald flex items-center justify-center shadow-sm"
                         >
                           <Plus size={16} strokeWidth={2.5} className="text-primary-foreground" />
@@ -175,7 +245,9 @@ const StoreOrder = () => {
                           </span>
                           <motion.button
                             whileTap={{ scale: 0.85 }}
-                            onClick={() => handleAdd(item)}
+                            onClick={() =>
+                              hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item)
+                            }
                             className="w-8 h-8 rounded-lg bg-score-emerald flex items-center justify-center"
                           >
                             <Plus size={14} strokeWidth={2} className="text-primary-foreground" />
@@ -190,15 +262,145 @@ const StoreOrder = () => {
           )}
         </div>
 
+        {/* Options Popup */}
+        <AnimatePresence>
+          {optionsItem && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-foreground/40 flex items-end justify-center"
+              onClick={() => setOptionsItem(null)}
+            >
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-lg bg-background rounded-t-3xl shadow-luxury overflow-hidden"
+              >
+                {/* Popup Header */}
+                <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                  <div>
+                    <h3 className="text-base font-bold text-foreground">{optionsItem.name}</h3>
+                    <p className="text-xs text-score-emerald font-semibold mt-0.5">
+                      ฿{optionsItem.price}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setOptionsItem(null)}
+                    className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center"
+                  >
+                    <X size={16} strokeWidth={2} className="text-muted-foreground" />
+                  </button>
+                </div>
+
+                <div className="px-5 pb-6 space-y-5 max-h-[60vh] overflow-y-auto">
+                  {/* Noodle Types */}
+                  {optionsItem.noodle_types && optionsItem.noodle_types.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🍜 เลือกเส้น
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {optionsItem.noodle_types.map((nt) => (
+                          <motion.button
+                            key={nt}
+                            whileTap={{ scale: 0.93 }}
+                            onClick={() => setSelectedNoodleType(nt)}
+                            className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                              selectedNoodleType === nt
+                                ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
+                                : "bg-surface-elevated text-foreground border-border/50"
+                            }`}
+                          >
+                            {nt}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Noodle Styles */}
+                  {optionsItem.noodle_styles && optionsItem.noodle_styles.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🍲 เลือกแบบ
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {optionsItem.noodle_styles.map((ns) => (
+                          <motion.button
+                            key={ns}
+                            whileTap={{ scale: 0.93 }}
+                            onClick={() => setSelectedNoodleStyle(ns)}
+                            className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                              selectedNoodleStyle === ns
+                                ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
+                                : "bg-surface-elevated text-foreground border-border/50"
+                            }`}
+                          >
+                            {ns}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Toppings */}
+                  {optionsItem.toppings && optionsItem.toppings.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🥩 เลือกท็อปปิ้ง (เลือกได้หลายอย่าง)
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {optionsItem.toppings.map((t) => {
+                          const selected = selectedToppings.includes(t);
+                          return (
+                            <motion.button
+                              key={t}
+                              whileTap={{ scale: 0.93 }}
+                              onClick={() => toggleTopping(t)}
+                              className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                                selected
+                                  ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
+                                  : "bg-surface-elevated text-foreground border-border/50"
+                              }`}
+                            >
+                              {selected && <Check size={12} strokeWidth={2.5} />}
+                              {t}
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirm */}
+                <div className="px-5 pb-8 pt-2">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleAddWithOptions}
+                    className="w-full py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury"
+                  >
+                    เพิ่มลงออเดอร์
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Floating order button */}
         <AnimatePresence>
-          {totalItems > 0 && (
+          {totalItems > 0 && !optionsItem && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
               transition={{ type: "spring", stiffness: 380, damping: 34 }}
-              className="fixed bottom-6 left-4 right-4 z-50"
+              className="fixed bottom-6 left-4 right-4 z-40"
             >
               <motion.button
                 whileTap={{ scale: 0.97 }}
