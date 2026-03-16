@@ -6,6 +6,7 @@ import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
 import { categories } from "@/lib/categories";
 import { useStore } from "@/lib/store-context";
+import { useAuth } from "@/hooks/use-auth";
 import type { MenuItem } from "@/lib/menu-types";
 import { GOOGLE_MAPS_API_KEY, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
 import PageTransition from "@/components/PageTransition";
@@ -19,7 +20,9 @@ const mapContainerStyle = { width: "100%", height: "100%" };
 const StoreRegistration = () => {
   const navigate = useNavigate();
   const { store, setStore } = useStore();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
@@ -106,9 +109,61 @@ const StoreRegistration = () => {
 
   const canProceed = name.trim().length > 0 && selectedCategory;
 
-  const handleProceed = () => {
+  const saveToDatabase = async () => {
+    if (!user) {
+      toast({ title: "กรุณาเข้าสู่ระบบ", description: "ต้องเข้าสู่ระบบก่อนบันทึกร้าน", variant: "destructive" });
+      navigate("/auth");
+      return false;
+    }
+    setSaving(true);
+    try {
+      const { data: storeData, error: storeError } = await supabase
+        .from("stores")
+        .insert({
+          user_id: user.id,
+          name: name.trim(),
+          category_id: selectedCategory,
+          pin_lat: pinLocation?.lat ?? null,
+          pin_lng: pinLocation?.lng ?? null,
+          menu_photo: menuPhoto,
+        })
+        .select()
+        .single();
+
+      if (storeError) throw storeError;
+
+      if (menuItems.length > 0) {
+        const itemsToInsert = menuItems.map((item) => ({
+          store_id: storeData.id,
+          name: item.name,
+          type: item.type,
+          price: item.price,
+          price_special: item.price_special ?? null,
+          noodle_types: item.noodle_types ?? [],
+          noodle_styles: item.noodle_styles ?? [],
+          toppings: item.toppings ?? [],
+          rating: item.rating ?? 0,
+        }));
+
+        const { error: itemsError } = await supabase.from("menu_items").insert(itemsToInsert);
+        if (itemsError) throw itemsError;
+      }
+
+      toast({ title: "บันทึกสำเร็จ", description: `ร้าน "${name.trim()}" ถูกบันทึกแล้ว` });
+      return true;
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleProceed = async () => {
     if (!canProceed) return;
     setStore({ name: name.trim(), pinLocation, menuPhoto, categoryId: selectedCategory, menuItems });
+    await saveToDatabase();
     navigate(`/review/${selectedCategory}`);
   };
 
@@ -331,7 +386,10 @@ const StoreRegistration = () => {
               color: canProceed ? "hsl(var(--primary-foreground))" : undefined,
             }}
           >
-            <span className="uppercase tracking-wider">Proceed to Verdict</span>
+            {saving ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : null}
+            <span className="uppercase tracking-wider">{saving ? "กำลังบันทึก..." : "Proceed to Verdict"}</span>
           </motion.button>
         </div>
 

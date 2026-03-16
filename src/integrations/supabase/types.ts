@@ -14,7 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      menu_items: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          noodle_styles: string[] | null
+          noodle_types: string[] | null
+          price: number
+          price_special: number | null
+          rating: number | null
+          store_id: string
+          toppings: string[] | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          noodle_styles?: string[] | null
+          noodle_types?: string[] | null
+          price?: number
+          price_special?: number | null
+          rating?: number | null
+          store_id: string
+          toppings?: string[] | null
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          noodle_styles?: string[] | null
+          noodle_types?: string[] | null
+          price?: number
+          price_special?: number | null
+          rating?: number | null
+          store_id?: string
+          toppings?: string[] | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      stores: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          menu_photo: string | null
+          name: string
+          pin_lat: number | null
+          pin_lng: number | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          menu_photo?: string | null
+          name: string
+          pin_lat?: number | null
+          pin_lng?: number | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          menu_photo?: string | null
+          name?: string
+          pin_lat?: number | null
+          pin_lng?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

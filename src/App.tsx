@@ -13,6 +13,7 @@ import Results from "./pages/Results.tsx";
 import WorldMap from "./pages/WorldMap.tsx";
 import SmartSplit from "./pages/SmartSplit.tsx";
 import Profile from "./pages/Profile.tsx";
+import Auth from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const AnimatedRoutes = () => {
         <Route path="/world" element={<WorldMap />} />
         <Route path="/split" element={<SmartSplit />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
