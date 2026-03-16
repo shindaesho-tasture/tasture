@@ -391,7 +391,7 @@ const StoreRegistration = () => {
             {saving ? (
               <Loader2 size={18} className="animate-spin" />
             ) : null}
-            <span className="uppercase tracking-wider">{saving ? "กำลังบันทึก..." : "Proceed to Verdict"}</span>
+            <span className="uppercase tracking-wider">{saving ? "กำลังบันทึก..." : "บันทึกร้าน"}</span>
           </motion.button>
         </div>
 
