@@ -79,6 +79,24 @@ export function getTrustTier(
   return 3;
 }
 
+/**
+ * Menu item tier (scaled down from store tier):
+ * Tier 1 (Gold): 10+ menu reviews + has DNA feedback
+ * Tier 2 (Silver): 5+ menu reviews
+ * Tier 3 (Bronze): <5 menu reviews (but has some)
+ * Tier 5 (New): no reviews at all
+ */
+export function getMenuTrustTier(
+  menuReviewCount: number,
+  dnaCount: number,
+): TrustTier {
+  if (menuReviewCount === 0 && dnaCount === 0) return 5;
+  if (menuReviewCount >= 10 && dnaCount > 0) return 1;
+  if (menuReviewCount >= 5) return 2;
+  if (menuReviewCount > 0 || dnaCount > 0) return 3;
+  return 5;
+}
+
 export function getTrustTierInfo(tier: TrustTier): TrustTierInfo {
   return { tier, ...tierMap[tier] };
 }
