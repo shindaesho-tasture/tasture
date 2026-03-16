@@ -168,6 +168,20 @@ const Profile = () => {
   const [verdicts, setVerdicts] = useState<StoreVerdict[]>([]);
   const [totalReviews, setTotalReviews] = useState(0);
   const [dnaEntryCount, setDnaEntryCount] = useState(0);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const handleSaveName = async () => {
+    if (!user || !nameInput.trim()) return;
+    setSavingName(true);
+    const { error } = await supabase.from("profiles").update({ display_name: nameInput.trim() }).eq("id", user.id);
+    if (!error) {
+      setProfile((p) => p ? { ...p, display_name: nameInput.trim() } : p);
+    }
+    setSavingName(false);
+    setEditingName(false);
+  };
 
   useEffect(() => {
     if (!user) return;
