@@ -51,7 +51,7 @@ const MyStores = () => {
       // Fetch user's stores
       const { data: storesData, error: storesErr } = await supabase
         .from("stores")
-        .select("id, name, category_id, created_at")
+        .select("id, name, category_id, created_at, verified")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
