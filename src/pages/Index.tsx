@@ -26,6 +26,7 @@ interface StoreCard {
   id: string;
   name: string;
   category_id: string | null;
+  categoryLabel: string | null;
   avgScore: number | null;
   reviewCount: number;
   menuCount: number;
