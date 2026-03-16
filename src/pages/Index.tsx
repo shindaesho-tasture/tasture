@@ -294,7 +294,10 @@ const Index = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-foreground truncate">{store.name}</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {store.categoryLabel && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{store.categoryLabel}</p>
+                        )}
+                        <p className="text-[9px] text-muted-foreground mt-0.5">
                           {store.menuCount} เมนู · {store.reviewCount} รีวิว
                           {store.dnaCount > 0 && <> · 🧬 {store.dnaCount}</>}
                           {store.menuReviewCount > 0 && <> · ⭐ {store.menuReviewCount}</>}
