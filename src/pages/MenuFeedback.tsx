@@ -291,6 +291,24 @@ const MenuFeedback = () => {
                 <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติเมนูเปลี่ยนไปหรือเปล่า?</p>
               </div>
             </div>
+
+            {/* Previous scores summary */}
+            <div className="rounded-2xl border border-border/50 bg-surface-elevated/50 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/30">
+                <p className="text-[10px] font-medium text-muted-foreground tracking-wide">คะแนนเดิมที่เคยให้</p>
+              </div>
+              <div className="divide-y divide-border/20 max-h-52 overflow-y-auto">
+                {items.filter((item) => item.my_score !== null).map((item) => (
+                  <div key={item.id} className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-[11px] text-foreground truncate flex-1 mr-3">{item.name}</span>
+                    <span className="text-sm shrink-0">
+                      {item.my_score === 1 ? "😔" : item.my_score === 2 ? "😐" : "🤩"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="flex gap-3">
               <motion.button
                 whileTap={{ scale: 0.95 }}
