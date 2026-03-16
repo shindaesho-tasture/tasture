@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Check, RotateCcw } from "lucide-react";
 import { categories, scoreTiers } from "@/lib/categories";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import MetricRater from "@/components/MetricRater";
 import ResultCard from "@/components/ResultCard";
 import PageTransition from "@/components/PageTransition";
@@ -13,6 +15,9 @@ import type { ResultCardData, MetricScore } from "@/lib/scoring";
 const ReviewFlow = () => {
   const navigate = useNavigate();
   const { categoryId } = useParams<{ categoryId: string }>();
+  const [searchParams] = useSearchParams();
+  const storeId = searchParams.get("store");
+  const { user } = useAuth();
   const category = categories.find((c) => c.id === categoryId);
 
   const [scores, setScores] = useState<Record<string, number | null>>({});
