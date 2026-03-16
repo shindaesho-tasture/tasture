@@ -34,7 +34,7 @@ export function getPopularityTierInfo(tier: PopularityTier): PopularityTierInfo 
     case 3:
       return {
         tier: 3,
-        label: "Tier 3 Status",
+        label: "Tier 3 Rising",
         borderClass: "border-l-[4px] border-l-score-emerald",
         glowClass: "shadow-[0_2px_12px_hsl(var(--shadow-card))]",
       };
