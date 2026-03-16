@@ -139,6 +139,7 @@ const StoreOrder = () => {
 
   const hasOptions = (item: MenuItemRow) => {
     return (
+      (item.price_special != null) ||
       (item.noodle_types && item.noodle_types.length > 0) ||
       (item.noodle_styles && item.noodle_styles.length > 0) ||
       (item.toppings && item.toppings.length > 0)
@@ -150,17 +151,20 @@ const StoreOrder = () => {
     setSelectedNoodleType(item.noodle_types?.[0] || "");
     setSelectedNoodleStyle(item.noodle_styles?.[0] || "");
     setSelectedToppings([]);
+    setSelectedSize("ธรรมดา");
   };
 
   const handleAddWithOptions = () => {
     if (!optionsItem) return;
+    const useSpecial = selectedSize === "พิเศษ" && optionsItem.price_special != null;
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
-      price: optionsItem.price,
+      price: useSpecial ? optionsItem.price_special! : optionsItem.price,
       quantity: 1,
       type: optionsItem.type,
       selectedOptions: {
+        size: optionsItem.price_special != null ? selectedSize : undefined,
         noodleType: selectedNoodleType || undefined,
         noodleStyle: selectedNoodleStyle || undefined,
         toppings: selectedToppings.length > 0 ? selectedToppings : undefined,
@@ -170,6 +174,10 @@ const StoreOrder = () => {
   };
 
   const handleAddSimple = (item: MenuItemRow) => {
+    if (item.price_special != null) {
+      openOptionsPopup(item);
+      return;
+    }
     addItem({
       menuItemId: item.id,
       name: item.name,
