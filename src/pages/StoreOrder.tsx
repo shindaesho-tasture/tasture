@@ -405,7 +405,7 @@ const StoreOrder = () => {
                   <div>
                     <h3 className="text-base font-bold text-foreground">{optionsItem.name}</h3>
                     <p className="text-xs text-score-emerald font-semibold mt-0.5">
-                      ฿{optionsItem.price}
+                      ฿{selectedSize === "พิเศษ" && optionsItem.price_special ? optionsItem.price_special : optionsItem.price}
                     </p>
                   </div>
                   <button
@@ -417,6 +417,40 @@ const StoreOrder = () => {
                 </div>
 
                 <div className="px-5 pb-6 space-y-5 max-h-[60vh] overflow-y-auto">
+                  {/* Size Selection (ธรรมดา / พิเศษ) */}
+                  {optionsItem.price_special != null && (
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        💰 เลือกขนาด
+                      </p>
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileTap={{ scale: 0.93 }}
+                          onClick={() => setSelectedSize("ธรรมดา")}
+                          className={`flex-1 px-3 py-3 rounded-xl text-xs font-medium border transition-all text-center ${
+                            selectedSize === "ธรรมดา"
+                              ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
+                              : "bg-surface-elevated text-foreground border-border/50"
+                          }`}
+                        >
+                          <span className="block font-bold">ธรรมดา</span>
+                          <span className="block text-[10px] mt-0.5 opacity-80">฿{optionsItem.price}</span>
+                        </motion.button>
+                        <motion.button
+                          whileTap={{ scale: 0.93 }}
+                          onClick={() => setSelectedSize("พิเศษ")}
+                          className={`flex-1 px-3 py-3 rounded-xl text-xs font-medium border transition-all text-center ${
+                            selectedSize === "พิเศษ"
+                              ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
+                              : "bg-surface-elevated text-foreground border-border/50"
+                          }`}
+                        >
+                          <span className="block font-bold">พิเศษ</span>
+                          <span className="block text-[10px] mt-0.5 opacity-80">฿{optionsItem.price_special}</span>
+                        </motion.button>
+                      </div>
+                    </div>
+                  )}
                   {/* Noodle Types */}
                   {optionsItem.noodle_types && optionsItem.noodle_types.length > 0 && (
                     <div>
