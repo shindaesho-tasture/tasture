@@ -11,6 +11,15 @@ const tierHsl: Record<ScoreTier, string> = {
   amber: "32,95%,44%",
   ruby: "0,68%,35%",
 };
+
+interface IntensityTag {
+  icon: string;
+  label: string;
+  score: number; // -2 to +2
+  count: number; // review count for opacity
+}
+
+interface SovereignMenuCardProps {
   name: string;
   price: number;
   priceSpecial?: number | null;
@@ -20,9 +29,6 @@ const tierHsl: Record<ScoreTier, string> = {
   onPress: () => void;
   index?: number;
 }
-
-/** Map review count → opacity 0.2–1.0 (linear 0→100+) */
-const tagOpacity = (count: number) => Math.min(1, 0.2 + (count / 100) * 0.8);
 
 const SovereignMenuCard = ({
   name,
