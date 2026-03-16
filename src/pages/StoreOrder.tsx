@@ -42,6 +42,7 @@ const StoreOrder = () => {
   const [selectedNoodleType, setSelectedNoodleType] = useState<string>("");
   const [selectedNoodleStyle, setSelectedNoodleStyle] = useState<string>("");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
+  const [selectedSize, setSelectedSize] = useState<"ธรรมดา" | "พิเศษ">("ธรรมดา");
 
   useEffect(() => {
     if (!storeId) return;

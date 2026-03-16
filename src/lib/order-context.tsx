@@ -10,6 +10,7 @@ export interface OrderItem {
     noodleType?: string;
     noodleStyle?: string;
     toppings?: string[];
+    size?: "ธรรมดา" | "พิเศษ";
   };
 }
 
