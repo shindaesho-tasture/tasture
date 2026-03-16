@@ -318,8 +318,8 @@ const Index = () => {
                           return (
                             <span
                               key={m.id}
-                              className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[9px] font-semibold text-primary-foreground", tierColors[t].bg)}
-                              style={{ opacity }}
+                              className={cn("inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-[9px] font-semibold", tierColors[t].bg)}
+                              style={{ opacity, color: "white" }}
                             >
                               {m.icon} {m.label}
                             </span>
