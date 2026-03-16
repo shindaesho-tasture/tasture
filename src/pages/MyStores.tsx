@@ -233,8 +233,8 @@ const MyStores = () => {
                             </p>
                           </div>
                         </div>
-                        <TrustTierBadge tier={trustTier} compact />
                       </div>
+                    </div>
 
                       {/* Score Tags */}
                       {topTags.length > 0 && (
@@ -285,6 +285,11 @@ const MyStores = () => {
                         ฟีดแบคเมนู
                       </motion.button>
                     </div>
+                    {popInfo.label && (
+                      <span className="absolute bottom-2 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
+                        {popInfo.label}
+                      </span>
+                    )}
                   </motion.div>
                 );
               })}
