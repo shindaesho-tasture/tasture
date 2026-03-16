@@ -100,21 +100,25 @@ const PostOrderReview = () => {
     }
   }, [storeId, items, navigate]);
 
-  // Load store category
+  // Load store category + check previous reviews
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId || !user) return;
     (async () => {
       setLoading(true);
-      const { data } = await supabase.from("stores").select("category_id").eq("id", storeId).single();
-      if (data?.category_id) {
-        const cat = categories.find((c) => c.id === data.category_id);
+      const [{ data: storeData }, { data: prevReviews }] = await Promise.all([
+        supabase.from("stores").select("category_id").eq("id", storeId).single(),
+        supabase.from("reviews").select("id").eq("store_id", storeId).eq("user_id", user.id).limit(1),
+      ]);
+      if (storeData?.category_id) {
+        const cat = categories.find((c) => c.id === storeData.category_id);
         setCategory(cat || categories[0]);
       } else {
         setCategory(categories[0]);
       }
+      setHasPreviousReview((prevReviews || []).length > 0);
       setLoading(false);
     })();
-  }, [storeId]);
+  }, [storeId, user]);
 
   // Load Dish DNA when step changes to dish-dna
   useEffect(() => {
