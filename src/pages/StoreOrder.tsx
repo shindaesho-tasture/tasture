@@ -255,9 +255,18 @@ const StoreOrder = () => {
                         {typeEmoji[item.type] || "🍽️"}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate">
-                          {item.name}
-                        </h3>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-sm font-semibold text-foreground truncate">
+                            {item.name}
+                          </h3>
+                          <TrustTierBadge
+                            tier={getMenuTrustTier(
+                              menuReviewCounts.get(item.id) || 0,
+                              dnaCounts.get(item.id) || 0,
+                            )}
+                            compact
+                          />
+                        </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-bold text-score-emerald">
                             ฿{item.price}
