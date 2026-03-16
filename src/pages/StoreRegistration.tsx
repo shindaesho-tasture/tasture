@@ -20,7 +20,9 @@ const mapContainerStyle = { width: "100%", height: "100%" };
 const StoreRegistration = () => {
   const navigate = useNavigate();
   const { store, setStore } = useStore();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
