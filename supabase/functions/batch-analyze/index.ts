@@ -7,6 +7,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SYSTEM_PROMPT = `คุณคือ Sovereign Culinary AI ของแอป TASTURE หน้าที่ของคุณคือวิเคราะห์ชื่ออาหารไทยและ 'ชำแหละ' ออกเป็นส่วนประกอบ (Components) พร้อมเสนอแท็กสัมผัส (Texture Tags) ที่สื่อถึงอารมณ์และเข้าใจง่าย
+
+เกณฑ์การให้แท็ก:
+- Emerald (+2): ภาษาที่สื่อถึงความฟิน ความประทับใจ สุดยอด — ให้ 2 แท็ก
+- Neutral (0): ภาษาที่สื่อถึงความปกติ มาตรฐานทั่วไป — ให้ 2 แท็ก
+- Ruby (-2): ภาษาที่สื่อถึงความผิดหวัง หรือข้อผิดพลาด — ให้ 2 แท็ก
+
+กฎ:
+1. แยกส่วนประกอบหลักๆ ออกมา 2-5 ส่วน
+2. แต่ละส่วนต้องมีไอคอนอิโมจิที่เหมาะสม
+3. แต่ละส่วนต้องมีแท็ก 3 ระดับ: emerald (+2), neutral (0), ruby (-2)
+4. แต่ละระดับต้องมี 2 แท็กให้เลือก (array ของ string 2 ตัว)
+5. แท็กต้องเป็นภาษาไทยที่สื่ออารมณ์ เข้าใจง่าย กระชับ (ไม่เกิน 20 ตัวอักษร)
+6. แท็กในระดับเดียวกันต้องสื่อมุมมองที่ต่างกัน
+7. ให้แท็กที่มีสีสัน สร้างสรรค์ ไม่ซ้ำซากจำเจ`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -14,8 +30,7 @@ serve(async (req) => {
     const { dishNames } = await req.json();
     if (!dishNames || !Array.isArray(dishNames) || dishNames.length === 0) {
       return new Response(JSON.stringify({ error: "No dish names provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -26,7 +41,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check which dish names already have templates
     const normalizedNames = dishNames.map((n: string) => n.trim());
     const { data: existing } = await supabase
       .from("dish_templates")
@@ -39,12 +53,10 @@ serve(async (req) => {
     const needAnalysis = normalizedNames.filter((n: string) => !existingMap.has(n));
     const results: Record<string, any> = {};
 
-    // Return cached results
     existingMap.forEach((components, name) => {
       results[name] = components;
     });
 
-    // Analyze missing dishes in batches of 3
     for (let i = 0; i < needAnalysis.length; i += 3) {
       const batch = needAnalysis.slice(i, i + 3);
 
@@ -59,26 +71,8 @@ serve(async (req) => {
             body: JSON.stringify({
               model: "google/gemini-2.5-flash",
               messages: [
-                {
-                  role: "system",
-                  content: `คุณคือ Sovereign Culinary AI ของแอป TASTURE หน้าที่ของคุณคือวิเคราะห์ชื่ออาหารไทยและ 'ชำแหละ' ออกเป็นส่วนประกอบ (Components) พร้อมเสนอแท็กสัมผัส (Texture Tags) ที่สื่อถึงอารมณ์และเข้าใจง่าย
-
-เกณฑ์การให้แท็ก:
-- Emerald (+2): ภาษาที่สื่อถึงความฟิน ความประทับใจ สุดยอด
-- Neutral (0): ภาษาที่สื่อถึงความปกติ มาตรฐานทั่วไป
-- Ruby (-2): ภาษาที่สื่อถึงความผิดหวัง หรือข้อผิดพลาด
-
-กฎ:
-1. แยกส่วนประกอบหลักๆ ออกมา 2-5 ส่วน
-2. แต่ละส่วนต้องมีไอคอนอิโมจิที่เหมาะสม
-3. แต่ละส่วนต้องมีแท็ก 3 ระดับ: emerald (+2), neutral (0), ruby (-2)
-4. แท็กต้องเป็นภาษาไทยที่สื่ออารมณ์ เข้าใจง่าย กระชับ (ไม่เกิน 25 ตัวอักษร)
-5. ให้แท็กที่มีสีสัน สร้างสรรค์ ไม่ซ้ำซากจำเจ`,
-                },
-                {
-                  role: "user",
-                  content: `วิเคราะห์อาหาร: "${dishName}"`,
-                },
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: `วิเคราะห์อาหาร: "${dishName}"` },
               ],
               tools: [
                 {
@@ -99,9 +93,9 @@ serve(async (req) => {
                               tags: {
                                 type: "object",
                                 properties: {
-                                  emerald: { type: "string" },
-                                  neutral: { type: "string" },
-                                  ruby: { type: "string" },
+                                  emerald: { type: "array", items: { type: "string" } },
+                                  neutral: { type: "array", items: { type: "string" } },
+                                  ruby: { type: "array", items: { type: "string" } },
                                 },
                                 required: ["emerald", "neutral", "ruby"],
                                 additionalProperties: false,
@@ -143,7 +137,6 @@ serve(async (req) => {
 
       const batchResults = await Promise.all(promises);
 
-      // Cache results in dish_templates
       for (const result of batchResults) {
         if (result.components.length > 0) {
           results[result.dishName] = result.components;
