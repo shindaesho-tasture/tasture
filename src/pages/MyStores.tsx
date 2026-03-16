@@ -234,7 +234,6 @@ const MyStores = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
 
                       {/* Score Tags */}
                       {topTags.length > 0 && (
