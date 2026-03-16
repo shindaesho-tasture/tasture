@@ -59,11 +59,22 @@ const tierMap: Record<TrustTier, Omit<TrustTierInfo, "tier">> = {
   },
 };
 
-export function getTrustTier(reviewCount: number, verified: boolean): TrustTier {
+/**
+ * Tier 1 (Gold): 50+ store reviews + verified + has menu reviews
+ * Tier 2 (Silver): 20+ store reviews + verified
+ * Tier 3 (Bronze): <20 store reviews + verified
+ * Tier 4 (Pending): unverified but has reviews
+ * Tier 5 (New): unverified, no reviews
+ */
+export function getTrustTier(
+  reviewCount: number,
+  verified: boolean,
+  menuReviewCount: number = 0,
+): TrustTier {
   if (!verified) {
     return reviewCount === 0 ? 5 : 4;
   }
-  if (reviewCount >= 50) return 1;
+  if (reviewCount >= 50 && menuReviewCount > 0) return 1;
   if (reviewCount >= 20) return 2;
   return 3;
 }
