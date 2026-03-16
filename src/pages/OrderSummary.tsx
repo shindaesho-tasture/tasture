@@ -14,6 +14,10 @@ const OrderSummary = () => {
     setConfirmed(true);
   };
 
+  const handleReview = () => {
+    navigate("/post-review");
+  };
+
   const handleDone = () => {
     clearOrder();
     navigate("/store-list");
@@ -41,10 +45,17 @@ const OrderSummary = () => {
             </div>
             <motion.button
               whileTap={{ scale: 0.97 }}
-              onClick={handleDone}
-              className="px-8 py-3 rounded-2xl bg-foreground text-background text-sm font-semibold mt-4"
+              onClick={handleReview}
+              className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury mt-4"
             >
-              กลับหน้าหลัก
+              ⭐ รีวิวร้านและอาหาร
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleDone}
+              className="px-8 py-2.5 rounded-2xl bg-secondary text-foreground text-xs font-medium mt-2"
+            >
+              ข้ามไป
             </motion.button>
           </motion.div>
         </div>

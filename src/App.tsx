@@ -22,6 +22,7 @@ import OrderSummary from "./pages/OrderSummary.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import MenuFeedback from "./pages/MenuFeedback.tsx";
 import DishDnaFeedback from "./pages/DishDnaFeedback.tsx";
+import PostOrderReview from "./pages/PostOrderReview.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/menu-feedback/:storeId" element={<MenuFeedback />} />
         <Route path="/dish-dna/:menuItemId" element={<DishDnaFeedback />} />
+        <Route path="/post-review" element={<PostOrderReview />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
