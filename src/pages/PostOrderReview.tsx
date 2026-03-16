@@ -191,6 +191,20 @@ const PostOrderReview = () => {
     (async () => {
       setSensoryLoading((prev) => ({ ...prev, [id]: true }));
       try {
+        // Check for previous sensory review (menu_reviews)
+        if (user && !hasPreviousSensory[id]) {
+          const { data: prevReview } = await supabase
+            .from("menu_reviews")
+            .select("score")
+            .eq("menu_item_id", id)
+            .eq("user_id", user.id)
+            .single();
+          if (prevReview) {
+            setHasPreviousSensory((prev) => ({ ...prev, [id]: true }));
+            setPreviousSensoryScore((prev) => ({ ...prev, [id]: prevReview.score }));
+          }
+        }
+
         const { data, error } = await supabase.functions.invoke("analyze-sensory", {
           body: { dishName: step.menuItemName },
         });
