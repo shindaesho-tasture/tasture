@@ -128,6 +128,7 @@ const MenuFeedback = () => {
       const scores: Record<string, number | null> = {};
       result.forEach((item) => { scores[item.id] = item.my_score; });
       setUserScores(scores);
+      setHasPreviousMenuReview(result.some((item) => item.my_score !== null));
     } catch (err) {
       console.error("MenuFeedback fetch error:", err);
     } finally {
