@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight } from "lucide-react";
+import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
@@ -168,6 +168,20 @@ const Profile = () => {
   const [verdicts, setVerdicts] = useState<StoreVerdict[]>([]);
   const [totalReviews, setTotalReviews] = useState(0);
   const [dnaEntryCount, setDnaEntryCount] = useState(0);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const handleSaveName = async () => {
+    if (!user || !nameInput.trim()) return;
+    setSavingName(true);
+    const { error } = await supabase.from("profiles").update({ display_name: nameInput.trim() }).eq("id", user.id);
+    if (!error) {
+      setProfile((p) => p ? { ...p, display_name: nameInput.trim() } : p);
+    }
+    setSavingName(false);
+    setEditingName(false);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -350,14 +364,41 @@ const Profile = () => {
             </div>
           </motion.div>
 
-          <motion.h1
+          <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.15 }}
-            className="mt-4 text-lg font-semibold text-foreground"
+            className="mt-4 flex items-center gap-1.5"
           >
-            {displayName}
-          </motion.h1>
+            {editingName ? (
+              <div className="flex items-center gap-1.5">
+                <input
+                  autoFocus
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+                  className="text-lg font-semibold text-foreground bg-transparent border-b-2 border-score-emerald outline-none text-center w-40 pb-0.5"
+                  maxLength={30}
+                />
+                <button onClick={handleSaveName} disabled={savingName} className="w-7 h-7 rounded-full bg-score-emerald/10 flex items-center justify-center">
+                  <Check size={14} className="text-score-emerald" />
+                </button>
+                <button onClick={() => setEditingName(false)} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+                  <X size={14} className="text-muted-foreground" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-lg font-semibold text-foreground">{displayName}</h1>
+                <button
+                  onClick={() => { setNameInput(profile?.display_name || ""); setEditingName(true); }}
+                  className="w-6 h-6 rounded-full bg-muted flex items-center justify-center"
+                >
+                  <Pencil size={11} className="text-muted-foreground" />
+                </button>
+              </>
+            )}
+          </motion.div>
 
           <motion.p
             initial={{ y: 10, opacity: 0 }}
