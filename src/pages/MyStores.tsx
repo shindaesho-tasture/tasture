@@ -8,8 +8,7 @@ import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
-import { getTrustTier } from "@/lib/trust-tiers";
-import TrustTierBadge from "@/components/TrustTierBadge";
+import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 
 interface StoreWithReviews {
   id: string;
