@@ -311,7 +311,7 @@ const Index = () => {
 
                     {/* Top Tags */}
                     {topMetrics.length > 0 && (
-                      <div className="flex flex-wrap gap-1 px-4 pb-1.5">
+                      <div className="flex flex-wrap gap-1 px-4 pb-3">
                         {topMetrics.map((m) => {
                           const t = getScoreTier(m.score);
                           const opacity = getIntensityOpacity(m.count);
@@ -321,19 +321,10 @@ const Index = () => {
                               className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[9px] font-semibold text-primary-foreground", tierColors[t].bg)}
                               style={{ opacity }}
                             >
-                              {m.icon} {m.score > 0 ? "+" : ""}{m.score.toFixed(1)}
+                              {m.icon} {m.label}
                             </span>
                           );
                         })}
-                      </div>
-                    )}
-
-                    {/* Score Bars */}
-                    {store.metrics.length > 0 && (
-                      <div className="px-4 pb-3 pt-1 space-y-1.5">
-                        {store.metrics.slice(0, 4).map((m) => (
-                          <MiniScoreBar key={m.id} metric={m} />
-                        ))}
                       </div>
                     )}
 
