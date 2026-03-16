@@ -271,12 +271,12 @@ const DishDnaFeedback = () => {
                 <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
               <div>
                   <p className="text-[11px] font-medium text-foreground leading-relaxed">
-                    แตะแท็กที่ตรงกับความรู้สึกของคุณ ส่วนประกอบละ 1 แท็ก
+                    แตะส่วนประกอบเพื่อเปิดแท็ก แล้วเลือกแท็กที่ตรงกับความรู้สึก
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
                   </p>
                 </div>
               </div>
