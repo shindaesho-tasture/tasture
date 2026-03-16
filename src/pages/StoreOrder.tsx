@@ -5,6 +5,8 @@ import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
+import TrustTierBadge from "@/components/TrustTierBadge";
+import { getMenuTrustTier } from "@/lib/trust-tiers";
 
 interface MenuItemRow {
   id: string;
@@ -33,6 +35,8 @@ const StoreOrder = () => {
   const [storeName, setStoreName] = useState("");
   const [loading, setLoading] = useState(true);
   const [dnaByItem, setDnaByItem] = useState<Map<string, DnaTag[]>>(new Map());
+  const [menuReviewCounts, setMenuReviewCounts] = useState<Map<string, number>>(new Map());
+  const [dnaCounts, setDnaCounts] = useState<Map<string, number>>(new Map());
 
   // Noodle options popup state
   const [optionsItem, setOptionsItem] = useState<MenuItemRow | null>(null);
@@ -67,13 +71,34 @@ const StoreOrder = () => {
       // Fetch Dish DNA for these menu items
       if (menuData.length > 0) {
         const menuIds = menuData.map((m) => m.id);
-        const { data: dnaRows } = await supabase
-          .from("dish_dna")
-          .select("menu_item_id, component_icon, component_name, selected_tag, selected_score")
-          .in("menu_item_id", menuIds);
+        const [dnaRes, menuRevRes] = await Promise.all([
+          supabase
+            .from("dish_dna")
+            .select("menu_item_id, component_icon, component_name, selected_tag, selected_score")
+            .in("menu_item_id", menuIds),
+          supabase
+            .from("menu_reviews")
+            .select("menu_item_id")
+            .in("menu_item_id", menuIds),
+        ]);
 
-        if (dnaRows) {
-          // Aggregate: group by menu_item_id + selected_tag, count occurrences
+        // Menu review counts
+        const revCounts = new Map<string, number>();
+        (menuRevRes.data || []).forEach((r) => {
+          revCounts.set(r.menu_item_id, (revCounts.get(r.menu_item_id) || 0) + 1);
+        });
+        setMenuReviewCounts(revCounts);
+
+        // DNA counts per item
+        const dnaCountMap = new Map<string, number>();
+        const dnaRows = dnaRes.data || [];
+        dnaRows.forEach((r) => {
+          dnaCountMap.set(r.menu_item_id, (dnaCountMap.get(r.menu_item_id) || 0) + 1);
+        });
+        setDnaCounts(dnaCountMap);
+
+        // Aggregate DNA tags
+        if (dnaRows.length > 0) {
           const tagMap = new Map<string, Map<string, DnaTag>>();
           dnaRows.forEach((r) => {
             if (!tagMap.has(r.menu_item_id)) tagMap.set(r.menu_item_id, new Map());
@@ -91,7 +116,6 @@ const StoreOrder = () => {
             itemMap.get(key)!.count++;
           });
 
-          // Convert to sorted arrays (top polarized first, max 3)
           const result = new Map<string, DnaTag[]>();
           tagMap.forEach((itemMap, menuItemId) => {
             const tags = Array.from(itemMap.values())
@@ -231,9 +255,18 @@ const StoreOrder = () => {
                         {typeEmoji[item.type] || "🍽️"}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate">
-                          {item.name}
-                        </h3>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-sm font-semibold text-foreground truncate">
+                            {item.name}
+                          </h3>
+                          <TrustTierBadge
+                            tier={getMenuTrustTier(
+                              menuReviewCounts.get(item.id) || 0,
+                              dnaCounts.get(item.id) || 0,
+                            )}
+                            compact
+                          />
+                        </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-bold text-score-emerald">
                             ฿{item.price}
