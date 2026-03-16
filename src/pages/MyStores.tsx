@@ -185,6 +185,7 @@ const MyStores = () => {
               {stores.map((store, i) => {
                 const cat = getCategoryInfo(store.category_id);
                 const topTags = store.metricAverages.slice(0, 4);
+                const trustTier = getTrustTier(store.reviewCount, store.verified);
 
                 return (
                   <motion.div
@@ -205,6 +206,7 @@ const MyStores = () => {
                             </p>
                           </div>
                         </div>
+                        <TrustTierBadge tier={trustTier} compact />
                       </div>
 
                       {/* Score Tags */}
