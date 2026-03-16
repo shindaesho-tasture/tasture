@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
+import { getTrustTier } from "@/lib/trust-tiers";
+import TrustTierBadge from "@/components/TrustTierBadge";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
