@@ -27,9 +27,42 @@ interface StoreVerdict {
   storeId: string;
   storeName: string;
   visits: number;
-  consistent: boolean; // true = เสน่ห์คงเดิม, false = กลายเป็นอื่น
+  consistent: boolean;
   lastVisit: string;
 }
+
+interface Achievement {
+  id: string;
+  icon: string;
+  title: string;
+  titleTh: string;
+  description: string;
+  check: (ctx: AchievementCtx) => boolean;
+  tier: "emerald" | "gold" | "ruby";
+}
+
+interface AchievementCtx {
+  emeraldCount: number;
+  storeCount: number;
+  totalReviews: number;
+  tasteDNA: TasteDNA;
+  dnaEntryCount: number;
+}
+
+const ACHIEVEMENTS: Achievement[] = [
+  { id: "first-emerald", icon: "💎", title: "First Emerald", titleTh: "เพชรดวงแรก", description: "ให้คะแนน +2 ครั้งแรก", check: (c) => c.emeraldCount >= 1, tier: "emerald" },
+  { id: "emerald-5", icon: "💎", title: "Emerald Collector", titleTh: "นักสะสมเพชร", description: "สะสม Emerald 5 ดวง", check: (c) => c.emeraldCount >= 5, tier: "emerald" },
+  { id: "emerald-20", icon: "👑", title: "Emerald Crown", titleTh: "มงกุฎเพชร", description: "สะสม Emerald 20 ดวง", check: (c) => c.emeraldCount >= 20, tier: "gold" },
+  { id: "store-1", icon: "🏪", title: "First Visit", titleTh: "ก้าวแรก", description: "รีวิวร้านแรก", check: (c) => c.storeCount >= 1, tier: "emerald" },
+  { id: "store-10", icon: "🗺️", title: "10 Stores", titleTh: "นักสำรวจ", description: "เยือน 10 ร้าน", check: (c) => c.storeCount >= 10, tier: "gold" },
+  { id: "store-30", icon: "🌍", title: "World Taster", titleTh: "ผู้พิชิตโลกรส", description: "เยือน 30 ร้าน", check: (c) => c.storeCount >= 30, tier: "ruby" },
+  { id: "reviews-10", icon: "📝", title: "10 Reviews", titleTh: "นักวิจารณ์", description: "รีวิว 10 เมนู", check: (c) => c.totalReviews >= 10, tier: "emerald" },
+  { id: "reviews-50", icon: "🔥", title: "50 Reviews", titleTh: "จอมวิจารณ์", description: "รีวิว 50 เมนู", check: (c) => c.totalReviews >= 50, tier: "gold" },
+  { id: "spice-lord", icon: "🌶️", title: "Spice Lord", titleTh: "ราชาความเผ็ด", description: "Taste DNA เผ็ดสูงสุด", check: (c) => c.tasteDNA.spicy >= 4, tier: "ruby" },
+  { id: "sweet-tooth", icon: "🍯", title: "Sweet Tooth", titleTh: "คนรักหวาน", description: "Taste DNA หวานสูงสุด", check: (c) => c.tasteDNA.sweet >= 4, tier: "gold" },
+  { id: "umami-sage", icon: "🍄", title: "Umami Sage", titleTh: "ปราชญ์อูมามิ", description: "Taste DNA อูมามิสูงสุด", check: (c) => c.tasteDNA.umami >= 4, tier: "emerald" },
+  { id: "dna-explorer", icon: "🧬", title: "DNA Explorer", titleTh: "นักวิเคราะห์ DNA", description: "ส่ง Dish DNA 5 ครั้ง", check: (c) => c.dnaEntryCount >= 5, tier: "emerald" },
+];
 
 /* ── Helpers ── */
 const formatDate = (iso: string) => {
