@@ -100,6 +100,25 @@ const OrderSummary = () => {
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-foreground truncate">{item.name}</h3>
+                    {item.selectedOptions && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.selectedOptions.noodleType && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                            {item.selectedOptions.noodleType}
+                          </span>
+                        )}
+                        {item.selectedOptions.noodleStyle && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                            {item.selectedOptions.noodleStyle}
+                          </span>
+                        )}
+                        {item.selectedOptions.toppings?.map((t) => (
+                          <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-emerald/10 text-score-emerald">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <span className="text-xs text-score-emerald font-bold">
                       ฿{(item.price * item.quantity).toLocaleString()}
                     </span>
