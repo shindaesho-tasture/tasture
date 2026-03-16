@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { getScoreTier, type ScoreTier } from "@/lib/categories";
+import { getIntensityOpacity } from "@/lib/scoring";
 
-interface IntensityTag {
-  icon: string;
-  label: string;
-  score: number; // -2 to +2
-  count: number; // review count for opacity
-}
-
-interface SovereignMenuCardProps {
+/** HSL values for each score tier */
+const tierHsl: Record<ScoreTier, string> = {
+  emerald: "163,78%,20%",
+  mint: "105,24%,70%",
+  slate: "215,16%,47%",
+  amber: "32,95%,44%",
+  ruby: "0,68%,35%",
+};
   name: string;
   price: number;
   priceSpecial?: number | null;
