@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import type { MenuItem } from "./menu-types";
 
 export interface StoreData {
   name: string;
   pinLocation: { lat: number; lng: number } | null;
   menuPhoto: string | null; // base64 data URL
   categoryId: string | null;
+  menuItems: MenuItem[];
 }
 
 interface StoreContextType {
@@ -18,6 +20,7 @@ const defaultStore: StoreData = {
   pinLocation: null,
   menuPhoto: null,
   categoryId: null,
+  menuItems: [],
 };
 
 const StoreContext = createContext<StoreContextType | null>(null);
