@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
+import SovereignMenuCard from "@/components/menu/SovereignMenuCard";
+import DishDetailSheet from "@/components/menu/DishDetailSheet";
 
 interface MenuItemRow {
   id: string;
