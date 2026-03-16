@@ -220,7 +220,7 @@ const DishDnaFeedback = () => {
                 {dishName || "Dish DNA"}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
-                dish dna analysis
+                เลือกแท็กที่ตรงกับความรู้สึก
               </p>
             </div>
             {!analyzing && totalComponents > 0 && (
