@@ -693,7 +693,6 @@ const PostOrderReview = () => {
                     )}
                   </>
                 )}
-                )}
               </div>
             )}
 
