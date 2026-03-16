@@ -160,7 +160,7 @@ const TasteDNAChart = ({ dna }: { dna: TasteDNA }) => {
 const Profile = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ display_name: string | null; email: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ display_name: string | null; email: string | null; avatar_url: string | null } | null>(null);
   const [emeraldCount, setEmeraldCount] = useState(0);
   const [storeCount, setStoreCount] = useState(0);
   const [tasteDNA, setTasteDNA] = useState<TasteDNA>({ salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 });
@@ -171,16 +171,38 @@ const Profile = () => {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const handleSaveName = async () => {
     if (!user || !nameInput.trim()) return;
     setSavingName(true);
-    const { error } = await supabase.from("profiles").update({ display_name: nameInput.trim() }).eq("id", user.id);
+    const { error } = await supabase.from("profiles").update({ display_name: nameInput.trim() } as any).eq("id", user.id);
     if (!error) {
       setProfile((p) => p ? { ...p, display_name: nameInput.trim() } : p);
     }
     setSavingName(false);
     setEditingName(false);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 2 * 1024 * 1024) return; // max 2MB
+
+    setUploadingAvatar(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/avatar.${ext}`;
+
+    // Upload (upsert)
+    const { error: uploadErr } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
+    if (uploadErr) { setUploadingAvatar(false); return; }
+
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    await supabase.from("profiles").update({ avatar_url: avatarUrl } as any).eq("id", user.id);
+    setProfile((p) => p ? { ...p, avatar_url: avatarUrl } : p);
+    setUploadingAvatar(false);
   };
 
   useEffect(() => {
