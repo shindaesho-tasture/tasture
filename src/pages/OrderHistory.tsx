@@ -4,15 +4,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
-import { ClipboardList, ChevronRight, Store, LogIn } from "lucide-react";
+import { ClipboardList, ChevronRight, Store, LogIn, Star } from "lucide-react";
 import { motion } from "framer-motion";
+
+interface MenuItem {
+  id: string;
+  name: string;
+  score: number | null;
+  hasReview: boolean;
+}
 
 interface VisitRecord {
   storeId: string;
   storeName: string;
   lastVisit: string;
-  itemCount: number;
-  items: { id: string; name: string; score: number | null }[];
+  items: MenuItem[];
 }
 
 const scoreEmoji = (s: number | null) =>
@@ -32,82 +38,118 @@ const OrderHistory = () => {
       return;
     }
 
-    const fetch = async () => {
-      // Get all menu_reviews for this user, joined with menu_items + stores
-      const { data: reviews } = await supabase
+    const load = async () => {
+      // 1. Get stores user reviewed (store-level reviews)
+      const { data: storeReviews } = await supabase
+        .from("reviews")
+        .select("store_id, created_at")
+        .eq("user_id", user.id);
+
+      // 2. Get menu reviews by user
+      const { data: menuReviews } = await supabase
         .from("menu_reviews")
         .select("score, created_at, menu_item_id")
         .eq("user_id", user.id);
 
-      if (!reviews || reviews.length === 0) {
+      const reviewedStoreIds = new Set(
+        (storeReviews || []).map((r) => r.store_id)
+      );
+      const menuReviewMap = new Map(
+        (menuReviews || []).map((r) => [r.menu_item_id, r])
+      );
+
+      // 3. Get menu items that user reviewed → derive store ids
+      const reviewedItemIds = [...menuReviewMap.keys()];
+      let menuItemStoreIds: string[] = [];
+      let allItems: { id: string; name: string; store_id: string }[] = [];
+
+      if (reviewedItemIds.length > 0) {
+        const { data: items } = await supabase
+          .from("menu_items")
+          .select("id, name, store_id")
+          .in("id", reviewedItemIds);
+        if (items) {
+          allItems = items;
+          menuItemStoreIds = items.map((i) => i.store_id);
+        }
+      }
+
+      // Combine all store IDs
+      const allStoreIds = [
+        ...new Set([...reviewedStoreIds, ...menuItemStoreIds]),
+      ];
+
+      if (allStoreIds.length === 0) {
         setLoading(false);
         return;
       }
 
-      const itemIds = [...new Set(reviews.map((r) => r.menu_item_id))];
-      const { data: items } = await supabase
-        .from("menu_items")
-        .select("id, name, store_id")
-        .in("id", itemIds);
-
-      if (!items) {
-        setLoading(false);
-        return;
-      }
-
-      const storeIds = [...new Set(items.map((i) => i.store_id))];
+      // 4. Get store info
       const { data: stores } = await supabase
         .from("stores")
         .select("id, name")
-        .in("id", storeIds);
+        .in("id", allStoreIds);
 
-      if (!stores) {
+      // 5. Get ALL menu items for those stores (to show unreviewed ones too)
+      const { data: allMenuItems } = await supabase
+        .from("menu_items")
+        .select("id, name, store_id")
+        .in("store_id", allStoreIds);
+
+      if (!stores || !allMenuItems) {
         setLoading(false);
         return;
       }
 
       const storeMap = Object.fromEntries(stores.map((s) => [s.id, s.name]));
-      const itemMap = Object.fromEntries(
-        items.map((i) => [i.id, { name: i.name, storeId: i.store_id }])
-      );
 
-      // Group by store
+      // 6. Build visit records grouped by store
       const grouped: Record<string, VisitRecord> = {};
-      for (const rev of reviews) {
-        const item = itemMap[rev.menu_item_id];
-        if (!item) continue;
-        const sid = item.storeId;
-        if (!grouped[sid]) {
-          grouped[sid] = {
-            storeId: sid,
-            storeName: storeMap[sid] || "ร้านไม่ทราบชื่อ",
-            lastVisit: rev.created_at,
-            itemCount: 0,
-            items: [],
+
+      for (const sid of allStoreIds) {
+        // Find latest interaction date for this store
+        const storeRevDates = (storeReviews || [])
+          .filter((r) => r.store_id === sid)
+          .map((r) => r.created_at);
+
+        const storeMenuItems = allMenuItems.filter((i) => i.store_id === sid);
+        const menuRevDates = storeMenuItems
+          .map((i) => menuReviewMap.get(i.id)?.created_at)
+          .filter(Boolean) as string[];
+
+        const allDates = [...storeRevDates, ...menuRevDates];
+        const lastVisit =
+          allDates.length > 0
+            ? allDates.sort().reverse()[0]
+            : new Date().toISOString();
+
+        const items: MenuItem[] = storeMenuItems.map((mi) => {
+          const rev = menuReviewMap.get(mi.id);
+          return {
+            id: mi.id,
+            name: mi.name,
+            score: rev ? rev.score : null,
+            hasReview: !!rev,
           };
-        }
-        if (rev.created_at > grouped[sid].lastVisit) {
-          grouped[sid].lastVisit = rev.created_at;
-        }
-        // Avoid duplicate items
-        if (!grouped[sid].items.find((x) => x.id === rev.menu_item_id)) {
-          grouped[sid].items.push({
-            id: rev.menu_item_id,
-            name: item.name,
-            score: rev.score,
-          });
-          grouped[sid].itemCount++;
-        }
+        });
+
+        grouped[sid] = {
+          storeId: sid,
+          storeName: storeMap[sid] || "ร้านไม่ทราบชื่อ",
+          lastVisit,
+          items,
+        };
       }
 
       const sorted = Object.values(grouped).sort(
-        (a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime()
+        (a, b) =>
+          new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime()
       );
       setVisits(sorted);
       setLoading(false);
     };
 
-    fetch();
+    load();
   }, [user, authLoading]);
 
   const formatDate = (iso: string) => {
@@ -185,6 +227,7 @@ const OrderHistory = () => {
           <div className="px-4 pt-3 space-y-3">
             {visits.map((visit, i) => {
               const isOpen = expanded === visit.storeId;
+              const reviewedCount = visit.items.filter((x) => x.hasReview).length;
               return (
                 <motion.div
                   key={visit.storeId}
@@ -206,7 +249,8 @@ const OrderHistory = () => {
                         {visit.storeName}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {visit.itemCount} เมนู · {formatDate(visit.lastVisit)}
+                        {visit.items.length} เมนู · {reviewedCount} รีวิวแล้ว ·{" "}
+                        {formatDate(visit.lastVisit)}
                       </p>
                     </div>
                     <ChevronRight
@@ -234,9 +278,22 @@ const OrderHistory = () => {
                           <span className="text-[13px] text-foreground truncate pr-3">
                             {item.name}
                           </span>
-                          <span className="text-base shrink-0">
-                            {scoreEmoji(item.score)}
-                          </span>
+                          {item.hasReview ? (
+                            <span className="text-base shrink-0">
+                              {scoreEmoji(item.score)}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/menu-feedback/${visit.storeId}`);
+                              }}
+                              className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
+                            >
+                              <Star size={12} />
+                              ให้คะแนน
+                            </button>
+                          )}
                         </div>
                       ))}
                     </motion.div>
