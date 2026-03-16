@@ -102,7 +102,7 @@ const Index = () => {
     try {
       const { data: allStores } = await supabase
         .from("stores")
-        .select("id, name, category_id")
+        .select("id, name, category_id, verified")
         .order("created_at", { ascending: false })
         .limit(10);
 
