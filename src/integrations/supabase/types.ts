@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      dish_dna: {
+        Row: {
+          component_icon: string
+          component_name: string
+          created_at: string
+          id: string
+          menu_item_id: string
+          selected_score: number
+          selected_tag: string
+          user_id: string
+        }
+        Insert: {
+          component_icon?: string
+          component_name: string
+          created_at?: string
+          id?: string
+          menu_item_id: string
+          selected_score: number
+          selected_tag: string
+          user_id: string
+        }
+        Update: {
+          component_icon?: string
+          component_name?: string
+          created_at?: string
+          id?: string
+          menu_item_id?: string
+          selected_score?: number
+          selected_tag?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dish_dna_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           created_at: string

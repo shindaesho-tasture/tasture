@@ -1,6 +1,10 @@
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { Dna } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MenuFeedbackItem {
   id: string;
@@ -17,6 +21,12 @@ interface MenuFeedbackCardProps {
   myScore: number | null;
   onRate: (value: number) => void;
   index?: number;
+}
+
+interface DnaTag {
+  component_icon: string;
+  selected_tag: string;
+  selected_score: number;
 }
 
 const tierColorMap: Record<ScoreTier, string> = {
@@ -68,9 +78,14 @@ const ratingOptions = [
   },
 ];
 
+const tagScoreConfig: Record<number, { bg: string; text: string }> = {
+  2: { bg: "bg-score-emerald/10", text: "text-score-emerald" },
+  0: { bg: "bg-score-slate/10", text: "text-score-slate" },
+  [-2]: { bg: "bg-score-ruby/10", text: "text-score-ruby" },
+};
+
 /** Mini circular gauge for average score */
 const ScoreGauge = ({ score, count, tier }: { score: number; count: number; tier: ScoreTier }) => {
-  // Map -2..+2 to 0..100
   const pct = ((score + 2) / 4) * 100;
   const r = 18;
   const circ = 2 * Math.PI * r;
@@ -103,9 +118,36 @@ const ScoreGauge = ({ score, count, tier }: { score: number; count: number; tier
 };
 
 const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCardProps) => {
+  const navigate = useNavigate();
   const hasAvg = item.avg_score !== null;
   const avgTier = hasAvg ? getScoreTier(item.avg_score!) : null;
   const config = typeConfig[item.type] || typeConfig.standard;
+  const [topTags, setTopTags] = useState<DnaTag[]>([]);
+
+  // Fetch top 3 most emotional tags (prioritize +2 and -2)
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("dish_dna")
+        .select("component_icon, selected_tag, selected_score")
+        .eq("menu_item_id", item.id)
+        .order("created_at", { ascending: false });
+      if (data && data.length > 0) {
+        // Sort by extremity: +2 and -2 first
+        const sorted = [...data].sort((a, b) => Math.abs(b.selected_score) - Math.abs(a.selected_score));
+        // Unique by component
+        const seen = new Set<string>();
+        const unique: DnaTag[] = [];
+        for (const d of sorted) {
+          if (!seen.has(d.selected_tag) && unique.length < 3) {
+            seen.add(d.selected_tag);
+            unique.push(d);
+          }
+        }
+        setTopTags(unique);
+      }
+    })();
+  }, [item.id]);
 
   return (
     <motion.div
@@ -119,11 +161,9 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
       }}
       className="bg-surface-elevated rounded-[20px] shadow-luxury overflow-hidden"
     >
-      {/* Card Content */}
       <div className="p-4 space-y-3.5">
         {/* Top: Info + Gauge */}
         <div className="flex items-start gap-3">
-          {/* Icon + Name + Price */}
           <div className="flex-1 min-w-0 space-y-1.5">
             <div className="flex items-center gap-2">
               <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center text-sm", config.accent)}>
@@ -166,14 +206,47 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
           )}
         </div>
 
-        {/* Divider */}
+        {/* ─── Top 3 DNA Tags ─── */}
+        {topTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pl-10">
+            {topTags.map((tag, i) => {
+              const cfg = tagScoreConfig[tag.selected_score] || tagScoreConfig[0];
+              return (
+                <motion.span
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + i * 0.08 }}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium",
+                    cfg.bg, cfg.text
+                  )}
+                >
+                  <span>{tag.component_icon}</span>
+                  <span className="truncate max-w-[120px]">{tag.selected_tag}</span>
+                </motion.span>
+              );
+            })}
+          </div>
+        )}
+
         <div className="h-px bg-border/60" />
 
-        {/* Rating Section */}
+        {/* Rating + DNA Button */}
         <div className="space-y-2">
-          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.15em]">
-            ให้คะแนนเมนูนี้
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.15em]">
+              ให้คะแนนเมนูนี้
+            </span>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={() => navigate(`/dish-dna/${item.id}?storeId=${item.id}`)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-score-emerald/8 text-score-emerald text-[10px] font-medium hover:bg-score-emerald/15 transition-colors"
+            >
+              <Dna size={12} strokeWidth={2} />
+              <span>Dish DNA</span>
+            </motion.button>
+          </div>
 
           <div className="flex items-center gap-2">
             {ratingOptions.map((opt) => {
@@ -205,7 +278,6 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                     {opt.label}
                   </span>
 
-                  {/* Active indicator dot */}
                   <AnimatePresence>
                     {isActive && (
                       <motion.div
