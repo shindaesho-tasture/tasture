@@ -207,11 +207,7 @@ const StoreOrder = () => {
     );
   };
 
-  const typeEmoji: Record<string, string> = {
-    noodle: "🍜",
-    dual_price: "💰",
-    standard: "🍽️",
-  };
+  // typeEmoji not needed anymore with SovereignMenuCard
 
   return (
     <PageTransition>
