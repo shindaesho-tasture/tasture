@@ -6,6 +6,7 @@ import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
 import { categories } from "@/lib/categories";
 import { useStore } from "@/lib/store-context";
+import { useAuth } from "@/hooks/use-auth";
 import type { MenuItem } from "@/lib/menu-types";
 import { GOOGLE_MAPS_API_KEY, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
 import PageTransition from "@/components/PageTransition";
