@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronLeft, MessageSquarePlus, Store } from "lucide-react";
+import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -18,6 +18,7 @@ interface StoreWithReviews {
   created_at: string;
   verified: boolean;
   reviewCount: number;
+  menuReviewCount: number;
   metricAverages: { metric_id: string; avg_score: number; count: number }[];
 }
 
@@ -70,6 +71,32 @@ const MyStores = () => {
         .select("store_id, metric_id, score")
         .in("store_id", storeIds);
 
+      // Fetch menu items for stores to get menu review counts
+      const { data: menuItemsData } = await supabase
+        .from("menu_items")
+        .select("id, store_id")
+        .in("store_id", storeIds);
+
+      const menuItemIds = (menuItemsData || []).map((mi) => mi.id);
+      let menuReviewsData: { menu_item_id: string }[] = [];
+      if (menuItemIds.length > 0) {
+        const { data } = await supabase
+          .from("menu_reviews")
+          .select("menu_item_id")
+          .in("menu_item_id", menuItemIds);
+        menuReviewsData = data || [];
+      }
+
+      // Map menu items to stores for counting
+      const menuItemStoreMap = new Map<string, string>();
+      (menuItemsData || []).forEach((mi) => menuItemStoreMap.set(mi.id, mi.store_id));
+
+      const menuReviewCountByStore = new Map<string, number>();
+      menuReviewsData.forEach((mr) => {
+        const sid = menuItemStoreMap.get(mr.menu_item_id);
+        if (sid) menuReviewCountByStore.set(sid, (menuReviewCountByStore.get(sid) || 0) + 1);
+      });
+
       // Compute averages per store per metric
       const avgMap = new Map<string, Map<string, { total: number; count: number }>>();
       (reviewsData || []).forEach((r) => {
@@ -96,7 +123,8 @@ const MyStores = () => {
         // Sort by extremity
         metricAverages.sort((a, b) => Math.abs(b.avg_score) - Math.abs(a.avg_score));
         const reviewCount = metricAverages.reduce((max, m) => Math.max(max, m.count), 0);
-        return { ...s, metricAverages, reviewCount };
+        const menuReviewCount = menuReviewCountByStore.get(s.id) || 0;
+        return { ...s, metricAverages, reviewCount, menuReviewCount };
       });
 
       setStores(result);
@@ -185,7 +213,7 @@ const MyStores = () => {
               {stores.map((store, i) => {
                 const cat = getCategoryInfo(store.category_id);
                 const topTags = store.metricAverages.slice(0, 4);
-                const trustTier = getTrustTier(store.reviewCount, store.verified);
+                const trustTier = getTrustTier(store.reviewCount, store.verified, store.menuReviewCount);
 
                 return (
                   <motion.div
@@ -235,8 +263,8 @@ const MyStores = () => {
                       )}
                     </div>
 
-                    {/* Action: Add Feedback */}
-                    <div className="px-4 pb-4">
+                    {/* Actions */}
+                    <div className="px-4 pb-4 flex gap-2">
                       <motion.button
                         whileTap={{ scale: 0.97 }}
                         onClick={() => {
@@ -244,10 +272,18 @@ const MyStores = () => {
                             navigate(`/review/${store.category_id}?store=${store.id}`);
                           }
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-muted transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-muted transition-colors"
                       >
                         <MessageSquarePlus size={14} strokeWidth={1.5} />
-                        เพิ่มฟีดแบค
+                        ฟีดแบคร้าน
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/menu-feedback/${store.id}`)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-score-emerald/15 text-score-emerald text-[11px] font-medium uppercase tracking-wider hover:bg-score-emerald/25 transition-colors"
+                      >
+                        <UtensilsCrossed size={14} strokeWidth={1.5} />
+                        ฟีดแบคเมนู
                       </motion.button>
                     </div>
                   </motion.div>

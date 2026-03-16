@@ -16,6 +16,7 @@ import Profile from "./pages/Profile.tsx";
 import Auth from "./pages/Auth.tsx";
 import MyStores from "./pages/MyStores.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
+import MenuFeedback from "./pages/MenuFeedback.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const AnimatedRoutes = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/my-stores" element={<MyStores />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/menu-feedback/:storeId" element={<MenuFeedback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
