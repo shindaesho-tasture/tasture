@@ -14,6 +14,10 @@ const OrderSummary = () => {
     setConfirmed(true);
   };
 
+  const handleReview = () => {
+    navigate("/post-review");
+  };
+
   const handleDone = () => {
     clearOrder();
     navigate("/store-list");
