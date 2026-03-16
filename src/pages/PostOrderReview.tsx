@@ -136,6 +136,19 @@ const PostOrderReview = () => {
     (async () => {
       setDnaLoading((prev) => ({ ...prev, [id]: true }));
       try {
+        // Check for previous user DNA reviews
+        if (user && !hasPreviousDna[id]) {
+          const { data: prevDna } = await supabase
+            .from("dish_dna")
+            .select("component_name, component_icon, selected_score, selected_tag")
+            .eq("menu_item_id", id)
+            .eq("user_id", user.id);
+          if (prevDna && prevDna.length > 0) {
+            setHasPreviousDna((prev) => ({ ...prev, [id]: true }));
+            setPreviousDnaRows((prev) => ({ ...prev, [id]: prevDna }));
+          }
+        }
+
         // Check cache
         const { data: template } = await supabase
           .from("dish_templates")
