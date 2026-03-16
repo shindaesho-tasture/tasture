@@ -16,7 +16,7 @@ const tierMap: Record<TrustTier, Omit<TrustTierInfo, "tier">> = {
     label: "Gold",
     labelTh: "ระดับทอง",
     icon: "🏆",
-    description: "50+ รีวิว · ยืนยันแล้ว",
+    description: "50+ รีวิว · ยืนยันแล้ว · มีฟีดแบคเมนู",
     colorClass: "text-gold",
     bgClass: "bg-gold/15",
     borderClass: "border-gold/30",
