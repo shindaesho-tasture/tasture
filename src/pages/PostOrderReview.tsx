@@ -66,6 +66,9 @@ const PostOrderReview = () => {
   const [dnaComponents, setDnaComponents] = useState<Record<string, DishComponent[]>>({});
   const [dnaSelections, setDnaSelections] = useState<Record<string, Record<string, DishDnaSelection>>>({});
   const [dnaLoading, setDnaLoading] = useState<Record<string, boolean>>({});
+  const [hasPreviousDna, setHasPreviousDna] = useState<Record<string, boolean>>({});
+  const [previousDnaRows, setPreviousDnaRows] = useState<Record<string, { component_name: string; component_icon: string; selected_score: number; selected_tag: string }[]>>({});
+  const [dnaReviewChoice, setDnaReviewChoice] = useState<Record<string, "same" | "changed" | null>>({});
 
   // Sensory state per menu item
   const [sensoryAxes, setSensoryAxes] = useState<Record<string, SensoryAxis[]>>({});
@@ -133,6 +136,19 @@ const PostOrderReview = () => {
     (async () => {
       setDnaLoading((prev) => ({ ...prev, [id]: true }));
       try {
+        // Check for previous user DNA reviews
+        if (user && !hasPreviousDna[id]) {
+          const { data: prevDna } = await supabase
+            .from("dish_dna")
+            .select("component_name, component_icon, selected_score, selected_tag")
+            .eq("menu_item_id", id)
+            .eq("user_id", user.id);
+          if (prevDna && prevDna.length > 0) {
+            setHasPreviousDna((prev) => ({ ...prev, [id]: true }));
+            setPreviousDnaRows((prev) => ({ ...prev, [id]: prevDna }));
+          }
+        }
+
         // Check cache
         const { data: template } = await supabase
           .from("dish_templates")
@@ -337,18 +353,34 @@ const PostOrderReview = () => {
 
       // Save dish DNA per item
       for (const item of items) {
-        const sel = dnaSelections[item.menuItemId] || {};
-        const rows = Object.values(sel).map((s) => ({
-          menu_item_id: item.menuItemId,
-          user_id: user.id,
-          component_name: s.component_name,
-          component_icon: s.component_icon,
-          selected_score: s.selected_score,
-          selected_tag: s.selected_tag,
-        }));
-        if (rows.length > 0) {
-          await supabase.from("dish_dna").delete().eq("menu_item_id", item.menuItemId).eq("user_id", user.id);
-          await supabase.from("dish_dna").insert(rows);
+        const id = item.menuItemId;
+        if (dnaReviewChoice[id] === "same" && previousDnaRows[id]?.length > 0) {
+          // Re-upsert previous DNA to update timestamp
+          await supabase.from("dish_dna").delete().eq("menu_item_id", id).eq("user_id", user.id);
+          await supabase.from("dish_dna").insert(
+            previousDnaRows[id].map((r) => ({
+              menu_item_id: id,
+              user_id: user.id,
+              component_name: r.component_name,
+              component_icon: r.component_icon,
+              selected_score: r.selected_score,
+              selected_tag: r.selected_tag,
+            }))
+          );
+        } else {
+          const sel = dnaSelections[id] || {};
+          const rows = Object.values(sel).map((s) => ({
+            menu_item_id: id,
+            user_id: user.id,
+            component_name: s.component_name,
+            component_icon: s.component_icon,
+            selected_score: s.selected_score,
+            selected_tag: s.selected_tag,
+          }));
+          if (rows.length > 0) {
+            await supabase.from("dish_dna").delete().eq("menu_item_id", id).eq("user_id", user.id);
+            await supabase.from("dish_dna").insert(rows);
+          }
         }
       }
 
@@ -557,31 +589,109 @@ const PostOrderReview = () => {
             {/* Dish DNA */}
             {step?.type === "dish-dna" && step.menuItemId && (
               <div className="px-4 pt-4 space-y-4">
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
-                  <Dna size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
-                  <div>
-                    <p className="text-[11px] font-medium text-foreground">เลือกแท็กที่ตรงกับความรู้สึก</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
-                      <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
-                      <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
-                    </p>
-                  </div>
-                </div>
-                {dnaLoading[step.menuItemId] ? (
-                  <AnalyzingSpinner label="กำลังวิเคราะห์ส่วนประกอบ..." />
-                ) : (dnaComponents[step.menuItemId] || []).length === 0 ? (
-                  <EmptyState label="ไม่สามารถวิเคราะห์ได้" />
+                {hasPreviousDna[step.menuItemId] && !dnaReviewChoice[step.menuItemId] ? (
+                  /* ─── Previous DNA Gate ─── */
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+                      <Dna size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
+                      <div>
+                        <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิว DNA เมนูนี้แล้ว</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติส่วนประกอบเปลี่ยนไปหรือเปล่า?</p>
+                      </div>
+                    </div>
+
+                    {/* Previous DNA summary */}
+                    <div className="rounded-2xl border border-border/50 bg-surface-elevated/50 overflow-hidden">
+                      <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/30">
+                        <p className="text-[10px] font-medium text-muted-foreground tracking-wide">รีวิวเดิมที่เคยให้</p>
+                      </div>
+                      <div className="divide-y divide-border/20 max-h-52 overflow-y-auto">
+                        {(previousDnaRows[step.menuItemId] || []).map((row, i) => (
+                          <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                            <span className="text-[11px] text-foreground truncate flex-1 mr-3">
+                              {row.component_icon} {row.component_name}
+                            </span>
+                            <span className="text-[10px] shrink-0">
+                              {row.selected_score === 2 ? "🤩" : row.selected_score === 0 ? "😐" : "😔"}{" "}
+                              <span className="text-muted-foreground">{row.selected_tag}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setDnaReviewChoice((prev) => ({ ...prev, [step.menuItemId!]: "same" }))}
+                        className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
+                      >
+                        <span className="text-3xl">👍</span>
+                        <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
+                        <span className="text-[9px] text-muted-foreground">ข้ามไปขั้นตอนถัดไป</span>
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setDnaReviewChoice((prev) => ({ ...prev, [step.menuItemId!]: "changed" }))}
+                        className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
+                      >
+                        <span className="text-3xl">🔄</span>
+                        <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
+                        <span className="text-[9px] text-muted-foreground">รีวิว DNA ใหม่</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ) : hasPreviousDna[step.menuItemId] && dnaReviewChoice[step.menuItemId] === "same" ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center py-8 gap-3"
+                  >
+                    <span className="text-5xl">✅</span>
+                    <p className="text-sm font-semibold text-foreground">ใช้รีวิว DNA เดิม</p>
+                    <p className="text-[10px] text-muted-foreground">กด "ถัดไป" เพื่อไปขั้นตอนถัดไป</p>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setDnaReviewChoice((prev) => ({ ...prev, [step.menuItemId!]: null }))}
+                      className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      เปลี่ยนใจ
+                    </motion.button>
+                  </motion.div>
                 ) : (
-                  (dnaComponents[step.menuItemId] || []).map((comp, i) => (
-                    <DishDnaCard
-                      key={comp.name}
-                      component={comp}
-                      selection={(dnaSelections[step.menuItemId!] || {})[comp.name] || null}
-                      onSelect={(score, tag) => handleDnaSelect(step.menuItemId!, comp.name, comp.icon, score, tag)}
-                      index={i}
-                    />
-                  ))
+                  /* ─── Full DNA Review ─── */
+                  <>
+                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+                      <Dna size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
+                      <div>
+                        <p className="text-[11px] font-medium text-foreground">เลือกแท็กที่ตรงกับความรู้สึก</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
+                          <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
+                          <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
+                        </p>
+                      </div>
+                    </div>
+                    {dnaLoading[step.menuItemId] ? (
+                      <AnalyzingSpinner label="กำลังวิเคราะห์ส่วนประกอบ..." />
+                    ) : (dnaComponents[step.menuItemId] || []).length === 0 ? (
+                      <EmptyState label="ไม่สามารถวิเคราะห์ได้" />
+                    ) : (
+                      (dnaComponents[step.menuItemId] || []).map((comp, i) => (
+                        <DishDnaCard
+                          key={comp.name}
+                          component={comp}
+                          selection={(dnaSelections[step.menuItemId!] || {})[comp.name] || null}
+                          onSelect={(score, tag) => handleDnaSelect(step.menuItemId!, comp.name, comp.icon, score, tag)}
+                          index={i}
+                        />
+                      ))
+                    )}
+                  </>
                 )}
               </div>
             )}
