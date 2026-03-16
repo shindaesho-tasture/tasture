@@ -332,14 +332,19 @@ const Index = () => {
                       <div className="flex flex-wrap gap-1 px-4 pb-3">
                         {topMetrics.map((m) => {
                           const t = getScoreTier(m.score);
-                          const opacity = getIntensityOpacity(m.count);
+                          const bgOpacity = getIntensityOpacity(m.count);
                           return (
                             <span
                               key={m.id}
-                              className={cn("inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-[9px] font-semibold", tierColors[t].bg)}
-                              style={{ opacity, color: "white" }}
+                              className="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-semibold relative overflow-hidden"
                             >
-                              {m.icon} {m.label}
+                              <span
+                                className={cn("absolute inset-0 rounded-lg", tierColors[t].bg)}
+                                style={{ opacity: bgOpacity }}
+                              />
+                              <span className={cn("relative z-10", tierColors[t].text)}>
+                                {m.icon} {m.label}
+                              </span>
                             </span>
                           );
                         })}
