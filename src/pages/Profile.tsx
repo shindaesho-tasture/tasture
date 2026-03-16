@@ -166,6 +166,8 @@ const Profile = () => {
   const [tasteDNA, setTasteDNA] = useState<TasteDNA>({ salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 });
   const [emeraldDishes, setEmeraldDishes] = useState<EmeraldDish[]>([]);
   const [verdicts, setVerdicts] = useState<StoreVerdict[]>([]);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [dnaEntryCount, setDnaEntryCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
