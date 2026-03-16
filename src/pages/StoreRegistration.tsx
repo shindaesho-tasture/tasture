@@ -163,8 +163,10 @@ const StoreRegistration = () => {
   const handleProceed = async () => {
     if (!canProceed) return;
     setStore({ name: name.trim(), pinLocation, menuPhoto, categoryId: selectedCategory, menuItems });
-    await saveToDatabase();
-    navigate(`/review/${selectedCategory}`);
+    const saved = await saveToDatabase();
+    if (saved) {
+      navigate("/my-stores");
+    }
   };
 
   return (

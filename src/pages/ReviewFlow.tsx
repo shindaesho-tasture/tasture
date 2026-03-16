@@ -147,7 +147,43 @@ const ReviewFlow = () => {
 
   const progress = totalMetrics > 0 ? (filledCount / totalMetrics) * 100 : 0;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Save reviews to database if we have a store and user
+    if (storeId && user) {
+      try {
+        const reviewRows: { store_id: string; user_id: string; metric_id: string; score: number }[] = [];
+        
+        category.metrics.forEach((m) => {
+          if (m.smartGate) {
+            if (gateState[m.id]) {
+              m.smartGate.subMetrics.forEach((sub) => {
+                const val = subScores[sub.id];
+                if (val !== null && val !== undefined) {
+                  reviewRows.push({ store_id: storeId, user_id: user.id, metric_id: sub.id, score: val });
+                }
+              });
+            }
+          } else {
+            const val = scores[m.id];
+            if (val !== null && val !== undefined) {
+              reviewRows.push({ store_id: storeId, user_id: user.id, metric_id: m.id, score: val });
+            }
+          }
+        });
+
+        if (reviewRows.length > 0) {
+          const { error } = await supabase
+            .from("reviews")
+            .upsert(reviewRows, { onConflict: "store_id,user_id,metric_id" });
+          if (error) throw error;
+        }
+      } catch (err: any) {
+        console.error("Save reviews error:", err);
+        toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+        return;
+      }
+    }
+
     toast({
       title: "✅ บันทึกรีวิวสำเร็จ",
       description: `${category.labelTh} — ${filledCount}/${totalMetrics} metrics rated`,
