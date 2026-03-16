@@ -74,6 +74,9 @@ const PostOrderReview = () => {
   const [sensoryAxes, setSensoryAxes] = useState<Record<string, SensoryAxis[]>>({});
   const [sensoryValues, setSensoryValues] = useState<Record<string, Record<string, number>>>({});
   const [sensoryLoading, setSensoryLoading] = useState<Record<string, boolean>>({});
+  const [hasPreviousSensory, setHasPreviousSensory] = useState<Record<string, boolean>>({});
+  const [previousSensoryScore, setPreviousSensoryScore] = useState<Record<string, number>>({});
+  const [sensoryReviewChoice, setSensoryReviewChoice] = useState<Record<string, "same" | "changed" | null>>({});
 
   // Taste satisfaction gate per menu item
   const [tasteSatisfaction, setTasteSatisfaction] = useState<Record<string, "perfect" | "ok" | "bad">>({});
