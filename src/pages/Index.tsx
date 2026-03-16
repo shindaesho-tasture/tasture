@@ -275,7 +275,7 @@ const Index = () => {
                 const overallTier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
                 const topMetrics = [...(store.metrics || [])]
                   .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-                  .slice(0, 3);
+                  .slice(0, 4);
 
                 return (
                   <motion.button
