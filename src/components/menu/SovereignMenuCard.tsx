@@ -1,5 +1,16 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { getScoreTier, type ScoreTier } from "@/lib/categories";
+import { getIntensityOpacity } from "@/lib/scoring";
+
+/** HSL values for each score tier */
+const tierHsl: Record<ScoreTier, string> = {
+  emerald: "163,78%,20%",
+  mint: "105,24%,70%",
+  slate: "215,16%,47%",
+  amber: "32,95%,44%",
+  ruby: "0,68%,35%",
+};
 
 interface IntensityTag {
   icon: string;
@@ -18,9 +29,6 @@ interface SovereignMenuCardProps {
   onPress: () => void;
   index?: number;
 }
-
-/** Map review count → opacity 0.2–1.0 (linear 0→100+) */
-const tagOpacity = (count: number) => Math.min(1, 0.2 + (count / 100) * 0.8);
 
 const SovereignMenuCard = ({
   name,
@@ -82,26 +90,15 @@ const SovereignMenuCard = ({
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {tags.slice(0, 3).map((tag) => {
-              const isPositive = tag.score >= 1;
-              const isNegative = tag.score <= -1;
-              const opacity = tagOpacity(tag.count);
+              const tier = getScoreTier(tag.score);
+              const opacity = getIntensityOpacity(tag.count);
+              const hsl = tierHsl[tier];
 
               return (
                 <span
                   key={`${tag.icon}-${tag.label}`}
-                  className={cn(
-                    "inline-flex items-center gap-1 px-2 py-[3px] rounded-full text-[10px] font-semibold leading-none",
-                    isPositive && "text-white",
-                    isNegative && "text-white",
-                    !isPositive && !isNegative && "text-white"
-                  )}
-                  style={{
-                    backgroundColor: isPositive
-                      ? `hsla(163,78%,20%,${opacity})`
-                      : isNegative
-                        ? `hsla(0,68%,35%,${opacity})`
-                        : `hsla(215,16%,47%,${opacity})`,
-                  }}
+                  className="inline-flex items-center gap-1 px-2 py-[3px] rounded-full text-[10px] font-semibold leading-none text-white"
+                  style={{ backgroundColor: `hsla(${hsl},${opacity})` }}
                 >
                   <span>{tag.icon}</span>
                   <span className="truncate max-w-[80px]">{tag.label}</span>
