@@ -278,7 +278,7 @@ const Index = () => {
             <div className="space-y-3">
               {stores.map((store, i) => {
                 const overallTier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
-                const trustTier = getTrustTier(store.reviewCount, store.verified, store.menuReviewCount);
+                const popInfo = getPopularityTierInfo(getPopularityTier(store.reviewCount));
                 const topMetrics = [...(store.metrics || [])]
                   .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
                   .slice(0, 4);
@@ -291,7 +291,7 @@ const Index = () => {
                     transition={{ delay: i * 0.06, duration: 0.4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(`/store/${store.id}/order`)}
-                    className="w-full rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left overflow-hidden"
+                    className={`w-full rounded-2xl bg-surface-elevated border border-border/50 text-left overflow-hidden relative ${popInfo.borderClass} ${popInfo.glowClass || 'shadow-luxury'}`}
                   >
                     {/* Card Header */}
                     <div className="flex items-center gap-3 p-4 pb-2">
