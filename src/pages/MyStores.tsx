@@ -95,7 +95,8 @@ const MyStores = () => {
         }
         // Sort by extremity
         metricAverages.sort((a, b) => Math.abs(b.avg_score) - Math.abs(a.avg_score));
-        return { ...s, metricAverages };
+        const reviewCount = metricAverages.reduce((max, m) => Math.max(max, m.count), 0);
+        return { ...s, metricAverages, reviewCount };
       });
 
       setStores(result);
