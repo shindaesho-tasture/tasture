@@ -147,6 +147,17 @@ const StoreRegistration = () => {
 
         const { error: itemsError } = await supabase.from("menu_items").insert(itemsToInsert);
         if (itemsError) throw itemsError;
+
+        // Auto-analyze dishes in background (don't block save)
+        const dishNames = menuItems.map((item) => item.name.trim()).filter(Boolean);
+        if (dishNames.length > 0) {
+          supabase.functions.invoke("batch-analyze", {
+            body: { dishNames },
+          }).then(({ data, error }) => {
+            if (error) console.error("Batch analyze error:", error);
+            else console.log("Dish templates cached:", Object.keys(data?.templates || {}).length);
+          });
+        }
       }
 
       toast({ title: "บันทึกสำเร็จ", description: `ร้าน "${name.trim()}" ถูกบันทึกแล้ว` });
