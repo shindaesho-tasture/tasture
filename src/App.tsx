@@ -32,6 +32,7 @@ const AnimatedRoutes = () => {
         <Route path="/world" element={<WorldMap />} />
         <Route path="/split" element={<SmartSplit />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

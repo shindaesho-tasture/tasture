@@ -386,7 +386,10 @@ const StoreRegistration = () => {
               color: canProceed ? "hsl(var(--primary-foreground))" : undefined,
             }}
           >
-            <span className="uppercase tracking-wider">Proceed to Verdict</span>
+            {saving ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : null}
+            <span className="uppercase tracking-wider">{saving ? "กำลังบันทึก..." : "Proceed to Verdict"}</span>
           </motion.button>
         </div>
 
