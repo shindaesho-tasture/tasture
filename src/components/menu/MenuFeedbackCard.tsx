@@ -133,15 +133,22 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
     })();
   }, [item.id]);
 
-  const handleExpandSensory = async () => {
-    if (sensoryExpanded) {
+  const handleTasteSatisfaction = async (choice: "perfect" | "ok" | "bad") => {
+    setTasteSatisfaction(choice);
+    if (choice === "perfect") {
+      // Auto-set all sensory to level 3 (perfect) and don't show sliders
       setSensoryExpanded(false);
-      return;
+      // Auto-rate as +2 (perfect taste)
+      onRate(2);
+    } else {
+      // Show sensory feedback for adjustment
+      await loadSensoryData();
+      setSensoryExpanded(true);
     }
-    setSensoryExpanded(true);
-    
+  };
+
+  const loadSensoryData = async () => {
     if (sensoryLoaded) return;
-    
     setLoadingSensory(true);
     try {
       const { data, error } = await supabase.functions.invoke("analyze-sensory", {
@@ -150,7 +157,6 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
       if (error) throw error;
       if (data?.axes) {
         setSensoryAxes(data.axes);
-        // Set all defaults to level 3 (perfect balance)
         const defaults: Record<string, number> = {};
         data.axes.forEach((a: SensoryAxis) => { defaults[a.name] = 3; });
         setSensoryValues(defaults);
@@ -161,6 +167,15 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
     } finally {
       setLoadingSensory(false);
     }
+  };
+
+  const handleExpandSensory = async () => {
+    if (sensoryExpanded) {
+      setSensoryExpanded(false);
+      return;
+    }
+    setSensoryExpanded(true);
+    await loadSensoryData();
   };
 
   const handleSensoryChange = (axisName: string, level: number) => {
