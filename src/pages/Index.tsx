@@ -273,7 +273,7 @@ const Index = () => {
             <div className="space-y-3">
               {stores.map((store, i) => {
                 const overallTier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
-                const topMetrics = [...store.metrics]
+                const topMetrics = [...(store.metrics || [])]
                   .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
                   .slice(0, 3);
 
