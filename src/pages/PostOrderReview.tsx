@@ -108,7 +108,7 @@ const PostOrderReview = () => {
       setLoading(true);
       const [{ data: storeData }, { data: prevReviews }] = await Promise.all([
         supabase.from("stores").select("category_id").eq("id", storeId).single(),
-        supabase.from("reviews").select("id").eq("store_id", storeId).eq("user_id", user.id).limit(1),
+        supabase.from("reviews").select("metric_id, score").eq("store_id", storeId).eq("user_id", user.id),
       ]);
       if (storeData?.category_id) {
         const cat = categories.find((c) => c.id === storeData.category_id);
@@ -116,7 +116,10 @@ const PostOrderReview = () => {
       } else {
         setCategory(categories[0]);
       }
-      setHasPreviousReview((prevReviews || []).length > 0);
+      if (prevReviews && prevReviews.length > 0) {
+        setHasPreviousReview(true);
+        setPreviousReviewRows(prevReviews);
+      }
       setLoading(false);
     })();
   }, [storeId, user]);
