@@ -20,9 +20,9 @@ export function getPopularityTierInfo(tier: PopularityTier): PopularityTierInfo 
     case 5:
       return {
         tier: 5,
-        label: "Tier 5 Status",
+        label: "Sovereign Legend",
         borderClass: "border-l-[8px] border-l-score-emerald",
-        glowClass: "shadow-[0_0_20px_4px_hsl(var(--score-emerald)/0.35),0_0_40px_8px_hsl(var(--score-emerald)/0.15)]",
+        glowClass: "animate-sovereign-pulse",
       };
     case 4:
       return {
