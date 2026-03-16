@@ -220,6 +220,7 @@ const Profile = () => {
         .select("component_name, selected_score")
         .eq("user_id", user.id);
 
+      setDnaEntryCount(dnaEntries?.length || 0);
       if (dnaEntries && dnaEntries.length > 0) {
         const tasteMap: Record<string, { total: number; count: number }> = {};
         const tasteKeywords: Record<string, keyof TasteDNA> = {
