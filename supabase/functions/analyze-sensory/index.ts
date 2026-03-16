@@ -6,14 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are the TASTURE Sovereign Sensory AI. Given a Thai dish name, identify 4-6 relevant taste & texture axes for that specific dish.
+const SYSTEM_PROMPT = `You are the TASTURE Sovereign Sensory AI. Given a Thai dish name, identify 3-5 relevant TASTE axes (รสชาติ) for that specific dish.
+
+CRITICAL: Only return TASTE/FLAVOR axes. Do NOT include texture, temperature, or mouthfeel axes.
+- ✅ ALLOWED: เค็ม, หวาน, เผ็ด, เปรี้ยว, ขม, มัน, อูมามิ, หอม, กลมกล่อม
+- ❌ NOT ALLOWED: กรุบกรอบ, นุ่ม, เย็น, ร้อน, เหนียว, ละเอียด, ฟู, แน่น, ละลาย
 
 RULES:
-1. Only include axes that are genuinely relevant to the dish. For example:
-   - ก๋วยเตี๋ยว → เค็ม, เผ็ด, เปรี้ยว, ความนุ่มเส้น, ความเข้มข้นน้ำ
-   - บิงซู → หวาน, เย็น, ความละเอียดน้ำแข็ง, ความสดผลไม้
-   - ข้าวมันไก่ → เค็ม, มัน, ความนุ่มไก่, ความหอมข้าว
-   Do NOT include irrelevant axes (e.g. "เย็น" for ก๋วยเตี๋ยว, "เผ็ด" for บิงซู).
+1. Only include taste axes genuinely relevant to the dish. For example:
+   - ก๋วยเตี๋ยว → เค็ม, เผ็ด, เปรี้ยว, อูมามิ
+   - บิงซู → หวาน, เปรี้ยว
+   - ข้าวมันไก่ → เค็ม, มัน, หอม, กลมกล่อม
+   - ส้มตำ → เผ็ด, เปรี้ยว, เค็ม, หวาน
 
 2. For each axis, generate exactly 5 emotional Thai labels representing intensity levels:
    - Level 1 (น้อยมาก/ขาดหาย): Extreme lack, emotionally vivid negative (e.g. "จืดชืดไร้วิญญาณ")
