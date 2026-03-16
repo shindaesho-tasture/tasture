@@ -200,6 +200,30 @@ const MenuFeedback = () => {
     }
   };
 
+  const handleSameReview = async () => {
+    if (!user) { navigate("/auth"); return; }
+    setSaving(true);
+    try {
+      const reRows = items
+        .filter((item) => item.my_score !== null)
+        .map((item) => ({ menu_item_id: item.id, user_id: user.id, score: item.my_score! }));
+      if (reRows.length > 0) {
+        const { error } = await supabase
+          .from("menu_reviews")
+          .upsert(reRows, { onConflict: "menu_item_id,user_id" });
+        if (error) throw error;
+      }
+      setSaveSuccess(true);
+      toast({ title: "✅ บันทึกสำเร็จ", description: `ยืนยันคะแนนเดิม ${reRows.length} เมนู` });
+      setTimeout(() => { setSaveSuccess(false); navigate(-1); }, 1500);
+    } catch (err: any) {
+      console.error("Re-save menu reviews error:", err);
+      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const noodles = items.filter((i) => i.type === "noodle");
   const dualPrice = items.filter((i) => i.type === "dual_price");
   const standard = items.filter((i) => i.type === "standard");
