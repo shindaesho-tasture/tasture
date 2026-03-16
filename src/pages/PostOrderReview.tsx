@@ -403,18 +403,26 @@ const PostOrderReview = () => {
 
       // Save sensory as menu_reviews (average balance score)
       for (const item of items) {
-        const axes = sensoryAxes[item.menuItemId] || [];
-        const vals = sensoryValues[item.menuItemId] || {};
-        if (axes.length > 0) {
-          const levels = Object.values(vals);
-          if (levels.length > 0) {
-            const balanceDistance = levels.reduce((sum, v) => sum + Math.abs(v - 3), 0) / levels.length;
-            // Map to allowed values: {-2, 0, 2}
-            const score = balanceDistance <= 0.5 ? 2 : balanceDistance <= 1.5 ? 0 : -2;
-            await supabase.from("menu_reviews").upsert(
-              { menu_item_id: item.menuItemId, user_id: user.id, score },
-              { onConflict: "menu_item_id,user_id" }
-            );
+        const id = item.menuItemId;
+        if (sensoryReviewChoice[id] === "same" && hasPreviousSensory[id]) {
+          // Re-upsert previous score to update timestamp
+          await supabase.from("menu_reviews").upsert(
+            { menu_item_id: id, user_id: user.id, score: previousSensoryScore[id] },
+            { onConflict: "menu_item_id,user_id" }
+          );
+        } else {
+          const axes = sensoryAxes[id] || [];
+          const vals = sensoryValues[id] || {};
+          if (axes.length > 0) {
+            const levels = Object.values(vals);
+            if (levels.length > 0) {
+              const balanceDistance = levels.reduce((sum, v) => sum + Math.abs(v - 3), 0) / levels.length;
+              const score = balanceDistance <= 0.5 ? 2 : balanceDistance <= 1.5 ? 0 : -2;
+              await supabase.from("menu_reviews").upsert(
+                { menu_item_id: id, user_id: user.id, score },
+                { onConflict: "menu_item_id,user_id" }
+              );
+            }
           }
         }
       }
