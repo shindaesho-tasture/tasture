@@ -187,6 +187,7 @@ const Index = () => {
         return {
           ...s,
           categoryLabel: cat?.labelTh || null,
+          verified: s.verified ?? false,
           avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
           reviewCount: totalCount,
           menuCount: menuCountMap.get(s.id) || 0,
