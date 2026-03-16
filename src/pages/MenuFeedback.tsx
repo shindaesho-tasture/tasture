@@ -380,7 +380,7 @@ const MenuFeedback = () => {
 
         {/* ─── Floating Submit ─── */}
         <AnimatePresence>
-          {items.length > 0 && (
+          {items.length > 0 && (!hasPreviousMenuReview || menuReviewChoice === "changed") && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
