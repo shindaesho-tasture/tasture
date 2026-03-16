@@ -329,7 +329,7 @@ const Index = () => {
                     )}
 
                     {/* No reviews yet */}
-                    {store.metrics.length === 0 && (
+                    {(store.metrics || []).length === 0 && (
                       <div className="px-4 pb-3">
                         <p className="text-[10px] text-muted-foreground italic">ยังไม่มีรีวิว — เป็นคนแรกที่ให้ฟีดแบค!</p>
                       </div>
