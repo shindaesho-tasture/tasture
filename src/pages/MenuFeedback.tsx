@@ -75,6 +75,8 @@ const MenuFeedback = () => {
   const [userScores, setUserScores] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [menuReviewChoice, setMenuReviewChoice] = useState<"same" | "changed" | null>(null);
+  const [hasPreviousMenuReview, setHasPreviousMenuReview] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -126,6 +128,7 @@ const MenuFeedback = () => {
       const scores: Record<string, number | null> = {};
       result.forEach((item) => { scores[item.id] = item.my_score; });
       setUserScores(scores);
+      setHasPreviousMenuReview(result.some((item) => item.my_score !== null));
     } catch (err) {
       console.error("MenuFeedback fetch error:", err);
     } finally {
@@ -197,6 +200,30 @@ const MenuFeedback = () => {
     }
   };
 
+  const handleSameReview = async () => {
+    if (!user) { navigate("/auth"); return; }
+    setSaving(true);
+    try {
+      const reRows = items
+        .filter((item) => item.my_score !== null)
+        .map((item) => ({ menu_item_id: item.id, user_id: user.id, score: item.my_score! }));
+      if (reRows.length > 0) {
+        const { error } = await supabase
+          .from("menu_reviews")
+          .upsert(reRows, { onConflict: "menu_item_id,user_id" });
+        if (error) throw error;
+      }
+      setSaveSuccess(true);
+      toast({ title: "✅ บันทึกสำเร็จ", description: `ยืนยันคะแนนเดิม ${reRows.length} เมนู` });
+      setTimeout(() => { setSaveSuccess(false); navigate(-1); }, 1500);
+    } catch (err: any) {
+      console.error("Re-save menu reviews error:", err);
+      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const noodles = items.filter((i) => i.type === "noodle");
   const dualPrice = items.filter((i) => i.type === "dual_price");
   const standard = items.filter((i) => i.type === "standard");
@@ -250,8 +277,48 @@ const MenuFeedback = () => {
           </div>
         </div>
 
+        {/* ─── Previous Review Gate ─── */}
+        {!loading && items.length > 0 && hasPreviousMenuReview && menuReviewChoice === null && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-4 pt-5 space-y-4"
+          >
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+              <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิวเมนูร้านนี้แล้ว</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติเมนูเปลี่ยนไปหรือเปล่า?</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setMenuReviewChoice("same");
+                  handleSameReview();
+                }}
+                className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
+              >
+                <span className="text-3xl">👍</span>
+                <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
+                <span className="text-[9px] text-muted-foreground">บันทึกคะแนนเดิมอีกครั้ง</span>
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setMenuReviewChoice("changed")}
+                className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
+              >
+                <span className="text-3xl">🔄</span>
+                <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
+                <span className="text-[9px] text-muted-foreground">รีวิวเมนูใหม่</span>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+
         {/* ─── Hero Description ─── */}
-        {!loading && items.length > 0 && (
+        {!loading && items.length > 0 && (!hasPreviousMenuReview || menuReviewChoice === "changed") && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -301,6 +368,8 @@ const MenuFeedback = () => {
               </p>
             </div>
           </motion.div>
+        ) : hasPreviousMenuReview && menuReviewChoice !== "changed" ? (
+          null
         ) : (
           <div className="px-4 pt-3 space-y-5">
             {renderSection("🍜", "ก๋วยเตี๋ยว", noodles)}
@@ -311,7 +380,7 @@ const MenuFeedback = () => {
 
         {/* ─── Floating Submit ─── */}
         <AnimatePresence>
-          {items.length > 0 && (
+          {items.length > 0 && (!hasPreviousMenuReview || menuReviewChoice === "changed") && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
