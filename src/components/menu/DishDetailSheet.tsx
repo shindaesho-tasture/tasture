@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2 } from "lucide-react";
+import { getScoreTier, type ScoreTier } from "@/lib/categories";
+import { getIntensityOpacity } from "@/lib/scoring";
 import { supabase } from "@/integrations/supabase/client";
 import BalanceSpiderChart from "./BalanceSpiderChart";
 import type { SensoryAxis } from "@/lib/sensory-types";
