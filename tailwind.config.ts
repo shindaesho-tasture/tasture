@@ -120,6 +120,7 @@ export default {
         "fade-out": "fade-out 0.3s ease-out",
         "scale-in": "scale-in 0.3s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
+        "sovereign-pulse": "sovereign-pulse 2.5s cubic-bezier(0.4,0,0.6,1) infinite",
       },
     },
   },

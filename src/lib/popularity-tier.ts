@@ -41,8 +41,8 @@ export function getPopularityTierInfo(tier: PopularityTier): PopularityTierInfo 
     case 2:
       return {
         tier: 2,
-        label: "Tier 2 Status",
-        borderClass: "border-l-[2px] border-l-score-emerald",
+        label: "Tier 2",
+        borderClass: "border-l-[2px] border-l-score-emerald/60",
         glowClass: "",
       };
     case 1:
