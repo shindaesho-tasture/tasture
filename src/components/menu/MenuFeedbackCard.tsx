@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Dna } from "lucide-react";
+import { Dna, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
+import type { SensoryAxis } from "@/lib/sensory-types";
+import SensorySliderCard from "./SensorySliderCard";
+import BalanceSpiderChart from "./BalanceSpiderChart";
 
 interface MenuFeedbackItem {
   id: string;
@@ -51,33 +54,6 @@ const typeConfig: Record<string, { icon: string; accent: string }> = {
   standard: { icon: "🍽️", accent: "bg-score-slate/8" },
 };
 
-const ratingOptions = [
-  {
-    value: -2,
-    emoji: "😔",
-    label: "ไม่โอเค",
-    color: "bg-score-ruby",
-    ring: "ring-score-ruby/30",
-    glow: "shadow-[0_0_20px_hsla(0,68%,35%,0.25)]",
-  },
-  {
-    value: 0,
-    emoji: "😐",
-    label: "ปกติ",
-    color: "bg-score-slate",
-    ring: "ring-score-slate/30",
-    glow: "shadow-[0_0_20px_hsla(215,16%,47%,0.2)]",
-  },
-  {
-    value: 2,
-    emoji: "🤩",
-    label: "สุดยอด",
-    color: "bg-score-emerald",
-    ring: "ring-score-emerald/30",
-    glow: "shadow-[0_0_20px_hsla(163,78%,20%,0.25)]",
-  },
-];
-
 const tagScoreConfig: Record<number, { bg: string; text: string }> = {
   2: { bg: "bg-score-emerald/10", text: "text-score-emerald" },
   0: { bg: "bg-score-slate/10", text: "text-score-slate" },
@@ -123,8 +99,15 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
   const avgTier = hasAvg ? getScoreTier(item.avg_score!) : null;
   const config = typeConfig[item.type] || typeConfig.standard;
   const [topTags, setTopTags] = useState<DnaTag[]>([]);
+  
+  // Sensory feedback state
+  const [sensoryExpanded, setSensoryExpanded] = useState(false);
+  const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
+  const [sensoryValues, setSensoryValues] = useState<Record<string, number>>({});
+  const [loadingSensory, setLoadingSensory] = useState(false);
+  const [sensoryLoaded, setSensoryLoaded] = useState(false);
 
-  // Fetch top 3 most emotional tags (prioritize +2 and -2)
+  // Fetch top 3 most emotional tags
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -133,9 +116,7 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
         .eq("menu_item_id", item.id)
         .order("created_at", { ascending: false });
       if (data && data.length > 0) {
-        // Sort by extremity: +2 and -2 first
         const sorted = [...data].sort((a, b) => Math.abs(b.selected_score) - Math.abs(a.selected_score));
-        // Unique by component
         const seen = new Set<string>();
         const unique: DnaTag[] = [];
         for (const d of sorted) {
@@ -148,6 +129,55 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
       }
     })();
   }, [item.id]);
+
+  const handleExpandSensory = async () => {
+    if (sensoryExpanded) {
+      setSensoryExpanded(false);
+      return;
+    }
+    setSensoryExpanded(true);
+    
+    if (sensoryLoaded) return;
+    
+    setLoadingSensory(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-sensory", {
+        body: { dishName: item.name },
+      });
+      if (error) throw error;
+      if (data?.axes) {
+        setSensoryAxes(data.axes);
+        // Set all defaults to level 3 (perfect balance)
+        const defaults: Record<string, number> = {};
+        data.axes.forEach((a: SensoryAxis) => { defaults[a.name] = 3; });
+        setSensoryValues(defaults);
+        setSensoryLoaded(true);
+      }
+    } catch (err) {
+      console.error("Sensory analysis error:", err);
+    } finally {
+      setLoadingSensory(false);
+    }
+  };
+
+  const handleSensoryChange = (axisName: string, level: number) => {
+    setSensoryValues((prev) => ({ ...prev, [axisName]: level }));
+  };
+
+  // Compute average sensory score mapped to -2 to +2 scale for the overall rating
+  const computeSensoryScore = (): number | null => {
+    if (sensoryAxes.length === 0) return null;
+    const vals = Object.values(sensoryValues);
+    if (vals.length === 0) return null;
+    // Level 3 = 0 (perfect), Level 1 = -2, Level 5 = +2
+    const avg = vals.reduce((sum, v) => sum + (v - 3), 0) / vals.length;
+    // Distance from balance: 0 = perfect, more distance = worse
+    const balanceScore = vals.reduce((sum, v) => sum + Math.abs(v - 3), 0) / vals.length;
+    // Convert: 0 distance = +2 (perfect), 2 distance = -2 (terrible)
+    return Math.round((2 - balanceScore * 2) * 10) / 10;
+  };
+
+  const sensoryComputedScore = computeSensoryScore();
 
   return (
     <motion.div
@@ -232,67 +262,98 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
 
         <div className="h-px bg-border/60" />
 
-        {/* Rating + DNA Button */}
-        <div className="space-y-2">
+        {/* ─── Sensory Feedback Button ─── */}
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.15em]">
-              ให้คะแนนเมนูนี้
-            </span>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleExpandSensory}
+              className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-score-emerald/8 text-score-emerald hover:bg-score-emerald/15 transition-colors"
+            >
+              <span className="text-sm">🎯</span>
+              <span className="text-[11px] font-semibold">Sensory Feedback</span>
+              {sensoryExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </motion.button>
+
             <motion.button
               whileTap={{ scale: 0.92 }}
               onClick={() => navigate(`/dish-dna/${item.id}?storeId=${item.id}`)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-score-emerald/8 text-score-emerald text-[10px] font-medium hover:bg-score-emerald/15 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-secondary text-muted-foreground text-[10px] font-medium hover:bg-muted transition-colors"
             >
               <Dna size={12} strokeWidth={2} />
               <span>Dish DNA</span>
             </motion.button>
           </div>
 
-          <div className="flex items-center gap-2">
-            {ratingOptions.map((opt) => {
-              const isActive = myScore === opt.value;
-              return (
-                <motion.button
-                  key={opt.value}
-                  whileTap={{ scale: 0.88 }}
-                  whileHover={{ scale: 1.03 }}
-                  onClick={() => onRate(opt.value)}
-                  className={cn(
-                    "flex-1 relative flex flex-col items-center gap-1 py-2.5 rounded-2xl transition-all duration-300",
-                    isActive
-                      ? cn(opt.color, "text-primary-foreground ring-2", opt.ring, opt.glow)
-                      : "bg-secondary text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  <motion.span
-                    className="text-lg leading-none"
-                    animate={isActive ? { scale: [1, 1.3, 1] } : { scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {opt.emoji}
-                  </motion.span>
-                  <span className={cn(
-                    "text-[9px] font-medium tracking-wide",
-                    isActive ? "text-primary-foreground" : "text-muted-foreground"
-                  )}>
-                    {opt.label}
-                  </span>
-
-                  <AnimatePresence>
-                    {isActive && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-primary-foreground border-2 border-current"
-                        style={{ borderColor: "inherit" }}
-                      />
+          {/* ─── Expanded Sensory Dashboard ─── */}
+          <AnimatePresence>
+            {sensoryExpanded && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="overflow-hidden"
+              >
+                {loadingSensory ? (
+                  <div className="flex flex-col items-center py-8 gap-3">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="w-8 h-8 rounded-full border-[2px] border-border border-t-score-emerald"
+                    />
+                    <p className="text-[10px] text-muted-foreground">AI กำลังวิเคราะห์แกนรสชาติ...</p>
+                  </div>
+                ) : sensoryAxes.length > 0 ? (
+                  <div className="space-y-3 pt-2">
+                    {/* Spider Chart */}
+                    {sensoryAxes.length >= 3 && (
+                      <div className="bg-secondary/30 rounded-2xl p-4">
+                        <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.15em] mb-2 text-center">
+                          Balance Spider Chart
+                        </p>
+                        <BalanceSpiderChart axes={sensoryAxes} values={sensoryValues} />
+                      </div>
                     )}
-                  </AnimatePresence>
-                </motion.button>
-              );
-            })}
-          </div>
+
+                    {/* Sliders */}
+                    <div className="space-y-2.5">
+                      {sensoryAxes.map((axis, i) => (
+                        <SensorySliderCard
+                          key={axis.name}
+                          axis={axis}
+                          value={sensoryValues[axis.name] ?? 3}
+                          onChange={(level) => handleSensoryChange(axis.name, level)}
+                          index={i}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Auto-computed score display */}
+                    {sensoryComputedScore !== null && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex items-center justify-between p-3 rounded-2xl bg-score-emerald/5 border border-score-emerald/10"
+                      >
+                        <span className="text-[11px] font-medium text-foreground">คะแนนสมดุลรวม</span>
+                        <span className={cn(
+                          "text-sm font-bold tabular-nums",
+                          sensoryComputedScore >= 1 ? "text-score-emerald" :
+                          sensoryComputedScore >= 0 ? "text-score-mint" :
+                          sensoryComputedScore >= -1 ? "text-score-amber" : "text-score-ruby"
+                        )}>
+                          {sensoryComputedScore > 0 ? "+" : ""}{sensoryComputedScore.toFixed(1)}
+                        </span>
+                      </motion.div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground text-center py-4">ไม่สามารถวิเคราะห์ได้</p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
