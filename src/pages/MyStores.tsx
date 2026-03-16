@@ -18,6 +18,7 @@ interface StoreWithReviews {
   created_at: string;
   verified: boolean;
   reviewCount: number;
+  menuReviewCount: number;
   metricAverages: { metric_id: string; avg_score: number; count: number }[];
 }
 
