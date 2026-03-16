@@ -42,6 +42,9 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/my-stores" element={<MyStores />} />
+        <Route path="/store-list" element={<StoreList />} />
+        <Route path="/store/:storeId/order" element={<StoreOrder />} />
+        <Route path="/order-summary" element={<OrderSummary />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/menu-feedback/:storeId" element={<MenuFeedback />} />
         <Route path="/dish-dna/:menuItemId" element={<DishDnaFeedback />} />
