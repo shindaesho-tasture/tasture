@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
-import KingSwitcher from "@/components/KingSwitcher";
+import DiscoveryTabs, { type DiscoveryTab } from "@/components/DiscoveryTabs";
 import SensorySearch from "@/components/SensorySearch";
 import HeroFoodCard from "@/components/HeroFoodCard";
 import BottomNav from "@/components/BottomNav";
@@ -35,6 +36,11 @@ interface StoreCard {
   metrics: MetricAvg[];
   dnaCount: number;
   menuReviewCount: number;
+  pin_lat: number | null;
+  pin_lng: number | null;
+  distanceKm: number | null;
+  recentActivityCount: number;
+  matchPercent: number | null;
 }
 
 const tierColors: Record<ScoreTier, { bg: string; text: string }> = {
@@ -55,66 +61,47 @@ const categoryEmoji: Record<string, string> = {
   bar: "🍸",
 };
 
-/* ─── Mini Score Bar ─── */
-const MiniScoreBar = ({ metric }: { metric: MetricAvg }) => {
-  const tier = getScoreTier(metric.score);
-  const opacity = getIntensityOpacity(metric.count);
-  const colors = tierColors[tier];
-  const pct = ((metric.score + 2) / 4) * 100;
-
-  return (
-    <div className="space-y-0.5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <span className="text-[10px]">{metric.icon}</span>
-          <span className="text-[9px] font-medium text-foreground truncate">{metric.label}</span>
-        </div>
-        <span className={cn("text-[9px] font-semibold tabular-nums", colors.text)}>
-          {metric.score > 0 ? "+" : ""}{metric.score.toFixed(1)}
-        </span>
-      </div>
-      <div className="h-1 rounded-full bg-secondary overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className={cn("h-full rounded-full", colors.bg)}
-          style={{ opacity }}
-        />
-      </div>
-    </div>
-  );
-};
-
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { position } = useGeolocation();
   const [stores, setStores] = useState<StoreCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<DiscoveryTab>("nearby");
 
   useEffect(() => {
     fetchStores();
-  }, [user]);
+  }, [user, position]);
 
   const fetchStores = async () => {
     setLoading(true);
     try {
       const { data: allStores } = await supabase
         .from("stores")
-        .select("id, name, category_id, verified")
+        .select("id, name, category_id, verified, pin_lat, pin_lng")
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(30);
 
       if (!allStores || allStores.length === 0) { setStores([]); setLoading(false); return; }
 
       const storeIds = allStores.map((s) => s.id);
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Fetch reviews (with metric_id), menu_items, dish_dna, menu_reviews in parallel
-      const [reviewsRes, menuRes, dnaRes, menuRevRes] = await Promise.all([
+      // Parallel fetches
+      const [reviewsRes, menuRes, dnaRes, menuRevRes, recentReviewsRes, recentDnaRes, userDnaRes] = await Promise.all([
         supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
         supabase.from("menu_items").select("id, store_id").in("store_id", storeIds),
-        supabase.from("dish_dna").select("menu_item_id"),
-        supabase.from("menu_reviews").select("menu_item_id"),
+        supabase.from("dish_dna").select("menu_item_id").in("menu_item_id",
+          (await supabase.from("menu_items").select("id").in("store_id", storeIds)).data?.map(m => m.id) || []
+        ),
+        supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id",
+          (await supabase.from("menu_items").select("id").in("store_id", storeIds)).data?.map(m => m.id) || []
+        ),
+        // Recent activity for trending (last 7 days)
+        supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
+        supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
+        // User's DNA preferences for matching
+        user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
       ]);
 
       // Build menu→store map
@@ -137,31 +124,64 @@ const Index = () => {
         m.count++;
       });
 
-      // DNA count per store
+      // DNA & menu review counts per store
       const dnaCountMap = new Map<string, number>();
       (dnaRes.data || []).forEach((d) => {
         const sid = menuToStore.get(d.menu_item_id);
         if (sid) dnaCountMap.set(sid, (dnaCountMap.get(sid) || 0) + 1);
       });
-
-      // Menu review count per store
       const menuRevCountMap = new Map<string, number>();
       (menuRevRes.data || []).forEach((r) => {
         const sid = menuToStore.get(r.menu_item_id);
         if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
 
+      // Recent activity per store (trending)
+      const recentActivityMap = new Map<string, number>();
+      (recentReviewsRes.data || []).forEach((r) => {
+        const sid = menuToStore.get(r.menu_item_id);
+        if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
+      });
+      (recentDnaRes.data || []).forEach((d) => {
+        const sid = menuToStore.get(d.menu_item_id);
+        if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
+      });
+
+      // User DNA preferences for matching
+      const userPrefs = new Map<string, number>();
+      (userDnaRes.data || []).forEach((d: any) => {
+        if (d.selected_score !== 0) {
+          userPrefs.set(d.component_name, (userPrefs.get(d.component_name) || 0) + d.selected_score);
+        }
+      });
+
+      // Store DNA profiles for matching
+      const storeDnaMap = new Map<string, Map<string, { total: number; count: number }>>();
+      // We need full dna data with component_name and score for matching
+      const { data: fullDnaData } = await supabase
+        .from("dish_dna")
+        .select("menu_item_id, component_name, selected_score");
+
+      (fullDnaData || []).forEach((d) => {
+        const sid = menuToStore.get(d.menu_item_id);
+        if (!sid) return;
+        if (!storeDnaMap.has(sid)) storeDnaMap.set(sid, new Map());
+        const sm = storeDnaMap.get(sid)!;
+        if (!sm.has(d.component_name)) sm.set(d.component_name, { total: 0, count: 0 });
+        const entry = sm.get(d.component_name)!;
+        entry.total += d.selected_score;
+        entry.count++;
+      });
+
       setStores(allStores.map((s) => {
         const sm = metricMap.get(s.id);
         const cat = categories.find((c) => c.id === s.category_id);
 
-        // Build metric averages
         const metrics: MetricAvg[] = [];
         let totalScore = 0;
         let totalCount = 0;
 
         if (sm && cat) {
-          // Flatten category metrics (including sub-metrics from smartGates)
           const allMetrics = cat.metrics.flatMap((m) =>
             m.smartGate ? m.smartGate.subMetrics : [m]
           );
@@ -183,6 +203,36 @@ const Index = () => {
           });
         }
 
+        // Distance
+        let distanceKm: number | null = null;
+        if (position && s.pin_lat != null && s.pin_lng != null) {
+          distanceKm = Math.round(haversineKm(position.lat, position.lng, s.pin_lat, s.pin_lng) * 10) / 10;
+        }
+
+        // Match percent
+        let matchPercent: number | null = null;
+        if (userPrefs.size > 0) {
+          const storeDna = storeDnaMap.get(s.id);
+          if (storeDna && storeDna.size > 0) {
+            let matchScore = 0;
+            let maxScore = 0;
+            userPrefs.forEach((prefScore, compName) => {
+              const storeEntry = storeDna.get(compName);
+              if (storeEntry && storeEntry.count > 0) {
+                const storeAvg = storeEntry.total / storeEntry.count;
+                // Both positive = match; both negative = match
+                if ((prefScore > 0 && storeAvg > 0) || (prefScore < 0 && storeAvg < 0)) {
+                  matchScore += Math.min(Math.abs(prefScore), Math.abs(storeAvg));
+                }
+                maxScore += Math.abs(prefScore);
+              } else {
+                maxScore += Math.abs(prefScore);
+              }
+            });
+            matchPercent = maxScore > 0 ? Math.round((matchScore / maxScore) * 100) : null;
+          }
+        }
+
         return {
           ...s,
           categoryLabel: cat?.labelTh || null,
@@ -193,6 +243,9 @@ const Index = () => {
           metrics,
           dnaCount: dnaCountMap.get(s.id) || 0,
           menuReviewCount: menuRevCountMap.get(s.id) || 0,
+          distanceKm,
+          recentActivityCount: recentActivityMap.get(s.id) || 0,
+          matchPercent,
         };
       }));
     } catch (err) {
@@ -200,6 +253,40 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Sort/filter based on active tab
+  const filteredStores = useMemo(() => {
+    const sorted = [...stores];
+    switch (activeTab) {
+      case "nearby":
+        return sorted.sort((a, b) => {
+          if (a.distanceKm == null && b.distanceKm == null) return 0;
+          if (a.distanceKm == null) return 1;
+          if (b.distanceKm == null) return -1;
+          return a.distanceKm - b.distanceKm;
+        });
+      case "trending":
+        return sorted
+          .filter((s) => s.recentActivityCount > 0)
+          .sort((a, b) => b.recentActivityCount - a.recentActivityCount)
+          .concat(sorted.filter((s) => s.recentActivityCount === 0));
+      case "match":
+        return sorted.sort((a, b) => {
+          if (a.matchPercent == null && b.matchPercent == null) return 0;
+          if (a.matchPercent == null) return 1;
+          if (b.matchPercent == null) return -1;
+          return b.matchPercent - a.matchPercent;
+        });
+      default:
+        return sorted;
+    }
+  }, [stores, activeTab]);
+
+  const tabTitle: Record<DiscoveryTab, string> = {
+    nearby: "📍 ร้านใกล้คุณ",
+    trending: "🔥 กำลังเป็นเทรนด์",
+    match: "💎 แมตช์กับคุณ",
   };
 
   return (
@@ -222,7 +309,9 @@ const Index = () => {
           </p>
         </div>
 
-        <KingSwitcher />
+        {/* Discovery Trinity Tabs */}
+        <DiscoveryTabs active={activeTab} onChange={setActiveTab} />
+
         <SensorySearch />
         <HeroFoodCard />
 
@@ -255,7 +344,9 @@ const Index = () => {
         {/* ─── Store List ─── */}
         <div className="px-6 pt-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-foreground tracking-tight">ร้านอาหาร</h2>
+            <h2 className="text-lg font-semibold text-foreground tracking-tight">
+              {tabTitle[activeTab]}
+            </h2>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate("/store-list")}
@@ -269,19 +360,26 @@ const Index = () => {
             <div className="flex items-center justify-center py-10">
               <div className="w-8 h-8 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
             </div>
-          ) : stores.length === 0 ? (
+          ) : filteredStores.length === 0 ? (
             <div className="flex flex-col items-center py-10 gap-2">
               <span className="text-3xl">🍽️</span>
-              <p className="text-xs text-muted-foreground">ยังไม่มีร้านอาหาร</p>
+              <p className="text-xs text-muted-foreground">
+                {activeTab === "match" && !user
+                  ? "เข้าสู่ระบบเพื่อดูร้านที่แมตช์กับคุณ"
+                  : activeTab === "match"
+                  ? "รีวิว Dish DNA เพิ่มเติมเพื่อให้ระบบแมตช์ได้แม่นยำขึ้น"
+                  : "ยังไม่มีร้านอาหาร"}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {stores.map((store, i) => {
+              {filteredStores.map((store, i) => {
                 const overallTier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
                 const popInfo = getPopularityTierInfo(getPopularityTier(store.reviewCount));
                 const topMetrics = [...(store.metrics || [])]
                   .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
                   .slice(0, 4);
+                const isTrending = activeTab === "trending" && store.recentActivityCount > 0;
 
                 return (
                   <motion.button
@@ -293,6 +391,24 @@ const Index = () => {
                     onClick={() => navigate(`/store/${store.id}/order`)}
                     className={`w-full rounded-2xl bg-surface-elevated border border-border/50 text-left overflow-hidden relative ${popInfo.borderClass} ${popInfo.glowClass || 'shadow-luxury'}`}
                   >
+                    {/* Trending badge */}
+                    {isTrending && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-score-amber/15 text-score-amber text-[9px] font-bold tracking-wide">
+                          🔥 Trending
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Match badge */}
+                    {activeTab === "match" && store.matchPercent != null && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-score-emerald/15 text-score-emerald text-[9px] font-bold tracking-wide">
+                          💎 {store.matchPercent}% Match
+                        </span>
+                      </div>
+                    )}
+
                     {/* Card Header */}
                     <div className="flex items-center gap-3 p-4 pb-2">
                       <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-xl shrink-0">
@@ -307,6 +423,9 @@ const Index = () => {
                           {store.menuCount} เมนู · {store.reviewCount} รีวิว
                           {store.dnaCount > 0 && <> · 🧬 {store.dnaCount}</>}
                           {store.menuReviewCount > 0 && <> · ⭐ {store.menuReviewCount}</>}
+                          {activeTab === "nearby" && store.distanceKm != null && (
+                            <> · 📍 {store.distanceKm} km</>
+                          )}
                         </p>
                       </div>
                       {overallTier && store.avgScore !== null && (
