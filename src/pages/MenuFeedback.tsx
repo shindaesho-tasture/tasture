@@ -368,6 +368,8 @@ const MenuFeedback = () => {
               </p>
             </div>
           </motion.div>
+        ) : hasPreviousMenuReview && menuReviewChoice !== "changed" ? (
+          null
         ) : (
           <div className="px-4 pt-3 space-y-5">
             {renderSection("🍜", "ก๋วยเตี๋ยว", noodles)}
