@@ -50,6 +50,7 @@ const PostOrderReview = () => {
   const { items, storeId, storeName, clearOrder } = useOrder();
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -359,17 +360,27 @@ const PostOrderReview = () => {
     navigate("/");
   };
 
+  const haptic = () => {
+    if (navigator.vibrate) navigator.vibrate(8);
+  };
+
   const goNext = () => {
     if (currentStep < totalSteps - 1) {
-      // Auto-save on results step
       if (steps[currentStep + 1].type === "results") handleSaveAll();
+      haptic();
+      setDirection(1);
       setCurrentStep((s) => s + 1);
     }
   };
 
   const goBack = () => {
-    if (currentStep > 0) setCurrentStep((s) => s - 1);
-    else navigate(-1);
+    haptic();
+    if (currentStep > 0) {
+      setDirection(-1);
+      setCurrentStep((s) => s - 1);
+    } else {
+      navigate(-1);
+    }
   };
 
   if (loading || authLoading) {
@@ -409,13 +420,24 @@ const PostOrderReview = () => {
         </div>
 
         {/* ─── Step Content ─── */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            custom={direction}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            variants={{
+              enter: (d: number) => ({ x: `${d * 60}%`, opacity: 0 }),
+              center: { x: 0, opacity: 1 },
+              exit: (d: number) => ({ x: `${d * -30}%`, opacity: 0 }),
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 380,
+              damping: 34,
+              mass: 0.8,
+            }}
           >
             {/* Store Review */}
             {step?.type === "store-review" && category && (
