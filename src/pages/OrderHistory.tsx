@@ -45,38 +45,50 @@ const OrderHistory = () => {
         .select("store_id, created_at")
         .eq("user_id", user.id);
 
-      // 2. Get menu reviews by user
+      // 2. Get menu reviews by user (ordered + reviewed)
       const { data: menuReviews } = await supabase
         .from("menu_reviews")
         .select("score, created_at, menu_item_id")
         .eq("user_id", user.id);
 
-      const reviewedStoreIds = new Set(
-        (storeReviews || []).map((r) => r.store_id)
-      );
+      // 3. Get dish_dna by user (ordered + DNA feedback but maybe no score)
+      const { data: dnaEntries } = await supabase
+        .from("dish_dna")
+        .select("menu_item_id, created_at")
+        .eq("user_id", user.id);
+
       const menuReviewMap = new Map(
         (menuReviews || []).map((r) => [r.menu_item_id, r])
       );
+      const dnaItemIds = new Set(
+        (dnaEntries || []).map((d) => d.menu_item_id)
+      );
 
-      // 3. Get menu items that user reviewed → derive store ids
-      const reviewedItemIds = [...menuReviewMap.keys()];
-      let menuItemStoreIds: string[] = [];
+      // Combine all ordered item IDs (from menu_reviews + dish_dna)
+      const orderedItemIds = [
+        ...new Set([...menuReviewMap.keys(), ...dnaItemIds]),
+      ];
+
+      if (orderedItemIds.length === 0 && (!storeReviews || storeReviews.length === 0)) {
+        setLoading(false);
+        return;
+      }
+
+      // 4. Get menu item info for ordered items only
       let allItems: { id: string; name: string; store_id: string }[] = [];
-
-      if (reviewedItemIds.length > 0) {
+      if (orderedItemIds.length > 0) {
         const { data: items } = await supabase
           .from("menu_items")
           .select("id, name, store_id")
-          .in("id", reviewedItemIds);
-        if (items) {
-          allItems = items;
-          menuItemStoreIds = items.map((i) => i.store_id);
-        }
+          .in("id", orderedItemIds);
+        if (items) allItems = items;
       }
 
-      // Combine all store IDs
       const allStoreIds = [
-        ...new Set([...reviewedStoreIds, ...menuItemStoreIds]),
+        ...new Set([
+          ...(storeReviews || []).map((r) => r.store_id),
+          ...allItems.map((i) => i.store_id),
+        ]),
       ];
 
       if (allStoreIds.length === 0) {
@@ -84,46 +96,43 @@ const OrderHistory = () => {
         return;
       }
 
-      // 4. Get store info
+      // 5. Get store info
       const { data: stores } = await supabase
         .from("stores")
         .select("id, name")
         .in("id", allStoreIds);
 
-      // 5. Get ALL menu items for those stores (to show unreviewed ones too)
-      const { data: allMenuItems } = await supabase
-        .from("menu_items")
-        .select("id, name, store_id")
-        .in("store_id", allStoreIds);
-
-      if (!stores || !allMenuItems) {
+      if (!stores) {
         setLoading(false);
         return;
       }
 
       const storeMap = Object.fromEntries(stores.map((s) => [s.id, s.name]));
 
-      // 6. Build visit records grouped by store
+      // 6. Build visit records — only ordered items
       const grouped: Record<string, VisitRecord> = {};
 
       for (const sid of allStoreIds) {
-        // Find latest interaction date for this store
         const storeRevDates = (storeReviews || [])
           .filter((r) => r.store_id === sid)
           .map((r) => r.created_at);
 
-        const storeMenuItems = allMenuItems.filter((i) => i.store_id === sid);
-        const menuRevDates = storeMenuItems
-          .map((i) => menuReviewMap.get(i.id)?.created_at)
+        const storeItems = allItems.filter((i) => i.store_id === sid);
+        const itemDates = storeItems
+          .map((i) => {
+            const rev = menuReviewMap.get(i.id);
+            const dna = (dnaEntries || []).find((d) => d.menu_item_id === i.id);
+            return rev?.created_at || dna?.created_at;
+          })
           .filter(Boolean) as string[];
 
-        const allDates = [...storeRevDates, ...menuRevDates];
+        const allDates = [...storeRevDates, ...itemDates];
         const lastVisit =
           allDates.length > 0
             ? allDates.sort().reverse()[0]
             : new Date().toISOString();
 
-        const items: MenuItem[] = storeMenuItems.map((mi) => {
+        const items: MenuItem[] = storeItems.map((mi) => {
           const rev = menuReviewMap.get(mi.id);
           return {
             id: mi.id,
