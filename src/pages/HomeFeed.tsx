@@ -596,10 +596,10 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         </div>
       )}
 
-      {/* Score display for reviews */}
-      {(post.type === "menu_review" || post.type === "combined") && post.score != null && (
-        <div className="px-4 pb-3">
-          <ScorePill score={post.score} />
+      {/* Satisfaction Radar Chart */}
+      {post.satisfaction && (
+        <div className="flex justify-center px-4 pb-3">
+          <FeedRadarChart data={post.satisfaction} size={180} />
         </div>
       )}
 
