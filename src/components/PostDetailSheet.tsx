@@ -1,15 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Heart, MessageCircle, Send, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Heart, MessageCircle, Send, Trash2, ChevronLeft, ChevronRight, UtensilsCrossed } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 /* ── Types ── */
-interface PostImage {
-  id: string;
+interface ImageSlide {
   image_url: string;
-  sort_order: number;
+  menu_review_id: string | null;
+}
+
+interface ReviewInfo {
+  menu_item_name: string;
+  score: number;
+  dish_dna: { component_name: string; component_icon: string; selected_tag: string; selected_score: number }[];
 }
 
 interface Comment {
@@ -58,7 +63,9 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
     store_id: string | null;
   } | null>(null);
   const [author, setAuthor] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+  const [slides, setSlides] = useState<ImageSlide[]>([]);
   const [images, setImages] = useState<string[]>(preload?.images || []);
+  const [reviewMap, setReviewMap] = useState<Record<string, ReviewInfo>>({});
   const [activeIdx, setActiveIdx] = useState(0);
 
   // Likes
@@ -81,7 +88,7 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
       // Post + images + likes + comments in parallel
       const [postRes, imagesRes, likesRes, commentsRes] = await Promise.all([
         supabase.from("posts").select("user_id, caption, created_at, store_id").eq("id", postId).single(),
-        supabase.from("post_images").select("image_url, sort_order").eq("post_id", postId).order("sort_order", { ascending: true }),
+        supabase.from("post_images").select("image_url, sort_order, menu_review_id").eq("post_id", postId).order("sort_order", { ascending: true }),
         supabase.from("post_likes").select("id, user_id").eq("ref_id", postId),
         supabase.from("feed_comments").select("id, user_id, content, created_at").eq("ref_id", postId).order("created_at", { ascending: true }),
       ]);
@@ -98,7 +105,43 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
       }
 
       if (imagesRes.data && imagesRes.data.length > 0) {
-        setImages(imagesRes.data.map((i) => i.image_url));
+        const slideData = imagesRes.data.map((i) => ({ image_url: i.image_url, menu_review_id: i.menu_review_id }));
+        setSlides(slideData);
+        setImages(slideData.map((s) => s.image_url));
+
+        // Load review info for slides that have menu_review_id
+        const reviewIds = [...new Set(slideData.map((s) => s.menu_review_id).filter(Boolean))] as string[];
+        if (reviewIds.length > 0) {
+          const { data: reviews } = await supabase
+            .from("menu_reviews")
+            .select("id, score, menu_item_id")
+            .in("id", reviewIds);
+
+          if (reviews && reviews.length > 0) {
+            const menuItemIds = [...new Set(reviews.map((r) => r.menu_item_id))];
+            const [menuRes, dnaRes] = await Promise.all([
+              supabase.from("menu_items").select("id, name").in("id", menuItemIds),
+              supabase.from("dish_dna").select("menu_item_id, component_name, component_icon, selected_tag, selected_score").in("menu_item_id", menuItemIds),
+            ]);
+
+            const menuMap = new Map((menuRes.data || []).map((m) => [m.id, m.name]));
+            const dnaByItem = new Map<string, ReviewInfo["dish_dna"]>();
+            (dnaRes.data || []).forEach((d) => {
+              if (!dnaByItem.has(d.menu_item_id)) dnaByItem.set(d.menu_item_id, []);
+              dnaByItem.get(d.menu_item_id)!.push(d);
+            });
+
+            const rMap: Record<string, ReviewInfo> = {};
+            reviews.forEach((r) => {
+              rMap[r.id] = {
+                menu_item_name: menuMap.get(r.menu_item_id) || "เมนู",
+                score: r.score,
+                dish_dna: dnaByItem.get(r.menu_item_id) || [],
+              };
+            });
+            setReviewMap(rMap);
+          }
+        }
       } else if (preload?.images) {
         setImages(preload.images);
       }
@@ -310,6 +353,44 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Review info for current slide */}
+              {(() => {
+                const currentSlide = slides[activeIdx];
+                const reviewInfo = currentSlide?.menu_review_id ? reviewMap[currentSlide.menu_review_id] : null;
+                if (!reviewInfo) return null;
+
+                const scoreEmoji = reviewInfo.score === 2 ? "🤩" : reviewInfo.score === 0 ? "😐" : "😔";
+                const scoreBg = reviewInfo.score === 2 ? "bg-emerald-50 border-emerald-200" : reviewInfo.score === 0 ? "bg-muted border-border" : "bg-red-50 border-red-200";
+                const scoreText = reviewInfo.score === 2 ? "text-emerald-700" : reviewInfo.score === 0 ? "text-muted-foreground" : "text-red-700";
+
+                return (
+                  <motion.div
+                    key={currentSlide.menu_review_id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn("mx-4 mt-2 p-3 rounded-2xl border", scoreBg)}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <UtensilsCrossed size={14} className={scoreText} />
+                      <span className={cn("text-sm font-semibold", scoreText)}>{reviewInfo.menu_item_name}</span>
+                      <span className="text-base ml-auto">{scoreEmoji}</span>
+                    </div>
+                    {reviewInfo.dish_dna.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {reviewInfo.dish_dna.map((d, i) => {
+                          const tagBg = d.selected_score === 2 ? "bg-emerald-100 text-emerald-800" : d.selected_score === 0 ? "bg-secondary text-muted-foreground" : "bg-red-100 text-red-800";
+                          return (
+                            <span key={i} className={cn("text-[11px] px-2 py-0.5 rounded-full font-medium", tagBg)}>
+                              {d.component_icon} {d.selected_tag}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })()}
 
               {/* Actions */}
               <div className="flex items-center gap-4 px-4 py-3">
