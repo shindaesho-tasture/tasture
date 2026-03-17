@@ -1,6 +1,51 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+
+/* ── Confetti / sparkle particles ── */
+const PARTICLE_COUNT = 18;
+const COLORS = ["#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899", "#14b8a6"];
+const randomBetween = (a: number, b: number) => a + Math.random() * (b - a);
+
+const ConfettiBurst = () => {
+  const [particles] = useState(() =>
+    Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
+      id: i,
+      color: COLORS[i % COLORS.length],
+      angle: (360 / PARTICLE_COUNT) * i + randomBetween(-15, 15),
+      distance: randomBetween(60, 130),
+      size: randomBetween(4, 8),
+      rotation: randomBetween(0, 360),
+      shape: i % 3, // 0=circle, 1=star, 2=rect
+      delay: randomBetween(0, 0.15),
+    }))
+  );
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {particles.map((p) => {
+        const rad = (p.angle * Math.PI) / 180;
+        const tx = Math.cos(rad) * p.distance;
+        const ty = Math.sin(rad) * p.distance;
+        return (
+          <motion.div
+            key={p.id}
+            initial={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }}
+            animate={{ opacity: 0, x: tx, y: ty, scale: 0.3, rotate: p.rotation + 180 }}
+            transition={{ duration: 0.9, delay: p.delay, ease: "easeOut" }}
+            className="absolute left-1/2 top-1/2"
+            style={{ width: p.size, height: p.size }}
+          >
+            {p.shape === 0 && <div className="w-full h-full rounded-full" style={{ background: p.color }} />}
+            {p.shape === 1 && <span style={{ fontSize: p.size * 1.5, lineHeight: 1, color: p.color }}>✦</span>}
+            {p.shape === 2 && <div className="w-full h-full rounded-sm" style={{ background: p.color, transform: `rotate(${p.rotation}deg)` }} />}
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+};
 
 interface TasteDNA {
   salty: number;
@@ -62,6 +107,17 @@ const tierColors = {
 };
 
 const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    if (open && badge && badge.check(ctx)) {
+      setShowConfetti(true);
+      const t = setTimeout(() => setShowConfetti(false), 1200);
+      return () => clearTimeout(t);
+    }
+    setShowConfetti(false);
+  }, [open, badge, ctx]);
+
   if (!badge) return null;
 
   const unlocked = badge.check(ctx);
@@ -100,20 +156,23 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
                 </button>
               </div>
 
-              {/* Badge icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.1 }}
-                className={cn(
-                  "w-24 h-24 rounded-3xl mx-auto flex items-center justify-center mb-4 border-2 shadow-lg",
-                  unlocked ? cn(tc.bg, tc.border, tc.glow) : "bg-muted/50 border-border"
-                )}
-              >
-                <span className={cn("text-5xl", !unlocked && "grayscale opacity-50")}>
-                  {unlocked ? badge.icon : "🔒"}
-                </span>
-              </motion.div>
+              {/* Badge icon + confetti */}
+              <div className="relative flex justify-center mb-4">
+                {unlocked && showConfetti && <ConfettiBurst />}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={unlocked ? { scale: [0, 1.2, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.1 }}
+                  className={cn(
+                    "w-24 h-24 rounded-3xl flex items-center justify-center border-2 shadow-lg relative z-10",
+                    unlocked ? cn(tc.bg, tc.border, tc.glow) : "bg-muted/50 border-border"
+                  )}
+                >
+                  <span className={cn("text-5xl", !unlocked && "grayscale opacity-50")}>
+                    {unlocked ? badge.icon : "🔒"}
+                  </span>
+                </motion.div>
+              </div>
 
               {/* Title & description */}
               <h2 className={cn("text-xl font-bold text-center mb-1", unlocked ? tc.text : "text-muted-foreground")}>
