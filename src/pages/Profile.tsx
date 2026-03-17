@@ -432,6 +432,20 @@ const Profile = () => {
           </div>
         )}
 
+        {/* Post Detail Sheet */}
+        <PostDetailSheet
+          open={!!selectedPost}
+          onClose={() => setSelectedPost(null)}
+          postId={selectedPost?.id || ""}
+          preload={selectedPost ? {
+            imageUrl: selectedPost.image_url,
+            images: selectedPost.images,
+            caption: selectedPost.caption,
+            likeCount: selectedPost.likeCount,
+            commentCount: selectedPost.commentCount,
+          } : undefined}
+        />
+
         <BottomNav />
       </div>
     </PageTransition>
