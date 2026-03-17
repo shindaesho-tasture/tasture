@@ -114,8 +114,39 @@ const AdminDashboard = () => {
 
   const fetchAll = async () => {
     setLoading(true);
-    await Promise.all([fetchStats(), fetchStores(), fetchUsers(), fetchPosts(), fetchReviews(), fetchDna()]);
+    await Promise.all([fetchStats(), fetchStores(), fetchUsers(), fetchPosts(), fetchReviews(), fetchDna(), fetchWeeklyTrend()]);
     setLoading(false);
+  };
+
+  const fetchWeeklyTrend = async () => {
+    const weeks: { week: string; start: string; end: string }[] = [];
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i * 7);
+      const weekStart = new Date(d);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      const label = `${weekStart.getDate()}/${weekStart.getMonth() + 1}`;
+      weeks.push({ week: label, start: weekStart.toISOString(), end: weekEnd.toISOString() });
+    }
+
+    const [{ data: revData }, { data: postData }, { data: userData }] = await Promise.all([
+      supabase.from("menu_reviews").select("created_at").gte("created_at", weeks[0].start),
+      supabase.from("posts").select("created_at").gte("created_at", weeks[0].start),
+      supabase.from("profiles").select("created_at").gte("created_at", weeks[0].start),
+    ]);
+
+    const result = weeks.map((w) => {
+      const inRange = (d: string) => d >= w.start && d <= w.end;
+      return {
+        week: w.week,
+        reviews: (revData || []).filter((r) => inRange(r.created_at)).length,
+        posts: (postData || []).filter((p) => inRange(p.created_at)).length,
+        users: (userData || []).filter((u) => inRange(u.created_at)).length,
+      };
+    });
+    setWeeklyData(result);
   };
 
   const fetchStats = async () => {
