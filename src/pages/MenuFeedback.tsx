@@ -471,6 +471,56 @@ const MenuFeedback = () => {
           )}
         </AnimatePresence>
 
+        {/* Post Prompt after review */}
+        <AnimatePresence>
+          {showPostPrompt && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6"
+              onClick={() => setShowPostPrompt(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className="w-full max-w-sm rounded-3xl bg-card border border-border/30 shadow-luxury p-6 space-y-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center space-y-2">
+                  <div className="text-4xl">📸</div>
+                  <h3 className="text-base font-bold text-foreground">แชร์รูปอาหารพร้อมรีวิว?</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    ถ่ายรูปอาหารที่คุณเพิ่งรีวิวแล้วโพสให้เพื่อนเห็น พร้อมแนบคะแนนรีวิวอัตโนมัติ
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2.5">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setShowPostPrompt(false);
+                      navigate(`/post?review=${lastSavedReviewId}`);
+                    }}
+                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-foreground text-background text-sm font-semibold"
+                  >
+                    <Camera size={16} />
+                    โพสรูปพร้อมรีวิว
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowPostPrompt(false)}
+                    className="py-3 rounded-2xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
+                  >
+                    ข้ามไปก่อน
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <BottomNav />
       </div>
     </PageTransition>
