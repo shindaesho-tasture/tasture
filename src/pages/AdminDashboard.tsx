@@ -852,6 +852,17 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Store Editor Sheet */}
+      <AnimatePresence>
+        {editingStoreId && (
+          <AdminStoreEditor
+            storeId={editingStoreId}
+            onClose={() => setEditingStoreId(null)}
+            onUpdated={() => fetchStores()}
+          />
+        )}
+      </AnimatePresence>
     </PageTransition>
   );
 };
