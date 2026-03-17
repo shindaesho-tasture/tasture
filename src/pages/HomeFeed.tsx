@@ -97,6 +97,15 @@ const HomeFeed = () => {
 
   const PULL_THRESHOLD = 80;
 
+  // Scroll shadow detection
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollTop > 10);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
   const refreshFollowingIds = useCallback(() => {
     if (!user) return;
     supabase
