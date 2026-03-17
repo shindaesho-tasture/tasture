@@ -722,6 +722,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     lastTapRef.current = now;
   };
 
+  const toggleFollow = async () => {
     if (!user || user.id === post.userId) return;
     setFollowLoading(true);
     if (isFollowing) {
