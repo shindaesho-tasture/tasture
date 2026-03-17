@@ -107,6 +107,17 @@ const tierColors = {
 };
 
 const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    if (open && badge && badge.check(ctx)) {
+      setShowConfetti(true);
+      const t = setTimeout(() => setShowConfetti(false), 1200);
+      return () => clearTimeout(t);
+    }
+    setShowConfetti(false);
+  }, [open, badge, ctx]);
+
   if (!badge) return null;
 
   const unlocked = badge.check(ctx);
