@@ -38,7 +38,13 @@ const StoreRegistration = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(store.categoryId);
 
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_API_KEY });
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [placeResults, setPlaceResults] = useState<google.maps.places.PlaceResult[]>([]);
+  const [searchingPlace, setSearchingPlace] = useState(false);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_API_KEY, libraries: LIBRARIES });
 
   const onMapLoad = useCallback((map: google.maps.Map) => { mapRef.current = map; }, []);
 
