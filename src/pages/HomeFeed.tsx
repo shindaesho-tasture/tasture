@@ -783,22 +783,4 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   );
 };
 
-/* ─── Score Pill ─── */
-const ScorePill = ({ score }: { score: number }) => {
-  const tier = getScoreTier(score);
-  return (
-    <div className={cn(
-      "inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl",
-      tierBg[tier]
-    )}>
-      <span className={cn("text-lg font-bold tabular-nums", tierColors[tier])}>
-        {score > 0 ? "+" : ""}{score}
-      </span>
-      <span className={cn("text-xs font-medium", tierColors[tier])}>
-        {scoreLabel(score)}
-      </span>
-    </div>
-  );
-};
-
 export default HomeFeed;
