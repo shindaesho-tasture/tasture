@@ -46,11 +46,6 @@ const tierBg: Record<ScoreTier, string> = {
   ruby: "bg-score-ruby/10",
 };
 
-const scoreLabel = (score: number) => {
-  if (score === 2) return "ชอบมาก 🔥";
-  if (score === -2) return "ไม่ชอบ 😔";
-  return "เฉยๆ 😐";
-};
 
 const timeAgo = (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
