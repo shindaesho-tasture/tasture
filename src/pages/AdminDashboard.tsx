@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ShieldCheck, Search, CheckCircle2, XCircle, Users, Store,
-  MessageSquare, Dna, BarChart3, TrendingUp, Eye, Trash2, UserCog,
-  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter,
+  MessageSquare, Dna, BarChart3, TrendingUp, Eye, EyeOff, Trash2, UserCog,
+  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,18 +26,18 @@ interface AdminStore {
 interface AdminUser {
   id: string; email: string | null; display_name: string | null;
   avatar_url: string | null; created_at: string; role: string;
-  postCount: number; reviewCount: number;
+  postCount: number; reviewCount: number; banned: boolean;
 }
 
 interface AdminPost {
   id: string; user_id: string; userName: string; caption: string | null;
   image_url: string; store_name: string | null; created_at: string;
-  likeCount: number; commentCount: number;
+  likeCount: number; commentCount: number; hidden: boolean;
 }
 
 interface AdminReview {
   id: string; user_id: string; userName: string; menu_item_name: string;
-  store_name: string; score: number; created_at: string; shared: boolean;
+  store_name: string; score: number; created_at: string; shared: boolean; hidden: boolean;
 }
 
 interface AdminDna {
@@ -160,7 +160,7 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     const { data: profilesData } = await supabase
-      .from("profiles").select("id, email, display_name, avatar_url, created_at")
+      .from("profiles").select("id, email, display_name, avatar_url, created_at, banned")
       .order("created_at", { ascending: false }).limit(200);
     const ids = (profilesData || []).map((p) => p.id);
     const [{ data: rolesData }, { data: postsData }, { data: reviewsData }] = await Promise.all([
@@ -177,12 +177,13 @@ const AdminDashboard = () => {
     setUsers((profilesData || []).map((p) => ({
       ...p, role: roleMap.get(p.id) || "user",
       postCount: postCountMap.get(p.id) || 0, reviewCount: reviewCountMap.get(p.id) || 0,
+      banned: (p as any).banned ?? false,
     })));
   };
 
   const fetchPosts = async () => {
     const { data } = await supabase
-      .from("posts").select("id, user_id, caption, image_url, store_id, created_at")
+      .from("posts").select("id, user_id, caption, image_url, store_id, created_at, hidden")
       .order("created_at", { ascending: false }).limit(100);
     if (!data) { setPosts([]); return; }
     const userIds = [...new Set(data.map((p) => p.user_id))];
@@ -205,12 +206,13 @@ const AdminDashboard = () => {
       ...p, userName: nameMap.get(p.user_id) || "ผู้ใช้",
       store_name: p.store_id ? storeNameMap.get(p.store_id) || null : null,
       likeCount: likeMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0,
+      hidden: (p as any).hidden ?? false,
     })));
   };
 
   const fetchReviews = async () => {
     const { data } = await supabase
-      .from("menu_reviews").select("id, user_id, menu_item_id, score, created_at, shared")
+      .from("menu_reviews").select("id, user_id, menu_item_id, score, created_at, shared, hidden")
       .order("created_at", { ascending: false }).limit(200);
     if (!data) { setReviews([]); return; }
     const userIds = [...new Set(data.map((r) => r.user_id))];
@@ -236,6 +238,7 @@ const AdminDashboard = () => {
         menu_item_name: menu?.name || "เมนู",
         store_name: menu ? (storeNameMap.get(menu.store_id) || "ร้าน") : "ร้าน",
         shared: r.shared ?? true,
+        hidden: (r as any).hidden ?? false,
       };
     }));
   };
@@ -309,6 +312,27 @@ const AdminDashboard = () => {
     await supabase.from("menu_reviews").delete().eq("id", reviewId);
     setReviews((p) => p.filter((r) => r.id !== reviewId));
     toast({ title: "🗑️ ลบรีวิวแล้ว" });
+  };
+
+  const toggleBanUser = async (userId: string, currentBanned: boolean) => {
+    haptic();
+    await supabase.from("profiles").update({ banned: !currentBanned } as any).eq("id", userId);
+    setUsers((p) => p.map((u) => u.id === userId ? { ...u, banned: !currentBanned } : u));
+    toast({ title: !currentBanned ? "🚫 แบนผู้ใช้แล้ว" : "✅ ปลดแบนผู้ใช้แล้ว" });
+  };
+
+  const toggleHidePost = async (postId: string, currentHidden: boolean) => {
+    haptic();
+    await supabase.from("posts").update({ hidden: !currentHidden } as any).eq("id", postId);
+    setPosts((p) => p.map((x) => x.id === postId ? { ...x, hidden: !currentHidden } : x));
+    toast({ title: !currentHidden ? "🙈 ซ่อนโพสแล้ว" : "👁️ แสดงโพสแล้ว" });
+  };
+
+  const toggleHideReview = async (reviewId: string, currentHidden: boolean) => {
+    haptic();
+    await supabase.from("menu_reviews").update({ hidden: !currentHidden } as any).eq("id", reviewId);
+    setReviews((p) => p.map((r) => r.id === reviewId ? { ...r, hidden: !currentHidden } : r));
+    toast({ title: !currentHidden ? "🙈 ซ่อนรีวิวแล้ว" : "👁️ แสดงรีวิวแล้ว" });
   };
 
   /* ─── Filters ─── */
@@ -532,9 +556,14 @@ const AdminDashboard = () => {
                     {filteredUsers.map((u) => {
                       const RoleIcon = roleIcons[u.role] || UserIcon;
                       return (
-                        <motion.div key={u.id} layout className="rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 p-4">
+                         <motion.div key={u.id} layout className={cn(
+                           "rounded-2xl bg-surface-elevated shadow-luxury border p-4",
+                           u.banned ? "border-destructive/30 bg-destructive/5" : "border-border/50"
+                         )}>
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/30">
+                            <div className={cn("w-10 h-10 rounded-full bg-secondary overflow-hidden shrink-0 ring-2",
+                              u.banned ? "ring-destructive/40 opacity-60" : "ring-border/30"
+                            )}>
                               {u.avatar_url ? (
                                 <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                               ) : (
@@ -544,7 +573,10 @@ const AdminDashboard = () => {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-foreground truncate">{u.display_name || "ไม่มีชื่อ"}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className={cn("text-sm font-semibold truncate", u.banned ? "text-destructive line-through" : "text-foreground")}>{u.display_name || "ไม่มีชื่อ"}</p>
+                                {u.banned && <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-destructive/10 text-destructive font-bold">BANNED</span>}
+                              </div>
                               <p className="text-[10px] text-muted-foreground truncate">{u.email || "—"}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-[10px] text-muted-foreground">📸 {u.postCount}</span>
@@ -552,7 +584,19 @@ const AdminDashboard = () => {
                                 <span className="text-[10px] text-muted-foreground">· {timeAgo(u.created_at)}</span>
                               </div>
                             </div>
-                            <RoleSelector currentRole={u.role} onChange={(role) => changeRole(u.id, role)} />
+                            <div className="flex flex-col items-end gap-1.5">
+                              <RoleSelector currentRole={u.role} onChange={(role) => changeRole(u.id, role)} />
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => toggleBanUser(u.id, u.banned)}
+                                className={cn("flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors",
+                                  u.banned ? "bg-score-emerald/10 text-score-emerald" : "bg-destructive/10 text-destructive"
+                                )}
+                              >
+                                <Ban size={10} />
+                                {u.banned ? "ปลดแบน" : "แบน"}
+                              </motion.button>
+                            </div>
                           </div>
                         </motion.div>
                       );
@@ -573,13 +617,19 @@ const AdminDashboard = () => {
                   {contentTab === "posts" && (
                     <div className="space-y-2">
                       {filteredPosts.map((p) => (
-                        <motion.div key={p.id} layout className="rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 overflow-hidden">
+                        <motion.div key={p.id} layout className={cn(
+                          "rounded-2xl bg-surface-elevated shadow-luxury border overflow-hidden",
+                          p.hidden ? "border-score-amber/30 bg-score-amber/5" : "border-border/50"
+                        )}>
                           <div className="flex gap-3 p-3">
-                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-secondary shrink-0">
+                            <div className={cn("w-16 h-16 rounded-xl overflow-hidden bg-secondary shrink-0", p.hidden && "opacity-40")}>
                               <img src={p.image_url} alt="" className="w-full h-full object-cover" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-foreground truncate">{p.userName}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-xs font-semibold text-foreground truncate">{p.userName}</p>
+                                {p.hidden && <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-amber/10 text-score-amber font-bold">ซ่อน</span>}
+                              </div>
                               <p className="text-[10px] text-muted-foreground truncate mt-0.5">{p.caption || "ไม่มีคำอธิบาย"}</p>
                               {p.store_name && <p className="text-[10px] text-muted-foreground mt-0.5">🏪 {p.store_name}</p>}
                               <div className="flex items-center gap-2 mt-1.5">
@@ -588,7 +638,18 @@ const AdminDashboard = () => {
                                 <span className="text-[10px] text-muted-foreground/60 ml-auto">{timeAgo(p.created_at)}</span>
                               </div>
                             </div>
-                            <ConfirmDeleteButton onDelete={() => deletePost(p.id)} />
+                            <div className="flex flex-col gap-1">
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => toggleHidePost(p.id, p.hidden)}
+                                className={cn("p-1.5 rounded-lg transition-colors",
+                                  p.hidden ? "bg-score-emerald/10 text-score-emerald" : "bg-score-amber/10 text-score-amber"
+                                )}
+                              >
+                                {p.hidden ? <Eye size={12} /> : <EyeOff size={12} />}
+                              </motion.button>
+                              <ConfirmDeleteButton onDelete={() => deletePost(p.id)} />
+                            </div>
                           </div>
                         </motion.div>
                       ))}
@@ -601,15 +662,21 @@ const AdminDashboard = () => {
                       {filteredReviews.map((r) => {
                         const tier = getScoreTier(r.score);
                         return (
-                          <motion.div key={r.id} layout className="rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 p-3">
+                          <motion.div key={r.id} layout className={cn(
+                            "rounded-2xl bg-surface-elevated shadow-luxury border p-3",
+                            r.hidden ? "border-score-amber/30 bg-score-amber/5" : "border-border/50"
+                          )}>
                             <div className="flex items-center gap-3">
                               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold",
-                                `bg-score-${tier}/10`, tierColors[tier]
+                                r.hidden ? "opacity-40" : "", `bg-score-${tier}/10`, tierColors[tier]
                               )}>
                                 {r.score > 0 ? "+" : ""}{r.score}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-foreground truncate">{r.menu_item_name}</p>
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs font-semibold text-foreground truncate">{r.menu_item_name}</p>
+                                  {r.hidden && <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-amber/10 text-score-amber font-bold">ซ่อน</span>}
+                                </div>
                                 <p className="text-[10px] text-muted-foreground">{r.userName} · {r.store_name}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className={cn("text-[9px] px-1.5 py-0.5 rounded-md font-medium",
@@ -620,7 +687,18 @@ const AdminDashboard = () => {
                                   <span className="text-[10px] text-muted-foreground/60">{timeAgo(r.created_at)}</span>
                                 </div>
                               </div>
-                              <ConfirmDeleteButton onDelete={() => deleteReview(r.id)} />
+                              <div className="flex flex-col gap-1">
+                                <motion.button
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => toggleHideReview(r.id, r.hidden)}
+                                  className={cn("p-1.5 rounded-lg transition-colors",
+                                    r.hidden ? "bg-score-emerald/10 text-score-emerald" : "bg-score-amber/10 text-score-amber"
+                                  )}
+                                >
+                                  {r.hidden ? <Eye size={12} /> : <EyeOff size={12} />}
+                                </motion.button>
+                                <ConfirmDeleteButton onDelete={() => deleteReview(r.id)} />
+                              </div>
                             </div>
                           </motion.div>
                         );

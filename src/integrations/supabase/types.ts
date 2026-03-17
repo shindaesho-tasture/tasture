@@ -183,6 +183,7 @@ export type Database = {
       menu_reviews: {
         Row: {
           created_at: string
+          hidden: boolean
           id: string
           menu_item_id: string
           score: number
@@ -191,6 +192,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          hidden?: boolean
           id?: string
           menu_item_id: string
           score: number
@@ -199,6 +201,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          hidden?: boolean
           id?: string
           menu_item_id?: string
           score?: number
@@ -321,6 +324,8 @@ export type Database = {
         Row: {
           caption: string | null
           created_at: string
+          hidden: boolean
+          hide_reason: string | null
           id: string
           image_url: string
           menu_review_id: string | null
@@ -330,6 +335,8 @@ export type Database = {
         Insert: {
           caption?: string | null
           created_at?: string
+          hidden?: boolean
+          hide_reason?: string | null
           id?: string
           image_url: string
           menu_review_id?: string | null
@@ -339,6 +346,8 @@ export type Database = {
         Update: {
           caption?: string | null
           created_at?: string
+          hidden?: boolean
+          hide_reason?: string | null
           id?: string
           image_url?: string
           menu_review_id?: string | null
@@ -365,6 +374,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          ban_reason: string | null
+          banned: boolean
           created_at: string
           display_name: string | null
           email: string | null
@@ -372,6 +383,8 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned?: boolean
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -379,6 +392,8 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned?: boolean
           created_at?: string
           display_name?: string | null
           email?: string | null

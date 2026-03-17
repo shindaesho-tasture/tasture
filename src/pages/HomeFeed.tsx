@@ -199,6 +199,7 @@ const HomeFeed = () => {
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
           .eq("shared", true)
+          .eq("hidden", false)
           .order("created_at", { ascending: false })
           .limit(limit),
         supabase
@@ -219,6 +220,7 @@ const HomeFeed = () => {
         supabase
           .from("posts")
           .select("id, user_id, image_url, caption, store_id, created_at")
+          .eq("hidden", false)
           .order("created_at", { ascending: false })
           .limit(limit),
       ]);
@@ -233,12 +235,14 @@ const HomeFeed = () => {
 
       // Fetch profiles, menu items, stores
       const [profilesRes, menuItemsRes] = await Promise.all([
-        supabase.from("profiles").select("id, display_name, avatar_url").in("id", [...userIds]),
+        supabase.from("profiles").select("id, display_name, avatar_url, banned").in("id", [...userIds]),
         supabase.from("menu_items").select("id, name, store_id, image_url").in("id", [...menuItemIds]),
       ]);
 
+      const bannedUsers = new Set<string>();
       const profileMap = new Map<string, { name: string; avatar: string | null }>();
-      (profilesRes.data || []).forEach((p) => {
+      (profilesRes.data || []).forEach((p: any) => {
+        if (p.banned) bannedUsers.add(p.id);
         profileMap.set(p.id, { name: p.display_name || "ผู้ใช้", avatar: p.avatar_url });
       });
 
@@ -538,8 +542,10 @@ const HomeFeed = () => {
       }
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      const finalPosts = allPosts.slice(0, limit);
-      setHasMore(allPosts.length > limit);
+      // Filter out banned users
+      const visiblePosts = allPosts.filter((p) => !bannedUsers.has(p.userId));
+      const finalPosts = visiblePosts.slice(0, limit);
+      setHasMore(visiblePosts.length > limit);
       pageSize.current = limit;
 
       // Track new posts from realtime
