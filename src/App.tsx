@@ -36,7 +36,8 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<HomeFeed />} />
+        <Route path="/discover" element={<Index />} />
         <Route path="/categories" element={<CategorySelect />} />
         <Route path="/register" element={<StoreRegistration />} />
         <Route path="/review/:categoryId" element={<ReviewFlow />} />
