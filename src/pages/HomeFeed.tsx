@@ -21,6 +21,8 @@ interface PostImageSlide {
   menuItemName: string | null;
   storeName: string | null;
   storeId: string | null;
+  dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
+  satisfaction?: SatisfactionAxes | null;
 }
 
 interface FeedPost {
