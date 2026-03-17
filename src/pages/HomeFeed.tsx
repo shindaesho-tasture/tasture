@@ -542,8 +542,10 @@ const HomeFeed = () => {
       }
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      const finalPosts = allPosts.slice(0, limit);
-      setHasMore(allPosts.length > limit);
+      // Filter out banned users
+      const visiblePosts = allPosts.filter((p) => !bannedUsers.has(p.userId));
+      const finalPosts = visiblePosts.slice(0, limit);
+      setHasMore(visiblePosts.length > limit);
       pageSize.current = limit;
 
       // Track new posts from realtime
