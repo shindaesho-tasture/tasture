@@ -89,6 +89,7 @@ const AdminDashboard = () => {
   const [posts, setPosts] = useState<AdminPost[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [dnaItems, setDnaItems] = useState<AdminDna[]>([]);
+  const [weeklyData, setWeeklyData] = useState<{ week: string; reviews: number; posts: number; users: number }[]>([]);
 
   // Filters
   const [search, setSearch] = useState("");
