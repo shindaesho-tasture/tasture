@@ -68,12 +68,28 @@ const HomeFeed = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<FeedTab>("explore");
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [storeLocations, setStoreLocations] = useState<Map<string, { lat: number; lng: number }>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const isPulling = useRef(false);
   const knownPostIds = useRef<Set<string>>(new Set());
+  const { position: geoPos } = useGeolocation();
 
   const PULL_THRESHOLD = 80;
+
+  // Fetch following IDs
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", user.id)
+      .then(({ data }) => {
+        setFollowingIds(new Set((data || []).map((d) => d.following_id)));
+      });
+  }, [user]);
 
   useEffect(() => {
     fetchFeed();
