@@ -298,13 +298,17 @@ const HomeFeed = () => {
         if (new Date(d.created_at) > new Date(entry.latestTime)) entry.latestTime = d.created_at;
       });
 
-      // Build combined posts
+      // Build combined posts with merged satisfaction data
       const allPosts: FeedPost[] = [...postMap.entries()].map(([key, entry]) => {
         const profile = profileMap.get(entry.userId);
         const menu = menuMap.get(entry.menuItemId);
+        const storeId = menu?.storeId || null;
         const hasReview = entry.score != null;
         const hasDna = entry.dnaComponents.length > 0;
         const type = hasReview && hasDna ? "combined" : hasReview ? "menu_review" : "dish_dna";
+
+        // Merge all data sources for satisfaction chart
+        const satisfaction = buildSatisfaction(entry.userId, entry.menuItemId, entry.score, storeId);
 
         return {
           id: `post-${key}`,
@@ -313,12 +317,12 @@ const HomeFeed = () => {
           userName: profile?.name || "ผู้ใช้",
           userAvatar: profile?.avatar || null,
           storeName: menu ? (storeMap.get(menu.storeId) || "ร้านค้า") : "ร้านค้า",
-          storeId: menu?.storeId || "",
+          storeId: storeId || "",
           menuItemName: menu?.name || "เมนู",
           menuItemId: entry.menuItemId,
           menuItemImage: menu?.image || null,
           score: entry.score,
-          satisfaction: entry.satisfaction,
+          satisfaction,
           dnaComponents: hasDna ? entry.dnaComponents : undefined,
           createdAt: entry.latestTime,
         };
