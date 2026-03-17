@@ -645,7 +645,7 @@ const HomeFeed = () => {
     <PageTransition>
       <div ref={containerRef} className="min-h-screen bg-background pb-24 overflow-y-auto">
         {/* Sticky Header + Pull-to-refresh */}
-        <div className="sticky top-0 z-40 bg-background">
+        <div className={`sticky top-0 z-40 bg-background transition-shadow duration-300 ${scrolled ? 'shadow-md' : ''}`}>
           <TastureHeader />
           {/* Pull-to-refresh indicator inside sticky header */}
           <motion.div
