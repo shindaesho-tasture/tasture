@@ -48,8 +48,23 @@ const tierBg: Record<ScoreTier, string> = {
   slate: "bg-score-slate/10",
   amber: "bg-score-amber/10",
   ruby: "bg-score-ruby/10",
-};
+  };
 
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      // Double tap detected
+      if (!liked && user) {
+        setLiked(true);
+        setLikeCount((c) => c + 1);
+        navigator.vibrate?.(8);
+        supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
+      }
+      setShowHeartAnim(true);
+      setTimeout(() => setShowHeartAnim(false), 900);
+    }
+    lastTapRef.current = now;
+  };
 
 const timeAgo = (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
