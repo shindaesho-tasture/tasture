@@ -5,6 +5,7 @@ import { Crown, Gem, Store, LogIn, Pencil, Check, X, Camera, Users, ChefHat, Gri
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import PostDetailSheet from "@/components/PostDetailSheet";
+import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
