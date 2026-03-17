@@ -116,9 +116,14 @@ const Index = () => {
 
       const menuToStore = new Map<string, string>();
       const menuCountMap = new Map<string, number>();
-      (menuRes.data || []).forEach((m) => {
+      const storeImageMap = new Map<string, string>();
+      (menuRes.data || []).forEach((m: any) => {
         menuToStore.set(m.id, m.store_id);
         menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
+        // Use first menu item image as store image fallback
+        if (m.image_url && !storeImageMap.has(m.store_id)) {
+          storeImageMap.set(m.store_id, m.image_url);
+        }
       });
 
       const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
