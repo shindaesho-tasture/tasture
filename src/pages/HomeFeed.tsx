@@ -72,7 +72,11 @@ const HomeFeed = () => {
   const [activeTab, setActiveTab] = useState<FeedTab>("explore");
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [storeLocations, setStoreLocations] = useState<Map<string, { lat: number; lng: number }>>(new Map());
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const pageSize = useRef(30);
   const containerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const isPulling = useRef(false);
   const knownPostIds = useRef<Set<string>>(new Set());
