@@ -46,6 +46,7 @@ type EditorTab = "info" | "menu" | "feedback";
 
 const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps) => {
   const [tab, setTab] = useState<EditorTab>("info");
+  const [confirmDeleteStore, setConfirmDeleteStore] = useState(false);
   const [store, setStore] = useState<StoreData | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [reviewTags, setReviewTags] = useState<ReviewTag[]>([]);
