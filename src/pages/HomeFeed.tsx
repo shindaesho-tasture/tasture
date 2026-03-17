@@ -232,6 +232,10 @@ const HomeFeed = () => {
         menuMap.set(m.id, { name: m.name, storeId: m.store_id, image: m.image_url });
         storeIds.add(m.store_id);
       });
+      // Also collect store_ids from photo posts
+      (photoPostsRes.data || []).forEach((pp) => {
+        if (pp.store_id) storeIds.add(pp.store_id);
+      });
 
       const { data: storesData } = await supabase.from("stores").select("id, name, pin_lat, pin_lng").in("id", [...storeIds]);
       const storeMap = new Map<string, string>();
