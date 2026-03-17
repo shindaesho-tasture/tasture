@@ -404,6 +404,7 @@ interface PostCardProps {
 
 const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [commentText, setCommentText] = useState("");
