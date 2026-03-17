@@ -72,6 +72,8 @@ const UserProfile = () => {
   const [totalReviews, setTotalReviews] = useState(0);
   const [dnaEntryCount, setDnaEntryCount] = useState(0);
   const [tasteDNA, setTasteDNA] = useState<TasteDNA>({ salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 });
+  const [myTasteDNA, setMyTasteDNA] = useState<TasteDNA | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
 
   // Tabs & posts
   const [activeTab, setActiveTab] = useState<"posts" | "badges" | "dna">("posts");
