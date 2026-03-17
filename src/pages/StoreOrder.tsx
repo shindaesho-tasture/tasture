@@ -85,16 +85,55 @@ const StoreOrder = () => {
             .in("menu_item_id", menuIds),
           supabase
             .from("menu_reviews")
-            .select("menu_item_id")
+            .select("id, menu_item_id")
             .in("menu_item_id", menuIds),
         ]);
 
         // Menu review counts
         const revCounts = new Map<string, number>();
+        const reviewIdToMenuItem = new Map<string, string>();
         (menuRevRes.data || []).forEach((r) => {
           revCounts.set(r.menu_item_id, (revCounts.get(r.menu_item_id) || 0) + 1);
+          reviewIdToMenuItem.set(r.id, r.menu_item_id);
         });
         setMenuReviewCounts(revCounts);
+
+        // Fetch most-liked user photos per menu item
+        const reviewIds = (menuRevRes.data || []).map((r) => r.id);
+        if (reviewIds.length > 0) {
+          const { data: postImages } = await supabase
+            .from("post_images")
+            .select("image_url, post_id, menu_review_id")
+            .in("menu_review_id", reviewIds);
+
+          if (postImages && postImages.length > 0) {
+            const postIds = [...new Set(postImages.map((pi) => pi.post_id))];
+            const { data: likes } = await supabase
+              .from("post_likes")
+              .select("ref_id")
+              .in("ref_id", postIds);
+
+            const likesMap = new Map<string, number>();
+            (likes || []).forEach((l) => likesMap.set(l.ref_id, (likesMap.get(l.ref_id) || 0) + 1));
+
+            // Group images by menu_item_id, pick the one with most likes
+            const bestByItem = new Map<string, { url: string; likes: number }>();
+            postImages.forEach((pi) => {
+              if (!pi.menu_review_id) return;
+              const menuItemId = reviewIdToMenuItem.get(pi.menu_review_id);
+              if (!menuItemId) return;
+              const lc = likesMap.get(pi.post_id) || 0;
+              const current = bestByItem.get(menuItemId);
+              if (!current || lc > current.likes) {
+                bestByItem.set(menuItemId, { url: pi.image_url, likes: lc });
+              }
+            });
+
+            const photoMap = new Map<string, string>();
+            bestByItem.forEach((v, k) => photoMap.set(k, v.url));
+            setTopPhotoByItem(photoMap);
+          }
+        }
 
         // DNA counts per item
         const dnaCountMap = new Map<string, number>();
