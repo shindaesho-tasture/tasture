@@ -354,6 +354,44 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
                 </AnimatePresence>
               </div>
 
+              {/* Review info for current slide */}
+              {(() => {
+                const currentSlide = slides[activeIdx];
+                const reviewInfo = currentSlide?.menu_review_id ? reviewMap[currentSlide.menu_review_id] : null;
+                if (!reviewInfo) return null;
+
+                const scoreEmoji = reviewInfo.score === 2 ? "🤩" : reviewInfo.score === 0 ? "😐" : "😔";
+                const scoreBg = reviewInfo.score === 2 ? "bg-emerald-50 border-emerald-200" : reviewInfo.score === 0 ? "bg-muted border-border" : "bg-red-50 border-red-200";
+                const scoreText = reviewInfo.score === 2 ? "text-emerald-700" : reviewInfo.score === 0 ? "text-muted-foreground" : "text-red-700";
+
+                return (
+                  <motion.div
+                    key={currentSlide.menu_review_id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn("mx-4 mt-2 p-3 rounded-2xl border", scoreBg)}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <UtensilsCrossed size={14} className={scoreText} />
+                      <span className={cn("text-sm font-semibold", scoreText)}>{reviewInfo.menu_item_name}</span>
+                      <span className="text-base ml-auto">{scoreEmoji}</span>
+                    </div>
+                    {reviewInfo.dish_dna.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {reviewInfo.dish_dna.map((d, i) => {
+                          const tagBg = d.selected_score === 2 ? "bg-emerald-100 text-emerald-800" : d.selected_score === 0 ? "bg-secondary text-muted-foreground" : "bg-red-100 text-red-800";
+                          return (
+                            <span key={i} className={cn("text-[11px] px-2 py-0.5 rounded-full font-medium", tagBg)}>
+                              {d.component_icon} {d.selected_tag}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })()}
+
               {/* Actions */}
               <div className="flex items-center gap-4 px-4 py-3">
                 <button onClick={toggleLike} className="active:scale-90 transition-transform">
