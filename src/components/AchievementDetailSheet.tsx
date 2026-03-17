@@ -132,7 +132,7 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 bg-foreground/50 flex items-end justify-center"
+          className="fixed inset-0 z-[60] bg-foreground/50 flex items-end justify-center"
           onClick={onClose}
         >
           <motion.div
