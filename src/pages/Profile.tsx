@@ -329,6 +329,26 @@ const Profile = () => {
       }).sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime());
 
       setVerdicts(vList);
+
+      // Fetch saved stores
+      const { data: savedData } = await supabase
+        .from("saved_stores")
+        .select("id, store_id, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (savedData && savedData.length > 0) {
+        const savedStoreIds = savedData.map((s) => s.store_id);
+        const { data: savedStoresData } = await supabase.from("stores").select("id, name").in("id", savedStoreIds);
+        const savedStoreNameMap = new Map((savedStoresData || []).map((s) => [s.id, s.name]));
+
+        setSavedStores(savedData.map((s) => ({
+          id: s.id,
+          storeId: s.store_id,
+          storeName: savedStoreNameMap.get(s.store_id) || "ร้านค้า",
+          savedAt: s.created_at,
+        })));
+      }
     };
 
     load();
