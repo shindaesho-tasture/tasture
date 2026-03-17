@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Heart, MessageCircle, Send, Trash2, ChevronLeft, ChevronRight, UtensilsCrossed } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,7 @@ const timeAgo = (iso: string) => {
 
 const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Post data
   const [post, setPost] = useState<{
@@ -257,7 +259,8 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
 
             {/* Header */}
             <div className="flex items-center gap-3 px-4 pb-3 flex-shrink-0">
-              <div className="w-9 h-9 rounded-full bg-secondary overflow-hidden flex-shrink-0">
+              <button onClick={() => { if (post?.user_id) { onClose(); navigate(`/user/${post.user_id}`); } }}
+                className="w-9 h-9 rounded-full bg-secondary overflow-hidden flex-shrink-0 active:scale-95 transition-transform">
                 {author?.avatar_url ? (
                   <img src={author.avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -265,7 +268,7 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
                     {(author?.display_name || "?").charAt(0)}
                   </div>
                 )}
-              </div>
+              </button>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">
                   {author?.display_name || "ผู้ใช้"}
@@ -428,7 +431,8 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
                 <div className="px-4 pt-1 pb-2 space-y-3">
                   {comments.map((c) => (
                     <div key={c.id} className="flex gap-2.5 group">
-                      <div className="w-7 h-7 rounded-full bg-secondary overflow-hidden flex-shrink-0 mt-0.5">
+                      <button onClick={() => { onClose(); navigate(`/user/${c.user_id}`); }}
+                        className="w-7 h-7 rounded-full bg-secondary overflow-hidden flex-shrink-0 mt-0.5 active:scale-95 transition-transform">
                         {c.avatar_url ? (
                           <img src={c.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -436,10 +440,11 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
                             {(c.display_name || "?").charAt(0)}
                           </div>
                         )}
-                      </div>
+                      </button>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground">
-                          <span className="font-semibold mr-1.5">{c.display_name || "ผู้ใช้"}</span>
+                          <button onClick={() => { onClose(); navigate(`/user/${c.user_id}`); }}
+                            className="font-semibold mr-1.5 hover:underline">{c.display_name || "ผู้ใช้"}</button>
                           {c.content}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{timeAgo(c.created_at)}</p>
