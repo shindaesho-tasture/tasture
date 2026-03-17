@@ -15,6 +15,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
 import SuggestedUsers from "@/components/SuggestedUsers";
 /* ─── Types ─── */
+interface PostImageSlide {
+  imageUrl: string;
+  reviewScore: number | null;
+  menuItemName: string | null;
+  storeName: string | null;
+}
+
 interface FeedPost {
   id: string;
   type: "combined" | "menu_review" | "dish_dna" | "photo_post";
@@ -31,6 +38,7 @@ interface FeedPost {
   dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
   caption?: string | null;
   photoUrl?: string | null;
+  slides?: PostImageSlide[];
   createdAt: string;
 }
 
