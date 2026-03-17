@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Gem, Store, Users, ChefHat, UserPlus, UserCheck, Crown } from "lucide-react";
+import { ArrowLeft, Gem, Store, Users, ChefHat, UserPlus, UserCheck, Crown, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import PageTransition from "@/components/PageTransition";
 
 interface PublicProfile {
