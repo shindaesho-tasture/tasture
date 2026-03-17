@@ -821,6 +821,19 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       .then(({ count }) => setCommentCount(count || 0));
   }, [refType, refId]);
 
+  const burstParticles = () => {
+    const emojis = ["❤️", "🧡", "💛", "💖", "✨", "💫", "🌟", "💕"];
+    const burst = Array.from({ length: 8 }, (_, i) => ({
+      id: Date.now() + i,
+      x: (Math.random() - 0.5) * 120,
+      y: -(Math.random() * 80 + 30),
+      emoji: emojis[Math.floor(Math.random() * emojis.length)],
+      scale: 0.6 + Math.random() * 0.6,
+    }));
+    setParticles(burst);
+    setTimeout(() => setParticles([]), 900);
+  };
+
   const toggleLike = async () => {
     if (!user) return;
     if (liked) {
@@ -831,6 +844,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       setLiked(true);
       setLikeCount((c) => c + 1);
       navigator.vibrate?.(8);
+      burstParticles();
       await supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
     }
   };
