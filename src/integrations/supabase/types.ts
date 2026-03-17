@@ -250,6 +250,50 @@ export type Database = {
           },
         ]
       }
+      satisfaction_ratings: {
+        Row: {
+          cleanliness: number
+          created_at: string
+          id: string
+          menu_item_id: string
+          overall: number
+          taste: number
+          texture: number
+          user_id: string
+          value: number
+        }
+        Insert: {
+          cleanliness?: number
+          created_at?: string
+          id?: string
+          menu_item_id: string
+          overall?: number
+          taste?: number
+          texture?: number
+          user_id: string
+          value?: number
+        }
+        Update: {
+          cleanliness?: number
+          created_at?: string
+          id?: string
+          menu_item_id?: string
+          overall?: number
+          taste?: number
+          texture?: number
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "satisfaction_ratings_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           category_id: string | null
