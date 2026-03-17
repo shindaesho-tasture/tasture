@@ -108,7 +108,7 @@ const Index = () => {
 
       const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes] = await Promise.all([
         supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
-        supabase.from("menu_items").select("id, store_id").in("store_id", storeIds),
+        supabase.from("menu_items").select("id, store_id, image_url").in("store_id", storeIds),
         supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
