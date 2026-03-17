@@ -215,7 +215,14 @@ const Profile = () => {
       const { data: prof } = await supabase.from("profiles").select("display_name, email, avatar_url" as any).eq("id", user.id).single();
       if (prof) setProfile(prof as any);
 
-      // Menu reviews (+2 = emerald)
+      // Follow counts
+      const [{ count: followers }, { count: following }] = await Promise.all([
+        supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", user.id),
+        supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
+      ]);
+      setFollowerCount(followers || 0);
+      setFollowingCount(following || 0);
+
       const { data: reviews } = await supabase.from("menu_reviews").select("id, score, menu_item_id, created_at").eq("user_id", user.id);
       if (!reviews) return;
 
