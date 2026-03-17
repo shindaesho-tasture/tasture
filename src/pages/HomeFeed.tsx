@@ -474,7 +474,6 @@ const HomeFeed = () => {
             if (s.texture != null) axes.texture = s.texture;
             if (s.overall != null) axes.overall = s.overall;
             if (s.cleanliness != null) axes.cleanliness = s.cleanliness;
-            if (s.value != null) axes.value = s.value;
             if (Object.keys(axes).length > 0) slideSatMap.set(key, axes);
           });
         }
