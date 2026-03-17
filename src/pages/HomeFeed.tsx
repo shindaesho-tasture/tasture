@@ -898,7 +898,32 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     }
   };
 
-  const fetchComments = async () => {
+  const handleDeletePost = async () => {
+    if (!user || user.id !== post.userId) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 3000);
+      return;
+    }
+    navigator.vibrate?.(8);
+    if (post.type === "photo_post") {
+      const realId = post.id.replace("photo-", "");
+      await supabase.from("post_images").delete().eq("post_id", realId);
+      await supabase.from("post_likes").delete().eq("ref_id", realId);
+      await supabase.from("feed_comments").delete().eq("ref_id", realId);
+      await supabase.from("posts").delete().eq("id", realId);
+    } else {
+      // Delete menu review, dish_dna, satisfaction for this user+menuItem
+      await supabase.from("dish_dna").delete().eq("user_id", user.id).eq("menu_item_id", post.menuItemId);
+      await supabase.from("satisfaction_ratings").delete().eq("user_id", user.id).eq("menu_item_id", post.menuItemId);
+      await supabase.from("menu_reviews").delete().eq("user_id", user.id).eq("menu_item_id", post.menuItemId);
+      await supabase.from("post_likes").delete().eq("ref_id", refId);
+      await supabase.from("feed_comments").delete().eq("ref_id", refId);
+    }
+    setDeleted(true);
+  };
+
+
     setLoadingComments(true);
     const { data } = await supabase
       .from("feed_comments")
