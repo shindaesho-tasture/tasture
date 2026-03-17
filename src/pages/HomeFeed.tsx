@@ -251,7 +251,24 @@ const HomeFeed = () => {
       });
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setPosts(allPosts.slice(0, 30));
+      const finalPosts = allPosts.slice(0, 30);
+
+      // Track new posts from realtime
+      if (isRealtime) {
+        const freshIds = new Set<string>();
+        finalPosts.forEach((p) => {
+          if (!knownPostIds.current.has(p.id)) freshIds.add(p.id);
+        });
+        if (freshIds.size > 0) {
+          setNewPostIds(freshIds);
+          navigator.vibrate?.(8);
+          setTimeout(() => setNewPostIds(new Set()), 3000);
+        }
+      }
+
+      // Update known IDs
+      finalPosts.forEach((p) => knownPostIds.current.add(p.id));
+      setPosts(finalPosts);
     } catch (err) {
       console.error("Feed fetch error:", err);
     } finally {
