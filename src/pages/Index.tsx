@@ -355,10 +355,14 @@ const Index = () => {
             </div>
           )}
 
-          {/* Trending fire */}
-          {store.recentActivityCount > 3 && (
+          {/* Match % or Trending fire */}
+          {store.matchPercent != null && store.matchPercent > 0 ? (
+            <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full bg-score-emerald/90 backdrop-blur-sm text-[9px] font-bold text-primary-foreground flex items-center gap-0.5">
+              💚 {store.matchPercent}%
+            </div>
+          ) : store.recentActivityCount > 3 ? (
             <div className="absolute top-2 left-2 text-xs">🔥</div>
-          )}
+          ) : null}
 
           {/* Distance pill */}
           {store.distanceKm != null && (
