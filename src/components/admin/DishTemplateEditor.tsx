@@ -158,6 +158,54 @@ const DishTemplateEditor = () => {
         <p className="text-[10px] text-muted-foreground">แก้ไข เพิ่ม หรือลบแท็กของแต่ละส่วนประกอบในเทมเพลต</p>
       </div>
 
+      {/* Create new */}
+      <AnimatePresence>
+        {creatingNew ? (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="rounded-2xl bg-surface-elevated border border-score-emerald/30 p-4 space-y-3 overflow-hidden"
+          >
+            <p className="text-xs font-semibold text-foreground">สร้างเทมเพลตใหม่</p>
+            <input
+              type="text"
+              placeholder="ชื่อเมนู เช่น ข้าวมันไก่, ผัดไทย..."
+              value={newDishName}
+              onChange={(e) => setNewDishName(e.target.value)}
+              autoFocus
+              className="w-full px-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground placeholder:text-muted-foreground outline-none border border-border/50 focus:border-score-emerald/50 transition-colors"
+            />
+            <div className="flex gap-2 justify-end">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { setCreatingNew(false); setNewDishName(""); }}
+                className="px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground text-[11px] font-medium"
+              >
+                ยกเลิก
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={createTemplate}
+                disabled={saving || !newDishName.trim()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-score-emerald text-white text-[11px] font-semibold disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                สร้าง
+              </motion.button>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { haptic(); setCreatingNew(true); }}
+            className="w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl border-2 border-dashed border-score-emerald/30 text-score-emerald text-[12px] font-semibold hover:bg-score-emerald/5 transition-colors"
+          >
+            <Plus size={15} /> สร้างเทมเพลตใหม่
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* Search */}
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
