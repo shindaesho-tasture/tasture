@@ -67,13 +67,64 @@ const HomeFeed = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startY = useRef(0);
+  const isPulling = useRef(false);
+
+  const PULL_THRESHOLD = 80;
 
   useEffect(() => {
     fetchFeed();
   }, []);
 
-  const fetchFeed = async () => {
-    setLoading(true);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchFeed(true);
+    setPullDistance(0);
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (el.scrollTop <= 0) {
+        startY.current = e.touches[0].clientY;
+        isPulling.current = true;
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isPulling.current) return;
+      const dy = e.touches[0].clientY - startY.current;
+      if (dy > 0) {
+        setPullDistance(Math.min(dy * 0.5, 120));
+        if (dy > 10) e.preventDefault();
+      }
+    };
+    const onTouchEnd = () => {
+      if (pullDistance >= PULL_THRESHOLD && !refreshing) {
+        handleRefresh();
+      } else {
+        setPullDistance(0);
+      }
+      isPulling.current = false;
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [pullDistance, refreshing, handleRefresh]);
+
+  const fetchFeed = async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     try {
       // Fetch recent menu reviews and dish DNA in parallel
       const [reviewsRes, dnaRes] = await Promise.all([
