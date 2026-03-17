@@ -490,10 +490,18 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury overflow-hidden"
+      initial={isNew ? { opacity: 0, y: -40, scale: 0.95 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={isNew
+        ? { type: "spring", stiffness: 380, damping: 34, mass: 0.8 }
+        : { delay: index * 0.05, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
+      }
+      className={cn(
+        "rounded-2xl bg-surface-elevated border shadow-luxury overflow-hidden transition-all duration-700",
+        isNew
+          ? "border-score-emerald/50 ring-2 ring-score-emerald/20 shadow-[0_0_20px_hsl(var(--score-emerald)/0.15)]"
+          : "border-border/50"
+      )}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
