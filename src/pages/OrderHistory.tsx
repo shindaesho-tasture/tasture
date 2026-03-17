@@ -163,11 +163,16 @@ const OrderHistory = () => {
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleDateString("th-TH", {
+    const date = d.toLocaleDateString("th-TH", {
       day: "numeric",
       month: "short",
       year: "2-digit",
     });
+    const time = d.toLocaleTimeString("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${date} · ${time}`;
   };
 
   if (authLoading || loading) {
