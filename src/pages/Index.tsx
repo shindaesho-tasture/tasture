@@ -70,6 +70,11 @@ const Index = () => {
   const [stores, setStores] = useState<StoreCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DiscoveryTab>("nearby");
+  const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+  // Use custom pinned position if set, otherwise GPS
+  const activePosition = customPos || position;
 
   useEffect(() => {
     fetchStores();
