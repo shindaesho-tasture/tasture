@@ -850,6 +850,13 @@ const AdminDashboard = () => {
                   <DishTemplateEditor />
                 </motion.div>
               )}
+
+              {/* ─── Categories Tab ─── */}
+              {activeTab === "categories" && (
+                <motion.div key="categories" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <AdminCategoryEditor />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         )}
