@@ -872,7 +872,30 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       .then(({ data }) => setIsFollowing(!!data));
   }, [user, post.userId]);
 
-  const fetchComments = async () => {
+  // Check saved store state
+  useEffect(() => {
+    if (!user || !post.storeId) return;
+    supabase
+      .from("saved_stores")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("store_id", post.storeId)
+      .maybeSingle()
+      .then(({ data }) => setSaved(!!data));
+  }, [user, post.storeId]);
+
+  const toggleSaveStore = async () => {
+    if (!user || !post.storeId) return;
+    navigator.vibrate?.(8);
+    if (saved) {
+      await supabase.from("saved_stores").delete().eq("user_id", user.id).eq("store_id", post.storeId);
+      setSaved(false);
+    } else {
+      await supabase.from("saved_stores").insert({ user_id: user.id, store_id: post.storeId } as any);
+      setSaved(true);
+    }
+  };
+
     setLoadingComments(true);
     const { data } = await supabase
       .from("feed_comments")
