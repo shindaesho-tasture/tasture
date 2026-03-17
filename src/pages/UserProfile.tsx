@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Heart, MessageCircle, UserPlus, UserCheck, Grid3X3, Trophy, Images } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, UserPlus, UserCheck, Grid3X3, Trophy, Images, Dna } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import AchievementDetailSheet from "@/components/AchievementDetailSheet";
+import FeedRadarChart from "@/components/FeedRadarChart";
 
 /* ── Types ── */
 interface UserPost {
@@ -72,7 +73,7 @@ const UserProfile = () => {
   const [tasteDNA, setTasteDNA] = useState<TasteDNA>({ salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 });
 
   // Tabs & posts
-  const [activeTab, setActiveTab] = useState<"posts" | "badges">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "badges" | "dna">("posts");
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
@@ -286,6 +287,7 @@ const UserProfile = () => {
         <div className="flex border-b border-border">
           {[
             { key: "posts" as const, icon: Grid3X3 },
+            { key: "dna" as const, icon: Dna },
             { key: "badges" as const, icon: Trophy },
           ].map(({ key, icon: Icon }) => (
             <button key={key} onClick={() => setActiveTab(key)}
@@ -338,7 +340,58 @@ const UserProfile = () => {
           </div>
         )}
 
-        {/* Badges Tab */}
+        {/* Taste DNA Tab */}
+        {activeTab === "dna" && (
+          <div className="px-4 pt-6 pb-8">
+            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              🧬 Taste DNA
+            </h2>
+
+            {(tasteDNA.salty + tasteDNA.sweet + tasteDNA.sour + tasteDNA.spicy + tasteDNA.umami) > 0 ? (
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }} className="flex flex-col items-center">
+                <FeedRadarChart
+                  data={{
+                    overall: tasteDNA.salty,
+                    taste: tasteDNA.sweet,
+                    texture: tasteDNA.sour,
+                    value: tasteDNA.spicy,
+                    cleanliness: tasteDNA.umami,
+                  }}
+                  size={240}
+                  showBarBreakdown
+                />
+
+                {/* Taste highlights */}
+                <div className="mt-6 w-full grid grid-cols-5 gap-1.5">
+                  {([
+                    { label: "เค็ม", icon: "🧂", val: tasteDNA.salty },
+                    { label: "หวาน", icon: "🍯", val: tasteDNA.sweet },
+                    { label: "เปรี้ยว", icon: "🍋", val: tasteDNA.sour },
+                    { label: "เผ็ด", icon: "🌶️", val: tasteDNA.spicy },
+                    { label: "อูมามิ", icon: "🍄", val: tasteDNA.umami },
+                  ] as const).map((t) => {
+                    const color = t.val >= 4 ? "text-score-emerald" : t.val >= 2.5 ? "text-foreground" : "text-muted-foreground";
+                    return (
+                      <div key={t.label} className="flex flex-col items-center py-2 rounded-xl bg-secondary/50">
+                        <span className="text-base">{t.icon}</span>
+                        <span className={cn("text-xs font-bold mt-0.5", color)}>{t.val.toFixed(1)}</span>
+                        <span className="text-[9px] text-muted-foreground">{t.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <Dna size={40} strokeWidth={1} className="mb-3 opacity-30" />
+                <p className="text-sm">ยังไม่มีข้อมูล Taste DNA</p>
+              </div>
+            )}
+          </div>
+        )}
+
+
         {activeTab === "badges" && (
           <div className="px-4 pt-4 pb-8">
             <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
