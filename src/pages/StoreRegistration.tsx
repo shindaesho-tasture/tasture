@@ -46,7 +46,63 @@ const StoreRegistration = () => {
 
   const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_API_KEY, libraries: LIBRARIES });
 
-  const onMapLoad = useCallback((map: google.maps.Map) => { mapRef.current = map; }, []);
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+    autocompleteServiceRef.current = new google.maps.places.AutocompleteService();
+    placesServiceRef.current = new google.maps.places.PlacesService(map);
+  }, []);
+
+  // Place search
+  const searchPlaces = useCallback((query: string) => {
+    if (!query.trim() || !autocompleteServiceRef.current) {
+      setPlaceResults([]);
+      return;
+    }
+    setSearchingPlace(true);
+    autocompleteServiceRef.current.getPlacePredictions(
+      { input: query, types: ["establishment"], componentRestrictions: { country: "th" } },
+      (predictions, status) => {
+        setSearchingPlace(false);
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+          setPlaceResults([]);
+          return;
+        }
+        // Get details for top 5
+        const results: google.maps.places.PlaceResult[] = [];
+        let pending = Math.min(predictions.length, 5);
+        predictions.slice(0, 5).forEach((p) => {
+          placesServiceRef.current?.getDetails(
+            { placeId: p.place_id!, fields: ["name", "geometry", "formatted_address", "place_id"] },
+            (place, detailStatus) => {
+              if (detailStatus === google.maps.places.PlacesServiceStatus.OK && place) {
+                results.push(place);
+              }
+              pending--;
+              if (pending === 0) setPlaceResults([...results]);
+            }
+          );
+        });
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => searchPlaces(placeQuery), 400);
+    return () => clearTimeout(timer);
+  }, [placeQuery, searchPlaces]);
+
+  const handleSelectPlace = (place: google.maps.places.PlaceResult) => {
+    if (place.geometry?.location) {
+      const loc = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+      setPinLocation(loc);
+      setPinned(true);
+      mapRef.current?.panTo(loc);
+      mapRef.current?.setZoom(17);
+      if (place.name && !name.trim()) setName(place.name);
+    }
+    setPlaceQuery("");
+    setPlaceResults([]);
+  };
 
   const handleDropPin = () => {
     if (navigator.geolocation) {
