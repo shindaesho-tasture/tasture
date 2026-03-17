@@ -12,6 +12,7 @@ const WorldMap = () => {
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: MAPS_LIBRARIES,
   });
 
   const onMapLoad = useCallback((map: google.maps.Map) => {
