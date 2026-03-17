@@ -832,6 +832,13 @@ const AdminDashboard = () => {
                   </div>
                 </motion.div>
               )}
+
+              {/* ─── Templates Tab (DNA Tag Editor) ─── */}
+              {activeTab === "templates" && (
+                <motion.div key="templates" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <DishTemplateEditor />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         )}
