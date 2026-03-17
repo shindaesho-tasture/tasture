@@ -41,6 +41,7 @@ interface StoreCard {
   distanceKm: number | null;
   recentActivityCount: number;
   matchPercent: number | null;
+  imageUrl: string | null;
 }
 
 const tierColors: Record<ScoreTier, string> = {
