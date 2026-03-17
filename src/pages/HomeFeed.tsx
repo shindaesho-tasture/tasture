@@ -1188,9 +1188,9 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
 
                   {/* Sensory feedback radar chart */}
                   {post.slides[slideIndex].satisfaction && (
-                    <div className="flex justify-center px-1">
-                      <div className="px-2 py-1.5 rounded-xl bg-black/50 backdrop-blur-md border border-white/10 inline-flex items-center">
-                        <FeedRadarChart data={post.slides[slideIndex].satisfaction!} size={100} className="[&_text]:!fill-white/70 [&_line]:!stroke-white/10 [&_path[stroke='hsl(0_0%_0%_/_0.06)']]:!stroke-white/10" />
+                    <div className="flex justify-center">
+                      <div className="rounded-xl bg-black/50 backdrop-blur-md border border-white/10 p-1">
+                        <FeedRadarChart data={post.slides[slideIndex].satisfaction!} size={100} dark />
                       </div>
                     </div>
                   )}
