@@ -738,7 +738,10 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-        <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/30">
+        <div
+          onClick={() => navigate(`/user/${post.userId}`)}
+          className="w-10 h-10 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/30 cursor-pointer active:scale-95 transition-transform"
+        >
           {post.userAvatar ? (
             <img src={post.userAvatar} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -747,8 +750,8 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
             </div>
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">{post.userName}</p>
+        <div className="flex-1 min-w-0" onClick={() => navigate(`/user/${post.userId}`)} role="button">
+          <p className="text-sm font-semibold text-foreground truncate cursor-pointer">{post.userName}</p>
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <Clock size={10} />
             <span>{timeAgo(post.createdAt)}</span>

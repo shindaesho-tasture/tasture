@@ -186,7 +186,10 @@ const FollowList = () => {
                   className="flex items-center gap-3 p-3 rounded-2xl bg-card shadow-luxury border border-border/30"
                 >
                   {/* Avatar */}
-                  <div className="w-11 h-11 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/20">
+                  <div
+                    onClick={() => navigate(`/user/${u.id}`)}
+                    className="w-11 h-11 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/20 cursor-pointer active:scale-95 transition-transform"
+                  >
                     {u.avatar_url ? (
                       <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -197,8 +200,8 @@ const FollowList = () => {
                   </div>
 
                   {/* Name */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">
+                  <div className="flex-1 min-w-0" onClick={() => navigate(`/user/${u.id}`)} role="button">
+                    <p className="text-sm font-semibold text-foreground truncate cursor-pointer">
                       {u.display_name || "ผู้ใช้"}
                     </p>
                   </div>
