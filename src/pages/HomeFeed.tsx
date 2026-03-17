@@ -673,7 +673,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       <div className="flex items-center gap-1 px-4 py-3 border-t border-border/30">
         <motion.button
           whileTap={{ scale: 0.85 }}
-          onClick={() => setLiked(!liked)}
+          onClick={toggleLike}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
         >
           <Heart
@@ -687,7 +687,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
             "text-[11px] font-medium",
             liked ? "text-score-ruby" : "text-muted-foreground"
           )}>
-            ถูกใจ
+            {likeCount > 0 ? likeCount : "ถูกใจ"}
           </span>
         </motion.button>
 
