@@ -151,8 +151,8 @@ const HomeFeed = () => {
   const fetchFeed = async (isRefresh = false, isRealtime = false) => {
     if (!isRefresh) setLoading(true);
     try {
-      // Fetch recent menu reviews, dish DNA, and satisfaction ratings in parallel
-      const [reviewsRes, dnaRes, satRes] = await Promise.all([
+      // Fetch recent menu reviews, dish DNA, satisfaction ratings, and store reviews in parallel
+      const [reviewsRes, dnaRes, satRes, storeReviewsRes] = await Promise.all([
         supabase
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
@@ -168,6 +168,11 @@ const HomeFeed = () => {
           .select("user_id, menu_item_id, texture, taste, overall, cleanliness, value, created_at")
           .order("created_at", { ascending: false })
           .limit(40),
+        supabase
+          .from("reviews")
+          .select("user_id, store_id, metric_id, score, created_at")
+          .order("created_at", { ascending: false })
+          .limit(60),
       ]);
 
       // Collect unique user_ids and menu_item_ids
@@ -210,7 +215,29 @@ const HomeFeed = () => {
         latestTime: string;
       }>();
 
-      // Build satisfaction lookup
+      // Helper: normalize store review score (-2..+2) to 1-5 scale
+      const norm = (score: number) => Math.round(((score + 2) / 4) * 4 + 1);
+      // Helper: normalize menu review score (-2, 0, +2) to 1-5
+      const normMenu = (score: number) => score === 2 ? 5 : score === 0 ? 3 : 1;
+
+      // Build store review lookup: user+store → mapped axes
+      // metric_id mapping: table-clean→cleanliness, ambiance→overall, wait-time→value
+      const METRIC_TO_AXIS: Record<string, keyof SatisfactionAxes> = {
+        "table-clean": "cleanliness",
+        "ambiance": "overall",
+        "wait-time": "value",
+      };
+      const storeRevLookup = new Map<string, Partial<SatisfactionAxes>>();
+      (storeReviewsRes.data || []).forEach((sr) => {
+        const axis = METRIC_TO_AXIS[sr.metric_id];
+        if (!axis) return;
+        const key = `${sr.user_id}-${sr.store_id}`;
+        if (!storeRevLookup.has(key)) storeRevLookup.set(key, {});
+        const entry = storeRevLookup.get(key)!;
+        if (entry[axis] == null) entry[axis] = norm(sr.score);
+      });
+
+      // Build satisfaction lookup from satisfaction_ratings table
       const satLookup = new Map<string, SatisfactionAxes>();
       (satRes.data || []).forEach((s) => {
         const key = `${s.user_id}-${s.menu_item_id}`;
@@ -219,11 +246,40 @@ const HomeFeed = () => {
         }
       });
 
-      // Add reviews
+      // Merge function: combine satisfaction_ratings + store reviews + menu score into one SatisfactionAxes
+      const buildSatisfaction = (userId: string, menuItemId: string, menuScore: number | null, storeId: string | null): SatisfactionAxes | null => {
+        const satKey = `${userId}-${menuItemId}`;
+        const sat = satLookup.get(satKey);
+        const storeKey = storeId ? `${userId}-${storeId}` : null;
+        const storeRev = storeKey ? storeRevLookup.get(storeKey) : null;
+
+        const merged: SatisfactionAxes = {};
+
+        // Layer 1: satisfaction_ratings (highest priority, direct data)
+        if (sat) Object.assign(merged, sat);
+
+        // Layer 2: store reviews fill missing axes
+        if (storeRev) {
+          for (const [k, v] of Object.entries(storeRev)) {
+            if (merged[k as keyof SatisfactionAxes] == null) {
+              (merged as any)[k] = v;
+            }
+          }
+        }
+
+        // Layer 3: menu review score → taste (if missing)
+        if (menuScore != null && merged.taste == null) {
+          merged.taste = normMenu(menuScore);
+        }
+
+        return Object.keys(merged).length > 0 ? merged : null;
+      };
+
+      // Add reviews (satisfaction computed later when storeId known)
       (reviewsRes.data || []).forEach((r) => {
         const key = `${r.user_id}-${r.menu_item_id}`;
         if (!postMap.has(key)) {
-          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, satisfaction: satLookup.get(key) || null, dnaComponents: [], latestTime: r.created_at });
+          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, satisfaction: null, dnaComponents: [], latestTime: r.created_at });
         }
         const entry = postMap.get(key)!;
         entry.score = r.score;
@@ -235,20 +291,24 @@ const HomeFeed = () => {
       (dnaRes.data || []).forEach((d) => {
         const key = `${d.user_id}-${d.menu_item_id}`;
         if (!postMap.has(key)) {
-          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, satisfaction: satLookup.get(key) || null, dnaComponents: [], latestTime: d.created_at });
+          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, satisfaction: null, dnaComponents: [], latestTime: d.created_at });
         }
         const entry = postMap.get(key)!;
         entry.dnaComponents.push({ name: d.component_name, icon: d.component_icon, tag: d.selected_tag, score: d.selected_score });
         if (new Date(d.created_at) > new Date(entry.latestTime)) entry.latestTime = d.created_at;
       });
 
-      // Build combined posts
+      // Build combined posts with merged satisfaction data
       const allPosts: FeedPost[] = [...postMap.entries()].map(([key, entry]) => {
         const profile = profileMap.get(entry.userId);
         const menu = menuMap.get(entry.menuItemId);
+        const storeId = menu?.storeId || null;
         const hasReview = entry.score != null;
         const hasDna = entry.dnaComponents.length > 0;
         const type = hasReview && hasDna ? "combined" : hasReview ? "menu_review" : "dish_dna";
+
+        // Merge all data sources for satisfaction chart
+        const satisfaction = buildSatisfaction(entry.userId, entry.menuItemId, entry.score, storeId);
 
         return {
           id: `post-${key}`,
@@ -257,12 +317,12 @@ const HomeFeed = () => {
           userName: profile?.name || "ผู้ใช้",
           userAvatar: profile?.avatar || null,
           storeName: menu ? (storeMap.get(menu.storeId) || "ร้านค้า") : "ร้านค้า",
-          storeId: menu?.storeId || "",
+          storeId: storeId || "",
           menuItemName: menu?.name || "เมนู",
           menuItemId: entry.menuItemId,
           menuItemImage: menu?.image || null,
           score: entry.score,
-          satisfaction: entry.satisfaction,
+          satisfaction,
           dnaComponents: hasDna ? entry.dnaComponents : undefined,
           createdAt: entry.latestTime,
         };

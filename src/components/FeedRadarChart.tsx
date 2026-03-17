@@ -1,14 +1,14 @@
 import { cn } from "@/lib/utils";
 
 export interface SatisfactionAxes {
-  texture: number;   // 1-5
-  taste: number;     // 1-5
-  overall: number;   // 1-5
-  cleanliness: number; // 1-5
-  value: number;     // 1-5
+  texture?: number;     // 1-5
+  taste?: number;       // 1-5
+  overall?: number;     // 1-5
+  cleanliness?: number; // 1-5
+  value?: number;       // 1-5
 }
 
-const AXES = [
+const ALL_AXES = [
   { key: "texture" as const, label: "เท็กซ์เจอร์", icon: "🫧", angle: -90 },
   { key: "taste" as const, label: "รสชาติ", icon: "👅", angle: -18 },
   { key: "value" as const, label: "ความคุ้มค่า", icon: "💰", angle: 54 },
@@ -23,6 +23,18 @@ interface FeedRadarChartProps {
 }
 
 const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) => {
+  // Filter to only axes that have data
+  const activeAxes = ALL_AXES.filter((a) => data[a.key] != null && data[a.key]! > 0);
+
+  if (activeAxes.length < 3) return null; // Need at least 3 axes to render
+
+  // Recalculate angles evenly based on active axes count
+  const angleStep = 360 / activeAxes.length;
+  const axes = activeAxes.map((a, i) => ({
+    ...a,
+    angle: -90 + i * angleStep,
+  }));
+
   const cx = size / 2;
   const cy = size / 2;
   const maxR = size * 0.32;
@@ -36,24 +48,24 @@ const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) =>
     };
   };
 
-  // Ring 3 (balanced) target zone
-  const targetPoints = AXES.map((a) => getPoint(a.angle, 3));
-  const targetPath = targetPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
+  const makePath = (points: { x: number; y: number }[]) =>
+    points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
 
+  // Target zone at ring 3
+  const targetPath = makePath(axes.map((a) => getPoint(a.angle, 3)));
   // Data shape
-  const dataPoints = AXES.map((a) => getPoint(a.angle, data[a.key]));
-  const dataPath = dataPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
+  const dataPoints = axes.map((a) => getPoint(a.angle, data[a.key]!));
+  const dataPath = makePath(dataPoints);
 
-  // Average score for center label
-  const avg = (data.texture + data.taste + data.overall + data.cleanliness + data.value) / 5;
+  // Average of active axes
+  const avg = axes.reduce((sum, a) => sum + (data[a.key] || 0), 0) / axes.length;
 
   return (
     <div className={cn("relative", className)}>
       <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
         {/* Grid rings 1-5 */}
         {[1, 2, 3, 4, 5].map((ring) => {
-          const ringPoints = AXES.map((a) => getPoint(a.angle, ring));
-          const ringPath = ringPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
+          const ringPath = makePath(axes.map((a) => getPoint(a.angle, ring)));
           return (
             <path
               key={ring}
@@ -67,97 +79,52 @@ const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) =>
         })}
 
         {/* Axis lines */}
-        {AXES.map((a, i) => {
+        {axes.map((a, i) => {
           const outer = getPoint(a.angle, 5);
           return (
-            <line
-              key={i}
-              x1={cx}
-              y1={cy}
-              x2={outer.x}
-              y2={outer.y}
-              stroke="hsl(0 0% 0% / 0.06)"
-              strokeWidth={0.5}
-            />
+            <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y}
+              stroke="hsl(0 0% 0% / 0.06)" strokeWidth={0.5} />
           );
         })}
 
-        {/* Target zone fill (ring 3) */}
-        <path
-          d={targetPath}
-          fill="hsl(163 78% 20% / 0.05)"
-          stroke="none"
-        />
+        {/* Target zone fill */}
+        <path d={targetPath} fill="hsl(163 78% 20% / 0.05)" stroke="none" />
 
         {/* Data shape */}
-        <path
-          d={dataPath}
+        <path d={dataPath}
           fill="hsl(163 78% 20% / 0.12)"
           stroke="hsl(163 78% 20% / 0.8)"
-          strokeWidth={1.5}
-          strokeLinejoin="round"
-        />
+          strokeWidth={1.5} strokeLinejoin="round" />
 
-        {/* Data points with tier color */}
+        {/* Data points */}
         {dataPoints.map((p, i) => {
-          const val = data[AXES[i].key];
+          const val = data[axes[i].key]!;
           const color = val >= 4 ? "hsl(163 78% 20%)" : val >= 3 ? "hsl(105 24% 70%)" : val >= 2 ? "hsl(32 95% 44%)" : "hsl(0 68% 35%)";
           return (
-            <circle
-              key={i}
-              cx={p.x}
-              cy={p.y}
-              r={3}
-              fill={color}
-              stroke="white"
-              strokeWidth={1.5}
-            />
+            <circle key={i} cx={p.x} cy={p.y} r={3}
+              fill={color} stroke="white" strokeWidth={1.5} />
           );
         })}
 
         {/* Axis labels */}
-        {AXES.map((a, i) => {
+        {axes.map((a, i) => {
           const labelPoint = getPoint(a.angle, 6.2);
           return (
-            <text
-              key={i}
-              x={labelPoint.x}
-              y={labelPoint.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill="hsl(0 0% 45%)"
-              fontSize="7"
-              fontWeight="500"
-              fontFamily="Kanit, sans-serif"
-            >
+            <text key={i} x={labelPoint.x} y={labelPoint.y}
+              textAnchor="middle" dominantBaseline="middle"
+              fill="hsl(0 0% 45%)" fontSize="7" fontWeight="500" fontFamily="Kanit, sans-serif">
               {a.icon} {a.label}
             </text>
           );
         })}
 
         {/* Center average */}
-        <text
-          x={cx}
-          y={cy - 4}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="hsl(163 78% 20%)"
-          fontSize="14"
-          fontWeight="700"
-          fontFamily="Inter, sans-serif"
-        >
+        <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
+          fill="hsl(163 78% 20%)" fontSize="14" fontWeight="700" fontFamily="Inter, sans-serif">
           {avg.toFixed(1)}
         </text>
-        <text
-          x={cx}
-          y={cy + 8}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="hsl(0 0% 45%)"
-          fontSize="6"
-          fontWeight="400"
-          fontFamily="Kanit, sans-serif"
-        >
+        <text x={cx} y={cy + 8} textAnchor="middle" dominantBaseline="middle"
+          fill="hsl(0 0% 45%)" fontSize="6" fontWeight="400" fontFamily="Kanit, sans-serif">
           คะแนนเฉลี่ย
         </text>
       </svg>
