@@ -941,6 +941,16 @@ const PostOrderReview = () => {
               </div>
             )}
 
+            {/* ─── 5-Axis Satisfaction ─── */}
+            {step?.type === "satisfaction" && step.menuItemId && (
+              <SatisfactionStep
+                menuItemId={step.menuItemId}
+                menuItemName={step.menuItemName || ""}
+                scores={satisfactionScores[step.menuItemId] || { texture: 3, taste: 3, overall: 3, cleanliness: 3, value: 3 }}
+                onChange={(scores) => setSatisfactionScores((prev) => ({ ...prev, [step.menuItemId!]: scores }))}
+              />
+            )}
+
             {/* Results */}
             {step?.type === "results" && results && (
               <div className="px-4 pt-4 space-y-4">
