@@ -145,6 +145,26 @@ const DishDetailSheet = ({
   const fetchDescriptions = async () => {
     setLoadingDesc(true);
     try {
+      // 1. Check cache first
+      const { data: cached } = await supabase
+        .from("dish_descriptions")
+        .select("component_name, description")
+        .eq("menu_item_id", menuItemId);
+
+      if (cached && cached.length > 0) {
+        const descMap: Record<string, string> = {};
+        cached.forEach((c) => (descMap[c.component_name] = c.description));
+
+        // If cache covers all tags, use it directly
+        const uncovered = dnaTags.filter((t) => !descMap[t.component_name]);
+        if (uncovered.length === 0) {
+          setDescriptions(descMap);
+          setLoadingDesc(false);
+          return;
+        }
+      }
+
+      // 2. Call AI for missing/all descriptions
       const tagsPayload = dnaTags.map((t) => ({
         ingredient: t.component_name,
         icon: t.component_icon,
@@ -158,10 +178,23 @@ const DishDetailSheet = ({
 
       if (!error && data?.descriptions) {
         const descMap: Record<string, string> = {};
-        (data.descriptions as Array<{ ingredient: string; description: string }>).forEach(
-          (d) => (descMap[d.ingredient] = d.description)
-        );
+        const descs = data.descriptions as Array<{ ingredient: string; description: string }>;
+        descs.forEach((d) => (descMap[d.ingredient] = d.description));
         setDescriptions(descMap);
+
+        // 3. Save to cache (upsert)
+        const rows = descs.map((d) => ({
+          menu_item_id: menuItemId,
+          component_name: d.ingredient,
+          description: d.description,
+        }));
+        // Fire and forget — don't block UI
+        supabase
+          .from("dish_descriptions")
+          .upsert(rows, { onConflict: "menu_item_id,component_name" })
+          .then(({ error: upsertErr }) => {
+            if (upsertErr) console.error("Cache upsert error:", upsertErr);
+          });
       }
     } catch (e) {
       console.error("describe-dish error:", e);
