@@ -401,28 +401,89 @@ const HomeFeed = () => {
         } as FeedPost;
       });
 
-      // Add photo posts from posts table
-      (photoPostsRes.data || []).forEach((pp) => {
-        const profile = profileMap.get(pp.user_id);
-        const ppStoreId = pp.store_id || "";
-        allPosts.push({
-          id: `photo-${pp.id}`,
-          type: "photo_post",
-          userId: pp.user_id,
-          userName: profile?.name || "ผู้ใช้",
-          userAvatar: profile?.avatar || null,
-          storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "",
-          storeId: ppStoreId,
-          menuItemName: "",
-          menuItemId: "",
-          menuItemImage: null,
-          score: null,
-          satisfaction: null,
-          caption: pp.caption,
-          photoUrl: pp.image_url,
-          createdAt: pp.created_at,
+      // Add photo posts from posts table with carousel slides
+      const photoPostIds = (photoPostsRes.data || []).map((pp) => pp.id);
+      let postImagesMap = new Map<string, { image_url: string; menu_review_id: string | null; sort_order: number }[]>();
+
+      if (photoPostIds.length > 0) {
+        const { data: piData } = await supabase
+          .from("post_images")
+          .select("post_id, image_url, menu_review_id, sort_order")
+          .in("post_id", photoPostIds)
+          .order("sort_order", { ascending: true });
+
+        (piData || []).forEach((pi: any) => {
+          if (!postImagesMap.has(pi.post_id)) postImagesMap.set(pi.post_id, []);
+          postImagesMap.get(pi.post_id)!.push(pi);
         });
-      });
+
+        // Fetch linked review details for slides
+        const slideReviewIds = (piData || [])
+          .filter((pi: any) => pi.menu_review_id)
+          .map((pi: any) => pi.menu_review_id);
+
+        let slideReviewMap = new Map<string, { score: number; menu_item_id: string }>();
+        if (slideReviewIds.length > 0) {
+          const { data: srData } = await supabase
+            .from("menu_reviews")
+            .select("id, score, menu_item_id")
+            .in("id", slideReviewIds);
+          (srData || []).forEach((sr) => slideReviewMap.set(sr.id, { score: sr.score, menu_item_id: sr.menu_item_id }));
+        }
+
+        // Build slides for each photo post
+        (photoPostsRes.data || []).forEach((pp) => {
+          const profile = profileMap.get(pp.user_id);
+          const ppStoreId = pp.store_id || "";
+          const piList = postImagesMap.get(pp.id) || [];
+
+          const slides: PostImageSlide[] = piList.length > 0
+            ? piList.map((pi) => {
+                const review = pi.menu_review_id ? slideReviewMap.get(pi.menu_review_id) : null;
+                const menuItem = review ? menuMap.get(review.menu_item_id) : null;
+                return {
+                  imageUrl: pi.image_url,
+                  reviewScore: review?.score ?? null,
+                  menuItemName: menuItem?.name || (review ? "เมนู" : null),
+                  storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
+                };
+              })
+            : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null }];
+
+          allPosts.push({
+            id: `photo-${pp.id}`,
+            type: "photo_post",
+            userId: pp.user_id,
+            userName: profile?.name || "ผู้ใช้",
+            userAvatar: profile?.avatar || null,
+            storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "",
+            storeId: ppStoreId,
+            menuItemName: "",
+            menuItemId: "",
+            menuItemImage: null,
+            score: null,
+            satisfaction: null,
+            caption: pp.caption,
+            photoUrl: pp.image_url,
+            slides,
+            createdAt: pp.created_at,
+          });
+        });
+      } else {
+        (photoPostsRes.data || []).forEach((pp) => {
+          const profile = profileMap.get(pp.user_id);
+          const ppStoreId = pp.store_id || "";
+          allPosts.push({
+            id: `photo-${pp.id}`, type: "photo_post",
+            userId: pp.user_id, userName: profile?.name || "ผู้ใช้", userAvatar: profile?.avatar || null,
+            storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "", storeId: ppStoreId,
+            menuItemName: "", menuItemId: "", menuItemImage: null, score: null, satisfaction: null,
+            caption: pp.caption, photoUrl: pp.image_url,
+            slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null }],
+            createdAt: pp.created_at,
+          });
+        });
+      }
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       const finalPosts = allPosts.slice(0, limit);
