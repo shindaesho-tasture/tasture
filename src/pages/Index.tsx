@@ -244,6 +244,7 @@ const Index = () => {
           distanceKm,
           recentActivityCount: recentActivityMap.get(s.id) || 0,
           matchPercent,
+          imageUrl: s.menu_photo || storeImageMap.get(s.id) || null,
         };
       }));
     } catch (err) {
