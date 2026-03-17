@@ -673,14 +673,6 @@ const HomeFeed = () => {
 
         {/* Fixed Title + Tabs */}
         <div className="flex-shrink-0 z-30 bg-background border-b border-border/50 transition-shadow duration-300" style={scrolled ? { boxShadow: '0 2px 8px -1px hsla(163, 78%, 20%, 0.08)' } : undefined}>
-          <div className="px-6 pt-2 pb-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              ฟีด
-            </h1>
-            <p className="text-sm font-light text-muted-foreground mt-1">
-              รีวิวล่าสุดจากชุมชน
-            </p>
-          </div>
           <HomeFeedTabs active={activeTab} onChange={handleTabChange} />
         </div>
 
