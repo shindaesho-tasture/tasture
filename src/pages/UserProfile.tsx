@@ -9,6 +9,7 @@ import PageTransition from "@/components/PageTransition";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import FeedRadarChart from "@/components/FeedRadarChart";
+import CompareRadarChart from "@/components/CompareRadarChart";
 
 /* ── Types ── */
 interface UserPost {
