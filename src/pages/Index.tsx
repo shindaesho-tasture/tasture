@@ -319,6 +319,27 @@ const Index = () => {
         {/* Discovery Trinity Tabs */}
         <DiscoveryTabs active={activeTab} onChange={setActiveTab} />
 
+        {/* Location picker trigger */}
+        <div className="px-6 pb-2">
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setShowLocationPicker(true)}
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-medium transition-all",
+              customPos
+                ? "bg-score-emerald/10 text-score-emerald border border-score-emerald/20"
+                : "bg-secondary text-muted-foreground"
+            )}
+          >
+            <MapPin size={13} strokeWidth={2} />
+            {customPos
+              ? `📍 ตำแหน่งที่เลือก (${customPos.lat.toFixed(3)}, ${customPos.lng.toFixed(3)})`
+              : activePosition
+              ? "📍 ใช้ GPS ปัจจุบัน — แตะเพื่อเปลี่ยน"
+              : "📍 เลือกตำแหน่ง"}
+          </motion.button>
+        </div>
+
         <SensorySearch />
         <HeroFoodCard />
 
