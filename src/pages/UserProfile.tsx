@@ -249,8 +249,62 @@ const UserProfile = () => {
             >
               แก้ไขโปรไฟล์
             </motion.button>
-          )}
-        </div>
+        )}
+
+        {/* Recent Reviews */}
+        {recentReviews.length > 0 && (
+          <motion.section
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mx-6 mb-8"
+          >
+            <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <span className="text-base">📝</span> รีวิวล่าสุด
+            </h2>
+            <div className="space-y-2.5">
+              {recentReviews.map((r, i) => {
+                const tier = getScoreTier(r.score);
+                const scoreLabel = r.score === 2 ? "💎" : r.score === 0 ? "😐" : "👎";
+                return (
+                  <motion.div
+                    key={r.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + i * 0.04 }}
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-card shadow-luxury border border-border/30"
+                  >
+                    {/* Menu image */}
+                    <div className="w-12 h-12 rounded-xl bg-secondary overflow-hidden shrink-0">
+                      {r.menuItemImage ? (
+                        <img src={r.menuItemImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-lg">🍜</div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{r.menuItemName}</p>
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <span className="truncate">{r.storeName}</span>
+                        <span>·</span>
+                        <Clock size={9} />
+                        <span>{timeAgo(r.createdAt)}</span>
+                      </div>
+                    </div>
+
+                    {/* Score */}
+                    <div className={cn("px-2.5 py-1 rounded-full text-xs font-bold", tierBg[tier], tierColors[tier])}>
+                      {scoreLabel}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.section>
+        )}
+      </div>
 
         {/* Stats */}
         <motion.div
