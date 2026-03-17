@@ -662,15 +662,21 @@ const AdminDashboard = () => {
                       {filteredReviews.map((r) => {
                         const tier = getScoreTier(r.score);
                         return (
-                          <motion.div key={r.id} layout className="rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 p-3">
+                          <motion.div key={r.id} layout className={cn(
+                            "rounded-2xl bg-surface-elevated shadow-luxury border p-3",
+                            r.hidden ? "border-score-amber/30 bg-score-amber/5" : "border-border/50"
+                          )}>
                             <div className="flex items-center gap-3">
                               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold",
-                                `bg-score-${tier}/10`, tierColors[tier]
+                                r.hidden ? "opacity-40" : "", `bg-score-${tier}/10`, tierColors[tier]
                               )}>
                                 {r.score > 0 ? "+" : ""}{r.score}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-foreground truncate">{r.menu_item_name}</p>
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs font-semibold text-foreground truncate">{r.menu_item_name}</p>
+                                  {r.hidden && <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-amber/10 text-score-amber font-bold">ซ่อน</span>}
+                                </div>
                                 <p className="text-[10px] text-muted-foreground">{r.userName} · {r.store_name}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className={cn("text-[9px] px-1.5 py-0.5 rounded-md font-medium",
@@ -681,7 +687,18 @@ const AdminDashboard = () => {
                                   <span className="text-[10px] text-muted-foreground/60">{timeAgo(r.created_at)}</span>
                                 </div>
                               </div>
-                              <ConfirmDeleteButton onDelete={() => deleteReview(r.id)} />
+                              <div className="flex flex-col gap-1">
+                                <motion.button
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => toggleHideReview(r.id, r.hidden)}
+                                  className={cn("p-1.5 rounded-lg transition-colors",
+                                    r.hidden ? "bg-score-emerald/10 text-score-emerald" : "bg-score-amber/10 text-score-amber"
+                                  )}
+                                >
+                                  {r.hidden ? <Eye size={12} /> : <EyeOff size={12} />}
+                                </motion.button>
+                                <ConfirmDeleteButton onDelete={() => deleteReview(r.id)} />
+                              </div>
                             </div>
                           </motion.div>
                         );
