@@ -73,7 +73,7 @@ const UserProfile = () => {
   const [tasteDNA, setTasteDNA] = useState<TasteDNA>({ salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 });
 
   // Tabs & posts
-  const [activeTab, setActiveTab] = useState<"posts" | "badges">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "badges" | "dna">("posts");
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
