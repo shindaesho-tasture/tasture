@@ -17,7 +17,7 @@ import SuggestedUsers from "@/components/SuggestedUsers";
 /* ─── Types ─── */
 interface FeedPost {
   id: string;
-  type: "combined" | "menu_review" | "dish_dna";
+  type: "combined" | "menu_review" | "dish_dna" | "photo_post";
   userId: string;
   userName: string;
   userAvatar: string | null;
@@ -29,6 +29,8 @@ interface FeedPost {
   score: number | null;
   satisfaction: SatisfactionAxes | null;
   dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
+  caption?: string | null;
+  photoUrl?: string | null;
   createdAt: string;
 }
 
@@ -122,6 +124,11 @@ const HomeFeed = () => {
         { event: "INSERT", schema: "public", table: "satisfaction_ratings" },
         () => fetchFeed(true, true)
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "posts" },
+        () => fetchFeed(true, true)
+      )
       .subscribe();
 
     return () => {
@@ -177,7 +184,7 @@ const HomeFeed = () => {
     if (!isRefresh) setLoading(true);
     try {
       // Fetch recent menu reviews, dish DNA, satisfaction ratings, and store reviews in parallel
-      const [reviewsRes, dnaRes, satRes, storeReviewsRes] = await Promise.all([
+      const [reviewsRes, dnaRes, satRes, storeReviewsRes, photoPostsRes] = await Promise.all([
         supabase
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
@@ -198,6 +205,11 @@ const HomeFeed = () => {
           .select("user_id, store_id, metric_id, score, created_at")
           .order("created_at", { ascending: false })
           .limit(limit * 3),
+        supabase
+          .from("posts")
+          .select("id, user_id, image_url, caption, store_id, created_at")
+          .order("created_at", { ascending: false })
+          .limit(limit),
       ]);
 
       // Collect unique user_ids and menu_item_ids
@@ -206,6 +218,7 @@ const HomeFeed = () => {
 
       (reviewsRes.data || []).forEach((r) => { userIds.add(r.user_id); menuItemIds.add(r.menu_item_id); });
       (dnaRes.data || []).forEach((d) => { userIds.add(d.user_id); menuItemIds.add(d.menu_item_id); });
+      (photoPostsRes.data || []).forEach((p) => { userIds.add(p.user_id); });
 
       // Fetch profiles, menu items, stores
       const [profilesRes, menuItemsRes] = await Promise.all([
@@ -223,6 +236,10 @@ const HomeFeed = () => {
       (menuItemsRes.data || []).forEach((m) => {
         menuMap.set(m.id, { name: m.name, storeId: m.store_id, image: m.image_url });
         storeIds.add(m.store_id);
+      });
+      // Also collect store_ids from photo posts
+      (photoPostsRes.data || []).forEach((pp) => {
+        if (pp.store_id) storeIds.add(pp.store_id);
       });
 
       const { data: storesData } = await supabase.from("stores").select("id, name, pin_lat, pin_lng").in("id", [...storeIds]);
@@ -374,7 +391,30 @@ const HomeFeed = () => {
           satisfaction,
           dnaComponents: hasDna ? entry.dnaComponents : undefined,
           createdAt: entry.latestTime,
-        };
+        } as FeedPost;
+      });
+
+      // Add photo posts from posts table
+      (photoPostsRes.data || []).forEach((pp) => {
+        const profile = profileMap.get(pp.user_id);
+        const ppStoreId = pp.store_id || "";
+        allPosts.push({
+          id: `photo-${pp.id}`,
+          type: "photo_post",
+          userId: pp.user_id,
+          userName: profile?.name || "ผู้ใช้",
+          userAvatar: profile?.avatar || null,
+          storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "",
+          storeId: ppStoreId,
+          menuItemName: "",
+          menuItemId: "",
+          menuItemImage: null,
+          score: null,
+          satisfaction: null,
+          caption: pp.caption,
+          photoUrl: pp.image_url,
+          createdAt: pp.created_at,
+        });
       });
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -616,9 +656,9 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [followLoading, setFollowLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Derive refId for comments - use consistent key based on user+menuItem
+  // Derive refId for comments/likes
   const refType = "post";
-  const refId = `${post.userId}-${post.menuItemId}`;
+  const refId = post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`;
 
   // Fetch like state + count on mount
   useEffect(() => {
@@ -835,30 +875,72 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
               🧬 DNA
             </span>
           )}
+          {post.type === "photo_post" && (
+            <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-primary/10 text-primary">
+              📸 โพส
+            </span>
+          )}
         </div>
       </div>
 
       {/* Action text */}
       <div className="px-4 pb-2">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          {post.type === "combined"
-            ? "รีวิวและวิเคราะห์ DNA ของ"
-            : post.type === "menu_review"
-            ? "ให้คะแนน"
-            : "วิเคราะห์ Dish DNA ของ"}{" "}
-          <span className="font-semibold text-foreground">{post.menuItemName}</span>
-          {" "}ที่{" "}
-          <button
-            onClick={() => navigate(`/store/${post.storeId}/order`)}
-            className="font-semibold text-score-emerald hover:underline"
-          >
-            {post.storeName}
-          </button>
+          {post.type === "photo_post" ? (
+            <>
+              {post.caption ? (
+                <span className="text-foreground">{post.caption}</span>
+              ) : (
+                "แชร์รูปอาหาร"
+              )}
+              {post.storeName && (
+                <>
+                  {" "}ที่{" "}
+                  <button
+                    onClick={() => navigate(`/store/${post.storeId}/order`)}
+                    className="font-semibold text-score-emerald hover:underline"
+                  >
+                    {post.storeName}
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {post.type === "combined"
+                ? "รีวิวและวิเคราะห์ DNA ของ"
+                : post.type === "menu_review"
+                ? "ให้คะแนน"
+                : "วิเคราะห์ Dish DNA ของ"}{" "}
+              <span className="font-semibold text-foreground">{post.menuItemName}</span>
+              {" "}ที่{" "}
+              <button
+                onClick={() => navigate(`/store/${post.storeId}/order`)}
+                className="font-semibold text-score-emerald hover:underline"
+              >
+                {post.storeName}
+              </button>
+            </>
+          )}
         </p>
       </div>
 
+      {/* Photo post image */}
+      {post.type === "photo_post" && post.photoUrl && (
+        <div className="px-4 pb-3">
+          <div className="relative rounded-xl overflow-hidden aspect-square">
+            <img
+              src={post.photoUrl}
+              alt={post.caption || "รูปอาหาร"}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Menu item image */}
-      {post.menuItemImage && (
+      {post.type !== "photo_post" && post.menuItemImage && (
         <div className="px-4 pb-3">
           <motion.div
             whileTap={{ scale: 0.98 }}
