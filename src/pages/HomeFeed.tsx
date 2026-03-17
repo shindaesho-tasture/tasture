@@ -532,7 +532,7 @@ const PostCard = ({ post, index, navigate, user }: PostCardProps) => {
       )}
 
       {/* Score display for reviews */}
-      {post.type === "menu_review" && post.score != null && (
+      {(post.type === "menu_review" || post.type === "combined") && post.score != null && (
         <div className="px-4 pb-3">
           <ScorePill score={post.score} />
         </div>
