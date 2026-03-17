@@ -160,7 +160,7 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     const { data: profilesData } = await supabase
-      .from("profiles").select("id, email, display_name, avatar_url, created_at")
+      .from("profiles").select("id, email, display_name, avatar_url, created_at, banned")
       .order("created_at", { ascending: false }).limit(200);
     const ids = (profilesData || []).map((p) => p.id);
     const [{ data: rolesData }, { data: postsData }, { data: reviewsData }] = await Promise.all([
