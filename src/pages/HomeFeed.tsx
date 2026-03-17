@@ -1003,6 +1003,17 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     setCommentCount((c) => Math.max(0, c - 1));
   };
 
+  if (deleted) {
+    return (
+      <motion.div
+        initial={{ opacity: 1, height: "auto" }}
+        animate={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.3 }}
+        className="overflow-hidden"
+      />
+    );
+  }
+
   return (
     <motion.div
       initial={isNew ? { opacity: 0, y: -40, scale: 0.95 } : { opacity: 0, y: 16 }}
