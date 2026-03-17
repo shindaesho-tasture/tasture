@@ -7,6 +7,7 @@ import {
   Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2,
 } from "lucide-react";
 import DishTemplateEditor from "@/components/admin/DishTemplateEditor";
+import AdminStoreEditor from "@/components/admin/AdminStoreEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -96,6 +97,7 @@ const AdminDashboard = () => {
   // Filters
   const [search, setSearch] = useState("");
   const [storeFilter, setStoreFilter] = useState<"all" | "verified" | "unverified">("all");
+  const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
   const [contentTab, setContentTab] = useState<"posts" | "reviews">("posts");
 
   useEffect(() => {
@@ -606,6 +608,13 @@ const AdminDashboard = () => {
                               >
                                 {store.verified ? <><XCircle size={12} /> ยกเลิก</> : <><CheckCircle2 size={12} /> ยืนยัน</>}
                               </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => { haptic(); setEditingStoreId(store.id); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-secondary text-foreground hover:bg-accent transition-colors"
+                              >
+                                <Eye size={12} /> จัดการ
+                              </motion.button>
                             </div>
                           </div>
                         </motion.div>
@@ -843,6 +852,17 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Store Editor Sheet */}
+      <AnimatePresence>
+        {editingStoreId && (
+          <AdminStoreEditor
+            storeId={editingStoreId}
+            onClose={() => setEditingStoreId(null)}
+            onUpdated={() => fetchStores()}
+          />
+        )}
+      </AnimatePresence>
     </PageTransition>
   );
 };
