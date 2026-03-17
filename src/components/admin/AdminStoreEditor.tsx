@@ -93,6 +93,7 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
       setEditCategory(storeData.category_id);
     }
     setMenuItems(items || []);
+    setReviewRows((reviews || []) as ReviewRow[]);
 
     // Aggregate review scores
     const map = new Map<string, { total: number; count: number }>();
