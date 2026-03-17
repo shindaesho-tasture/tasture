@@ -474,20 +474,28 @@ const PostCard = ({ post, index, navigate, user }: PostCardProps) => {
             <span>{timeAgo(post.createdAt)}</span>
           </div>
         </div>
-        <span className={cn(
-          "px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide",
-          post.type === "menu_review"
-            ? "bg-score-amber/10 text-score-amber"
-            : "bg-score-emerald/10 text-score-emerald"
-        )}>
-          {post.type === "menu_review" ? "⭐ รีวิว" : "🧬 DNA"}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {(post.type === "combined" || post.type === "menu_review") && (
+            <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-score-amber/10 text-score-amber">
+              ⭐ รีวิว
+            </span>
+          )}
+          {(post.type === "combined" || post.type === "dish_dna") && (
+            <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-score-emerald/10 text-score-emerald">
+              🧬 DNA
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Action text */}
       <div className="px-4 pb-2">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          {post.type === "menu_review" ? "ให้คะแนน" : "วิเคราะห์ Dish DNA ของ"}{" "}
+          {post.type === "combined"
+            ? "รีวิวและวิเคราะห์ DNA ของ"
+            : post.type === "menu_review"
+            ? "ให้คะแนน"
+            : "วิเคราะห์ Dish DNA ของ"}{" "}
           <span className="font-semibold text-foreground">{post.menuItemName}</span>
           {" "}ที่{" "}
           <button
