@@ -97,6 +97,7 @@ const AdminDashboard = () => {
   // Filters
   const [search, setSearch] = useState("");
   const [storeFilter, setStoreFilter] = useState<"all" | "verified" | "unverified">("all");
+  const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
   const [contentTab, setContentTab] = useState<"posts" | "reviews">("posts");
 
   useEffect(() => {
