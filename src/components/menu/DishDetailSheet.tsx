@@ -60,6 +60,8 @@ const DishDetailSheet = ({
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
   const [sensoryValues, setSensoryValues] = useState<Record<string, number>>({});
+  const [userPhotos, setUserPhotos] = useState<UserPhoto[]>([]);
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
 
   const emerald = hasEmeraldSeal(dnaTags, totalReviews);
 
