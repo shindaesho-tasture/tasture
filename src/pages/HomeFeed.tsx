@@ -10,6 +10,7 @@ import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import BottomNav from "@/components/BottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
+import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
 
 /* ─── Types ─── */
 interface FeedPost {
@@ -24,6 +25,7 @@ interface FeedPost {
   menuItemId: string;
   menuItemImage: string | null;
   score: number | null;
+  satisfaction: SatisfactionAxes | null;
   dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
   createdAt: string;
 }
@@ -44,11 +46,6 @@ const tierBg: Record<ScoreTier, string> = {
   ruby: "bg-score-ruby/10",
 };
 
-const scoreLabel = (score: number) => {
-  if (score === 2) return "ชอบมาก 🔥";
-  if (score === -2) return "ไม่ชอบ 😔";
-  return "เฉยๆ 😐";
-};
 
 const timeAgo = (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
@@ -93,6 +90,11 @@ const HomeFeed = () => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "dish_dna" },
+        () => fetchFeed(true, true)
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "satisfaction_ratings" },
         () => fetchFeed(true, true)
       )
       .subscribe();
@@ -149,8 +151,8 @@ const HomeFeed = () => {
   const fetchFeed = async (isRefresh = false, isRealtime = false) => {
     if (!isRefresh) setLoading(true);
     try {
-      // Fetch recent menu reviews and dish DNA in parallel
-      const [reviewsRes, dnaRes] = await Promise.all([
+      // Fetch recent menu reviews, dish DNA, and satisfaction ratings in parallel
+      const [reviewsRes, dnaRes, satRes] = await Promise.all([
         supabase
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
@@ -161,6 +163,11 @@ const HomeFeed = () => {
           .select("id, user_id, menu_item_id, component_name, component_icon, selected_tag, selected_score, created_at")
           .order("created_at", { ascending: false })
           .limit(60),
+        supabase
+          .from("satisfaction_ratings")
+          .select("user_id, menu_item_id, texture, taste, overall, cleanliness, value, created_at")
+          .order("created_at", { ascending: false })
+          .limit(40),
       ]);
 
       // Collect unique user_ids and menu_item_ids
@@ -198,15 +205,25 @@ const HomeFeed = () => {
         menuItemId: string;
         score: number | null;
         reviewId: string | null;
+        satisfaction: SatisfactionAxes | null;
         dnaComponents: { name: string; icon: string; tag: string; score: number }[];
         latestTime: string;
       }>();
+
+      // Build satisfaction lookup
+      const satLookup = new Map<string, SatisfactionAxes>();
+      (satRes.data || []).forEach((s) => {
+        const key = `${s.user_id}-${s.menu_item_id}`;
+        if (!satLookup.has(key)) {
+          satLookup.set(key, { texture: s.texture, taste: s.taste, overall: s.overall, cleanliness: s.cleanliness, value: s.value });
+        }
+      });
 
       // Add reviews
       (reviewsRes.data || []).forEach((r) => {
         const key = `${r.user_id}-${r.menu_item_id}`;
         if (!postMap.has(key)) {
-          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, dnaComponents: [], latestTime: r.created_at });
+          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, satisfaction: satLookup.get(key) || null, dnaComponents: [], latestTime: r.created_at });
         }
         const entry = postMap.get(key)!;
         entry.score = r.score;
@@ -218,7 +235,7 @@ const HomeFeed = () => {
       (dnaRes.data || []).forEach((d) => {
         const key = `${d.user_id}-${d.menu_item_id}`;
         if (!postMap.has(key)) {
-          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, dnaComponents: [], latestTime: d.created_at });
+          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, satisfaction: satLookup.get(key) || null, dnaComponents: [], latestTime: d.created_at });
         }
         const entry = postMap.get(key)!;
         entry.dnaComponents.push({ name: d.component_name, icon: d.component_icon, tag: d.selected_tag, score: d.selected_score });
@@ -245,6 +262,7 @@ const HomeFeed = () => {
           menuItemId: entry.menuItemId,
           menuItemImage: menu?.image || null,
           score: entry.score,
+          satisfaction: entry.satisfaction,
           dnaComponents: hasDna ? entry.dnaComponents : undefined,
           createdAt: entry.latestTime,
         };
@@ -578,10 +596,10 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         </div>
       )}
 
-      {/* Score display for reviews */}
-      {(post.type === "menu_review" || post.type === "combined") && post.score != null && (
-        <div className="px-4 pb-3">
-          <ScorePill score={post.score} />
+      {/* Satisfaction Radar Chart */}
+      {post.satisfaction && (
+        <div className="flex justify-center px-4 pb-3">
+          <FeedRadarChart data={post.satisfaction} size={180} />
         </div>
       )}
 
@@ -762,24 +780,6 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         )}
       </AnimatePresence>
     </motion.div>
-  );
-};
-
-/* ─── Score Pill ─── */
-const ScorePill = ({ score }: { score: number }) => {
-  const tier = getScoreTier(score);
-  return (
-    <div className={cn(
-      "inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl",
-      tierBg[tier]
-    )}>
-      <span className={cn("text-lg font-bold tabular-nums", tierColors[tier])}>
-        {score > 0 ? "+" : ""}{score}
-      </span>
-      <span className={cn("text-xs font-medium", tierColors[tier])}>
-        {scoreLabel(score)}
-      </span>
-    </div>
   );
 };
 
