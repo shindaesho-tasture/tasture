@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed } from "lucide-react";
+import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -282,6 +282,14 @@ const MyStores = () => {
                       >
                         <UtensilsCrossed size={14} strokeWidth={1.5} />
                         ฟีดแบคเมนู
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/menu-images/${store.id}`)}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-accent/50 text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-accent transition-colors"
+                      >
+                        <Camera size={14} strokeWidth={1.5} />
+                        📷
                       </motion.button>
                     </div>
                     {popInfo.label && (

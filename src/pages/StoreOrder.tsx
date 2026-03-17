@@ -18,6 +18,7 @@ interface MenuItemRow {
   noodle_types: string[] | null;
   noodle_styles: string[] | null;
   toppings: string[] | null;
+  image_url: string | null;
 }
 
 interface DnaTag {
@@ -61,7 +62,7 @@ const StoreOrder = () => {
         supabase.from("stores").select("name").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings")
+          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url")
           .eq("store_id", storeId!)
           .order("name"),
       ]);
@@ -260,6 +261,7 @@ const StoreOrder = () => {
                       name={item.name}
                       price={item.price}
                       priceSpecial={item.price_special}
+                      imageUrl={item.image_url ?? undefined}
                       tags={tags}
                       totalReviews={totalRevs}
                       onPress={() => setDetailItem(item)}
