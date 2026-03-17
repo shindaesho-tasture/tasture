@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Camera, Check, Loader2 } from "lucide-react";
+import { ChevronLeft, MapPin, Camera, Check, Loader2, Search, X } from "lucide-react";
 import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/use-categories";
@@ -9,6 +9,13 @@ import { useStore } from "@/lib/store-context";
 import { useAuth } from "@/hooks/use-auth";
 import type { MenuItem } from "@/lib/menu-types";
 import { GOOGLE_MAPS_API_KEY, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
+import PageTransition from "@/components/PageTransition";
+import BottomNav from "@/components/BottomNav";
+import ScanningOverlay from "@/components/menu/ScanningOverlay";
+import MenuCardList from "@/components/menu/MenuCardList";
+import { useToast } from "@/hooks/use-toast";
+
+const LIBRARIES: ("places")[] = ["places"];
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import ScanningOverlay from "@/components/menu/ScanningOverlay";
