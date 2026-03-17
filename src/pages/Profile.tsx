@@ -474,17 +474,18 @@ const Profile = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mx-6 grid grid-cols-3 gap-3 mb-8"
+          className="mx-6 grid grid-cols-4 gap-2.5 mb-8"
         >
           {[
             { icon: Gem, label: "Emeralds", value: emeraldCount },
             { icon: Store, label: "Stores", value: storeCount },
-            { icon: ChefHat, label: "Palate Lv.", value: palateLevel },
+            { icon: Users, label: "ผู้ติดตาม", value: followerCount },
+            { icon: ChefHat, label: "ติดตาม", value: followingCount },
           ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex flex-col items-center py-4 rounded-2xl bg-card shadow-luxury">
-              <Icon size={18} strokeWidth={1.5} className="text-score-emerald mb-1.5" />
-              <span className="text-xl font-bold text-foreground">{value}</span>
-              <span className="text-[10px] text-muted-foreground font-medium mt-0.5">{label}</span>
+            <div key={label} className="flex flex-col items-center py-3.5 rounded-2xl bg-card shadow-luxury">
+              <Icon size={16} strokeWidth={1.5} className="text-score-emerald mb-1" />
+              <span className="text-lg font-bold text-foreground">{value}</span>
+              <span className="text-[9px] text-muted-foreground font-medium mt-0.5">{label}</span>
             </div>
           ))}
         </motion.div>
