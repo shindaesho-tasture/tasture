@@ -26,6 +26,7 @@ import MenuFeedback from "./pages/MenuFeedback.tsx";
 import DishDnaFeedback from "./pages/DishDnaFeedback.tsx";
 import PostOrderReview from "./pages/PostOrderReview.tsx";
 import MenuImageManager from "./pages/MenuImageManager.tsx";
+import FollowList from "./pages/FollowList.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const AnimatedRoutes = () => {
         <Route path="/dish-dna/:menuItemId" element={<DishDnaFeedback />} />
         <Route path="/post-review" element={<PostOrderReview />} />
         <Route path="/menu-images/:storeId" element={<MenuImageManager />} />
+        <Route path="/follows" element={<FollowList />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
