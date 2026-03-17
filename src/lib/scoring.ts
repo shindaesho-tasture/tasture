@@ -48,16 +48,42 @@ export function getScoreSuffix(metric: MetricScore): string {
 /**
  * Select top 4 tags prioritized by extremity and intensity
  */
+/**
+ * Select top tags prioritized by:
+ * 1. Extremity (|score| desc) — strongest opinions first
+ * 2. Review count — more consensus = more trustworthy
+ * 3. Diversity — avoid showing all positive or all negative
+ */
 export function selectTopTags(metrics: MetricScore[], maxTags = 4): MetricScore[] {
-  return [...metrics]
-    .sort((a, b) => {
-      // Sort by absolute score (extremity) descending, then by review count
-      const absA = Math.abs(a.score);
-      const absB = Math.abs(b.score);
-      if (absB !== absA) return absB - absA;
-      return b.reviewCount - a.reviewCount;
-    })
-    .slice(0, maxTags);
+  const sorted = [...metrics].sort((a, b) => {
+    const absA = Math.abs(a.score);
+    const absB = Math.abs(b.score);
+    // Primary: extremity
+    if (Math.abs(absB - absA) > 0.3) return absB - absA;
+    // Secondary: review count (confidence)
+    return b.reviewCount - a.reviewCount;
+  });
+
+  // Ensure diversity: if we have both positive and negative extremes, show both
+  const positives = sorted.filter((m) => m.score > 0);
+  const negatives = sorted.filter((m) => m.score < 0);
+  const neutrals = sorted.filter((m) => m.score === 0);
+
+  const result: MetricScore[] = [];
+  let pi = 0, ni = 0, nui = 0;
+
+  // Alternate positive/negative, filling remaining with whatever's left
+  while (result.length < maxTags) {
+    if (pi < positives.length && (result.length % 2 === 0 || ni >= negatives.length)) {
+      result.push(positives[pi++]);
+    } else if (ni < negatives.length) {
+      result.push(negatives[ni++]);
+    } else if (nui < neutrals.length) {
+      result.push(neutrals[nui++]);
+    } else break;
+  }
+
+  return result;
 }
 
 // Demo data for showcasing the Result Card
