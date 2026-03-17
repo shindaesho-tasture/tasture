@@ -539,7 +539,7 @@ const PostCard = ({ post, index, navigate, user }: PostCardProps) => {
       )}
 
       {/* DNA Components */}
-      {post.type === "dish_dna" && post.dnaComponents && post.dnaComponents.length > 0 && (
+      {(post.type === "dish_dna" || post.type === "combined") && post.dnaComponents && post.dnaComponents.length > 0 && (
         <div className="px-4 pb-3">
           <div className="flex flex-wrap gap-1.5">
             {post.dnaComponents.slice(0, 6).map((comp, i) => {
