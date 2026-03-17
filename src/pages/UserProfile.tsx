@@ -15,6 +15,43 @@ interface PublicProfile {
   email: string | null;
 }
 
+interface RecentReview {
+  id: string;
+  menuItemName: string;
+  menuItemImage: string | null;
+  storeName: string;
+  storeId: string;
+  score: number;
+  createdAt: string;
+}
+
+const tierColors: Record<ScoreTier, string> = {
+  emerald: "text-score-emerald",
+  mint: "text-score-mint",
+  slate: "text-score-slate",
+  amber: "text-score-amber",
+  ruby: "text-score-ruby",
+};
+const tierBg: Record<ScoreTier, string> = {
+  emerald: "bg-score-emerald/10",
+  mint: "bg-score-mint/10",
+  slate: "bg-score-slate/10",
+  amber: "bg-score-amber/10",
+  ruby: "bg-score-ruby/10",
+};
+
+const timeAgo = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "เมื่อสักครู่";
+  if (mins < 60) return `${mins} นาที`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} ชม.`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days} วัน`;
+  return new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+};
+
 const ACHIEVEMENTS = [
   { id: "first-emerald", icon: "💎", titleTh: "เพชรดวงแรก", check: (e: number) => e >= 1, tier: "emerald" },
   { id: "emerald-5", icon: "💎", titleTh: "นักสะสมเพชร", check: (e: number) => e >= 5, tier: "emerald" },
