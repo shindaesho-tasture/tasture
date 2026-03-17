@@ -434,6 +434,51 @@ const HomeFeed = () => {
           (srData || []).forEach((sr) => slideReviewMap.set(sr.id, { score: sr.score, menu_item_id: sr.menu_item_id }));
         }
 
+        // Collect menu_item_ids and user_ids from slides for DNA + satisfaction fetch
+        const slideMenuItemIds = new Set<string>();
+        const slideUserIds = new Set<string>();
+        slideReviewMap.forEach((sr) => slideMenuItemIds.add(sr.menu_item_id));
+        (photoPostsRes.data || []).forEach((pp) => slideUserIds.add(pp.user_id));
+
+        // Fetch dish_dna and satisfaction_ratings for slide-linked items
+        let slideDnaMap = new Map<string, { name: string; icon: string; tag: string; score: number }[]>();
+        let slideSatMap = new Map<string, SatisfactionAxes>();
+
+        if (slideMenuItemIds.size > 0) {
+          const [slideDnaRes, slideSatRes] = await Promise.all([
+            supabase
+              .from("dish_dna")
+              .select("user_id, menu_item_id, component_name, component_icon, selected_tag, selected_score")
+              .in("menu_item_id", [...slideMenuItemIds]),
+            supabase
+              .from("satisfaction_ratings")
+              .select("user_id, menu_item_id, texture, taste, overall, cleanliness, value")
+              .in("menu_item_id", [...slideMenuItemIds]),
+          ]);
+
+          (slideDnaRes.data || []).forEach((d) => {
+            const key = `${d.user_id}-${d.menu_item_id}`;
+            if (!slideDnaMap.has(key)) slideDnaMap.set(key, []);
+            slideDnaMap.get(key)!.push({
+              name: d.component_name,
+              icon: d.component_icon,
+              tag: d.selected_tag,
+              score: d.selected_score,
+            });
+          });
+
+          (slideSatRes.data || []).forEach((s) => {
+            const key = `${s.user_id}-${s.menu_item_id}`;
+            const axes: SatisfactionAxes = {};
+            if (s.taste != null) axes.taste = s.taste;
+            if (s.texture != null) axes.texture = s.texture;
+            if (s.overall != null) axes.overall = s.overall;
+            if (s.cleanliness != null) axes.cleanliness = s.cleanliness;
+            if (s.value != null) axes.value = s.value;
+            if (Object.keys(axes).length > 0) slideSatMap.set(key, axes);
+          });
+        }
+
         // Build slides for each photo post
         (photoPostsRes.data || []).forEach((pp) => {
           const profile = profileMap.get(pp.user_id);
@@ -444,12 +489,15 @@ const HomeFeed = () => {
             ? piList.map((pi) => {
                 const review = pi.menu_review_id ? slideReviewMap.get(pi.menu_review_id) : null;
                 const menuItem = review ? menuMap.get(review.menu_item_id) : null;
+                const slideKey = review ? `${pp.user_id}-${review.menu_item_id}` : null;
                 return {
                   imageUrl: pi.image_url,
                   reviewScore: review?.score ?? null,
                   menuItemName: menuItem?.name || (review ? "เมนู" : null),
                   storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
                   storeId: menuItem?.storeId || null,
+                  dnaComponents: slideKey ? slideDnaMap.get(slideKey) : undefined,
+                  satisfaction: slideKey ? slideSatMap.get(slideKey) : undefined,
                 };
               })
             : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }];
