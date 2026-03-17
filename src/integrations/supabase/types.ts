@@ -278,6 +278,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string
+          menu_review_id: string | null
           store_id: string | null
           user_id: string
         }
@@ -286,6 +287,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url: string
+          menu_review_id?: string | null
           store_id?: string | null
           user_id: string
         }
@@ -294,10 +296,18 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string
+          menu_review_id?: string | null
           store_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "posts_menu_review_id_fkey"
+            columns: ["menu_review_id"]
+            isOneToOne: false
+            referencedRelation: "menu_reviews"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "posts_store_id_fkey"
             columns: ["store_id"]
