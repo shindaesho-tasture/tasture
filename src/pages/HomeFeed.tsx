@@ -13,6 +13,7 @@ import HomeFeedTabs, { type FeedTab } from "@/components/HomeFeedTabs";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
 import { Skeleton } from "@/components/ui/skeleton";
 import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
+import SuggestedUsers from "@/components/SuggestedUsers";
 /* ─── Types ─── */
 interface FeedPost {
   id: string;
@@ -79,8 +80,7 @@ const HomeFeed = () => {
 
   const PULL_THRESHOLD = 80;
 
-  // Fetch following IDs
-  useEffect(() => {
+  const refreshFollowingIds = useCallback(() => {
     if (!user) return;
     supabase
       .from("follows")
@@ -90,6 +90,10 @@ const HomeFeed = () => {
         setFollowingIds(new Set((data || []).map((d) => d.following_id)));
       });
   }, [user]);
+
+  useEffect(() => {
+    refreshFollowingIds();
+  }, [refreshFollowingIds]);
 
   useEffect(() => {
     fetchFeed();
@@ -472,6 +476,13 @@ const HomeFeed = () => {
 
         {/* Feed Tabs */}
         <HomeFeedTabs active={activeTab} onChange={handleTabChange} />
+
+        {/* Suggested Users for "foryou" tab */}
+        {activeTab === "foryou" && user && !loading && (
+          <div className="px-4 pt-2">
+            <SuggestedUsers userId={user.id} followingIds={followingIds} onFollowChange={refreshFollowingIds} />
+          </div>
+        )}
 
         {/* Feed */}
         <div className="px-4 space-y-4">
