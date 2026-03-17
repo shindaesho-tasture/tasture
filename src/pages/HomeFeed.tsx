@@ -221,11 +221,10 @@ const HomeFeed = () => {
       const normMenu = (score: number) => score === 2 ? 5 : score === 0 ? 3 : 1;
 
       // Build store review lookup: user+store → mapped axes
-      // metric_id mapping: table-clean→cleanliness, ambiance→overall, wait-time→value
+      // metric_id mapping: table-clean→cleanliness, ambiance→overall
       const METRIC_TO_AXIS: Record<string, keyof SatisfactionAxes> = {
         "table-clean": "cleanliness",
         "ambiance": "overall",
-        "wait-time": "value",
       };
       const storeRevLookup = new Map<string, Partial<SatisfactionAxes>>();
       (storeReviewsRes.data || []).forEach((sr) => {
