@@ -59,6 +59,7 @@ const SovereignMenuCard = ({
   index = 0,
   popularityRank,
   avgSatisfaction,
+  userPhotos,
 }: SovereignMenuCardProps) => {
   // Build enriched tags: score tags first, then auto-generated meta tags
   const enrichedTags: IntensityTag[] = [...tags];
