@@ -206,6 +206,7 @@ const AdminDashboard = () => {
       ...p, userName: nameMap.get(p.user_id) || "ผู้ใช้",
       store_name: p.store_id ? storeNameMap.get(p.store_id) || null : null,
       likeCount: likeMap.get(p.id) || 0, commentCount: commentMap.get(p.id) || 0,
+      hidden: (p as any).hidden ?? false,
     })));
   };
 
