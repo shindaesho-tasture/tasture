@@ -1416,7 +1416,24 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         >
           <Share2 size={16} className="text-muted-foreground" />
         </motion.button>
-      </div>
+
+        {user && user.id === post.userId && (
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={handleDeletePost}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors",
+              confirmDelete
+                ? "bg-destructive/10 text-destructive"
+                : "hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+            )}
+          >
+            <Trash2 size={16} />
+            <span className="text-[11px] font-medium">
+              {confirmDelete ? "กดอีกครั้ง" : "ลบ"}
+            </span>
+          </motion.button>
+        )}
 
       {/* Comments Section */}
       <AnimatePresence>
