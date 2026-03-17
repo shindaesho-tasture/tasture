@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import AchievementDetailSheet from "@/components/AchievementDetailSheet";
+import FeedRadarChart from "@/components/FeedRadarChart";
 
 /* ── Types ── */
 interface UserPost {
