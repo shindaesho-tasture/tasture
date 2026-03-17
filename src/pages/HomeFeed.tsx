@@ -50,7 +50,6 @@ const tierBg: Record<ScoreTier, string> = {
   ruby: "bg-score-ruby/10",
 };
 
-
 const timeAgo = (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -654,7 +653,9 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [commentCount, setCommentCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [showHeartAnim, setShowHeartAnim] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastTapRef = useRef(0);
 
   // Derive refId for comments/likes
   const refType = "post";
@@ -704,6 +705,21 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       navigator.vibrate?.(8);
       await supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
     }
+  };
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!liked && user) {
+        setLiked(true);
+        setLikeCount((c) => c + 1);
+        navigator.vibrate?.(8);
+        supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
+      }
+      setShowHeartAnim(true);
+      setTimeout(() => setShowHeartAnim(false), 900);
+    }
+    lastTapRef.current = now;
   };
 
   const toggleFollow = async () => {
@@ -925,16 +941,34 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         </p>
       </div>
 
-      {/* Photo post image */}
+      {/* Photo post image with double-tap to like */}
       {post.type === "photo_post" && post.photoUrl && (
         <div className="px-4 pb-3">
-          <div className="relative rounded-xl overflow-hidden aspect-square">
+          <div
+            className="relative rounded-xl overflow-hidden aspect-square select-none"
+            onClick={handleDoubleTap}
+          >
             <img
               src={post.photoUrl}
               alt={post.caption || "รูปอาหาร"}
               className="w-full h-full object-cover"
               loading="lazy"
+              draggable={false}
             />
+            {/* Double-tap heart animation */}
+            <AnimatePresence>
+              {showHeartAnim && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.4, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                  <Heart size={72} className="fill-white text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.3)]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       )}
@@ -942,16 +976,16 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       {/* Menu item image */}
       {post.type !== "photo_post" && post.menuItemImage && (
         <div className="px-4 pb-3">
-          <motion.div
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate(`/store/${post.storeId}/order`)}
-            className="relative rounded-xl overflow-hidden cursor-pointer aspect-[16/10]"
+          <div
+            className="relative rounded-xl overflow-hidden cursor-pointer aspect-[16/10] select-none"
+            onClick={handleDoubleTap}
           >
             <img
               src={post.menuItemImage}
               alt={post.menuItemName}
               className="w-full h-full object-cover"
               loading="lazy"
+              draggable={false}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             <div className="absolute bottom-3 left-3">
@@ -959,7 +993,20 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
                 {post.menuItemName}
               </span>
             </div>
-          </motion.div>
+            <AnimatePresence>
+              {showHeartAnim && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.4, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                  <Heart size={72} className="fill-white text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.3)]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       )}
 
