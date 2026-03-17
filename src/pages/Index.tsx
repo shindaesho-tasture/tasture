@@ -41,6 +41,7 @@ interface StoreCard {
   distanceKm: number | null;
   recentActivityCount: number;
   matchPercent: number | null;
+  imageUrl: string | null;
 }
 
 const tierColors: Record<ScoreTier, string> = {
@@ -96,7 +97,7 @@ const Index = () => {
     try {
       const { data: allStores } = await supabase
         .from("stores")
-        .select("id, name, category_id, verified, pin_lat, pin_lng")
+        .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -107,7 +108,7 @@ const Index = () => {
 
       const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes] = await Promise.all([
         supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
-        supabase.from("menu_items").select("id, store_id").in("store_id", storeIds),
+        supabase.from("menu_items").select("id, store_id, image_url").in("store_id", storeIds),
         supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
@@ -115,9 +116,14 @@ const Index = () => {
 
       const menuToStore = new Map<string, string>();
       const menuCountMap = new Map<string, number>();
-      (menuRes.data || []).forEach((m) => {
+      const storeImageMap = new Map<string, string>();
+      (menuRes.data || []).forEach((m: any) => {
         menuToStore.set(m.id, m.store_id);
         menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
+        // Use first menu item image as store image fallback
+        if (m.image_url && !storeImageMap.has(m.store_id)) {
+          storeImageMap.set(m.store_id, m.image_url);
+        }
       });
 
       const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
@@ -238,6 +244,7 @@ const Index = () => {
           distanceKm,
           recentActivityCount: recentActivityMap.get(s.id) || 0,
           matchPercent,
+          imageUrl: s.menu_photo || storeImageMap.get(s.id) || null,
         };
       }));
     } catch (err) {
@@ -318,14 +325,28 @@ const Index = () => {
           isLarge ? "w-[180px]" : "w-[150px]"
         )}
       >
-        {/* Card bg with gradient */}
+        {/* Card bg with image or gradient */}
         <div className={cn(
           "aspect-square rounded-xl flex items-center justify-center relative overflow-hidden",
           "bg-gradient-to-br from-muted to-secondary"
         )}>
-          <span className={cn("transition-transform duration-300 group-hover:scale-110", isLarge ? "text-5xl" : "text-4xl")}>
-            {store.categoryIcon}
-          </span>
+          {store.imageUrl ? (
+            <img
+              src={store.imageUrl}
+              alt={store.name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              loading="lazy"
+            />
+          ) : (
+            <span className={cn("transition-transform duration-300 group-hover:scale-110", isLarge ? "text-5xl" : "text-4xl")}>
+              {store.categoryIcon}
+            </span>
+          )}
+
+          {/* Dark overlay for text readability when image present */}
+          {store.imageUrl && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+          )}
 
           {/* Score badge */}
           {tier && store.avgScore !== null && (
