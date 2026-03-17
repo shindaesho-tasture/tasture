@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera, Users } from "lucide-react";
+import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera, Users, Bookmark } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
@@ -175,6 +175,7 @@ const Profile = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [savedStores, setSavedStores] = useState<{ id: string; storeId: string; storeName: string; savedAt: string }[]>([]);
 
   const handleSaveName = async () => {
     if (!user || !nameInput.trim()) return;
@@ -328,6 +329,26 @@ const Profile = () => {
       }).sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime());
 
       setVerdicts(vList);
+
+      // Fetch saved stores
+      const { data: savedData } = await supabase
+        .from("saved_stores")
+        .select("id, store_id, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (savedData && savedData.length > 0) {
+        const savedStoreIds = savedData.map((s) => s.store_id);
+        const { data: savedStoresData } = await supabase.from("stores").select("id, name").in("id", savedStoreIds);
+        const savedStoreNameMap = new Map((savedStoresData || []).map((s) => [s.id, s.name]));
+
+        setSavedStores(savedData.map((s) => ({
+          id: s.id,
+          storeId: s.store_id,
+          storeName: savedStoreNameMap.get(s.store_id) || "ร้านค้า",
+          savedAt: s.created_at,
+        })));
+      }
     };
 
     load();
@@ -619,6 +640,52 @@ const Profile = () => {
               <span className="text-2xl mb-2 block">💎</span>
               <p className="text-xs text-muted-foreground">ยังไม่มีเมนู Emerald</p>
               <p className="text-[10px] text-muted-foreground mt-1">ให้คะแนน +2 (ดีเลิศ) เพื่อเก็บเข้า Vault</p>
+            </div>
+          )}
+        </motion.section>
+
+        {/* ── ร้านที่บันทึก ── */}
+        <motion.section
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.65 }}
+          className="mx-6 mb-8"
+        >
+          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Bookmark size={14} className="text-score-emerald" />
+            ร้านที่บันทึก
+            {savedStores.length > 0 && (
+              <span className="text-[10px] text-muted-foreground font-normal">({savedStores.length})</span>
+            )}
+          </h2>
+
+          {savedStores.length > 0 ? (
+            <div className="space-y-2">
+              {savedStores.map((s, i) => (
+                <motion.div
+                  key={s.id}
+                  initial={{ x: 30, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.7 + i * 0.05 }}
+                  onClick={() => navigate(`/store/${s.storeId}/order`)}
+                  className="bg-card rounded-2xl shadow-luxury p-4 flex items-center gap-3 active:scale-[0.98] transition-transform cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-score-emerald/10 flex items-center justify-center shrink-0">
+                    <Store size={18} className="text-score-emerald" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground block truncate">{s.storeName}</span>
+                    <span className="text-[10px] text-muted-foreground">บันทึกเมื่อ {formatDate(s.savedAt)}</span>
+                  </div>
+                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-card rounded-2xl shadow-luxury p-6 text-center">
+              <span className="text-2xl mb-2 block">🔖</span>
+              <p className="text-xs text-muted-foreground">ยังไม่ได้บันทึกร้านค้า</p>
+              <p className="text-[10px] text-muted-foreground mt-1">กดปุ่มบันทึกในฟีดเพื่อเก็บร้านที่ชอบ</p>
             </div>
           )}
         </motion.section>

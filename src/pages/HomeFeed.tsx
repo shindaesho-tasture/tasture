@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send, Trash2, UserPlus, UserCheck } from "lucide-react";
+import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send, Trash2, UserPlus, UserCheck, Bookmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -775,6 +775,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [followLoading, setFollowLoading] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [saved, setSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastTapRef = useRef(0);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -870,6 +871,30 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       .maybeSingle()
       .then(({ data }) => setIsFollowing(!!data));
   }, [user, post.userId]);
+
+  // Check saved store state
+  useEffect(() => {
+    if (!user || !post.storeId) return;
+    supabase
+      .from("saved_stores")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("store_id", post.storeId)
+      .maybeSingle()
+      .then(({ data }) => setSaved(!!data));
+  }, [user, post.storeId]);
+
+  const toggleSaveStore = async () => {
+    if (!user || !post.storeId) return;
+    navigator.vibrate?.(8);
+    if (saved) {
+      await supabase.from("saved_stores").delete().eq("user_id", user.id).eq("store_id", post.storeId);
+      setSaved(false);
+    } else {
+      await supabase.from("saved_stores").insert({ user_id: user.id, store_id: post.storeId } as any);
+      setSaved(true);
+    }
+  };
 
   const fetchComments = async () => {
     setLoadingComments(true);
@@ -1324,6 +1349,28 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
             {commentCount > 0 ? commentCount : "คอมเมนต์"}
           </span>
         </motion.button>
+
+        {post.storeId && user && (
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={toggleSaveStore}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
+          >
+            <Bookmark
+              size={16}
+              className={cn(
+                "transition-all duration-200",
+                saved ? "fill-score-emerald text-score-emerald" : "text-muted-foreground"
+              )}
+            />
+            <span className={cn(
+              "text-[11px] font-medium",
+              saved ? "text-score-emerald" : "text-muted-foreground"
+            )}>
+              {saved ? "บันทึกแล้ว" : "บันทึก"}
+            </span>
+          </motion.button>
+        )}
 
         <motion.button
           whileTap={{ scale: 0.85 }}
