@@ -565,6 +565,17 @@ const HomeFeed = () => {
               ))}
             </AnimatePresence>
           )}
+
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="h-1" />
+          {loadingMore && (
+            <div className="flex justify-center py-6">
+              <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {!hasMore && filteredPosts.length > 0 && (
+            <p className="text-center text-[11px] text-muted-foreground/50 py-4">ไม่มีโพสเพิ่มเติม</p>
+          )}
         </div>
 
         <BottomNav />
