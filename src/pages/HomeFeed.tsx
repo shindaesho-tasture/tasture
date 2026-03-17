@@ -1006,11 +1006,35 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   if (deleted) {
     return (
       <motion.div
-        initial={{ opacity: 1, height: "auto" }}
-        animate={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.3 }}
-        className="overflow-hidden"
-      />
+        initial={{ opacity: 1, scale: 1, height: "auto", marginBottom: 12 }}
+        animate={{
+          opacity: 0,
+          scale: 0.85,
+          x: -120,
+          height: 0,
+          marginBottom: 0,
+          filter: "blur(8px)",
+        }}
+        transition={{
+          duration: 0.5,
+          ease: [0.4, 0, 0.2, 1],
+          height: { delay: 0.25, duration: 0.3 },
+          marginBottom: { delay: 0.25, duration: 0.3 },
+        }}
+        className="overflow-hidden rounded-2xl"
+      >
+        <div className="flex items-center justify-center py-6 bg-destructive/5 border border-destructive/20 rounded-2xl">
+          <motion.div
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+            className="flex items-center gap-2 text-destructive"
+          >
+            <Trash2 size={18} />
+            <span className="text-sm font-semibold">ลบแล้ว</span>
+          </motion.div>
+        </div>
+      </motion.div>
     );
   }
 
