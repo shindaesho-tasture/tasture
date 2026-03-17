@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Heart, MessageCircle, Send, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Heart, MessageCircle, Send, Trash2, ChevronLeft, ChevronRight, UtensilsCrossed } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
