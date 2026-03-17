@@ -352,7 +352,7 @@ const Profile = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="relative aspect-square bg-secondary overflow-hidden group"
-                    onClick={() => navigate(`/`)} // navigate to feed/post detail later
+                    onClick={() => setSelectedPost(post)}
                   >
                     <img
                       src={post.images[0] || post.image_url}
