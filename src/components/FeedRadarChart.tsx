@@ -17,10 +17,11 @@ const ALL_AXES = [
 interface FeedRadarChartProps {
   data: SatisfactionAxes;
   size?: number;
+  dark?: boolean;
   className?: string;
 }
 
-const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) => {
+const FeedRadarChart = ({ data, size = 160, dark = false, className }: FeedRadarChartProps) => {
   // Filter to only axes that have data
   const activeAxes = ALL_AXES.filter((a) => data[a.key] != null && data[a.key]! > 0);
 
@@ -69,7 +70,7 @@ const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) =>
               key={ring}
               d={ringPath}
               fill="none"
-              stroke={ring === 3 ? "hsl(163 78% 20% / 0.25)" : "hsl(0 0% 0% / 0.06)"}
+              stroke={ring === 3 ? "hsl(163 78% 20% / 0.25)" : dark ? "hsl(0 0% 100% / 0.1)" : "hsl(0 0% 0% / 0.06)"}
               strokeWidth={ring === 3 ? 1.5 : 0.5}
               strokeDasharray={ring === 3 ? "3 2" : undefined}
             />
@@ -81,7 +82,7 @@ const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) =>
           const outer = getPoint(a.angle, 5);
           return (
             <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y}
-              stroke="hsl(0 0% 0% / 0.06)" strokeWidth={0.5} />
+              stroke={dark ? "hsl(0 0% 100% / 0.1)" : "hsl(0 0% 0% / 0.06)"} strokeWidth={0.5} />
           );
         })}
 
@@ -90,8 +91,8 @@ const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) =>
 
         {/* Data shape */}
         <path d={dataPath}
-          fill="hsl(163 78% 20% / 0.12)"
-          stroke="hsl(163 78% 20% / 0.8)"
+          fill={dark ? "hsl(163 78% 40% / 0.2)" : "hsl(163 78% 20% / 0.12)"}
+          stroke={dark ? "hsl(163 78% 50% / 0.9)" : "hsl(163 78% 20% / 0.8)"}
           strokeWidth={1.5} strokeLinejoin="round" />
 
         {/* Data points */}
@@ -110,19 +111,19 @@ const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) =>
           return (
             <text key={i} x={labelPoint.x} y={labelPoint.y}
               textAnchor="middle" dominantBaseline="middle"
-              fill="hsl(0 0% 45%)" fontSize="7" fontWeight="500" fontFamily="Kanit, sans-serif">
-              {a.icon} {a.label}
+              fill={dark ? "hsl(0 0% 100% / 0.7)" : "hsl(0 0% 45%)"} fontSize={size <= 110 ? "6" : "7"} fontWeight="500" fontFamily="Kanit, sans-serif">
+              {a.icon} {size <= 110 ? "" : a.label}
             </text>
           );
         })}
 
         {/* Center average */}
         <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
-          fill="hsl(163 78% 20%)" fontSize="14" fontWeight="700" fontFamily="Inter, sans-serif">
+          fill={dark ? "hsl(163 78% 50%)" : "hsl(163 78% 20%)"} fontSize={size <= 110 ? "11" : "14"} fontWeight="700" fontFamily="Inter, sans-serif">
           {avg.toFixed(1)}
         </text>
         <text x={cx} y={cy + 8} textAnchor="middle" dominantBaseline="middle"
-          fill="hsl(0 0% 45%)" fontSize="6" fontWeight="400" fontFamily="Kanit, sans-serif">
+          fill={dark ? "hsl(0 0% 100% / 0.5)" : "hsl(0 0% 45%)"} fontSize={size <= 110 ? "5" : "6"} fontWeight="400" fontFamily="Kanit, sans-serif">
           คะแนนเฉลี่ย
         </text>
       </svg>
