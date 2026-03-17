@@ -133,6 +133,7 @@ const DishTemplateEditor = () => {
       toast({ title: "✅ สร้างเทมเพลตใหม่แล้ว" });
     }
     setSaving(false);
+  };
 
   const filtered = templates.filter(
     (t) => !search || t.dish_name.toLowerCase().includes(search.toLowerCase())
