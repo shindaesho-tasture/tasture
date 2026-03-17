@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /* ─── Types ─── */
 interface FeedPost {
   id: string;
-  type: "menu_review" | "dish_dna";
+  type: "combined" | "menu_review" | "dish_dna";
   userId: string;
   userName: string;
   userAvatar: string | null;
