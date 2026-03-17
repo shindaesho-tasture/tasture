@@ -173,7 +173,7 @@ const HomeFeed = () => {
     };
   }, [pullDistance, refreshing, handleRefresh]);
 
-  const fetchFeed = async (isRefresh = false, isRealtime = false) => {
+  const fetchFeed = async (isRefresh = false, isRealtime = false, limit = 30) => {
     if (!isRefresh) setLoading(true);
     try {
       // Fetch recent menu reviews, dish DNA, satisfaction ratings, and store reviews in parallel
