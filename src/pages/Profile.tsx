@@ -477,12 +477,19 @@ const Profile = () => {
           className="mx-6 grid grid-cols-4 gap-2.5 mb-8"
         >
           {[
-            { icon: Gem, label: "Emeralds", value: emeraldCount },
-            { icon: Store, label: "Stores", value: storeCount },
-            { icon: Users, label: "ผู้ติดตาม", value: followerCount },
-            { icon: ChefHat, label: "ติดตาม", value: followingCount },
-          ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex flex-col items-center py-3.5 rounded-2xl bg-card shadow-luxury">
+            { icon: Gem, label: "Emeralds", value: emeraldCount, link: null },
+            { icon: Store, label: "Stores", value: storeCount, link: null },
+            { icon: Users, label: "ผู้ติดตาม", value: followerCount, link: "/follows?tab=followers" },
+            { icon: ChefHat, label: "ติดตาม", value: followingCount, link: "/follows?tab=following" },
+          ].map(({ icon: Icon, label, value, link }) => (
+            <div
+              key={label}
+              onClick={() => link && navigate(link)}
+              className={cn(
+                "flex flex-col items-center py-3.5 rounded-2xl bg-card shadow-luxury",
+                link && "cursor-pointer active:scale-95 transition-transform"
+              )}
+            >
               <Icon size={16} strokeWidth={1.5} className="text-score-emerald mb-1" />
               <span className="text-lg font-bold text-foreground">{value}</span>
               <span className="text-[9px] text-muted-foreground font-medium mt-0.5">{label}</span>

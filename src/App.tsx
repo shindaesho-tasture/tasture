@@ -57,6 +57,7 @@ const AnimatedRoutes = () => {
         <Route path="/dish-dna/:menuItemId" element={<DishDnaFeedback />} />
         <Route path="/post-review" element={<PostOrderReview />} />
         <Route path="/menu-images/:storeId" element={<MenuImageManager />} />
+        <Route path="/follows" element={<FollowList />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
