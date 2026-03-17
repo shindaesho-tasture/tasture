@@ -353,7 +353,7 @@ const HomeFeed = () => {
           ) : (
             <AnimatePresence>
               {posts.map((post, i) => (
-                <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} />
+                <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
               ))}
             </AnimatePresence>
           )}
