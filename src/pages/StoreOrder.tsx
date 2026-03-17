@@ -62,7 +62,7 @@ const StoreOrder = () => {
         supabase.from("stores").select("name").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings")
+          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url")
           .eq("store_id", storeId!)
           .order("name"),
       ]);
