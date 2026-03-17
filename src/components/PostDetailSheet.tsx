@@ -105,7 +105,43 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
       }
 
       if (imagesRes.data && imagesRes.data.length > 0) {
-        setImages(imagesRes.data.map((i) => i.image_url));
+        const slideData = imagesRes.data.map((i) => ({ image_url: i.image_url, menu_review_id: i.menu_review_id }));
+        setSlides(slideData);
+        setImages(slideData.map((s) => s.image_url));
+
+        // Load review info for slides that have menu_review_id
+        const reviewIds = [...new Set(slideData.map((s) => s.menu_review_id).filter(Boolean))] as string[];
+        if (reviewIds.length > 0) {
+          const { data: reviews } = await supabase
+            .from("menu_reviews")
+            .select("id, score, menu_item_id")
+            .in("id", reviewIds);
+
+          if (reviews && reviews.length > 0) {
+            const menuItemIds = [...new Set(reviews.map((r) => r.menu_item_id))];
+            const [menuRes, dnaRes] = await Promise.all([
+              supabase.from("menu_items").select("id, name").in("id", menuItemIds),
+              supabase.from("dish_dna").select("menu_item_id, component_name, component_icon, selected_tag, selected_score").in("menu_item_id", menuItemIds),
+            ]);
+
+            const menuMap = new Map((menuRes.data || []).map((m) => [m.id, m.name]));
+            const dnaByItem = new Map<string, ReviewInfo["dish_dna"]>();
+            (dnaRes.data || []).forEach((d) => {
+              if (!dnaByItem.has(d.menu_item_id)) dnaByItem.set(d.menu_item_id, []);
+              dnaByItem.get(d.menu_item_id)!.push(d);
+            });
+
+            const rMap: Record<string, ReviewInfo> = {};
+            reviews.forEach((r) => {
+              rMap[r.id] = {
+                menu_item_name: menuMap.get(r.menu_item_id) || "เมนู",
+                score: r.score,
+                dish_dna: dnaByItem.get(r.menu_item_id) || [],
+              };
+            });
+            setReviewMap(rMap);
+          }
+        }
       } else if (preload?.images) {
         setImages(preload.images);
       }
