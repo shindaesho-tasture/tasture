@@ -213,6 +213,7 @@ const HomeFeed = () => {
 
       (reviewsRes.data || []).forEach((r) => { userIds.add(r.user_id); menuItemIds.add(r.menu_item_id); });
       (dnaRes.data || []).forEach((d) => { userIds.add(d.user_id); menuItemIds.add(d.menu_item_id); });
+      (photoPostsRes.data || []).forEach((p) => { userIds.add(p.user_id); });
 
       // Fetch profiles, menu items, stores
       const [profilesRes, menuItemsRes] = await Promise.all([
