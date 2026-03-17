@@ -428,7 +428,7 @@ const PostOrderReview = () => {
               const balanceDistance = levels.reduce((sum, v) => sum + Math.abs(v - 3), 0) / levels.length;
               const score = balanceDistance <= 0.5 ? 2 : balanceDistance <= 1.5 ? 0 : -2;
               await supabase.from("menu_reviews").upsert(
-                { menu_item_id: id, user_id: user.id, score },
+                { menu_item_id: id, user_id: user.id, score, shared: shareToFeed } as any,
                 { onConflict: "menu_item_id,user_id" }
               );
             }
