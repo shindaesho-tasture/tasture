@@ -509,6 +509,14 @@ const Index = () => {
       </motion.div>
 
       <BottomNav />
+
+      <LocationPickerSheet
+        open={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        onConfirm={(pos) => setCustomPos(pos)}
+        currentPosition={customPos}
+        gpsPosition={position}
+      />
     </div>
     </PageTransition>
   );
