@@ -477,6 +477,13 @@ const HomeFeed = () => {
         {/* Feed Tabs */}
         <HomeFeedTabs active={activeTab} onChange={handleTabChange} />
 
+        {/* Suggested Users for "foryou" tab */}
+        {activeTab === "foryou" && user && !loading && (
+          <div className="px-4 pt-2">
+            <SuggestedUsers userId={user.id} followingIds={followingIds} onFollowChange={refreshFollowingIds} />
+          </div>
+        )}
+
         {/* Feed */}
         <div className="px-4 space-y-4">
           {loading ? (
