@@ -1083,9 +1083,18 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: -8, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute bottom-10 left-3 right-3 pointer-events-none"
+                  className="absolute bottom-10 left-3 right-3"
                 >
-                  <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10">
+                  <div
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 ${post.slides[slideIndex].storeId ? "cursor-pointer active:scale-[0.97] transition-transform" : ""}`}
+                    onClick={(e) => {
+                      const sid = post.slides[slideIndex].storeId;
+                      if (sid) {
+                        e.stopPropagation();
+                        navigate(`/store/${sid}/order`);
+                      }
+                    }}
+                  >
                     <span className="text-xl">
                       {post.slides[slideIndex].reviewScore === 2 ? "🤩" : post.slides[slideIndex].reviewScore === 0 ? "😐" : "😔"}
                     </span>
@@ -1095,10 +1104,13 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
                       </p>
                       {post.slides[slideIndex].storeName && (
                         <p className="text-[9px] text-white/70 truncate">
-                          {post.slides[slideIndex].storeName}
+                          📍 {post.slides[slideIndex].storeName}
                         </p>
                       )}
                     </div>
+                    {post.slides[slideIndex].storeId && (
+                      <span className="text-white/50 text-xs">›</span>
+                    )}
                   </div>
                 </motion.div>
               )}
