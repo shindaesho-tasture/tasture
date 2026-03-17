@@ -643,6 +643,13 @@ const Profile = () => {
           } : undefined}
         />
 
+        <AchievementDetailSheet
+          open={!!selectedBadge}
+          onClose={() => setSelectedBadge(null)}
+          badge={selectedBadge}
+          ctx={achievementCtx}
+        />
+
         <BottomNav />
       </div>
     </PageTransition>
