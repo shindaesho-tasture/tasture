@@ -5,15 +5,13 @@ export interface SatisfactionAxes {
   taste?: number;       // 1-5
   overall?: number;     // 1-5
   cleanliness?: number; // 1-5
-  value?: number;       // 1-5
 }
 
 const ALL_AXES = [
-  { key: "texture" as const, label: "เท็กซ์เจอร์", icon: "🫧", angle: -90 },
-  { key: "taste" as const, label: "รสชาติ", icon: "👅", angle: -18 },
-  { key: "value" as const, label: "ความคุ้มค่า", icon: "💰", angle: 54 },
-  { key: "cleanliness" as const, label: "ความสะอาด", icon: "✨", angle: 126 },
-  { key: "overall" as const, label: "ภาพรวมร้าน", icon: "🏪", angle: 198 },
+  { key: "texture" as const, label: "เท็กซ์เจอร์", icon: "🫧" },
+  { key: "taste" as const, label: "รสชาติ", icon: "👅" },
+  { key: "cleanliness" as const, label: "ความสะอาด", icon: "✨" },
+  { key: "overall" as const, label: "ภาพรวมร้าน", icon: "🏪" },
 ];
 
 interface FeedRadarChartProps {

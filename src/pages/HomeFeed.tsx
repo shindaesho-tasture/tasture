@@ -221,11 +221,10 @@ const HomeFeed = () => {
       const normMenu = (score: number) => score === 2 ? 5 : score === 0 ? 3 : 1;
 
       // Build store review lookup: user+store → mapped axes
-      // metric_id mapping: table-clean→cleanliness, ambiance→overall, wait-time→value
+      // metric_id mapping: table-clean→cleanliness, ambiance→overall
       const METRIC_TO_AXIS: Record<string, keyof SatisfactionAxes> = {
         "table-clean": "cleanliness",
         "ambiance": "overall",
-        "wait-time": "value",
       };
       const storeRevLookup = new Map<string, Partial<SatisfactionAxes>>();
       (storeReviewsRes.data || []).forEach((sr) => {
@@ -242,7 +241,7 @@ const HomeFeed = () => {
       (satRes.data || []).forEach((s) => {
         const key = `${s.user_id}-${s.menu_item_id}`;
         if (!satLookup.has(key)) {
-          satLookup.set(key, { texture: s.texture, taste: s.taste, overall: s.overall, cleanliness: s.cleanliness, value: s.value });
+          satLookup.set(key, { texture: s.texture, taste: s.taste, overall: s.overall, cleanliness: s.cleanliness });
         }
       });
 

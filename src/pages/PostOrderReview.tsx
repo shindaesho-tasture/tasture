@@ -82,7 +82,7 @@ const PostOrderReview = () => {
   const [tasteSatisfaction, setTasteSatisfaction] = useState<Record<string, "perfect" | "ok" | "bad">>({});
 
   // 5-axis satisfaction ratings per menu item
-  const [satisfactionScores, setSatisfactionScores] = useState<Record<string, { texture: number; taste: number; overall: number; cleanliness: number; value: number }>>({});
+  const [satisfactionScores, setSatisfactionScores] = useState<Record<string, { texture: number; taste: number; overall: number; cleanliness: number }>>({});
 
   const [saving, setSaving] = useState(false);
 
@@ -946,7 +946,7 @@ const PostOrderReview = () => {
               <SatisfactionStep
                 menuItemId={step.menuItemId}
                 menuItemName={step.menuItemName || ""}
-                scores={satisfactionScores[step.menuItemId] || { texture: 3, taste: 3, overall: 3, cleanliness: 3, value: 3 }}
+                scores={satisfactionScores[step.menuItemId] || { texture: 3, taste: 3, overall: 3, cleanliness: 3 }}
                 onChange={(scores) => setSatisfactionScores((prev) => ({ ...prev, [step.menuItemId!]: scores }))}
               />
             )}
@@ -1133,7 +1133,6 @@ const SATISFACTION_AXES = [
   { key: "taste" as const, label: "รสชาติ", icon: "👅", desc: "ความพอใจในรสชาติอาหาร" },
   { key: "overall" as const, label: "ภาพรวมร้าน", icon: "🏪", desc: "ความพอใจโดยรวมของร้าน" },
   { key: "cleanliness" as const, label: "ความสะอาด", icon: "✨", desc: "ความสะอาดของร้านและอาหาร" },
-  { key: "value" as const, label: "ความคุ้มค่า", icon: "💰", desc: "คุ้มค่ากับราคาที่จ่าย" },
 ];
 
 const LEVEL_LABELS: Record<number, { label: string; color: string }> = {
@@ -1147,8 +1146,8 @@ const LEVEL_LABELS: Record<number, { label: string; color: string }> = {
 interface SatisfactionStepProps {
   menuItemId: string;
   menuItemName: string;
-  scores: { texture: number; taste: number; overall: number; cleanliness: number; value: number };
-  onChange: (scores: { texture: number; taste: number; overall: number; cleanliness: number; value: number }) => void;
+  scores: { texture: number; taste: number; overall: number; cleanliness: number };
+  onChange: (scores: { texture: number; taste: number; overall: number; cleanliness: number }) => void;
 }
 
 const SatisfactionStep = ({ menuItemId, menuItemName, scores, onChange }: SatisfactionStepProps) => {
