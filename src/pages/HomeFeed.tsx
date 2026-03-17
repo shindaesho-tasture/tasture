@@ -447,6 +447,7 @@ const HomeFeed = () => {
                   reviewScore: review?.score ?? null,
                   menuItemName: menuItem?.name || (review ? "เมนู" : null),
                   storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
+                  storeId: menuItem?.storeId || null,
                 };
               })
             : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null }];
