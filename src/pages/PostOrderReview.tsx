@@ -433,6 +433,18 @@ const PostOrderReview = () => {
         }
       }
 
+      // Save 5-axis satisfaction ratings
+      for (const item of items) {
+        const id = item.menuItemId;
+        const sat = satisfactionScores[id];
+        if (sat) {
+          await supabase.from("satisfaction_ratings").upsert(
+            { user_id: user.id, menu_item_id: id, ...sat },
+            { onConflict: "user_id,menu_item_id" }
+          );
+        }
+      }
+
       toast({ title: "✅ บันทึกรีวิวทั้งหมดสำเร็จ" });
     } catch (err: any) {
       console.error("Save error:", err);
