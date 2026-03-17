@@ -59,6 +59,7 @@ const AnimatedRoutes = () => {
         <Route path="/post-review" element={<PostOrderReview />} />
         <Route path="/menu-images/:storeId" element={<MenuImageManager />} />
         <Route path="/follows" element={<FollowList />} />
+        <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
