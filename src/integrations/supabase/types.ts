@@ -79,6 +79,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          ref_id: string
+          ref_type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          ref_id: string
+          ref_type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          ref_id?: string
+          ref_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       menu_items: {
         Row: {
           created_at: string
