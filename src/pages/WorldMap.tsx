@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
 import { Globe } from "lucide-react";
-import { GOOGLE_MAPS_API_KEY, MAPS_SILVER_STYLE, DEFAULT_CENTER } from "@/lib/maps-config";
+import { GOOGLE_MAPS_API_KEY, MAPS_LIBRARIES, MAPS_SILVER_STYLE, DEFAULT_CENTER } from "@/lib/maps-config";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
@@ -12,6 +12,7 @@ const WorldMap = () => {
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: MAPS_LIBRARIES,
   });
 
   const onMapLoad = useCallback((map: google.maps.Map) => {
