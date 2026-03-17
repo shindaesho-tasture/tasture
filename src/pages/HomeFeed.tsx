@@ -765,6 +765,8 @@ const HomeFeed = () => {
               <p className="text-center text-[11px] text-muted-foreground/50 py-4">ไม่มีโพสเพิ่มเติม</p>
             )}
           </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         <BottomNav />
