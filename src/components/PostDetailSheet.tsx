@@ -88,7 +88,7 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
       // Post + images + likes + comments in parallel
       const [postRes, imagesRes, likesRes, commentsRes] = await Promise.all([
         supabase.from("posts").select("user_id, caption, created_at, store_id").eq("id", postId).single(),
-        supabase.from("post_images").select("image_url, sort_order").eq("post_id", postId).order("sort_order", { ascending: true }),
+        supabase.from("post_images").select("image_url, sort_order, menu_review_id").eq("post_id", postId).order("sort_order", { ascending: true }),
         supabase.from("post_likes").select("id, user_id").eq("ref_id", postId),
         supabase.from("feed_comments").select("id, user_id, content, created_at").eq("ref_id", postId).order("created_at", { ascending: true }),
       ]);
