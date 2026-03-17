@@ -111,19 +111,19 @@ const FeedRadarChart = ({ data, size = 160, dark = false, className }: FeedRadar
           return (
             <text key={i} x={labelPoint.x} y={labelPoint.y}
               textAnchor="middle" dominantBaseline="middle"
-              fill="hsl(0 0% 45%)" fontSize="7" fontWeight="500" fontFamily="Kanit, sans-serif">
-              {a.icon} {a.label}
+              fill={dark ? "hsl(0 0% 100% / 0.7)" : "hsl(0 0% 45%)"} fontSize={size <= 110 ? "6" : "7"} fontWeight="500" fontFamily="Kanit, sans-serif">
+              {a.icon} {size <= 110 ? "" : a.label}
             </text>
           );
         })}
 
         {/* Center average */}
         <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
-          fill="hsl(163 78% 20%)" fontSize="14" fontWeight="700" fontFamily="Inter, sans-serif">
+          fill={dark ? "hsl(163 78% 50%)" : "hsl(163 78% 20%)"} fontSize={size <= 110 ? "11" : "14"} fontWeight="700" fontFamily="Inter, sans-serif">
           {avg.toFixed(1)}
         </text>
         <text x={cx} y={cy + 8} textAnchor="middle" dominantBaseline="middle"
-          fill="hsl(0 0% 45%)" fontSize="6" fontWeight="400" fontFamily="Kanit, sans-serif">
+          fill={dark ? "hsl(0 0% 100% / 0.5)" : "hsl(0 0% 45%)"} fontSize={size <= 110 ? "5" : "6"} fontWeight="400" fontFamily="Kanit, sans-serif">
           คะแนนเฉลี่ย
         </text>
       </svg>
