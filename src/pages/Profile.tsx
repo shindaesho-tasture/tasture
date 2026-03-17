@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera } from "lucide-react";
+import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera, Users } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
@@ -172,6 +172,8 @@ const Profile = () => {
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   const handleSaveName = async () => {
     if (!user || !nameInput.trim()) return;
@@ -213,7 +215,14 @@ const Profile = () => {
       const { data: prof } = await supabase.from("profiles").select("display_name, email, avatar_url" as any).eq("id", user.id).single();
       if (prof) setProfile(prof as any);
 
-      // Menu reviews (+2 = emerald)
+      // Follow counts
+      const [{ count: followers }, { count: following }] = await Promise.all([
+        supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", user.id),
+        supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
+      ]);
+      setFollowerCount(followers || 0);
+      setFollowingCount(following || 0);
+
       const { data: reviews } = await supabase.from("menu_reviews").select("id, score, menu_item_id, created_at").eq("user_id", user.id);
       if (!reviews) return;
 
@@ -465,17 +474,18 @@ const Profile = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mx-6 grid grid-cols-3 gap-3 mb-8"
+          className="mx-6 grid grid-cols-4 gap-2.5 mb-8"
         >
           {[
             { icon: Gem, label: "Emeralds", value: emeraldCount },
             { icon: Store, label: "Stores", value: storeCount },
-            { icon: ChefHat, label: "Palate Lv.", value: palateLevel },
+            { icon: Users, label: "ผู้ติดตาม", value: followerCount },
+            { icon: ChefHat, label: "ติดตาม", value: followingCount },
           ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex flex-col items-center py-4 rounded-2xl bg-card shadow-luxury">
-              <Icon size={18} strokeWidth={1.5} className="text-score-emerald mb-1.5" />
-              <span className="text-xl font-bold text-foreground">{value}</span>
-              <span className="text-[10px] text-muted-foreground font-medium mt-0.5">{label}</span>
+            <div key={label} className="flex flex-col items-center py-3.5 rounded-2xl bg-card shadow-luxury">
+              <Icon size={16} strokeWidth={1.5} className="text-score-emerald mb-1" />
+              <span className="text-lg font-bold text-foreground">{value}</span>
+              <span className="text-[9px] text-muted-foreground font-medium mt-0.5">{label}</span>
             </div>
           ))}
         </motion.div>

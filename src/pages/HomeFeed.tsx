@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send, Trash2, UserPlus, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -490,6 +490,8 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Derive refId for comments - use consistent key based on user+menuItem
@@ -542,6 +544,31 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     }
   };
 
+  const toggleFollow = async () => {
+    if (!user || user.id === post.userId) return;
+    setFollowLoading(true);
+    if (isFollowing) {
+      setIsFollowing(false);
+      await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", post.userId);
+    } else {
+      setIsFollowing(true);
+      navigator.vibrate?.(8);
+      await supabase.from("follows").insert({ follower_id: user.id, following_id: post.userId });
+    }
+    setFollowLoading(false);
+  };
+
+  // Check follow state
+  useEffect(() => {
+    if (!user || user.id === post.userId) return;
+    supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", user.id)
+      .eq("following_id", post.userId)
+      .maybeSingle()
+      .then(({ data }) => setIsFollowing(!!data));
+  }, [user, post.userId]);
 
   const fetchComments = async () => {
     setLoadingComments(true);
@@ -657,6 +684,22 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          {user && user.id !== post.userId && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleFollow}
+              disabled={followLoading}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide transition-all",
+                isFollowing
+                  ? "bg-score-emerald/10 text-score-emerald"
+                  : "bg-secondary text-muted-foreground hover:bg-accent"
+              )}
+            >
+              {isFollowing ? <UserCheck size={10} /> : <UserPlus size={10} />}
+              {isFollowing ? "ติดตามแล้ว" : "ติดตาม"}
+            </motion.button>
+          )}
           {(post.type === "combined" || post.type === "menu_review") && (
             <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-score-amber/10 text-score-amber">
               ⭐ รีวิว
