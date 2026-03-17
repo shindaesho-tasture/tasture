@@ -77,6 +77,8 @@ const MenuFeedback = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [menuReviewChoice, setMenuReviewChoice] = useState<"same" | "changed" | null>(null);
   const [hasPreviousMenuReview, setHasPreviousMenuReview] = useState(false);
+  const [showPostPrompt, setShowPostPrompt] = useState(false);
+  const [lastSavedReviewId, setLastSavedReviewId] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
