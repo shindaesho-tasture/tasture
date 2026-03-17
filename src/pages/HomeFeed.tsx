@@ -86,6 +86,7 @@ const HomeFeed = () => {
   const [storeLocations, setStoreLocations] = useState<Map<string, { lat: number; lng: number }>>(new Map());
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
   const pageSize = useRef(30);
   const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -95,6 +96,15 @@ const HomeFeed = () => {
   const { position: geoPos } = useGeolocation();
 
   const PULL_THRESHOLD = 80;
+
+  // Scroll shadow detection
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollTop > 10);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   const refreshFollowingIds = useCallback(() => {
     if (!user) return;
@@ -635,7 +645,7 @@ const HomeFeed = () => {
     <PageTransition>
       <div ref={containerRef} className="min-h-screen bg-background pb-24 overflow-y-auto">
         {/* Sticky Header + Pull-to-refresh */}
-        <div className="sticky top-0 z-40 bg-background">
+        <div className={`sticky top-0 z-40 bg-background transition-shadow duration-300 ${scrolled ? 'shadow-md' : ''}`}>
           <TastureHeader />
           {/* Pull-to-refresh indicator inside sticky header */}
           <motion.div
@@ -662,7 +672,7 @@ const HomeFeed = () => {
         </div>
 
         {/* Sticky Title + Tabs */}
-        <div className="sticky top-[56px] z-30 bg-background border-b border-border/50">
+        <div className={`sticky top-[56px] z-30 bg-background border-b border-border/50 transition-shadow duration-300 ${scrolled ? 'shadow-sm' : ''}`}>
           <div className="px-6 pt-2 pb-2">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               ฟีด
