@@ -1133,7 +1133,6 @@ const SATISFACTION_AXES = [
   { key: "taste" as const, label: "รสชาติ", icon: "👅", desc: "ความพอใจในรสชาติอาหาร" },
   { key: "overall" as const, label: "ภาพรวมร้าน", icon: "🏪", desc: "ความพอใจโดยรวมของร้าน" },
   { key: "cleanliness" as const, label: "ความสะอาด", icon: "✨", desc: "ความสะอาดของร้านและอาหาร" },
-  { key: "value" as const, label: "ความคุ้มค่า", icon: "💰", desc: "คุ้มค่ากับราคาที่จ่าย" },
 ];
 
 const LEVEL_LABELS: Record<number, { label: string; color: string }> = {
