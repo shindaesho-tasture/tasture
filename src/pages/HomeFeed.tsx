@@ -870,30 +870,72 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
               🧬 DNA
             </span>
           )}
+          {post.type === "photo_post" && (
+            <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-primary/10 text-primary">
+              📸 โพส
+            </span>
+          )}
         </div>
       </div>
 
       {/* Action text */}
       <div className="px-4 pb-2">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          {post.type === "combined"
-            ? "รีวิวและวิเคราะห์ DNA ของ"
-            : post.type === "menu_review"
-            ? "ให้คะแนน"
-            : "วิเคราะห์ Dish DNA ของ"}{" "}
-          <span className="font-semibold text-foreground">{post.menuItemName}</span>
-          {" "}ที่{" "}
-          <button
-            onClick={() => navigate(`/store/${post.storeId}/order`)}
-            className="font-semibold text-score-emerald hover:underline"
-          >
-            {post.storeName}
-          </button>
+          {post.type === "photo_post" ? (
+            <>
+              {post.caption ? (
+                <span className="text-foreground">{post.caption}</span>
+              ) : (
+                "แชร์รูปอาหาร"
+              )}
+              {post.storeName && (
+                <>
+                  {" "}ที่{" "}
+                  <button
+                    onClick={() => navigate(`/store/${post.storeId}/order`)}
+                    className="font-semibold text-score-emerald hover:underline"
+                  >
+                    {post.storeName}
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {post.type === "combined"
+                ? "รีวิวและวิเคราะห์ DNA ของ"
+                : post.type === "menu_review"
+                ? "ให้คะแนน"
+                : "วิเคราะห์ Dish DNA ของ"}{" "}
+              <span className="font-semibold text-foreground">{post.menuItemName}</span>
+              {" "}ที่{" "}
+              <button
+                onClick={() => navigate(`/store/${post.storeId}/order`)}
+                className="font-semibold text-score-emerald hover:underline"
+              >
+                {post.storeName}
+              </button>
+            </>
+          )}
         </p>
       </div>
 
+      {/* Photo post image */}
+      {post.type === "photo_post" && post.photoUrl && (
+        <div className="px-4 pb-3">
+          <div className="relative rounded-xl overflow-hidden aspect-square">
+            <img
+              src={post.photoUrl}
+              alt={post.caption || "รูปอาหาร"}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Menu item image */}
-      {post.menuItemImage && (
+      {post.type !== "photo_post" && post.menuItemImage && (
         <div className="px-4 pb-3">
           <motion.div
             whileTap={{ scale: 0.98 }}
