@@ -17,7 +17,7 @@ import SuggestedUsers from "@/components/SuggestedUsers";
 /* ─── Types ─── */
 interface FeedPost {
   id: string;
-  type: "combined" | "menu_review" | "dish_dna";
+  type: "combined" | "menu_review" | "dish_dna" | "photo_post";
   userId: string;
   userName: string;
   userAvatar: string | null;
@@ -29,6 +29,8 @@ interface FeedPost {
   score: number | null;
   satisfaction: SatisfactionAxes | null;
   dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
+  caption?: string | null;
+  photoUrl?: string | null;
   createdAt: string;
 }
 
