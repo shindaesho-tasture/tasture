@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw } from "lucide-react";
+import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
