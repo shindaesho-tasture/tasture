@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Camera, Check, Loader2 } from "lucide-react";
+import { ChevronLeft, MapPin, Camera, Check, Loader2, Search, X } from "lucide-react";
 import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/use-categories";
@@ -14,6 +14,8 @@ import BottomNav from "@/components/BottomNav";
 import ScanningOverlay from "@/components/menu/ScanningOverlay";
 import MenuCardList from "@/components/menu/MenuCardList";
 import { useToast } from "@/hooks/use-toast";
+
+const LIBRARIES: ("places")[] = ["places"];
 
 const mapContainerStyle = { width: "100%", height: "100%" };
 
@@ -36,9 +38,71 @@ const StoreRegistration = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(store.categoryId);
 
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_API_KEY });
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [placeResults, setPlaceResults] = useState<google.maps.places.PlaceResult[]>([]);
+  const [searchingPlace, setSearchingPlace] = useState(false);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
 
-  const onMapLoad = useCallback((map: google.maps.Map) => { mapRef.current = map; }, []);
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_API_KEY, libraries: LIBRARIES });
+
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+    autocompleteServiceRef.current = new google.maps.places.AutocompleteService();
+    placesServiceRef.current = new google.maps.places.PlacesService(map);
+  }, []);
+
+  // Place search
+  const searchPlaces = useCallback((query: string) => {
+    if (!query.trim() || !autocompleteServiceRef.current) {
+      setPlaceResults([]);
+      return;
+    }
+    setSearchingPlace(true);
+    autocompleteServiceRef.current.getPlacePredictions(
+      { input: query, types: ["establishment"], componentRestrictions: { country: "th" } },
+      (predictions, status) => {
+        setSearchingPlace(false);
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+          setPlaceResults([]);
+          return;
+        }
+        // Get details for top 5
+        const results: google.maps.places.PlaceResult[] = [];
+        let pending = Math.min(predictions.length, 5);
+        predictions.slice(0, 5).forEach((p) => {
+          placesServiceRef.current?.getDetails(
+            { placeId: p.place_id!, fields: ["name", "geometry", "formatted_address", "place_id"] },
+            (place, detailStatus) => {
+              if (detailStatus === google.maps.places.PlacesServiceStatus.OK && place) {
+                results.push(place);
+              }
+              pending--;
+              if (pending === 0) setPlaceResults([...results]);
+            }
+          );
+        });
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => searchPlaces(placeQuery), 400);
+    return () => clearTimeout(timer);
+  }, [placeQuery, searchPlaces]);
+
+  const handleSelectPlace = (place: google.maps.places.PlaceResult) => {
+    if (place.geometry?.location) {
+      const loc = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+      setPinLocation(loc);
+      setPinned(true);
+      mapRef.current?.panTo(loc);
+      mapRef.current?.setZoom(17);
+      if (place.name && !name.trim()) setName(place.name);
+    }
+    setPlaceQuery("");
+    setPlaceResults([]);
+  };
 
   const handleDropPin = () => {
     if (navigator.geolocation) {
@@ -212,9 +276,58 @@ const StoreRegistration = () => {
             />
           </motion.section>
 
-          {/* Input 2: Map with Pin */}
+          {/* Input 2: Map with Pin + Search */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
             <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">ปักหมุดตำแหน่ง</label>
+
+            {/* Place Search */}
+            <div className="relative mb-2">
+              <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-surface-elevated shadow-luxury border border-border/30 focus-within:ring-2 focus-within:ring-score-emerald/30 transition-shadow">
+                <Search size={16} strokeWidth={1.5} className="text-muted-foreground shrink-0" />
+                <input
+                  type="text"
+                  value={placeQuery}
+                  onChange={(e) => setPlaceQuery(e.target.value)}
+                  placeholder="ค้นหาชื่อร้านหรือสถานที่..."
+                  lang="th"
+                  autoComplete="off"
+                  className="flex-1 bg-transparent text-sm font-light text-foreground placeholder:text-muted-foreground/60 outline-none"
+                />
+                {placeQuery && (
+                  <button onClick={() => { setPlaceQuery(""); setPlaceResults([]); }} className="p-1 rounded-full hover:bg-secondary">
+                    <X size={14} className="text-muted-foreground" />
+                  </button>
+                )}
+                {searchingPlace && <Loader2 size={14} className="text-score-emerald animate-spin" />}
+              </div>
+
+              {/* Search results dropdown */}
+              <AnimatePresence>
+                {placeResults.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute left-0 right-0 top-full mt-1 z-20 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 overflow-hidden"
+                  >
+                    {placeResults.map((place) => (
+                      <button
+                        key={place.place_id}
+                        onClick={() => handleSelectPlace(place)}
+                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-secondary/60 transition-colors border-b border-border/20 last:border-0"
+                      >
+                        <MapPin size={14} strokeWidth={1.5} className="text-score-emerald shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{place.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{place.formatted_address}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="relative overflow-hidden rounded-2xl shadow-luxury">
               <div className="relative h-48 bg-secondary overflow-hidden rounded-t-2xl">
                 {isLoaded ? (
