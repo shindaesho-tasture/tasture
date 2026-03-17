@@ -215,7 +215,29 @@ const HomeFeed = () => {
         latestTime: string;
       }>();
 
-      // Build satisfaction lookup
+      // Helper: normalize store review score (-2..+2) to 1-5 scale
+      const norm = (score: number) => Math.round(((score + 2) / 4) * 4 + 1);
+      // Helper: normalize menu review score (-2, 0, +2) to 1-5
+      const normMenu = (score: number) => score === 2 ? 5 : score === 0 ? 3 : 1;
+
+      // Build store review lookup: user+store → mapped axes
+      // metric_id mapping: table-clean→cleanliness, ambiance→overall, wait-time→value
+      const METRIC_TO_AXIS: Record<string, keyof SatisfactionAxes> = {
+        "table-clean": "cleanliness",
+        "ambiance": "overall",
+        "wait-time": "value",
+      };
+      const storeRevLookup = new Map<string, Partial<SatisfactionAxes>>();
+      (storeReviewsRes.data || []).forEach((sr) => {
+        const axis = METRIC_TO_AXIS[sr.metric_id];
+        if (!axis) return;
+        const key = `${sr.user_id}-${sr.store_id}`;
+        if (!storeRevLookup.has(key)) storeRevLookup.set(key, {});
+        const entry = storeRevLookup.get(key)!;
+        if (entry[axis] == null) entry[axis] = norm(sr.score);
+      });
+
+      // Build satisfaction lookup from satisfaction_ratings table
       const satLookup = new Map<string, SatisfactionAxes>();
       (satRes.data || []).forEach((s) => {
         const key = `${s.user_id}-${s.menu_item_id}`;
@@ -223,6 +245,35 @@ const HomeFeed = () => {
           satLookup.set(key, { texture: s.texture, taste: s.taste, overall: s.overall, cleanliness: s.cleanliness, value: s.value });
         }
       });
+
+      // Merge function: combine satisfaction_ratings + store reviews + menu score into one SatisfactionAxes
+      const buildSatisfaction = (userId: string, menuItemId: string, menuScore: number | null, storeId: string | null): SatisfactionAxes | null => {
+        const satKey = `${userId}-${menuItemId}`;
+        const sat = satLookup.get(satKey);
+        const storeKey = storeId ? `${userId}-${storeId}` : null;
+        const storeRev = storeKey ? storeRevLookup.get(storeKey) : null;
+
+        const merged: SatisfactionAxes = {};
+
+        // Layer 1: satisfaction_ratings (highest priority, direct data)
+        if (sat) Object.assign(merged, sat);
+
+        // Layer 2: store reviews fill missing axes
+        if (storeRev) {
+          for (const [k, v] of Object.entries(storeRev)) {
+            if (merged[k as keyof SatisfactionAxes] == null) {
+              (merged as any)[k] = v;
+            }
+          }
+        }
+
+        // Layer 3: menu review score → taste (if missing)
+        if (menuScore != null && merged.taste == null) {
+          merged.taste = normMenu(menuScore);
+        }
+
+        return Object.keys(merged).length > 0 ? merged : null;
+      };
 
       // Add reviews
       (reviewsRes.data || []).forEach((r) => {
