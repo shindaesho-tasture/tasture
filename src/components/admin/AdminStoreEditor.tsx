@@ -598,7 +598,76 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
               {/* ─── Feedback Tags Tab ─── */}
               {tab === "feedback" && (
                 <div className="space-y-3">
-                  {reviewTags.length === 0 ? (
+                  {/* Add feedback button */}
+                  {!addingFeedback ? (
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => { haptic(); setAddingFeedback(true); }}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-score-emerald/30 text-score-emerald text-[12px] font-semibold hover:bg-score-emerald/5 transition-colors"
+                    >
+                      <Plus size={15} /> เพิ่มแท็กฟีดแบค
+                    </motion.button>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="rounded-xl bg-score-emerald/5 border border-score-emerald/20 p-3 space-y-3 overflow-hidden"
+                    >
+                      <p className="text-[11px] font-semibold text-foreground">เพิ่มแท็กฟีดแบค</p>
+                      {/* Metric picker */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-muted-foreground">เลือก Metric</label>
+                        <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
+                          {getAllMetrics().map((m) => (
+                            <button
+                              key={m.id}
+                              onClick={() => setFbMetric(m.id)}
+                              className={cn("flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-[10px] font-medium border transition-colors text-left",
+                                fbMetric === m.id ? "bg-score-emerald/10 text-score-emerald border-score-emerald/30" : "bg-secondary/50 text-foreground border-border/30"
+                              )}
+                            >
+                              <span>{m.icon}</span>
+                              <span className="truncate">{m.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Score picker */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-muted-foreground">คะแนน</label>
+                        <div className="flex gap-1.5">
+                          {[2, 1, 0, -1, -2].map((s) => (
+                            <button
+                              key={s}
+                              onClick={() => setFbScore(s)}
+                              className={cn("flex-1 py-2 rounded-lg text-[11px] font-bold border transition-colors",
+                                fbScore === s ? scoreColor(s) + " border-transparent" : "bg-secondary/50 text-muted-foreground border-border/30"
+                              )}
+                            >
+                              {s > 0 ? "+" : ""}{s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={() => setAddingFeedback(false)} className="px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground text-[11px] font-medium">
+                          ยกเลิก
+                        </button>
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={addFeedbackTag}
+                          disabled={saving || !fbMetric}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-score-emerald text-white text-[11px] font-semibold disabled:opacity-50"
+                        >
+                          {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                          เพิ่ม
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Tag list */}
+                  {reviewTags.length === 0 && !addingFeedback ? (
                     <p className="text-center text-sm text-muted-foreground py-10">ยังไม่มีฟีดแบค</p>
                   ) : (
                     reviewTags
@@ -610,11 +679,12 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
                             <span className="text-lg">{info.icon}</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-semibold text-foreground">{info.label}</p>
-                              <p className="text-[10px] text-muted-foreground">{tag.count} รีวิว</p>
+                              <p className="text-[10px] text-muted-foreground">{tag.count} รีวิว · avg {tag.avg_score > 0 ? "+" : ""}{tag.avg_score.toFixed(1)}</p>
                             </div>
                             <span className={cn("px-2.5 py-1 rounded-lg text-[12px] font-bold tabular-nums", scoreColor(tag.avg_score))}>
                               {tag.avg_score > 0 ? "+" : ""}{tag.avg_score.toFixed(1)}
                             </span>
+                            <ConfirmDelete onDelete={() => deleteFeedbackMetric(tag.metric_id)} />
                           </div>
                         );
                       })
