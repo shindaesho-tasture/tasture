@@ -43,6 +43,7 @@ interface UserPhoto {
   avatar_url: string | null;
   created_at: string;
   post_id: string;
+  likeCount: number;
 }
 
 const DishDetailSheet = ({
