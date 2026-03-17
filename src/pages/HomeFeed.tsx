@@ -235,7 +235,7 @@ const HomeFeed = () => {
       (dnaRes.data || []).forEach((d) => {
         const key = `${d.user_id}-${d.menu_item_id}`;
         if (!postMap.has(key)) {
-          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, dnaComponents: [], latestTime: d.created_at });
+          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, satisfaction: satLookup.get(key) || null, dnaComponents: [], latestTime: d.created_at });
         }
         const entry = postMap.get(key)!;
         entry.dnaComponents.push({ name: d.component_name, icon: d.component_icon, tag: d.selected_tag, score: d.selected_score });
