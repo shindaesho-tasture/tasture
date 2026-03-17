@@ -976,16 +976,16 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       {/* Menu item image */}
       {post.type !== "photo_post" && post.menuItemImage && (
         <div className="px-4 pb-3">
-          <motion.div
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate(`/store/${post.storeId}/order`)}
-            className="relative rounded-xl overflow-hidden cursor-pointer aspect-[16/10]"
+          <div
+            className="relative rounded-xl overflow-hidden cursor-pointer aspect-[16/10] select-none"
+            onClick={handleDoubleTap}
           >
             <img
               src={post.menuItemImage}
               alt={post.menuItemName}
               className="w-full h-full object-cover"
               loading="lazy"
+              draggable={false}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             <div className="absolute bottom-3 left-3">
@@ -993,7 +993,20 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
                 {post.menuItemName}
               </span>
             </div>
-          </motion.div>
+            <AnimatePresence>
+              {showHeartAnim && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.4, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                  <Heart size={72} className="fill-white text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.3)]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       )}
 
