@@ -17,6 +17,7 @@ const ALL_AXES = [
 interface FeedRadarChartProps {
   data: SatisfactionAxes;
   size?: number;
+  dark?: boolean;
   className?: string;
 }
 
