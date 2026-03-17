@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { supabase } from "@/integrations/supabase/client";
 import BalanceSpiderChart from "./BalanceSpiderChart";
 import type { SensoryAxis } from "@/lib/sensory-types";
+import { cn } from "@/lib/utils";
 
 interface DnaTag {
   component_icon: string;
@@ -33,6 +34,16 @@ const hasEmeraldSeal = (tags: DnaTag[], reviews: number) => {
   const avg = tags.reduce((s, t) => s + t.selected_score, 0) / tags.length;
   return avg >= 1.0;
 };
+/** Photo posted by users */
+interface UserPhoto {
+  id: string;
+  image_url: string;
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  post_id: string;
+}
 
 const DishDetailSheet = ({
   open,
@@ -49,14 +60,79 @@ const DishDetailSheet = ({
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
   const [sensoryValues, setSensoryValues] = useState<Record<string, number>>({});
+  const [userPhotos, setUserPhotos] = useState<UserPhoto[]>([]);
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
 
   const emerald = hasEmeraldSeal(dnaTags, totalReviews);
 
-  // Fetch AI descriptions when opening
+  // Fetch AI descriptions and user photos when opening
   useEffect(() => {
-    if (!open || dnaTags.length === 0) return;
-    fetchDescriptions();
+    if (!open) return;
+    if (dnaTags.length > 0) fetchDescriptions();
+    fetchUserPhotos();
+    setActivePhotoIdx(0);
   }, [open, menuItemId]);
+
+  const fetchUserPhotos = async () => {
+    try {
+      // Get menu_review ids for this menu item
+      const { data: reviews } = await supabase
+        .from("menu_reviews")
+        .select("id")
+        .eq("menu_item_id", menuItemId);
+
+      if (!reviews || reviews.length === 0) { setUserPhotos([]); return; }
+
+      const reviewIds = reviews.map((r) => r.id);
+
+      // Get post_images linked to these reviews
+      const { data: images } = await supabase
+        .from("post_images")
+        .select("id, image_url, post_id, menu_review_id, created_at")
+        .in("menu_review_id", reviewIds)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (!images || images.length === 0) { setUserPhotos([]); return; }
+
+      // Get post user_ids
+      const postIds = [...new Set(images.map((i) => i.post_id))];
+      const { data: posts } = await supabase
+        .from("posts")
+        .select("id, user_id")
+        .in("id", postIds);
+
+      const postUserMap = new Map<string, string>();
+      (posts || []).forEach((p) => postUserMap.set(p.id, p.user_id));
+
+      // Get profiles
+      const userIds = [...new Set((posts || []).map((p) => p.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", userIds);
+
+      const profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
+      (profiles || []).forEach((p) => profileMap.set(p.id, { display_name: p.display_name, avatar_url: p.avatar_url }));
+
+      setUserPhotos(images.map((img) => {
+        const userId = postUserMap.get(img.post_id) || "";
+        const profile = profileMap.get(userId);
+        return {
+          id: img.id,
+          image_url: img.image_url,
+          user_id: userId,
+          display_name: profile?.display_name || null,
+          avatar_url: profile?.avatar_url || null,
+          created_at: img.created_at,
+          post_id: img.post_id,
+        };
+      }));
+    } catch (e) {
+      console.error("fetchUserPhotos error:", e);
+      setUserPhotos([]);
+    }
+  };
 
   const fetchDescriptions = async () => {
     setLoadingDesc(true);
@@ -179,7 +255,97 @@ const DishDetailSheet = ({
                 )}
               </div>
 
-              {/* Title section */}
+              {/* IG-style User Photos Gallery */}
+              {userPhotos.length > 0 && (
+                <div className="px-5 pt-3 pb-2">
+                  <h3 className="text-xs font-semibold text-foreground mb-2.5 uppercase tracking-wider">
+                    📸 รูปจากผู้ใช้ ({userPhotos.length})
+                  </h3>
+                  {/* Main photo display */}
+                  <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-secondary">
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={userPhotos[activePhotoIdx]?.id}
+                        src={userPhotos[activePhotoIdx]?.image_url}
+                        alt="User photo"
+                        className="w-full h-full object-cover"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                      />
+                    </AnimatePresence>
+
+                    {/* User info overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5 bg-gradient-to-t from-black/60 to-transparent">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-muted overflow-hidden border-2 border-white/30 flex-shrink-0">
+                          {userPhotos[activePhotoIdx]?.avatar_url ? (
+                            <img src={userPhotos[activePhotoIdx].avatar_url!} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px]">👤</div>
+                          )}
+                        </div>
+                        <span className="text-[11px] font-semibold text-white truncate">
+                          {userPhotos[activePhotoIdx]?.display_name || "ผู้ใช้"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Nav arrows */}
+                    {userPhotos.length > 1 && (
+                      <>
+                        {activePhotoIdx > 0 && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setActivePhotoIdx((i) => i - 1); }}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center"
+                          >
+                            <ChevronLeft size={14} className="text-foreground" />
+                          </button>
+                        )}
+                        {activePhotoIdx < userPhotos.length - 1 && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setActivePhotoIdx((i) => i + 1); }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center"
+                          >
+                            <ChevronRight size={14} className="text-foreground" />
+                          </button>
+                        )}
+                      </>
+                    )}
+
+                    {/* Dots indicator */}
+                    {userPhotos.length > 1 && (
+                      <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-foreground/50 backdrop-blur-sm">
+                        <span className="text-[10px] font-semibold text-white">
+                          {activePhotoIdx + 1}/{userPhotos.length}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Thumbnail strip */}
+                  {userPhotos.length > 1 && (
+                    <div className="flex gap-1.5 mt-2 overflow-x-auto scrollbar-hide pb-1">
+                      {userPhotos.map((photo, idx) => (
+                        <button
+                          key={photo.id}
+                          onClick={() => setActivePhotoIdx(idx)}
+                          className={cn(
+                            "w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all",
+                            idx === activePhotoIdx
+                              ? "border-score-emerald shadow-[0_0_8px_hsla(163,78%,20%,0.3)]"
+                              : "border-transparent opacity-60"
+                          )}
+                        >
+                          <img src={photo.image_url} alt="" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="px-5 pt-4 pb-3">
                 <h2 className="text-xl font-bold text-foreground">{dishName}</h2>
                 <div className="flex items-baseline gap-2 mt-1">
