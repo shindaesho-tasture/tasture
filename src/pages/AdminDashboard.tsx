@@ -531,7 +531,40 @@ const AdminDashboard = () => {
                         </motion.button>
                       ))}
                     </div>
-                  </div>
+                   </div>
+
+                  {/* Weekly Trend Chart */}
+                  {weeklyData.length > 0 && (
+                    <div className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <BarChart3 size={16} className="text-score-emerald" />
+                        <span className="text-xs font-semibold text-foreground">แนวโน้มรายสัปดาห์</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto">8 สัปดาห์ล่าสุด</span>
+                      </div>
+                      <div className="h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={weeklyData} barGap={2}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                            <XAxis dataKey="week" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={28} />
+                            <Tooltip
+                              contentStyle={{
+                                background: "hsl(var(--background))",
+                                border: "1px solid hsl(var(--border))",
+                                borderRadius: "12px",
+                                fontSize: "11px",
+                              }}
+                              labelStyle={{ fontWeight: 600, marginBottom: 4 }}
+                            />
+                            <Legend iconSize={8} wrapperStyle={{ fontSize: "10px" }} />
+                            <Bar dataKey="reviews" name="รีวิว" fill="hsl(var(--score-emerald))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="posts" name="โพส" fill="hsl(var(--score-amber))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="users" name="ผู้ใช้ใหม่" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
