@@ -15,6 +15,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
 import SuggestedUsers from "@/components/SuggestedUsers";
 /* ─── Types ─── */
+interface PostImageSlide {
+  imageUrl: string;
+  reviewScore: number | null;
+  menuItemName: string | null;
+  storeName: string | null;
+}
+
 interface FeedPost {
   id: string;
   type: "combined" | "menu_review" | "dish_dna" | "photo_post";
@@ -31,6 +38,7 @@ interface FeedPost {
   dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
   caption?: string | null;
   photoUrl?: string | null;
+  slides?: PostImageSlide[];
   createdAt: string;
 }
 
@@ -393,28 +401,89 @@ const HomeFeed = () => {
         } as FeedPost;
       });
 
-      // Add photo posts from posts table
-      (photoPostsRes.data || []).forEach((pp) => {
-        const profile = profileMap.get(pp.user_id);
-        const ppStoreId = pp.store_id || "";
-        allPosts.push({
-          id: `photo-${pp.id}`,
-          type: "photo_post",
-          userId: pp.user_id,
-          userName: profile?.name || "ผู้ใช้",
-          userAvatar: profile?.avatar || null,
-          storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "",
-          storeId: ppStoreId,
-          menuItemName: "",
-          menuItemId: "",
-          menuItemImage: null,
-          score: null,
-          satisfaction: null,
-          caption: pp.caption,
-          photoUrl: pp.image_url,
-          createdAt: pp.created_at,
+      // Add photo posts from posts table with carousel slides
+      const photoPostIds = (photoPostsRes.data || []).map((pp) => pp.id);
+      let postImagesMap = new Map<string, { image_url: string; menu_review_id: string | null; sort_order: number }[]>();
+
+      if (photoPostIds.length > 0) {
+        const { data: piData } = await supabase
+          .from("post_images")
+          .select("post_id, image_url, menu_review_id, sort_order")
+          .in("post_id", photoPostIds)
+          .order("sort_order", { ascending: true });
+
+        (piData || []).forEach((pi: any) => {
+          if (!postImagesMap.has(pi.post_id)) postImagesMap.set(pi.post_id, []);
+          postImagesMap.get(pi.post_id)!.push(pi);
         });
-      });
+
+        // Fetch linked review details for slides
+        const slideReviewIds = (piData || [])
+          .filter((pi: any) => pi.menu_review_id)
+          .map((pi: any) => pi.menu_review_id);
+
+        let slideReviewMap = new Map<string, { score: number; menu_item_id: string }>();
+        if (slideReviewIds.length > 0) {
+          const { data: srData } = await supabase
+            .from("menu_reviews")
+            .select("id, score, menu_item_id")
+            .in("id", slideReviewIds);
+          (srData || []).forEach((sr) => slideReviewMap.set(sr.id, { score: sr.score, menu_item_id: sr.menu_item_id }));
+        }
+
+        // Build slides for each photo post
+        (photoPostsRes.data || []).forEach((pp) => {
+          const profile = profileMap.get(pp.user_id);
+          const ppStoreId = pp.store_id || "";
+          const piList = postImagesMap.get(pp.id) || [];
+
+          const slides: PostImageSlide[] = piList.length > 0
+            ? piList.map((pi) => {
+                const review = pi.menu_review_id ? slideReviewMap.get(pi.menu_review_id) : null;
+                const menuItem = review ? menuMap.get(review.menu_item_id) : null;
+                return {
+                  imageUrl: pi.image_url,
+                  reviewScore: review?.score ?? null,
+                  menuItemName: menuItem?.name || (review ? "เมนู" : null),
+                  storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
+                };
+              })
+            : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null }];
+
+          allPosts.push({
+            id: `photo-${pp.id}`,
+            type: "photo_post",
+            userId: pp.user_id,
+            userName: profile?.name || "ผู้ใช้",
+            userAvatar: profile?.avatar || null,
+            storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "",
+            storeId: ppStoreId,
+            menuItemName: "",
+            menuItemId: "",
+            menuItemImage: null,
+            score: null,
+            satisfaction: null,
+            caption: pp.caption,
+            photoUrl: pp.image_url,
+            slides,
+            createdAt: pp.created_at,
+          });
+        });
+      } else {
+        (photoPostsRes.data || []).forEach((pp) => {
+          const profile = profileMap.get(pp.user_id);
+          const ppStoreId = pp.store_id || "";
+          allPosts.push({
+            id: `photo-${pp.id}`, type: "photo_post",
+            userId: pp.user_id, userName: profile?.name || "ผู้ใช้", userAvatar: profile?.avatar || null,
+            storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "", storeId: ppStoreId,
+            menuItemName: "", menuItemId: "", menuItemImage: null, score: null, satisfaction: null,
+            caption: pp.caption, photoUrl: pp.image_url,
+            slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null }],
+            createdAt: pp.created_at,
+          });
+        });
+      }
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       const finalPosts = allPosts.slice(0, limit);
@@ -654,8 +723,11 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastTapRef = useRef(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
 
   // Derive refId for comments/likes
   const refType = "post";
@@ -941,21 +1013,96 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         </p>
       </div>
 
-      {/* Photo post image with double-tap to like */}
-      {post.type === "photo_post" && post.photoUrl && (
+      {/* Photo post carousel with double-tap to like */}
+      {post.type === "photo_post" && post.slides && post.slides.length > 0 && (
         <div className="px-4 pb-3">
-          <div
-            className="relative rounded-xl overflow-hidden aspect-square select-none"
-            onClick={handleDoubleTap}
-          >
-            <img
-              src={post.photoUrl}
-              alt={post.caption || "รูปอาหาร"}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              draggable={false}
-            />
-            {/* Double-tap heart animation */}
+          <div className="relative rounded-xl overflow-hidden aspect-square select-none">
+            {/* Swipeable carousel */}
+            <div
+              ref={carouselRef}
+              className="relative w-full h-full"
+              onClick={handleDoubleTap}
+              onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+              onTouchEnd={(e) => {
+                const dx = e.changedTouches[0].clientX - touchStartX.current;
+                if (Math.abs(dx) > 50) {
+                  if (dx < 0 && slideIndex < (post.slides?.length || 1) - 1) {
+                    setSlideIndex((p) => p + 1);
+                  } else if (dx > 0 && slideIndex > 0) {
+                    setSlideIndex((p) => p - 1);
+                  }
+                }
+              }}
+            >
+              <AnimatePresence initial={false} mode="popLayout">
+                <motion.img
+                  key={slideIndex}
+                  src={post.slides[slideIndex].imageUrl}
+                  alt={post.slides[slideIndex].menuItemName || post.caption || "รูปอาหาร"}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  initial={{ opacity: 0, x: 60 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -60 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  loading="lazy"
+                  draggable={false}
+                />
+              </AnimatePresence>
+            </div>
+
+            {/* Slide counter */}
+            {post.slides.length > 1 && (
+              <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-white">
+                {slideIndex + 1} / {post.slides.length}
+              </div>
+            )}
+
+            {/* Dot indicators */}
+            {post.slides.length > 1 && (
+              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                {post.slides.map((_, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full transition-all duration-200",
+                      i === slideIndex ? "bg-white w-4" : "bg-white/50"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Review overlay for current slide */}
+            <AnimatePresence mode="wait">
+              {post.slides[slideIndex].reviewScore !== null && (
+                <motion.div
+                  key={`review-${slideIndex}`}
+                  initial={{ y: 8, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -8, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute bottom-10 left-3 right-3 pointer-events-none"
+                >
+                  <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10">
+                    <span className="text-xl">
+                      {post.slides[slideIndex].reviewScore === 2 ? "🤩" : post.slides[slideIndex].reviewScore === 0 ? "😐" : "😔"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-white truncate">
+                        {post.slides[slideIndex].menuItemName}
+                      </p>
+                      {post.slides[slideIndex].storeName && (
+                        <p className="text-[9px] text-white/70 truncate">
+                          {post.slides[slideIndex].storeName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Double-tap heart */}
             <AnimatePresence>
               {showHeartAnim && (
                 <motion.div

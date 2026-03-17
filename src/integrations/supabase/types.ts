@@ -251,6 +251,48 @@ export type Database = {
         }
         Relationships: []
       }
+      post_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          menu_review_id: string | null
+          post_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          menu_review_id?: string | null
+          post_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          menu_review_id?: string | null
+          post_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_images_menu_review_id_fkey"
+            columns: ["menu_review_id"]
+            isOneToOne: false
+            referencedRelation: "menu_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_images_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_likes: {
         Row: {
           created_at: string
