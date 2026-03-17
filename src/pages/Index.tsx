@@ -68,9 +68,11 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { position } = useGeolocation();
+  const { categories: dynamicCategories } = useCategories();
   const [stores, setStores] = useState<StoreCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DiscoveryTab>("nearby");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
   const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
 
