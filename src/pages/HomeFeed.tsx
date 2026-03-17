@@ -632,7 +632,12 @@ const HomeFeed = () => {
     }
   }, [posts, activeTab, followingIds, geoPos, storeLocations, user]);
 
+  const tabIndexMap: Record<FeedTab, number> = { explore: 0, nearby: 1, following: 2, foryou: 3 };
   const handleTabChange = useCallback((tab: FeedTab) => {
+    const newIndex = tabIndexMap[tab];
+    const dir = newIndex > prevTabIndexRef.current ? 1 : -1;
+    setSlideDirection(dir);
+    prevTabIndexRef.current = newIndex;
     setActiveTab(tab);
   }, []);
 
