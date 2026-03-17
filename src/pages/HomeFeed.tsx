@@ -775,6 +775,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [followLoading, setFollowLoading] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [saved, setSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastTapRef = useRef(0);
   const carouselRef = useRef<HTMLDivElement>(null);
