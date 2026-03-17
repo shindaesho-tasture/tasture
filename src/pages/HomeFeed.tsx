@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send, Trash2, UserPlus, UserCheck } from "lucide-react";
@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import BottomNav from "@/components/BottomNav";
+import HomeFeedTabs, { type FeedTab } from "@/components/HomeFeedTabs";
+import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
 import { Skeleton } from "@/components/ui/skeleton";
 import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
-
 /* ─── Types ─── */
 interface FeedPost {
   id: string;
@@ -67,12 +68,28 @@ const HomeFeed = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<FeedTab>("explore");
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [storeLocations, setStoreLocations] = useState<Map<string, { lat: number; lng: number }>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const isPulling = useRef(false);
   const knownPostIds = useRef<Set<string>>(new Set());
+  const { position: geoPos } = useGeolocation();
 
   const PULL_THRESHOLD = 80;
+
+  // Fetch following IDs
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", user.id)
+      .then(({ data }) => {
+        setFollowingIds(new Set((data || []).map((d) => d.following_id)));
+      });
+  }, [user]);
 
   useEffect(() => {
     fetchFeed();
@@ -200,9 +217,14 @@ const HomeFeed = () => {
         storeIds.add(m.store_id);
       });
 
-      const { data: storesData } = await supabase.from("stores").select("id, name").in("id", [...storeIds]);
+      const { data: storesData } = await supabase.from("stores").select("id, name, pin_lat, pin_lng").in("id", [...storeIds]);
       const storeMap = new Map<string, string>();
-      (storesData || []).forEach((s) => storeMap.set(s.id, s.name));
+      const locMap = new Map<string, { lat: number; lng: number }>();
+      (storesData || []).forEach((s) => {
+        storeMap.set(s.id, s.name);
+        if (s.pin_lat != null && s.pin_lng != null) locMap.set(s.id, { lat: s.pin_lat, lng: s.pin_lng });
+      });
+      setStoreLocations(locMap);
 
       // Group everything by user+menu_item to create combined posts
       const postMap = new Map<string, {
@@ -375,6 +397,41 @@ const HomeFeed = () => {
 
   const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
 
+  // Filter posts based on active tab
+  const filteredPosts = useMemo(() => {
+    switch (activeTab) {
+      case "following":
+        return posts.filter((p) => followingIds.has(p.userId));
+      case "nearby": {
+        if (!geoPos) return posts; // fallback to all if no location
+        const NEARBY_KM = 10;
+        return posts.filter((p) => {
+          const loc = storeLocations.get(p.storeId);
+          if (!loc) return false;
+          return haversineKm(geoPos.lat, geoPos.lng, loc.lat, loc.lng) <= NEARBY_KM;
+        });
+      }
+      case "foryou":
+        // Show posts from users the current user follows + own posts, prioritized
+        if (!user) return posts;
+        return posts.filter((p) => followingIds.has(p.userId) || p.userId === user.id);
+      case "explore":
+      default:
+        return posts;
+    }
+  }, [posts, activeTab, followingIds, geoPos, storeLocations, user]);
+
+  const handleTabChange = useCallback((tab: FeedTab) => {
+    setActiveTab(tab);
+  }, []);
+
+  const emptyMessages: Record<FeedTab, string> = {
+    explore: "ยังไม่มีรีวิวจากชุมชน",
+    nearby: geoPos ? "ไม่พบรีวิวร้านใกล้เคียง" : "กรุณาเปิดตำแหน่งที่ตั้ง",
+    following: "ยังไม่มีรีวิวจากคนที่คุณติดตาม",
+    foryou: "ยังไม่มีรีวิวที่แนะนำสำหรับคุณ",
+  };
+
   return (
     <PageTransition>
       <div ref={containerRef} className="min-h-screen bg-background pb-24 overflow-y-auto">
@@ -404,7 +461,7 @@ const HomeFeed = () => {
         </motion.div>
 
         {/* Page Title */}
-        <div className="px-6 pt-2 pb-4">
+        <div className="px-6 pt-2 pb-2">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             ฟีด
           </h1>
@@ -412,6 +469,9 @@ const HomeFeed = () => {
             รีวิวล่าสุดจากชุมชน
           </p>
         </div>
+
+        {/* Feed Tabs */}
+        <HomeFeedTabs active={activeTab} onChange={handleTabChange} />
 
         {/* Feed */}
         <div className="px-4 space-y-4">
@@ -429,7 +489,7 @@ const HomeFeed = () => {
                 <Skeleton className="h-3 w-3/4" />
               </div>
             ))
-          ) : posts.length === 0 ? (
+          ) : filteredPosts.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -438,18 +498,29 @@ const HomeFeed = () => {
               <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
                 <ChefHat size={28} className="text-muted-foreground" />
               </div>
-              <p className="text-sm text-muted-foreground">ยังไม่มีรีวิวจากชุมชน</p>
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={() => navigate("/store-list")}
-                className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
-              >
-                เริ่มสำรวจร้าน
-              </motion.button>
+              <p className="text-sm text-muted-foreground">{emptyMessages[activeTab]}</p>
+              {activeTab === "explore" && (
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => navigate("/store-list")}
+                  className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
+                >
+                  เริ่มสำรวจร้าน
+                </motion.button>
+              )}
+              {activeTab === "following" && (
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => navigate("/discover")}
+                  className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
+                >
+                  ค้นหาคนเพื่อติดตาม
+                </motion.button>
+              )}
             </motion.div>
           ) : (
             <AnimatePresence>
-              {posts.map((post, i) => (
+              {filteredPosts.map((post, i) => (
                 <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
               ))}
             </AnimatePresence>
