@@ -82,6 +82,8 @@ const HomeFeed = () => {
   const [pullDistance, setPullDistance] = useState(0);
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<FeedTab>("explore");
+  const [slideDirection, setSlideDirection] = useState(0);
+  const prevTabIndexRef = useRef(0);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [storeLocations, setStoreLocations] = useState<Map<string, { lat: number; lng: number }>>(new Map());
   const [loadingMore, setLoadingMore] = useState(false);
