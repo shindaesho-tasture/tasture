@@ -417,6 +417,28 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const refType = "post";
   const refId = `${post.userId}-${post.menuItemId}`;
 
+  // Fetch like state + count on mount
+  useEffect(() => {
+    const fetchLikes = async () => {
+      const { count } = await supabase
+        .from("post_likes")
+        .select("id", { count: "exact", head: true })
+        .eq("ref_id", refId);
+      setLikeCount(count || 0);
+
+      if (user) {
+        const { data } = await supabase
+          .from("post_likes")
+          .select("id")
+          .eq("ref_id", refId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        setLiked(!!data);
+      }
+    };
+    fetchLikes();
+  }, [refId, user]);
+
   // Fetch comment count on mount
   useEffect(() => {
     supabase
@@ -426,6 +448,21 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       .eq("ref_id", refId)
       .then(({ count }) => setCommentCount(count || 0));
   }, [refType, refId]);
+
+  const toggleLike = async () => {
+    if (!user) return;
+    if (liked) {
+      setLiked(false);
+      setLikeCount((c) => Math.max(0, c - 1));
+      await supabase.from("post_likes").delete().eq("ref_id", refId).eq("user_id", user.id);
+    } else {
+      setLiked(true);
+      setLikeCount((c) => c + 1);
+      navigator.vibrate?.(8);
+      await supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
+    }
+  };
+
 
   const fetchComments = async () => {
     setLoadingComments(true);
