@@ -378,7 +378,9 @@ const HomeFeed = () => {
       });
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      const finalPosts = allPosts.slice(0, 30);
+      const finalPosts = allPosts.slice(0, limit);
+      setHasMore(allPosts.length > limit);
+      pageSize.current = limit;
 
       // Track new posts from realtime
       if (isRealtime) {
@@ -400,6 +402,7 @@ const HomeFeed = () => {
       console.error("Feed fetch error:", err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
