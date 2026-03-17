@@ -325,14 +325,28 @@ const Index = () => {
           isLarge ? "w-[180px]" : "w-[150px]"
         )}
       >
-        {/* Card bg with gradient */}
+        {/* Card bg with image or gradient */}
         <div className={cn(
           "aspect-square rounded-xl flex items-center justify-center relative overflow-hidden",
           "bg-gradient-to-br from-muted to-secondary"
         )}>
-          <span className={cn("transition-transform duration-300 group-hover:scale-110", isLarge ? "text-5xl" : "text-4xl")}>
-            {store.categoryIcon}
-          </span>
+          {store.imageUrl ? (
+            <img
+              src={store.imageUrl}
+              alt={store.name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              loading="lazy"
+            />
+          ) : (
+            <span className={cn("transition-transform duration-300 group-hover:scale-110", isLarge ? "text-5xl" : "text-4xl")}>
+              {store.categoryIcon}
+            </span>
+          )}
+
+          {/* Dark overlay for text readability when image present */}
+          {store.imageUrl && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+          )}
 
           {/* Score badge */}
           {tier && store.avgScore !== null && (
