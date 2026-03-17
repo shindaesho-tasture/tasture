@@ -192,6 +192,22 @@ const MenuFeedback = () => {
 
       setSaveSuccess(true);
       toast({ title: "✅ บันทึกสำเร็จ", description: `ให้คะแนน ${ratedCount} เมนู` });
+
+      // Get the most recent review id for linking to a post
+      if (upsertRows.length > 0) {
+        const { data: latestReview } = await supabase
+          .from("menu_reviews")
+          .select("id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (latestReview) {
+          setLastSavedReviewId(latestReview.id);
+          setShowPostPrompt(true);
+        }
+      }
+
       setTimeout(() => setSaveSuccess(false), 2000);
       fetchData();
     } catch (err: any) {
