@@ -40,8 +40,9 @@ interface SovereignMenuCardProps {
   totalReviews: number;
   onPress: () => void;
   index?: number;
-  popularityRank?: number; // 1 = most reviewed
-  avgSatisfaction?: number; // 1-5 satisfaction average
+  popularityRank?: number;
+  avgSatisfaction?: number;
+  userPhotos?: string[]; // top user-posted photo URLs (sorted by likes)
 }
 
 /** Format compact review count */
@@ -58,6 +59,7 @@ const SovereignMenuCard = ({
   index = 0,
   popularityRank,
   avgSatisfaction,
+  userPhotos,
 }: SovereignMenuCardProps) => {
   // Build enriched tags: score tags first, then auto-generated meta tags
   const enrichedTags: IntensityTag[] = [...tags];
@@ -106,88 +108,113 @@ const SovereignMenuCard = ({
         navigator.vibrate?.(8);
         onPress();
       }}
-      className="w-full flex gap-3.5 p-3 rounded-2xl bg-surface-elevated shadow-luxury border border-border/40 text-left transition-shadow hover:shadow-card-elevated active:shadow-none"
+      className="w-full rounded-2xl bg-surface-elevated shadow-luxury border border-border/40 text-left transition-shadow hover:shadow-card-elevated active:shadow-none overflow-hidden"
     >
-      {/* Left: Food image 1:1 */}
-      <div className="w-[88px] h-[88px] rounded-xl overflow-hidden flex-shrink-0 bg-secondary relative">
-        {imageUrl ? (
-          <img src={imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br from-secondary to-muted">🍽️</div>
-        )}
-        {/* Review count badge */}
-        {totalReviews > 0 && (
-          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-lg bg-foreground/70 backdrop-blur-sm">
-            <span className="text-[8px] font-semibold text-background">{formatCount(totalReviews)} รีวิว</span>
-          </div>
-        )}
-      </div>
-
-      {/* Right: Info */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-        <div>
-          <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">{name}</h3>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-sm font-semibold text-score-emerald">฿{price}</span>
-            {priceSpecial != null && (
-              <span className="text-[11px] font-light text-muted-foreground line-through">฿{priceSpecial}</span>
-            )}
-          </div>
+      <div className="flex gap-3.5 p-3">
+        {/* Left: Food image 1:1 */}
+        <div className="w-[88px] h-[88px] rounded-xl overflow-hidden flex-shrink-0 bg-secondary relative">
+          {imageUrl ? (
+            <img src={imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br from-secondary to-muted">🍽️</div>
+          )}
+          {/* Review count badge */}
+          {totalReviews > 0 && (
+            <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-lg bg-foreground/70 backdrop-blur-sm">
+              <span className="text-[8px] font-semibold text-background">{formatCount(totalReviews)} รีวิว</span>
+            </div>
+          )}
         </div>
 
-        {/* Intensity Tags - redesigned with types */}
-        {enrichedTags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {enrichedTags.slice(0, 4).map((tag) => {
-              const isMetaTag = tag.type && tag.type !== "score";
+        {/* Right: Info */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+          <div>
+            <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">{name}</h3>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-sm font-semibold text-score-emerald">฿{price}</span>
+              {priceSpecial != null && (
+                <span className="text-[11px] font-light text-muted-foreground line-through">฿{priceSpecial}</span>
+              )}
+            </div>
+          </div>
 
-              if (isMetaTag) {
-                // Meta tags (popularity, price, recommendation) - distinct style
-                const metaStyles: Record<string, string> = {
-                  popularity: "bg-gradient-to-r from-score-amber/90 to-score-ruby/80",
-                  recommendation: "bg-gradient-to-r from-score-emerald/90 to-score-mint/80",
-                  price: "bg-gradient-to-r from-primary/80 to-primary/60",
-                };
+          {/* Intensity Tags */}
+          {enrichedTags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {enrichedTags.slice(0, 4).map((tag) => {
+                const isMetaTag = tag.type && tag.type !== "score";
+
+                if (isMetaTag) {
+                  const metaStyles: Record<string, string> = {
+                    popularity: "bg-gradient-to-r from-score-amber/90 to-score-ruby/80",
+                    recommendation: "bg-gradient-to-r from-score-emerald/90 to-score-mint/80",
+                    price: "bg-gradient-to-r from-primary/80 to-primary/60",
+                  };
+                  return (
+                    <span
+                      key={`${tag.type}-${tag.label}`}
+                      className={cn(
+                        "inline-flex items-center gap-0.5 px-2 py-[3px] rounded-full text-[9px] font-bold leading-none text-white",
+                        metaStyles[tag.type!] || "bg-primary/80"
+                      )}
+                    >
+                      <span>{tag.icon}</span>
+                      <span>{tag.label}</span>
+                    </span>
+                  );
+                }
+
+                const tier = getScoreTier(tag.score);
+                const opacity = getIntensityOpacity(tag.count);
+                const hsl = tierHsl[tier];
+                const bgOpacity = Math.max(0.45, opacity);
+
                 return (
                   <span
-                    key={`${tag.type}-${tag.label}`}
+                    key={`${tag.icon}-${tag.label}`}
                     className={cn(
-                      "inline-flex items-center gap-0.5 px-2 py-[3px] rounded-full text-[9px] font-bold leading-none text-white",
-                      metaStyles[tag.type!] || "bg-primary/80"
+                      "inline-flex items-center gap-0.5 px-2 py-[3px] rounded-full text-[9px] font-bold leading-none text-white transition-shadow",
+                      tierGlow[tier]
                     )}
+                    style={{ backgroundColor: `hsla(${hsl},${bgOpacity})` }}
                   >
                     <span>{tag.icon}</span>
-                    <span>{tag.label}</span>
+                    <span className="truncate max-w-[72px]">{tag.label}</span>
+                    {tag.count >= 10 && (
+                      <span className="opacity-50 text-[7px] ml-0.5">({formatCount(tag.count)})</span>
+                    )}
                   </span>
                 );
-              }
-
-              // Score-based tags - enhanced with glow
-              const tier = getScoreTier(tag.score);
-              const opacity = getIntensityOpacity(tag.count);
-              const hsl = tierHsl[tier];
-              const bgOpacity = Math.max(0.45, opacity);
-
-              return (
-                <span
-                  key={`${tag.icon}-${tag.label}`}
-                  className={cn(
-                    "inline-flex items-center gap-0.5 px-2 py-[3px] rounded-full text-[9px] font-bold leading-none text-white transition-shadow",
-                    tierGlow[tier]
-                  )}
-                  style={{ backgroundColor: `hsla(${hsl},${bgOpacity})` }}
-                >
-                  <span>{tag.icon}</span>
-                  <span className="truncate max-w-[72px]">{tag.label}</span>
-                  {tag.count >= 10 && (
-                    <span className="opacity-50 text-[7px] ml-0.5">({formatCount(tag.count)})</span>
-                  )}
-                </span>
-              );
-            })}
-          </div>
-        )}
+              })}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* User-posted photos strip at bottom */}
+      {userPhotos && userPhotos.length > 0 && (
+        <div className="px-3 pb-3 pt-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] text-muted-foreground font-medium mr-0.5">📸</span>
+            <div className="flex -space-x-1.5">
+              {userPhotos.slice(0, 4).map((url, idx) => (
+                <div
+                  key={idx}
+                  className="w-8 h-8 rounded-lg overflow-hidden border-2 border-background flex-shrink-0 shadow-sm"
+                >
+                  <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                </div>
+              ))}
+            </div>
+            {userPhotos.length > 4 && (
+              <span className="text-[9px] text-muted-foreground font-medium ml-1">
+                +{userPhotos.length - 4}
+              </span>
+            )}
+            <span className="text-[9px] text-muted-foreground ml-auto">จากผู้ใช้</span>
+          </div>
+        </div>
+      )}
     </motion.button>
   );
 };

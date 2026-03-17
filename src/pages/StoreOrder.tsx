@@ -39,7 +39,7 @@ const StoreOrder = () => {
   const [dnaByItem, setDnaByItem] = useState<Map<string, DnaTag[]>>(new Map());
   const [menuReviewCounts, setMenuReviewCounts] = useState<Map<string, number>>(new Map());
   const [dnaCounts, setDnaCounts] = useState<Map<string, number>>(new Map());
-  const [topPhotoByItem, setTopPhotoByItem] = useState<Map<string, string>>(new Map());
+  const [topPhotoByItem, setTopPhotoByItem] = useState<Map<string, string[]>>(new Map());
 
   // Noodle options popup state
   const [optionsItem, setOptionsItem] = useState<MenuItemRow | null>(null);
@@ -116,21 +116,22 @@ const StoreOrder = () => {
             const likesMap = new Map<string, number>();
             (likes || []).forEach((l) => likesMap.set(l.ref_id, (likesMap.get(l.ref_id) || 0) + 1));
 
-            // Group images by menu_item_id, pick the one with most likes
-            const bestByItem = new Map<string, { url: string; likes: number }>();
+            // Group images by menu_item_id, sorted by likes desc
+            const itemPhotos = new Map<string, { url: string; likes: number }[]>();
             postImages.forEach((pi) => {
               if (!pi.menu_review_id) return;
               const menuItemId = reviewIdToMenuItem.get(pi.menu_review_id);
               if (!menuItemId) return;
               const lc = likesMap.get(pi.post_id) || 0;
-              const current = bestByItem.get(menuItemId);
-              if (!current || lc > current.likes) {
-                bestByItem.set(menuItemId, { url: pi.image_url, likes: lc });
-              }
+              if (!itemPhotos.has(menuItemId)) itemPhotos.set(menuItemId, []);
+              itemPhotos.get(menuItemId)!.push({ url: pi.image_url, likes: lc });
             });
 
-            const photoMap = new Map<string, string>();
-            bestByItem.forEach((v, k) => photoMap.set(k, v.url));
+            const photoMap = new Map<string, string[]>();
+            itemPhotos.forEach((photos, k) => {
+              photos.sort((a, b) => b.likes - a.likes);
+              photoMap.set(k, photos.slice(0, 4).map((p) => p.url));
+            });
             setTopPhotoByItem(photoMap);
           }
         }
@@ -301,11 +302,12 @@ const StoreOrder = () => {
                       name={item.name}
                       price={item.price}
                       priceSpecial={item.price_special}
-                      imageUrl={topPhotoByItem.get(item.id) || item.image_url || undefined}
+                      imageUrl={item.image_url ?? undefined}
                       tags={tags}
                       totalReviews={totalRevs}
                       onPress={() => setDetailItem(item)}
                       index={i}
+                      userPhotos={topPhotoByItem.get(item.id)}
                     />
 
                     {/* Quantity overlay */}
