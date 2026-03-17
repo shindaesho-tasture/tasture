@@ -205,15 +205,25 @@ const HomeFeed = () => {
         menuItemId: string;
         score: number | null;
         reviewId: string | null;
+        satisfaction: SatisfactionAxes | null;
         dnaComponents: { name: string; icon: string; tag: string; score: number }[];
         latestTime: string;
       }>();
+
+      // Build satisfaction lookup
+      const satLookup = new Map<string, SatisfactionAxes>();
+      (satRes.data || []).forEach((s) => {
+        const key = `${s.user_id}-${s.menu_item_id}`;
+        if (!satLookup.has(key)) {
+          satLookup.set(key, { texture: s.texture, taste: s.taste, overall: s.overall, cleanliness: s.cleanliness, value: s.value });
+        }
+      });
 
       // Add reviews
       (reviewsRes.data || []).forEach((r) => {
         const key = `${r.user_id}-${r.menu_item_id}`;
         if (!postMap.has(key)) {
-          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, dnaComponents: [], latestTime: r.created_at });
+          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, satisfaction: satLookup.get(key) || null, dnaComponents: [], latestTime: r.created_at });
         }
         const entry = postMap.get(key)!;
         entry.score = r.score;
