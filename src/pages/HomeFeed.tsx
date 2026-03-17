@@ -723,8 +723,11 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastTapRef = useRef(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
 
   // Derive refId for comments/likes
   const refType = "post";
