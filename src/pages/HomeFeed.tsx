@@ -634,7 +634,10 @@ const HomeFeed = () => {
   return (
     <PageTransition>
       <div ref={containerRef} className="min-h-screen bg-background pb-24 overflow-y-auto">
-        <TastureHeader />
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-40 bg-background">
+          <TastureHeader />
+        </div>
 
         {/* Pull-to-refresh indicator */}
         <motion.div
@@ -659,18 +662,18 @@ const HomeFeed = () => {
           )}
         </motion.div>
 
-        {/* Page Title */}
-        <div className="px-6 pt-2 pb-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            ฟีด
-          </h1>
-          <p className="text-sm font-light text-muted-foreground mt-1">
-            รีวิวล่าสุดจากชุมชน
-          </p>
+        {/* Sticky Title + Tabs */}
+        <div className="sticky top-[56px] z-30 bg-background border-b border-border/50">
+          <div className="px-6 pt-2 pb-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              ฟีด
+            </h1>
+            <p className="text-sm font-light text-muted-foreground mt-1">
+              รีวิวล่าสุดจากชุมชน
+            </p>
+          </div>
+          <HomeFeedTabs active={activeTab} onChange={handleTabChange} />
         </div>
-
-        {/* Feed Tabs */}
-        <HomeFeedTabs active={activeTab} onChange={handleTabChange} />
 
         {/* Suggested Users for "foryou" tab */}
         {activeTab === "foryou" && user && !loading && (
