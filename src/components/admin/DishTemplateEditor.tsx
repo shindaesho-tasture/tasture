@@ -105,6 +105,35 @@ const DishTemplateEditor = () => {
     setSaving(false);
   };
 
+  const createTemplate = async () => {
+    const name = newDishName.trim();
+    if (!name) { toast({ title: "กรุณาใส่ชื่อเมนู", variant: "destructive" }); return; }
+    if (templates.some((t) => t.dish_name.toLowerCase() === name.toLowerCase())) {
+      toast({ title: "มีเทมเพลตชื่อนี้แล้ว", variant: "destructive" }); return;
+    }
+    setSaving(true);
+    haptic();
+    const defaultComponents: DishComponent[] = [
+      { name: "ส่วนประกอบ 1", icon: "🍽️", tags: { emerald: "สุดยอด", neutral: "ปกติ", ruby: "ผิดหวัง" } },
+    ];
+    const { data, error } = await supabase
+      .from("dish_templates")
+      .insert({ dish_name: name, components: defaultComponents as any })
+      .select()
+      .single();
+    if (error) {
+      toast({ title: "สร้างไม่สำเร็จ", description: error.message, variant: "destructive" });
+    } else if (data) {
+      const newT: DishTemplate = { ...data, components: defaultComponents };
+      setTemplates((prev) => [newT, ...prev]);
+      setCreatingNew(false);
+      setNewDishName("");
+      setExpandedId(newT.id);
+      startEdit(newT);
+      toast({ title: "✅ สร้างเทมเพลตใหม่แล้ว" });
+    }
+    setSaving(false);
+
   const filtered = templates.filter(
     (t) => !search || t.dish_name.toLowerCase().includes(search.toLowerCase())
   );
