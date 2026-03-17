@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, MapPin, Camera, Check, Loader2 } from "lucide-react";
 import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
-import { categories } from "@/lib/categories";
+import { useCategories } from "@/hooks/use-categories";
 import { useStore } from "@/lib/store-context";
 import { useAuth } from "@/hooks/use-auth";
 import type { MenuItem } from "@/lib/menu-types";

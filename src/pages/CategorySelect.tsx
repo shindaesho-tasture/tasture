@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import { categories } from "@/lib/categories";
+import { useCategories } from "@/hooks/use-categories";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
