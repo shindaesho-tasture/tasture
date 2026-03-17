@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,6 +14,7 @@ import TrustTierBadge from "@/components/TrustTierBadge";
 import PageTransition from "@/components/PageTransition";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 /* ─── Types ─── */
 type AdminTab = "overview" | "stores" | "users" | "content" | "feedback";
@@ -88,6 +89,7 @@ const AdminDashboard = () => {
   const [posts, setPosts] = useState<AdminPost[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [dnaItems, setDnaItems] = useState<AdminDna[]>([]);
+  const [weeklyData, setWeeklyData] = useState<{ week: string; reviews: number; posts: number; users: number }[]>([]);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -112,8 +114,39 @@ const AdminDashboard = () => {
 
   const fetchAll = async () => {
     setLoading(true);
-    await Promise.all([fetchStats(), fetchStores(), fetchUsers(), fetchPosts(), fetchReviews(), fetchDna()]);
+    await Promise.all([fetchStats(), fetchStores(), fetchUsers(), fetchPosts(), fetchReviews(), fetchDna(), fetchWeeklyTrend()]);
     setLoading(false);
+  };
+
+  const fetchWeeklyTrend = async () => {
+    const weeks: { week: string; start: string; end: string }[] = [];
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i * 7);
+      const weekStart = new Date(d);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      const label = `${weekStart.getDate()}/${weekStart.getMonth() + 1}`;
+      weeks.push({ week: label, start: weekStart.toISOString(), end: weekEnd.toISOString() });
+    }
+
+    const [{ data: revData }, { data: postData }, { data: userData }] = await Promise.all([
+      supabase.from("menu_reviews").select("created_at").gte("created_at", weeks[0].start),
+      supabase.from("posts").select("created_at").gte("created_at", weeks[0].start),
+      supabase.from("profiles").select("created_at").gte("created_at", weeks[0].start),
+    ]);
+
+    const result = weeks.map((w) => {
+      const inRange = (d: string) => d >= w.start && d <= w.end;
+      return {
+        week: w.week,
+        reviews: (revData || []).filter((r) => inRange(r.created_at)).length,
+        posts: (postData || []).filter((p) => inRange(p.created_at)).length,
+        users: (userData || []).filter((u) => inRange(u.created_at)).length,
+      };
+    });
+    setWeeklyData(result);
   };
 
   const fetchStats = async () => {
@@ -498,7 +531,40 @@ const AdminDashboard = () => {
                         </motion.button>
                       ))}
                     </div>
-                  </div>
+                   </div>
+
+                  {/* Weekly Trend Chart */}
+                  {weeklyData.length > 0 && (
+                    <div className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <BarChart3 size={16} className="text-score-emerald" />
+                        <span className="text-xs font-semibold text-foreground">แนวโน้มรายสัปดาห์</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto">8 สัปดาห์ล่าสุด</span>
+                      </div>
+                      <div className="h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={weeklyData} barGap={2}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                            <XAxis dataKey="week" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={28} />
+                            <Tooltip
+                              contentStyle={{
+                                background: "hsl(var(--background))",
+                                border: "1px solid hsl(var(--border))",
+                                borderRadius: "12px",
+                                fontSize: "11px",
+                              }}
+                              labelStyle={{ fontWeight: 600, marginBottom: 4 }}
+                            />
+                            <Legend iconSize={8} wrapperStyle={{ fontSize: "10px" }} />
+                            <Bar dataKey="reviews" name="รีวิว" fill="hsl(var(--score-emerald))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="posts" name="โพส" fill="hsl(var(--score-amber))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="users" name="ผู้ใช้ใหม่" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
