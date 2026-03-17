@@ -67,6 +67,7 @@ const tabs: { id: AdminTab; label: string; icon: typeof BarChart3 }[] = [
   { id: "content", label: "เนื้อหา", icon: MessageSquare },
   { id: "feedback", label: "ฟีดแบค", icon: Dna },
   { id: "templates", label: "แท็ก DNA", icon: Settings2 },
+  { id: "categories", label: "กลุ่มร้าน", icon: Tags },
 ];
 
 const roleIcons: Record<string, typeof Crown> = { admin: Crown, moderator: Shield, user: UserIcon };
