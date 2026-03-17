@@ -340,7 +340,58 @@ const UserProfile = () => {
           </div>
         )}
 
-        {/* Badges Tab */}
+        {/* Taste DNA Tab */}
+        {activeTab === "dna" && (
+          <div className="px-4 pt-6 pb-8">
+            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              🧬 Taste DNA
+            </h2>
+
+            {(tasteDNA.salty + tasteDNA.sweet + tasteDNA.sour + tasteDNA.spicy + tasteDNA.umami) > 0 ? (
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }} className="flex flex-col items-center">
+                <FeedRadarChart
+                  data={{
+                    overall: tasteDNA.salty,
+                    taste: tasteDNA.sweet,
+                    texture: tasteDNA.sour,
+                    value: tasteDNA.spicy,
+                    cleanliness: tasteDNA.umami,
+                  }}
+                  size={240}
+                  showBarBreakdown
+                />
+
+                {/* Taste highlights */}
+                <div className="mt-6 w-full grid grid-cols-5 gap-1.5">
+                  {([
+                    { label: "เค็ม", icon: "🧂", val: tasteDNA.salty },
+                    { label: "หวาน", icon: "🍯", val: tasteDNA.sweet },
+                    { label: "เปรี้ยว", icon: "🍋", val: tasteDNA.sour },
+                    { label: "เผ็ด", icon: "🌶️", val: tasteDNA.spicy },
+                    { label: "อูมามิ", icon: "🍄", val: tasteDNA.umami },
+                  ] as const).map((t) => {
+                    const color = t.val >= 4 ? "text-score-emerald" : t.val >= 2.5 ? "text-foreground" : "text-muted-foreground";
+                    return (
+                      <div key={t.label} className="flex flex-col items-center py-2 rounded-xl bg-secondary/50">
+                        <span className="text-base">{t.icon}</span>
+                        <span className={cn("text-xs font-bold mt-0.5", color)}>{t.val.toFixed(1)}</span>
+                        <span className="text-[9px] text-muted-foreground">{t.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <Dna size={40} strokeWidth={1} className="mb-3 opacity-30" />
+                <p className="text-sm">ยังไม่มีข้อมูล Taste DNA</p>
+              </div>
+            )}
+          </div>
+        )}
+
+
         {activeTab === "badges" && (
           <div className="px-4 pt-4 pb-8">
             <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
