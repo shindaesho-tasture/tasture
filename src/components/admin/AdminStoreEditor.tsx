@@ -224,6 +224,61 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
     setSaving(false);
   };
 
+  // Get all available metrics for current category
+  const getAllMetrics = () => {
+    const result: { id: string; label: string; icon: string }[] = [];
+    for (const cat of categories) {
+      for (const m of cat.metrics) {
+        if (m.id.endsWith("-gate")) {
+          if (m.smartGate) m.smartGate.subMetrics.forEach((sub) => result.push({ id: sub.id, label: sub.label, icon: sub.icon }));
+        } else {
+          result.push({ id: m.id, label: m.label, icon: m.icon });
+        }
+      }
+    }
+    // Deduplicate
+    const seen = new Set<string>();
+    return result.filter((m) => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
+  };
+
+  const addFeedbackTag = async () => {
+    if (!fbMetric) return;
+    setSaving(true);
+    haptic();
+    // Insert as admin's own review
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSaving(false); return; }
+    const { data, error } = await supabase.from("reviews").insert({
+      store_id: storeId,
+      user_id: user.id,
+      metric_id: fbMetric,
+      score: fbScore,
+    }).select().single();
+    if (error) {
+      toast({ title: "เพิ่มไม่สำเร็จ", description: error.message, variant: "destructive" });
+    } else if (data) {
+      toast({ title: "✅ เพิ่มแท็กแล้ว" });
+      setAddingFeedback(false);
+      setFbMetric("");
+      setFbScore(0);
+      await loadStore(); // Refresh aggregation
+    }
+    setSaving(false);
+  };
+
+  const deleteFeedbackMetric = async (metricId: string) => {
+    haptic();
+    setSaving(true);
+    const { error } = await supabase.from("reviews").delete().eq("store_id", storeId).eq("metric_id", metricId);
+    if (error) {
+      toast({ title: "ลบไม่สำเร็จ", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "🗑️ ลบแท็กทั้งหมดแล้ว" });
+      await loadStore();
+    }
+    setSaving(false);
+  };
+
   const scoreColor = (s: number) => {
     if (s >= 1.5) return "text-score-emerald bg-score-emerald/10";
     if (s >= 0.5) return "text-score-mint bg-score-mint/10";
