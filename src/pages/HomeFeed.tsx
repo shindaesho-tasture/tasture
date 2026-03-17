@@ -86,6 +86,7 @@ const HomeFeed = () => {
   const [storeLocations, setStoreLocations] = useState<Map<string, { lat: number; lng: number }>>(new Map());
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
   const pageSize = useRef(30);
   const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
