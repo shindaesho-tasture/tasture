@@ -284,7 +284,7 @@ const DishDetailSheet = ({
                       />
                     </AnimatePresence>
 
-                    {/* User info overlay */}
+                    {/* User info overlay with like count */}
                     <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5 bg-gradient-to-t from-black/60 to-transparent">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-muted overflow-hidden border-2 border-white/30 flex-shrink-0">
@@ -294,9 +294,14 @@ const DishDetailSheet = ({
                             <div className="w-full h-full flex items-center justify-center text-[10px]">👤</div>
                           )}
                         </div>
-                        <span className="text-[11px] font-semibold text-white truncate">
+                        <span className="text-[11px] font-semibold text-white truncate flex-1">
                           {userPhotos[activePhotoIdx]?.display_name || "ผู้ใช้"}
                         </span>
+                        {(userPhotos[activePhotoIdx]?.likeCount ?? 0) > 0 && (
+                          <span className="text-[10px] text-white/80 flex items-center gap-0.5">
+                            ❤️ {userPhotos[activePhotoIdx].likeCount}
+                          </span>
+                        )}
                       </div>
                     </div>
 
