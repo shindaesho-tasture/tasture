@@ -43,6 +43,7 @@ interface UserPhoto {
   avatar_url: string | null;
   created_at: string;
   post_id: string;
+  likeCount: number;
 }
 
 const DishDetailSheet = ({
@@ -75,7 +76,6 @@ const DishDetailSheet = ({
 
   const fetchUserPhotos = async () => {
     try {
-      // Get menu_review ids for this menu item
       const { data: reviews } = await supabase
         .from("menu_reviews")
         .select("id")
@@ -85,28 +85,31 @@ const DishDetailSheet = ({
 
       const reviewIds = reviews.map((r) => r.id);
 
-      // Get post_images linked to these reviews
       const { data: images } = await supabase
         .from("post_images")
         .select("id, image_url, post_id, menu_review_id, created_at")
         .in("menu_review_id", reviewIds)
-        .order("created_at", { ascending: false })
         .limit(20);
 
       if (!images || images.length === 0) { setUserPhotos([]); return; }
 
-      // Get post user_ids
+      // Get posts, likes, and profiles in parallel
       const postIds = [...new Set(images.map((i) => i.post_id))];
-      const { data: posts } = await supabase
-        .from("posts")
-        .select("id, user_id")
-        .in("id", postIds);
+      const [postsRes, likesRes] = await Promise.all([
+        supabase.from("posts").select("id, user_id").in("id", postIds),
+        supabase.from("post_likes").select("ref_id").in("ref_id", postIds),
+      ]);
 
       const postUserMap = new Map<string, string>();
-      (posts || []).forEach((p) => postUserMap.set(p.id, p.user_id));
+      (postsRes.data || []).forEach((p) => postUserMap.set(p.id, p.user_id));
 
-      // Get profiles
-      const userIds = [...new Set((posts || []).map((p) => p.user_id))];
+      // Count likes per post
+      const likesMap = new Map<string, number>();
+      (likesRes.data || []).forEach((l) => {
+        likesMap.set(l.ref_id, (likesMap.get(l.ref_id) || 0) + 1);
+      });
+
+      const userIds = [...new Set((postsRes.data || []).map((p) => p.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, display_name, avatar_url")
@@ -115,7 +118,7 @@ const DishDetailSheet = ({
       const profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
       (profiles || []).forEach((p) => profileMap.set(p.id, { display_name: p.display_name, avatar_url: p.avatar_url }));
 
-      setUserPhotos(images.map((img) => {
+      const photos = images.map((img) => {
         const userId = postUserMap.get(img.post_id) || "";
         const profile = profileMap.get(userId);
         return {
@@ -126,8 +129,13 @@ const DishDetailSheet = ({
           avatar_url: profile?.avatar_url || null,
           created_at: img.created_at,
           post_id: img.post_id,
+          likeCount: likesMap.get(img.post_id) || 0,
         };
-      }));
+      });
+
+      // Sort by likes (most liked first)
+      photos.sort((a, b) => b.likeCount - a.likeCount);
+      setUserPhotos(photos);
     } catch (e) {
       console.error("fetchUserPhotos error:", e);
       setUserPhotos([]);
@@ -276,7 +284,7 @@ const DishDetailSheet = ({
                       />
                     </AnimatePresence>
 
-                    {/* User info overlay */}
+                    {/* User info overlay with like count */}
                     <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5 bg-gradient-to-t from-black/60 to-transparent">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-muted overflow-hidden border-2 border-white/30 flex-shrink-0">
@@ -286,9 +294,14 @@ const DishDetailSheet = ({
                             <div className="w-full h-full flex items-center justify-center text-[10px]">👤</div>
                           )}
                         </div>
-                        <span className="text-[11px] font-semibold text-white truncate">
+                        <span className="text-[11px] font-semibold text-white truncate flex-1">
                           {userPhotos[activePhotoIdx]?.display_name || "ผู้ใช้"}
                         </span>
+                        {(userPhotos[activePhotoIdx]?.likeCount ?? 0) > 0 && (
+                          <span className="text-[10px] text-white/80 flex items-center gap-0.5">
+                            ❤️ {userPhotos[activePhotoIdx].likeCount}
+                          </span>
+                        )}
                       </div>
                     </div>
 
