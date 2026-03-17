@@ -1,12 +1,11 @@
 import { motion } from "framer-motion";
-import { Home, Compass, Globe, Split, ClipboardList, User } from "lucide-react";
+import { Home, Compass, PlusCircle, ClipboardList, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const navItems = [
   { id: "home", label: "Home", icon: Home, path: "/" },
   { id: "discover", label: "Discover", icon: Compass, path: "/discover" },
-  { id: "world", label: "World Map", icon: Globe, path: "/world" },
-  { id: "split", label: "Smart Split", icon: Split, path: "/split" },
+  { id: "post", label: "โพส", icon: PlusCircle, path: "/post", isCenter: true },
   { id: "orders", label: "รายการ", icon: ClipboardList, path: "/orders" },
   { id: "profile", label: "Profile", icon: User, path: "/profile" },
 ];
