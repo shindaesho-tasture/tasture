@@ -177,6 +177,7 @@ const AdminDashboard = () => {
     setUsers((profilesData || []).map((p) => ({
       ...p, role: roleMap.get(p.id) || "user",
       postCount: postCountMap.get(p.id) || 0, reviewCount: reviewCountMap.get(p.id) || 0,
+      banned: (p as any).banned ?? false,
     })));
   };
 
