@@ -1434,8 +1434,8 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
             </span>
           </motion.button>
         )}
+      </div>
 
-      {/* Comments Section */}
       <AnimatePresence>
         {showComments && (
           <motion.div
