@@ -5,7 +5,8 @@ import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
-import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
+import { useCategories } from "@/hooks/use-categories";
+import { categories as defaultCategories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
@@ -67,9 +68,11 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { position } = useGeolocation();
+  const { categories: dynamicCategories } = useCategories();
   const [stores, setStores] = useState<StoreCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DiscoveryTab>("nearby");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
   const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
 
@@ -182,7 +185,7 @@ const Index = () => {
 
       setStores(allStores.map((s) => {
         const sm = metricMap.get(s.id);
-        const cat = categories.find((c) => c.id === s.category_id);
+        const cat = dynamicCategories.find((c) => c.id === s.category_id) || defaultCategories.find((c) => c.id === s.category_id);
 
         const metrics: MetricAvg[] = [];
         let totalScore = 0;
@@ -264,7 +267,13 @@ const Index = () => {
 
   // Sort/filter based on active tab
   const filteredStores = useMemo(() => {
-    const sorted = [...stores];
+    let sorted = [...stores];
+    
+    // Apply category filter
+    if (selectedCategoryFilter) {
+      sorted = sorted.filter((s) => s.category_id === selectedCategoryFilter);
+    }
+    
     switch (activeTab) {
       case "nearby":
         return sorted.sort((a, b) => {
@@ -288,7 +297,7 @@ const Index = () => {
       default:
         return sorted;
     }
-  }, [stores, activeTab]);
+  }, [stores, activeTab, selectedCategoryFilter]);
 
   const tabTitle: Record<DiscoveryTab, string> = {
     nearby: "📍 ร้านใกล้คุณ",
@@ -338,6 +347,43 @@ const Index = () => {
               ? "📍 ใช้ GPS ปัจจุบัน — แตะเพื่อเปลี่ยน"
               : "📍 เลือกตำแหน่ง"}
           </motion.button>
+        </div>
+
+        {/* Category Filter Chips */}
+        <div className="px-6 pb-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedCategoryFilter(null)}
+              className={cn(
+                "shrink-0 px-3.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
+                !selectedCategoryFilter
+                  ? "bg-foreground text-primary-foreground shadow-luxury"
+                  : "bg-secondary/80 text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              ทั้งหมด
+            </motion.button>
+            {dynamicCategories.map((cat) => {
+              const isActive = selectedCategoryFilter === cat.id;
+              return (
+                <motion.button
+                  key={cat.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedCategoryFilter(isActive ? null : cat.id)}
+                  className={cn(
+                    "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
+                    isActive
+                      ? "bg-foreground text-primary-foreground shadow-luxury"
+                      : "bg-secondary/80 text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  <span className="text-sm">{cat.icon}</span>
+                  {cat.labelTh || cat.label}
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
 
         <SensorySearch />
