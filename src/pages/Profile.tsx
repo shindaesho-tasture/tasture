@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera, Users, Bookmark } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera, Users, Bookmark, Trash2 } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
@@ -154,6 +154,69 @@ const TasteDNAChart = ({ dna }: { dna: TasteDNA }) => {
         );
       })}
     </svg>
+  );
+};
+
+/* ── Swipeable Saved Store Row ── */
+const SavedStoreRow = ({ store, index, onNavigate, onRemove }: {
+  store: { id: string; storeId: string; storeName: string; savedAt: string };
+  index: number;
+  onNavigate: () => void;
+  onRemove: () => void;
+}) => {
+  const touchStartX = useRef(0);
+  const [offsetX, setOffsetX] = useState(0);
+  const [removing, setRemoving] = useState(false);
+  const DELETE_THRESHOLD = -70;
+
+  return (
+    <motion.div
+      layout
+      initial={{ x: 30, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -300, opacity: 0, height: 0, marginBottom: 0 }}
+      transition={{ delay: removing ? 0 : 0.7 + index * 0.05 }}
+      className="relative overflow-hidden rounded-2xl"
+    >
+      {/* Delete background */}
+      <div className="absolute inset-0 bg-score-ruby rounded-2xl flex items-center justify-end pr-5">
+        <Trash2 size={18} className="text-white" />
+      </div>
+
+      {/* Foreground card */}
+      <motion.div
+        className="bg-card rounded-2xl shadow-luxury p-4 flex items-center gap-3 cursor-pointer relative"
+        style={{ x: offsetX }}
+        animate={{ x: offsetX }}
+        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+        onTouchMove={(e) => {
+          const dx = e.touches[0].clientX - touchStartX.current;
+          if (dx < 0) setOffsetX(Math.max(dx, -100));
+        }}
+        onTouchEnd={() => {
+          if (offsetX <= DELETE_THRESHOLD) {
+            setRemoving(true);
+            setOffsetX(-300);
+            setTimeout(onRemove, 200);
+          } else {
+            setOffsetX(0);
+          }
+        }}
+        onClick={() => {
+          if (Math.abs(offsetX) < 10) onNavigate();
+        }}
+      >
+        <div className="w-10 h-10 rounded-xl bg-score-emerald/10 flex items-center justify-center shrink-0">
+          <Store size={18} className="text-score-emerald" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-medium text-foreground block truncate">{store.storeName}</span>
+          <span className="text-[10px] text-muted-foreground">บันทึกเมื่อ {formatDate(store.savedAt)}</span>
+        </div>
+        <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -661,25 +724,21 @@ const Profile = () => {
 
           {savedStores.length > 0 ? (
             <div className="space-y-2">
-              {savedStores.map((s, i) => (
-                <motion.div
-                  key={s.id}
-                  initial={{ x: 30, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.7 + i * 0.05 }}
-                  onClick={() => navigate(`/store/${s.storeId}/order`)}
-                  className="bg-card rounded-2xl shadow-luxury p-4 flex items-center gap-3 active:scale-[0.98] transition-transform cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-score-emerald/10 flex items-center justify-center shrink-0">
-                    <Store size={18} className="text-score-emerald" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-foreground block truncate">{s.storeName}</span>
-                    <span className="text-[10px] text-muted-foreground">บันทึกเมื่อ {formatDate(s.savedAt)}</span>
-                  </div>
-                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-                </motion.div>
-              ))}
+              <AnimatePresence>
+                {savedStores.map((s, i) => (
+                  <SavedStoreRow
+                    key={s.id}
+                    store={s}
+                    index={i}
+                    onNavigate={() => navigate(`/store/${s.storeId}/order`)}
+                    onRemove={async () => {
+                      navigator.vibrate?.(8);
+                      await supabase.from("saved_stores").delete().eq("id", s.id);
+                      setSavedStores((prev) => prev.filter((p) => p.id !== s.id));
+                    }}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="bg-card rounded-2xl shadow-luxury p-6 text-center">
