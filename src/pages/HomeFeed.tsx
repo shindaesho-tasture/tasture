@@ -83,6 +83,8 @@ const HomeFeed = () => {
   // Fetch following IDs
   useEffect(() => {
     if (!user) return;
+  const refreshFollowingIds = useCallback(() => {
+    if (!user) return;
     supabase
       .from("follows")
       .select("following_id")
@@ -91,6 +93,10 @@ const HomeFeed = () => {
         setFollowingIds(new Set((data || []).map((d) => d.following_id)));
       });
   }, [user]);
+
+  useEffect(() => {
+    refreshFollowingIds();
+  }, [refreshFollowingIds]);
 
   useEffect(() => {
     fetchFeed();
