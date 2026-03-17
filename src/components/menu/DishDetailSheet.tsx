@@ -45,7 +45,7 @@ interface UserPhoto {
   post_id: string;
 }
 
-
+const DishDetailSheet = ({
   open,
   onClose,
   menuItemId,
