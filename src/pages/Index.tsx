@@ -375,6 +375,32 @@ const Index = () => {
             {store.categoryLabel || "ร้านอาหาร"}
             {store.menuCount > 0 && ` · ${store.menuCount} เมนู`}
           </p>
+          {/* Metric tags */}
+          {store.metrics.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {[...store.metrics]
+                .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+                .slice(0, 3)
+                .map((m) => {
+                  const t = getScoreTier(m.score);
+                  const tagColorMap: Record<ScoreTier, string> = {
+                    emerald: "bg-score-emerald/15 text-score-emerald",
+                    mint: "bg-score-mint/15 text-score-mint",
+                    slate: "bg-score-slate/15 text-score-slate",
+                    amber: "bg-score-amber/15 text-score-amber",
+                    ruby: "bg-score-ruby/15 text-score-ruby",
+                  };
+                  return (
+                    <span
+                      key={m.id}
+                      className={cn("px-1.5 py-0.5 rounded-md text-[8px] font-semibold leading-none", tagColorMap[t])}
+                    >
+                      {m.icon} {m.label}
+                    </span>
+                  );
+                })}
+            </div>
+          )}
         </div>
       </motion.button>
     );
