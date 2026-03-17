@@ -34,6 +34,13 @@ interface ReviewTag {
   count: number;
 }
 
+interface ReviewRow {
+  id: string;
+  metric_id: string;
+  score: number;
+  user_id: string;
+}
+
 interface AdminStoreEditorProps {
   storeId: string;
   onClose: () => void;
@@ -50,6 +57,7 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
   const [store, setStore] = useState<StoreData | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [reviewTags, setReviewTags] = useState<ReviewTag[]>([]);
+  const [reviewRows, setReviewRows] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -57,6 +65,11 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
   const [editName, setEditName] = useState("");
   const [editCategory, setEditCategory] = useState<string | null>(null);
   const [showCatPicker, setShowCatPicker] = useState(false);
+
+  // Feedback edit
+  const [addingFeedback, setAddingFeedback] = useState(false);
+  const [fbMetric, setFbMetric] = useState("");
+  const [fbScore, setFbScore] = useState(0);
 
   // Menu edit
   const [editingMenuId, setEditingMenuId] = useState<string | null>(null);
@@ -72,7 +85,7 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
     const [{ data: storeData }, { data: items }, { data: reviews }] = await Promise.all([
       supabase.from("stores").select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo").eq("id", storeId).single(),
       supabase.from("menu_items").select("id, name, price, price_special, type, image_url").eq("store_id", storeId).order("created_at"),
-      supabase.from("reviews").select("metric_id, score").eq("store_id", storeId),
+      supabase.from("reviews").select("id, metric_id, score, user_id").eq("store_id", storeId),
     ]);
     if (storeData) {
       setStore(storeData);
@@ -80,6 +93,7 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
       setEditCategory(storeData.category_id);
     }
     setMenuItems(items || []);
+    setReviewRows((reviews || []) as ReviewRow[]);
 
     // Aggregate review scores
     const map = new Map<string, { total: number; count: number }>();
@@ -206,6 +220,61 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
       onClose();
     } catch (err: any) {
       toast({ title: "ลบไม่สำเร็จ", description: err.message, variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  // Get all available metrics for current category
+  const getAllMetrics = () => {
+    const result: { id: string; label: string; icon: string }[] = [];
+    for (const cat of categories) {
+      for (const m of cat.metrics) {
+        if (m.id.endsWith("-gate")) {
+          if (m.smartGate) m.smartGate.subMetrics.forEach((sub) => result.push({ id: sub.id, label: sub.label, icon: sub.icon }));
+        } else {
+          result.push({ id: m.id, label: m.label, icon: m.icon });
+        }
+      }
+    }
+    // Deduplicate
+    const seen = new Set<string>();
+    return result.filter((m) => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
+  };
+
+  const addFeedbackTag = async () => {
+    if (!fbMetric) return;
+    setSaving(true);
+    haptic();
+    // Insert as admin's own review
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSaving(false); return; }
+    const { data, error } = await supabase.from("reviews").insert({
+      store_id: storeId,
+      user_id: user.id,
+      metric_id: fbMetric,
+      score: fbScore,
+    }).select().single();
+    if (error) {
+      toast({ title: "เพิ่มไม่สำเร็จ", description: error.message, variant: "destructive" });
+    } else if (data) {
+      toast({ title: "✅ เพิ่มแท็กแล้ว" });
+      setAddingFeedback(false);
+      setFbMetric("");
+      setFbScore(0);
+      await loadStore(); // Refresh aggregation
+    }
+    setSaving(false);
+  };
+
+  const deleteFeedbackMetric = async (metricId: string) => {
+    haptic();
+    setSaving(true);
+    const { error } = await supabase.from("reviews").delete().eq("store_id", storeId).eq("metric_id", metricId);
+    if (error) {
+      toast({ title: "ลบไม่สำเร็จ", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "🗑️ ลบแท็กทั้งหมดแล้ว" });
+      await loadStore();
     }
     setSaving(false);
   };
@@ -529,7 +598,76 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
               {/* ─── Feedback Tags Tab ─── */}
               {tab === "feedback" && (
                 <div className="space-y-3">
-                  {reviewTags.length === 0 ? (
+                  {/* Add feedback button */}
+                  {!addingFeedback ? (
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => { haptic(); setAddingFeedback(true); }}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-score-emerald/30 text-score-emerald text-[12px] font-semibold hover:bg-score-emerald/5 transition-colors"
+                    >
+                      <Plus size={15} /> เพิ่มแท็กฟีดแบค
+                    </motion.button>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="rounded-xl bg-score-emerald/5 border border-score-emerald/20 p-3 space-y-3 overflow-hidden"
+                    >
+                      <p className="text-[11px] font-semibold text-foreground">เพิ่มแท็กฟีดแบค</p>
+                      {/* Metric picker */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-muted-foreground">เลือก Metric</label>
+                        <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
+                          {getAllMetrics().map((m) => (
+                            <button
+                              key={m.id}
+                              onClick={() => setFbMetric(m.id)}
+                              className={cn("flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-[10px] font-medium border transition-colors text-left",
+                                fbMetric === m.id ? "bg-score-emerald/10 text-score-emerald border-score-emerald/30" : "bg-secondary/50 text-foreground border-border/30"
+                              )}
+                            >
+                              <span>{m.icon}</span>
+                              <span className="truncate">{m.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Score picker */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-muted-foreground">คะแนน</label>
+                        <div className="flex gap-1.5">
+                          {[2, 1, 0, -1, -2].map((s) => (
+                            <button
+                              key={s}
+                              onClick={() => setFbScore(s)}
+                              className={cn("flex-1 py-2 rounded-lg text-[11px] font-bold border transition-colors",
+                                fbScore === s ? scoreColor(s) + " border-transparent" : "bg-secondary/50 text-muted-foreground border-border/30"
+                              )}
+                            >
+                              {s > 0 ? "+" : ""}{s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={() => setAddingFeedback(false)} className="px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground text-[11px] font-medium">
+                          ยกเลิก
+                        </button>
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={addFeedbackTag}
+                          disabled={saving || !fbMetric}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-score-emerald text-white text-[11px] font-semibold disabled:opacity-50"
+                        >
+                          {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                          เพิ่ม
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Tag list */}
+                  {reviewTags.length === 0 && !addingFeedback ? (
                     <p className="text-center text-sm text-muted-foreground py-10">ยังไม่มีฟีดแบค</p>
                   ) : (
                     reviewTags
@@ -541,11 +679,12 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
                             <span className="text-lg">{info.icon}</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-semibold text-foreground">{info.label}</p>
-                              <p className="text-[10px] text-muted-foreground">{tag.count} รีวิว</p>
+                              <p className="text-[10px] text-muted-foreground">{tag.count} รีวิว · avg {tag.avg_score > 0 ? "+" : ""}{tag.avg_score.toFixed(1)}</p>
                             </div>
                             <span className={cn("px-2.5 py-1 rounded-lg text-[12px] font-bold tabular-nums", scoreColor(tag.avg_score))}>
                               {tag.avg_score > 0 ? "+" : ""}{tag.avg_score.toFixed(1)}
                             </span>
+                            <ConfirmDelete onDelete={() => deleteFeedbackMetric(tag.metric_id)} />
                           </div>
                         );
                       })
