@@ -53,6 +53,8 @@ const Profile = () => {
   // Saved stores
   const [savedStores, setSavedStores] = useState<SavedStoreItem[]>([]);
 
+  // Post detail sheet
+  const [selectedPost, setSelectedPost] = useState<UserPost | null>(null);
   const handleSaveName = async () => {
     if (!user || !nameInput.trim()) return;
     setSavingName(true);
