@@ -186,6 +186,7 @@ export type Database = {
           id: string
           menu_item_id: string
           score: number
+          shared: boolean
           user_id: string
         }
         Insert: {
@@ -193,6 +194,7 @@ export type Database = {
           id?: string
           menu_item_id: string
           score: number
+          shared?: boolean
           user_id: string
         }
         Update: {
@@ -200,6 +202,7 @@ export type Database = {
           id?: string
           menu_item_id?: string
           score?: number
+          shared?: boolean
           user_id?: string
         }
         Relationships: [
