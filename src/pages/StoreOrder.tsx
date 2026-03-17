@@ -116,21 +116,22 @@ const StoreOrder = () => {
             const likesMap = new Map<string, number>();
             (likes || []).forEach((l) => likesMap.set(l.ref_id, (likesMap.get(l.ref_id) || 0) + 1));
 
-            // Group images by menu_item_id, pick the one with most likes
-            const bestByItem = new Map<string, { url: string; likes: number }>();
+            // Group images by menu_item_id, sorted by likes desc
+            const itemPhotos = new Map<string, { url: string; likes: number }[]>();
             postImages.forEach((pi) => {
               if (!pi.menu_review_id) return;
               const menuItemId = reviewIdToMenuItem.get(pi.menu_review_id);
               if (!menuItemId) return;
               const lc = likesMap.get(pi.post_id) || 0;
-              const current = bestByItem.get(menuItemId);
-              if (!current || lc > current.likes) {
-                bestByItem.set(menuItemId, { url: pi.image_url, likes: lc });
-              }
+              if (!itemPhotos.has(menuItemId)) itemPhotos.set(menuItemId, []);
+              itemPhotos.get(menuItemId)!.push({ url: pi.image_url, likes: lc });
             });
 
-            const photoMap = new Map<string, string>();
-            bestByItem.forEach((v, k) => photoMap.set(k, v.url));
+            const photoMap = new Map<string, string[]>();
+            itemPhotos.forEach((photos, k) => {
+              photos.sort((a, b) => b.likes - a.likes);
+              photoMap.set(k, photos.slice(0, 4).map((p) => p.url));
+            });
             setTopPhotoByItem(photoMap);
           }
         }
