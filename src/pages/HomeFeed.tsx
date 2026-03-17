@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat } from "lucide-react";
+import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -67,13 +67,64 @@ const HomeFeed = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startY = useRef(0);
+  const isPulling = useRef(false);
+
+  const PULL_THRESHOLD = 80;
 
   useEffect(() => {
     fetchFeed();
   }, []);
 
-  const fetchFeed = async () => {
-    setLoading(true);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchFeed(true);
+    setPullDistance(0);
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (el.scrollTop <= 0) {
+        startY.current = e.touches[0].clientY;
+        isPulling.current = true;
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isPulling.current) return;
+      const dy = e.touches[0].clientY - startY.current;
+      if (dy > 0) {
+        setPullDistance(Math.min(dy * 0.5, 120));
+        if (dy > 10) e.preventDefault();
+      }
+    };
+    const onTouchEnd = () => {
+      if (pullDistance >= PULL_THRESHOLD && !refreshing) {
+        handleRefresh();
+      } else {
+        setPullDistance(0);
+      }
+      isPulling.current = false;
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [pullDistance, refreshing, handleRefresh]);
+
+  const fetchFeed = async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     try {
       // Fetch recent menu reviews and dish DNA in parallel
       const [reviewsRes, dnaRes] = await Promise.all([
@@ -185,10 +236,35 @@ const HomeFeed = () => {
     }
   };
 
+  const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
+
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background pb-24">
+      <div ref={containerRef} className="min-h-screen bg-background pb-24 overflow-y-auto">
         <TastureHeader />
+
+        {/* Pull-to-refresh indicator */}
+        <motion.div
+          animate={{ height: pullDistance, opacity: pullProgress }}
+          transition={refreshing ? { duration: 0.2 } : { duration: 0 }}
+          className="flex items-center justify-center overflow-hidden"
+        >
+          <motion.div
+            animate={{ rotate: refreshing ? 360 : pullProgress * 180 }}
+            transition={refreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : { duration: 0 }}
+          >
+            <RefreshCw
+              size={20}
+              className={pullProgress >= 1 ? "text-score-emerald" : "text-muted-foreground"}
+            />
+          </motion.div>
+          {pullProgress >= 1 && !refreshing && (
+            <span className="ml-2 text-[11px] font-medium text-score-emerald">ปล่อยเพื่อรีเฟรช</span>
+          )}
+          {refreshing && (
+            <span className="ml-2 text-[11px] font-medium text-muted-foreground">กำลังโหลด…</span>
+          )}
+        </motion.div>
 
         {/* Page Title */}
         <div className="px-6 pt-2 pb-4">
