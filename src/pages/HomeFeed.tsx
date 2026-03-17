@@ -775,6 +775,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const [particles, setParticles] = useState<{ id: number; x: number; y: number; emoji: string; scale: number }[]>([]);
   const [slideIndex, setSlideIndex] = useState(0);
   const [saved, setSaved] = useState(false);
   const [deleted, setDeleted] = useState(false);
