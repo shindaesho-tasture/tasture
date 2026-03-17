@@ -156,20 +156,23 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
                 </button>
               </div>
 
-              {/* Badge icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.1 }}
-                className={cn(
-                  "w-24 h-24 rounded-3xl mx-auto flex items-center justify-center mb-4 border-2 shadow-lg",
-                  unlocked ? cn(tc.bg, tc.border, tc.glow) : "bg-muted/50 border-border"
-                )}
-              >
-                <span className={cn("text-5xl", !unlocked && "grayscale opacity-50")}>
-                  {unlocked ? badge.icon : "🔒"}
-                </span>
-              </motion.div>
+              {/* Badge icon + confetti */}
+              <div className="relative flex justify-center mb-4">
+                {unlocked && showConfetti && <ConfettiBurst />}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={unlocked ? { scale: [0, 1.2, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.1 }}
+                  className={cn(
+                    "w-24 h-24 rounded-3xl flex items-center justify-center border-2 shadow-lg relative z-10",
+                    unlocked ? cn(tc.bg, tc.border, tc.glow) : "bg-muted/50 border-border"
+                  )}
+                >
+                  <span className={cn("text-5xl", !unlocked && "grayscale opacity-50")}>
+                    {unlocked ? badge.icon : "🔒"}
+                  </span>
+                </motion.div>
+              </div>
 
               {/* Title & description */}
               <h2 className={cn("text-xl font-bold text-center mb-1", unlocked ? tc.text : "text-muted-foreground")}>
