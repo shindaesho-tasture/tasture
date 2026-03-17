@@ -450,7 +450,7 @@ const HomeFeed = () => {
                   storeId: menuItem?.storeId || null,
                 };
               })
-            : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null }];
+            : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }];
 
           allPosts.push({
             id: `photo-${pp.id}`,
