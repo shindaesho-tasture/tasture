@@ -26,7 +26,7 @@ interface AdminStore {
 interface AdminUser {
   id: string; email: string | null; display_name: string | null;
   avatar_url: string | null; created_at: string; role: string;
-  postCount: number; reviewCount: number;
+  postCount: number; reviewCount: number; banned: boolean;
 }
 
 interface AdminPost {
