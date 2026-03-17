@@ -25,6 +25,7 @@ interface FeedPost {
   menuItemId: string;
   menuItemImage: string | null;
   score: number | null;
+  satisfaction: SatisfactionAxes | null;
   dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
   createdAt: string;
 }
