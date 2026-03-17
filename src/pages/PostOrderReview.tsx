@@ -26,7 +26,7 @@ import type { DishComponent, DishDnaSelection } from "@/lib/dish-dna-types";
 import type { SensoryAxis } from "@/lib/sensory-types";
 
 /* ─── Step Types ─── */
-type StepType = "store-review" | "dish-dna" | "sensory" | "results";
+type StepType = "store-review" | "dish-dna" | "sensory" | "satisfaction" | "results";
 
 interface Step {
   type: StepType;
@@ -81,6 +81,9 @@ const PostOrderReview = () => {
   // Taste satisfaction gate per menu item
   const [tasteSatisfaction, setTasteSatisfaction] = useState<Record<string, "perfect" | "ok" | "bad">>({});
 
+  // 5-axis satisfaction ratings per menu item
+  const [satisfactionScores, setSatisfactionScores] = useState<Record<string, { texture: number; taste: number; overall: number; cleanliness: number; value: number }>>({});
+
   const [saving, setSaving] = useState(false);
 
   // Build steps
@@ -92,7 +95,10 @@ const PostOrderReview = () => {
     items.forEach((item) => {
       s.push({ type: "sensory", label: item.name, icon: "🎯", menuItemId: item.menuItemId, menuItemName: item.name });
     });
-    s.push({ type: "results", label: "สรุปผล", icon: "📊" });
+    items.forEach((item) => {
+      s.push({ type: "satisfaction", label: item.name, icon: "📊", menuItemId: item.menuItemId, menuItemName: item.name });
+    });
+    s.push({ type: "results", label: "สรุปผล", icon: "🏆" });
     return s;
   }, [items]);
 
@@ -427,6 +433,18 @@ const PostOrderReview = () => {
         }
       }
 
+      // Save 5-axis satisfaction ratings
+      for (const item of items) {
+        const id = item.menuItemId;
+        const sat = satisfactionScores[id];
+        if (sat) {
+          await supabase.from("satisfaction_ratings").upsert(
+            { user_id: user.id, menu_item_id: id, ...sat },
+            { onConflict: "user_id,menu_item_id" }
+          );
+        }
+      }
+
       toast({ title: "✅ บันทึกรีวิวทั้งหมดสำเร็จ" });
     } catch (err: any) {
       console.error("Save error:", err);
@@ -487,7 +505,7 @@ const PostOrderReview = () => {
             </motion.button>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
-                {step?.icon} {step?.type === "store-review" ? "รีวิวร้าน" : step?.type === "dish-dna" ? `DNA: ${step.menuItemName}` : step?.type === "sensory" ? `รสชาติ: ${step.menuItemName}` : "สรุปผลรีวิว"}
+                {step?.icon} {step?.type === "store-review" ? "รีวิวร้าน" : step?.type === "dish-dna" ? `DNA: ${step.menuItemName}` : step?.type === "sensory" ? `รสชาติ: ${step.menuItemName}` : step?.type === "satisfaction" ? `ให้คะแนน: ${step.menuItemName}` : "สรุปผลรีวิว"}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
                 {storeName} · {currentStep + 1}/{totalSteps}
@@ -923,6 +941,16 @@ const PostOrderReview = () => {
               </div>
             )}
 
+            {/* ─── 5-Axis Satisfaction ─── */}
+            {step?.type === "satisfaction" && step.menuItemId && (
+              <SatisfactionStep
+                menuItemId={step.menuItemId}
+                menuItemName={step.menuItemName || ""}
+                scores={satisfactionScores[step.menuItemId] || { texture: 3, taste: 3, overall: 3, cleanliness: 3, value: 3 }}
+                onChange={(scores) => setSatisfactionScores((prev) => ({ ...prev, [step.menuItemId!]: scores }))}
+              />
+            )}
+
             {/* Results */}
             {step?.type === "results" && results && (
               <div className="px-4 pt-4 space-y-4">
@@ -1096,6 +1124,112 @@ const ScoreSection = ({ icon, title, score, subtitle }: { icon: string; title: s
         {score > 0 ? "+" : ""}{score.toFixed(1)}
       </span>
     </motion.div>
+  );
+};
+
+/* ─── 5-Axis Satisfaction Step ─── */
+const SATISFACTION_AXES = [
+  { key: "texture" as const, label: "เท็กซ์เจอร์", icon: "🫧", desc: "ความพอใจในเนื้อสัมผัส" },
+  { key: "taste" as const, label: "รสชาติ", icon: "👅", desc: "ความพอใจในรสชาติอาหาร" },
+  { key: "overall" as const, label: "ภาพรวมร้าน", icon: "🏪", desc: "ความพอใจโดยรวมของร้าน" },
+  { key: "cleanliness" as const, label: "ความสะอาด", icon: "✨", desc: "ความสะอาดของร้านและอาหาร" },
+  { key: "value" as const, label: "ความคุ้มค่า", icon: "💰", desc: "คุ้มค่ากับราคาที่จ่าย" },
+];
+
+const LEVEL_LABELS: Record<number, { label: string; color: string }> = {
+  1: { label: "แย่มาก", color: "text-score-ruby" },
+  2: { label: "ไม่ค่อยดี", color: "text-score-amber" },
+  3: { label: "ปกติดี", color: "text-score-emerald" },
+  4: { label: "ดีมาก", color: "text-score-emerald" },
+  5: { label: "ยอดเยี่ยม", color: "text-score-emerald" },
+};
+
+interface SatisfactionStepProps {
+  menuItemId: string;
+  menuItemName: string;
+  scores: { texture: number; taste: number; overall: number; cleanliness: number; value: number };
+  onChange: (scores: { texture: number; taste: number; overall: number; cleanliness: number; value: number }) => void;
+}
+
+const SatisfactionStep = ({ menuItemId, menuItemName, scores, onChange }: SatisfactionStepProps) => {
+  const handleChange = (key: keyof typeof scores, val: number) => {
+    if (navigator.vibrate) navigator.vibrate(6);
+    onChange({ ...scores, [key]: val });
+  };
+
+  return (
+    <div className="px-4 pt-4 space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center pb-2"
+      >
+        <p className="text-sm font-semibold text-foreground">ให้คะแนนประสบการณ์</p>
+        <p className="text-[11px] text-muted-foreground mt-1">{menuItemName}</p>
+      </motion.div>
+
+      {SATISFACTION_AXES.map((axis, i) => {
+        const val = scores[axis.key];
+        const levelInfo = LEVEL_LABELS[val];
+        return (
+          <motion.div
+            key={axis.key}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06 }}
+            className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury p-4 space-y-3"
+          >
+            {/* Label */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{axis.icon}</span>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">{axis.label}</p>
+                  <p className="text-[9px] text-muted-foreground">{axis.desc}</p>
+                </div>
+              </div>
+              <span className={cn("text-xs font-bold tabular-nums", levelInfo.color)}>
+                {val}/5
+              </span>
+            </div>
+
+            {/* 5-point selector */}
+            <div className="flex items-center gap-1.5">
+              {[1, 2, 3, 4, 5].map((level) => {
+                const isActive = val === level;
+                const info = LEVEL_LABELS[level];
+                return (
+                  <motion.button
+                    key={level}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleChange(axis.key, level)}
+                    className={cn(
+                      "flex-1 py-2.5 rounded-xl text-[10px] font-semibold transition-all duration-200 border",
+                      isActive
+                        ? level >= 3
+                          ? "bg-score-emerald text-white border-score-emerald shadow-[0_2px_12px_hsl(163_78%_20%/0.3)]"
+                          : level === 2
+                          ? "bg-score-amber text-white border-score-amber shadow-[0_2px_12px_hsl(32_95%_44%/0.3)]"
+                          : "bg-score-ruby text-white border-score-ruby shadow-[0_2px_12px_hsl(0_68%_35%/0.3)]"
+                        : "bg-secondary border-border/50 text-muted-foreground hover:bg-accent"
+                    )}
+                  >
+                    {level}
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {/* Active label */}
+            <div className="text-center">
+              <span className={cn("text-[10px] font-medium", levelInfo.color)}>
+                {levelInfo.label}
+              </span>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
   );
 };
 
