@@ -302,11 +302,12 @@ const StoreOrder = () => {
                       name={item.name}
                       price={item.price}
                       priceSpecial={item.price_special}
-                      imageUrl={topPhotoByItem.get(item.id) || item.image_url || undefined}
+                      imageUrl={item.image_url ?? undefined}
                       tags={tags}
                       totalReviews={totalRevs}
                       onPress={() => setDetailItem(item)}
                       index={i}
+                      userPhotos={topPhotoByItem.get(item.id)}
                     />
 
                     {/* Quantity overlay */}
