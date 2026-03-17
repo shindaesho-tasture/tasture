@@ -6,10 +6,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 /* ── Types ── */
-interface PostImage {
-  id: string;
+interface ImageSlide {
   image_url: string;
-  sort_order: number;
+  menu_review_id: string | null;
+}
+
+interface ReviewInfo {
+  menu_item_name: string;
+  score: number;
+  dish_dna: { component_name: string; component_icon: string; selected_tag: string; selected_score: number }[];
 }
 
 interface Comment {
