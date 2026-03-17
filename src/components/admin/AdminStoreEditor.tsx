@@ -85,7 +85,7 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
     const [{ data: storeData }, { data: items }, { data: reviews }] = await Promise.all([
       supabase.from("stores").select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo").eq("id", storeId).single(),
       supabase.from("menu_items").select("id, name, price, price_special, type, image_url").eq("store_id", storeId).order("created_at"),
-      supabase.from("reviews").select("metric_id, score").eq("store_id", storeId),
+      supabase.from("reviews").select("id, metric_id, score, user_id").eq("store_id", storeId),
     ]);
     if (storeData) {
       setStore(storeData);
