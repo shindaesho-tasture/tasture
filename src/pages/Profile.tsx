@@ -5,6 +5,7 @@ import { Crown, Gem, Store, LogIn, Pencil, Check, X, Camera, Users, ChefHat, Gri
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import PostDetailSheet from "@/components/PostDetailSheet";
+import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -151,6 +152,7 @@ const Profile = () => {
 
   // Post detail sheet
   const [selectedPost, setSelectedPost] = useState<UserPost | null>(null);
+  const [selectedBadge, setSelectedBadge] = useState<Achievement | null>(null);
 
   // Achievement / DNA data
   const [emeraldCount, setEmeraldCount] = useState(0);
@@ -598,14 +600,15 @@ const Profile = () => {
                       ruby: "shadow-[0_0_0_1.5px_hsl(0,68%,35%),0_0_12px_hsla(0,68%,35%,0.2)]",
                     }[badge.tier];
                     return (
-                      <motion.div key={badge.id} initial={{ scale: 0, opacity: 0 }}
+                      <motion.button key={badge.id} initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.1 + i * 0.06, type: "spring", stiffness: 400, damping: 20 }}
-                        className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc}`}>
+                        onClick={() => setSelectedBadge(badge)}
+                        className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc} active:scale-95 transition-transform`}>
                         <span className="text-xl mb-1">{badge.icon}</span>
                         <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{badge.titleTh}</span>
                         <span className="text-[8px] text-muted-foreground mt-0.5 text-center px-1">{badge.description}</span>
-                      </motion.div>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -614,10 +617,11 @@ const Profile = () => {
               {lockedBadges.length > 0 && (
                 <div className="grid grid-cols-4 gap-2.5">
                   {lockedBadges.map((badge) => (
-                    <div key={badge.id} className="flex flex-col items-center py-3 rounded-2xl bg-muted/50 opacity-40">
+                    <button key={badge.id} onClick={() => setSelectedBadge(badge)}
+                      className="flex flex-col items-center py-3 rounded-2xl bg-muted/50 opacity-40 active:scale-95 transition-transform">
                       <span className="text-xl mb-1 grayscale">🔒</span>
                       <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{badge.titleTh}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -637,6 +641,13 @@ const Profile = () => {
             likeCount: selectedPost.likeCount,
             commentCount: selectedPost.commentCount,
           } : undefined}
+        />
+
+        <AchievementDetailSheet
+          open={!!selectedBadge}
+          onClose={() => setSelectedBadge(null)}
+          badge={selectedBadge}
+          ctx={achievementCtx}
         />
 
         <BottomNav />
