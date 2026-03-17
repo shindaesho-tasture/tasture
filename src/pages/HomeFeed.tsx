@@ -896,6 +896,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     }
   };
 
+  const fetchComments = async () => {
     setLoadingComments(true);
     const { data } = await supabase
       .from("feed_comments")
