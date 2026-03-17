@@ -184,9 +184,9 @@ const NotificationBell = () => {
                     {/* Icon */}
                     <div className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm",
-                      n.type === "comment" ? "bg-score-emerald/10" : "bg-secondary"
+                      n.type === "comment" ? "bg-score-emerald/10" : n.type === "like" ? "bg-score-ruby/10" : "bg-secondary"
                     )}>
-                      {n.type === "comment" ? "💬" : "🔔"}
+                      {n.type === "comment" ? "💬" : n.type === "like" ? "❤️" : "🔔"}
                     </div>
 
                     {/* Content */}
