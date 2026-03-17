@@ -20,6 +20,7 @@ interface PostImageSlide {
   reviewScore: number | null;
   menuItemName: string | null;
   storeName: string | null;
+  storeId: string | null;
 }
 
 interface FeedPost {
