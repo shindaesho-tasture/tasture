@@ -275,11 +275,11 @@ const HomeFeed = () => {
         return Object.keys(merged).length > 0 ? merged : null;
       };
 
-      // Add reviews
+      // Add reviews (satisfaction computed later when storeId known)
       (reviewsRes.data || []).forEach((r) => {
         const key = `${r.user_id}-${r.menu_item_id}`;
         if (!postMap.has(key)) {
-          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, satisfaction: satLookup.get(key) || null, dnaComponents: [], latestTime: r.created_at });
+          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, satisfaction: null, dnaComponents: [], latestTime: r.created_at });
         }
         const entry = postMap.get(key)!;
         entry.score = r.score;
@@ -291,7 +291,7 @@ const HomeFeed = () => {
       (dnaRes.data || []).forEach((d) => {
         const key = `${d.user_id}-${d.menu_item_id}`;
         if (!postMap.has(key)) {
-          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, satisfaction: satLookup.get(key) || null, dnaComponents: [], latestTime: d.created_at });
+          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, satisfaction: null, dnaComponents: [], latestTime: d.created_at });
         }
         const entry = postMap.get(key)!;
         entry.dnaComponents.push({ name: d.component_name, icon: d.component_icon, tag: d.selected_tag, score: d.selected_score });
