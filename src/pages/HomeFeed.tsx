@@ -651,9 +651,9 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [followLoading, setFollowLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Derive refId for comments - use consistent key based on user+menuItem
+  // Derive refId for comments/likes
   const refType = "post";
-  const refId = `${post.userId}-${post.menuItemId}`;
+  const refId = post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`;
 
   // Fetch like state + count on mount
   useEffect(() => {
