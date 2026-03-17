@@ -57,6 +57,7 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
   const [store, setStore] = useState<StoreData | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [reviewTags, setReviewTags] = useState<ReviewTag[]>([]);
+  const [reviewRows, setReviewRows] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -64,6 +65,11 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
   const [editName, setEditName] = useState("");
   const [editCategory, setEditCategory] = useState<string | null>(null);
   const [showCatPicker, setShowCatPicker] = useState(false);
+
+  // Feedback edit
+  const [addingFeedback, setAddingFeedback] = useState(false);
+  const [fbMetric, setFbMetric] = useState("");
+  const [fbScore, setFbScore] = useState(0);
 
   // Menu edit
   const [editingMenuId, setEditingMenuId] = useState<string | null>(null);
