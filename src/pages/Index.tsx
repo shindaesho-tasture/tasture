@@ -1,20 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { MapPin, Search, Plus, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
 import { useCategories } from "@/hooks/use-categories";
 import { categories as defaultCategories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
-import { getIntensityOpacity } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
-import DiscoveryTabs, { type DiscoveryTab } from "@/components/DiscoveryTabs";
-import SensorySearch from "@/components/SensorySearch";
-import HeroFoodCard from "@/components/HeroFoodCard";
 import LocationPickerSheet from "@/components/LocationPickerSheet";
 import BottomNav from "@/components/BottomNav";
 
@@ -32,6 +28,7 @@ interface StoreCard {
   name: string;
   category_id: string | null;
   categoryLabel: string | null;
+  categoryIcon: string;
   verified: boolean;
   avgScore: number | null;
   reviewCount: number;
@@ -46,12 +43,12 @@ interface StoreCard {
   matchPercent: number | null;
 }
 
-const tierColors: Record<ScoreTier, { bg: string; text: string }> = {
-  emerald: { bg: "bg-score-emerald", text: "text-score-emerald" },
-  mint: { bg: "bg-score-mint", text: "text-score-mint" },
-  slate: { bg: "bg-score-slate", text: "text-score-slate" },
-  amber: { bg: "bg-score-amber", text: "text-score-amber" },
-  ruby: { bg: "bg-score-ruby", text: "text-score-ruby" },
+const tierColors: Record<ScoreTier, string> = {
+  emerald: "bg-score-emerald",
+  mint: "bg-score-mint",
+  slate: "bg-score-slate",
+  amber: "bg-score-amber",
+  ruby: "bg-score-ruby",
 };
 
 const categoryEmoji: Record<string, string> = {
@@ -64,6 +61,17 @@ const categoryEmoji: Record<string, string> = {
   bar: "🍸",
 };
 
+// Spotify-style gradient colors for category sections
+const sectionGradients = [
+  "from-emerald-900/40 to-transparent",
+  "from-amber-900/40 to-transparent",
+  "from-rose-900/40 to-transparent",
+  "from-indigo-900/40 to-transparent",
+  "from-cyan-900/40 to-transparent",
+  "from-purple-900/40 to-transparent",
+  "from-orange-900/40 to-transparent",
+];
+
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -71,18 +79,18 @@ const Index = () => {
   const { categories: dynamicCategories } = useCategories();
   const [stores, setStores] = useState<StoreCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<DiscoveryTab>("nearby");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
   const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Use custom pinned position if set, otherwise GPS
   const activePosition = customPos || position;
 
   useEffect(() => {
     fetchStores();
   }, [user, activePosition]);
 
+  // ─── Data Fetching (unchanged logic) ───
   const fetchStores = async () => {
     setLoading(true);
     try {
@@ -90,40 +98,28 @@ const Index = () => {
         .from("stores")
         .select("id, name, category_id, verified, pin_lat, pin_lng")
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(50);
 
       if (!allStores || allStores.length === 0) { setStores([]); setLoading(false); return; }
 
       const storeIds = allStores.map((s) => s.id);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Parallel fetches
-      const [reviewsRes, menuRes, dnaRes, menuRevRes, recentReviewsRes, recentDnaRes, userDnaRes] = await Promise.all([
+      const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes] = await Promise.all([
         supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
         supabase.from("menu_items").select("id, store_id").in("store_id", storeIds),
-        supabase.from("dish_dna").select("menu_item_id").in("menu_item_id",
-          (await supabase.from("menu_items").select("id").in("store_id", storeIds)).data?.map(m => m.id) || []
-        ),
-        supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id",
-          (await supabase.from("menu_items").select("id").in("store_id", storeIds)).data?.map(m => m.id) || []
-        ),
-        // Recent activity for trending (last 7 days)
         supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
-        // User's DNA preferences for matching
         user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
       ]);
 
-      // Build menu→store map
       const menuToStore = new Map<string, string>();
-      (menuRes.data || []).forEach((m) => menuToStore.set(m.id, m.store_id));
-
       const menuCountMap = new Map<string, number>();
       (menuRes.data || []).forEach((m) => {
+        menuToStore.set(m.id, m.store_id);
         menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
       });
 
-      // Per-metric averages per store
       const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
       (reviewsRes.data || []).forEach((r) => {
         if (!metricMap.has(r.store_id)) metricMap.set(r.store_id, new Map());
@@ -134,19 +130,6 @@ const Index = () => {
         m.count++;
       });
 
-      // DNA & menu review counts per store
-      const dnaCountMap = new Map<string, number>();
-      (dnaRes.data || []).forEach((d) => {
-        const sid = menuToStore.get(d.menu_item_id);
-        if (sid) dnaCountMap.set(sid, (dnaCountMap.get(sid) || 0) + 1);
-      });
-      const menuRevCountMap = new Map<string, number>();
-      (menuRevRes.data || []).forEach((r) => {
-        const sid = menuToStore.get(r.menu_item_id);
-        if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
-      });
-
-      // Recent activity per store (trending)
       const recentActivityMap = new Map<string, number>();
       (recentReviewsRes.data || []).forEach((r) => {
         const sid = menuToStore.get(r.menu_item_id);
@@ -157,30 +140,37 @@ const Index = () => {
         if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
       });
 
-      // User DNA preferences for matching
       const userPrefs = new Map<string, number>();
       (userDnaRes.data || []).forEach((d: any) => {
-        if (d.selected_score !== 0) {
-          userPrefs.set(d.component_name, (userPrefs.get(d.component_name) || 0) + d.selected_score);
-        }
+        if (d.selected_score !== 0) userPrefs.set(d.component_name, (userPrefs.get(d.component_name) || 0) + d.selected_score);
       });
 
-      // Store DNA profiles for matching
-      const storeDnaMap = new Map<string, Map<string, { total: number; count: number }>>();
-      // We need full dna data with component_name and score for matching
-      const { data: fullDnaData } = await supabase
-        .from("dish_dna")
-        .select("menu_item_id, component_name, selected_score");
+      const menuIds = (menuRes.data || []).map((m) => m.id);
+      const [dnaRes, menuRevRes] = menuIds.length > 0
+        ? await Promise.all([
+            supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds),
+            supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds),
+          ])
+        : [{ data: [] }, { data: [] }];
 
-      (fullDnaData || []).forEach((d) => {
+      const dnaCountMap = new Map<string, number>();
+      const storeDnaMap = new Map<string, Map<string, { total: number; count: number }>>();
+      (dnaRes.data || []).forEach((d: any) => {
         const sid = menuToStore.get(d.menu_item_id);
         if (!sid) return;
+        dnaCountMap.set(sid, (dnaCountMap.get(sid) || 0) + 1);
         if (!storeDnaMap.has(sid)) storeDnaMap.set(sid, new Map());
         const sm = storeDnaMap.get(sid)!;
         if (!sm.has(d.component_name)) sm.set(d.component_name, { total: 0, count: 0 });
         const entry = sm.get(d.component_name)!;
         entry.total += d.selected_score;
         entry.count++;
+      });
+
+      const menuRevCountMap = new Map<string, number>();
+      ((menuRevRes as any).data || []).forEach((r: any) => {
+        const sid = menuToStore.get(r.menu_item_id);
+        if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
 
       setStores(allStores.map((s) => {
@@ -192,10 +182,7 @@ const Index = () => {
         let totalCount = 0;
 
         if (sm && cat) {
-          const allMetrics = cat.metrics.flatMap((m) =>
-            m.smartGate ? m.smartGate.subMetrics : [m]
-          );
-          allMetrics.forEach((cm) => {
+          cat.metrics.flatMap((m) => m.smartGate ? m.smartGate.subMetrics : [m]).forEach((cm) => {
             const data = sm.get(cm.id);
             if (data) {
               const avg = data.total / data.count;
@@ -213,31 +200,25 @@ const Index = () => {
           });
         }
 
-        // Distance
         let distanceKm: number | null = null;
         if (activePosition && s.pin_lat != null && s.pin_lng != null) {
           distanceKm = Math.round(haversineKm(activePosition.lat, activePosition.lng, s.pin_lat, s.pin_lng) * 10) / 10;
         }
 
-        // Match percent
         let matchPercent: number | null = null;
         if (userPrefs.size > 0) {
           const storeDna = storeDnaMap.get(s.id);
           if (storeDna && storeDna.size > 0) {
-            let matchScore = 0;
-            let maxScore = 0;
+            let matchScore = 0, maxScore = 0;
             userPrefs.forEach((prefScore, compName) => {
               const storeEntry = storeDna.get(compName);
               if (storeEntry && storeEntry.count > 0) {
                 const storeAvg = storeEntry.total / storeEntry.count;
-                // Both positive = match; both negative = match
                 if ((prefScore > 0 && storeAvg > 0) || (prefScore < 0 && storeAvg < 0)) {
                   matchScore += Math.min(Math.abs(prefScore), Math.abs(storeAvg));
                 }
                 maxScore += Math.abs(prefScore);
-              } else {
-                maxScore += Math.abs(prefScore);
-              }
+              } else { maxScore += Math.abs(prefScore); }
             });
             matchPercent = maxScore > 0 ? Math.round((matchScore / maxScore) * 100) : null;
           }
@@ -245,7 +226,8 @@ const Index = () => {
 
         return {
           ...s,
-          categoryLabel: cat?.labelTh || null,
+          categoryLabel: cat?.labelTh || cat?.label || null,
+          categoryIcon: cat?.icon || categoryEmoji[s.category_id || ""] || "🍽️",
           verified: s.verified ?? false,
           avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
           reviewCount: totalCount,
@@ -265,305 +247,330 @@ const Index = () => {
     }
   };
 
-  // Sort/filter based on active tab
-  const filteredStores = useMemo(() => {
-    let sorted = [...stores];
-    
-    // Apply category filter
-    if (selectedCategoryFilter) {
-      sorted = sorted.filter((s) => s.category_id === selectedCategoryFilter);
-    }
-    
-    switch (activeTab) {
-      case "nearby":
-        return sorted.sort((a, b) => {
-          if (a.distanceKm == null && b.distanceKm == null) return 0;
-          if (a.distanceKm == null) return 1;
-          if (b.distanceKm == null) return -1;
-          return a.distanceKm - b.distanceKm;
-        });
-      case "trending":
-        return sorted
-          .filter((s) => s.recentActivityCount > 0)
-          .sort((a, b) => b.recentActivityCount - a.recentActivityCount)
-          .concat(sorted.filter((s) => s.recentActivityCount === 0));
-      case "match":
-        return sorted.sort((a, b) => {
-          if (a.matchPercent == null && b.matchPercent == null) return 0;
-          if (a.matchPercent == null) return 1;
-          if (b.matchPercent == null) return -1;
-          return b.matchPercent - a.matchPercent;
-        });
-      default:
-        return sorted;
-    }
-  }, [stores, activeTab, selectedCategoryFilter]);
+  // ─── Derived Data ───
+  const searchFiltered = useMemo(() => {
+    if (!searchQuery.trim()) return stores;
+    const q = searchQuery.toLowerCase();
+    return stores.filter((s) => s.name.toLowerCase().includes(q) || (s.categoryLabel || "").toLowerCase().includes(q));
+  }, [stores, searchQuery]);
 
-  const tabTitle: Record<DiscoveryTab, string> = {
-    nearby: "📍 ร้านใกล้คุณ",
-    trending: "🔥 กำลังเป็นเทรนด์",
-    match: "💎 แมตช์กับคุณ",
+  const categoryFiltered = useMemo(() => {
+    if (!selectedCategoryFilter) return searchFiltered;
+    return searchFiltered.filter((s) => s.category_id === selectedCategoryFilter);
+  }, [searchFiltered, selectedCategoryFilter]);
+
+  // Nearby stores (sorted by distance)
+  const nearbyStores = useMemo(() =>
+    [...categoryFiltered].sort((a, b) => {
+      if (a.distanceKm == null && b.distanceKm == null) return 0;
+      if (a.distanceKm == null) return 1;
+      if (b.distanceKm == null) return -1;
+      return a.distanceKm - b.distanceKm;
+    }).slice(0, 10)
+  , [categoryFiltered]);
+
+  // Trending stores
+  const trendingStores = useMemo(() =>
+    [...categoryFiltered].filter((s) => s.recentActivityCount > 0)
+      .sort((a, b) => b.recentActivityCount - a.recentActivityCount)
+      .slice(0, 10)
+  , [categoryFiltered]);
+
+  // Match stores
+  const matchStores = useMemo(() =>
+    [...categoryFiltered].filter((s) => s.matchPercent != null && s.matchPercent > 0)
+      .sort((a, b) => (b.matchPercent || 0) - (a.matchPercent || 0))
+      .slice(0, 10)
+  , [categoryFiltered]);
+
+  // Group by category for Spotify-style sections
+  const categoryGroups = useMemo(() => {
+    const groups = new Map<string, { label: string; icon: string; stores: StoreCard[] }>();
+    categoryFiltered.forEach((s) => {
+      const key = s.category_id || "other";
+      if (!groups.has(key)) {
+        groups.set(key, { label: s.categoryLabel || "อื่นๆ", icon: s.categoryIcon, stores: [] });
+      }
+      groups.get(key)!.stores.push(s);
+    });
+    return Array.from(groups.entries()).filter(([, g]) => g.stores.length > 0);
+  }, [categoryFiltered]);
+
+  // Greeting based on time
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 12) return "สวัสดีตอนเช้า";
+    if (h < 17) return "สวัสดีตอนบ่าย";
+    return "สวัสดีตอนเย็น";
+  }, []);
+
+  // ─── Store Card Component ───
+  const SpotifyStoreCard = ({ store, size = "normal" }: { store: StoreCard; size?: "normal" | "large" }) => {
+    const tier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
+    const isLarge = size === "large";
+
+    return (
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={() => navigate(`/store/${store.id}/order`)}
+        className={cn(
+          "shrink-0 rounded-xl overflow-hidden text-left relative group",
+          isLarge ? "w-[180px]" : "w-[150px]"
+        )}
+      >
+        {/* Card bg with gradient */}
+        <div className={cn(
+          "aspect-square rounded-xl flex items-center justify-center relative overflow-hidden",
+          "bg-gradient-to-br from-muted to-secondary"
+        )}>
+          <span className={cn("transition-transform duration-300 group-hover:scale-110", isLarge ? "text-5xl" : "text-4xl")}>
+            {store.categoryIcon}
+          </span>
+
+          {/* Score badge */}
+          {tier && store.avgScore !== null && (
+            <div className={cn("absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold text-primary-foreground", tierColors[tier])}>
+              {store.avgScore > 0 ? "+" : ""}{store.avgScore.toFixed(1)}
+            </div>
+          )}
+
+          {/* Trending fire */}
+          {store.recentActivityCount > 3 && (
+            <div className="absolute top-2 left-2 text-xs">🔥</div>
+          )}
+
+          {/* Distance pill */}
+          {store.distanceKm != null && (
+            <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-full bg-background/70 backdrop-blur-sm text-[9px] font-medium text-foreground">
+              {store.distanceKm} km
+            </div>
+          )}
+        </div>
+
+        {/* Title area */}
+        <div className="pt-2 pb-1 px-0.5">
+          <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{store.name}</p>
+          <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+            {store.categoryLabel || "ร้านอาหาร"}
+            {store.menuCount > 0 && ` · ${store.menuCount} เมนู`}
+          </p>
+        </div>
+      </motion.button>
+    );
+  };
+
+  // ─── Horizontal Scroll Section ───
+  const HorizontalSection = ({ title, emoji, stores: sectionStores, gradient, showAll }: {
+    title: string;
+    emoji: string;
+    stores: StoreCard[];
+    gradient?: string;
+    showAll?: () => void;
+  }) => {
+    if (sectionStores.length === 0) return null;
+    return (
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mt-6"
+      >
+        <div className="flex items-center justify-between px-5 mb-3">
+          <h2 className="text-lg font-bold text-foreground tracking-tight">
+            {emoji} {title}
+          </h2>
+          {showAll && (
+            <button onClick={showAll} className="text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors">
+              ดูทั้งหมด
+            </button>
+          )}
+        </div>
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide px-5 pb-1">
+          {sectionStores.map((store) => (
+            <SpotifyStoreCard key={store.id} store={store} size={sectionStores.length <= 3 ? "large" : "normal"} />
+          ))}
+        </div>
+      </motion.section>
+    );
   };
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-background pb-24">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
+      <div className="min-h-screen bg-background pb-24">
         <TastureHeader />
 
-        {/* Large Title */}
-        <div className="px-6 pt-2 pb-1">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            สำรวจ
-          </h1>
-          <p className="text-sm font-light text-muted-foreground mt-1">
-            สัมผัสรสชาติผ่านประสาทสัมผัสของคุณ
-          </p>
+        {/* ─── Spotify Greeting + Gradient ─── */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-score-emerald/8 via-transparent to-transparent pointer-events-none" />
+          <div className="relative px-5 pt-3 pb-2">
+            <h1 className="text-[26px] font-bold tracking-tight text-foreground leading-tight">
+              {greeting} 👋
+            </h1>
+          </div>
         </div>
 
-        {/* Discovery Trinity Tabs */}
-        <DiscoveryTabs active={activeTab} onChange={setActiveTab} />
+        {/* ─── Search Bar (Spotify-style) ─── */}
+        <div className="px-5 pt-2 pb-1">
+          <motion.div
+            whileTap={{ scale: 0.99 }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary"
+          >
+            <Search size={18} strokeWidth={2} className="text-muted-foreground shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="ค้นหาร้านอาหารหรือหมวดหมู่..."
+              className="flex-1 bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground/60 outline-none"
+              lang="th"
+              autoComplete="off"
+            />
+          </motion.div>
+        </div>
 
-        {/* Location picker trigger */}
-        <div className="px-6 pb-2">
+        {/* ─── Location Pill ─── */}
+        <div className="px-5 pt-2 pb-1">
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={() => setShowLocationPicker(true)}
             className={cn(
-              "flex items-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-medium transition-all",
+              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all",
               customPos
-                ? "bg-score-emerald/10 text-score-emerald border border-score-emerald/20"
+                ? "bg-score-emerald/10 text-score-emerald"
                 : "bg-secondary text-muted-foreground"
             )}
           >
-            <MapPin size={13} strokeWidth={2} />
+            <MapPin size={12} strokeWidth={2} />
             {customPos
-              ? `📍 ตำแหน่งที่เลือก (${customPos.lat.toFixed(3)}, ${customPos.lng.toFixed(3)})`
+              ? `ตำแหน่งที่เลือก`
               : activePosition
-              ? "📍 ใช้ GPS ปัจจุบัน — แตะเพื่อเปลี่ยน"
-              : "📍 เลือกตำแหน่ง"}
+              ? "ใช้ GPS ปัจจุบัน"
+              : "เลือกตำแหน่ง"}
           </motion.button>
         </div>
 
-        {/* Category Filter Chips */}
-        <div className="px-6 pb-2">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedCategoryFilter(null)}
-              className={cn(
-                "shrink-0 px-3.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
-                !selectedCategoryFilter
-                  ? "bg-foreground text-primary-foreground shadow-luxury"
-                  : "bg-secondary/80 text-muted-foreground hover:bg-secondary"
-              )}
-            >
-              ทั้งหมด
-            </motion.button>
-            {dynamicCategories.map((cat) => {
-              const isActive = selectedCategoryFilter === cat.id;
-              return (
-                <motion.button
-                  key={cat.id}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setSelectedCategoryFilter(isActive ? null : cat.id)}
-                  className={cn(
-                    "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
-                    isActive
-                      ? "bg-foreground text-primary-foreground shadow-luxury"
-                      : "bg-secondary/80 text-muted-foreground hover:bg-secondary"
-                  )}
-                >
-                  <span className="text-sm">{cat.icon}</span>
-                  {cat.labelTh || cat.label}
-                </motion.button>
-              );
-            })}
-          </div>
+        {/* ─── Filter Chips (Spotify pill style) ─── */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide px-5 pt-3 pb-1">
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            onClick={() => setSelectedCategoryFilter(null)}
+            className={cn(
+              "shrink-0 px-4 py-2 rounded-full text-[12px] font-semibold transition-all border",
+              !selectedCategoryFilter
+                ? "bg-foreground text-primary-foreground border-foreground"
+                : "bg-transparent text-foreground border-border hover:bg-secondary"
+            )}
+          >
+            ทั้งหมด
+          </motion.button>
+          {dynamicCategories.map((cat) => {
+            const isActive = selectedCategoryFilter === cat.id;
+            return (
+              <motion.button
+                key={cat.id}
+                whileTap={{ scale: 0.93 }}
+                onClick={() => setSelectedCategoryFilter(isActive ? null : cat.id)}
+                className={cn(
+                  "shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] font-semibold transition-all border",
+                  isActive
+                    ? "bg-foreground text-primary-foreground border-foreground"
+                    : "bg-transparent text-foreground border-border hover:bg-secondary"
+                )}
+              >
+                {cat.icon} {cat.labelTh || cat.label}
+              </motion.button>
+            );
+          })}
         </div>
 
-        <SensorySearch />
-        <HeroFoodCard />
-
-        {/* Quick Actions */}
-        <div className="px-6 pt-4 grid grid-cols-2 gap-3">
+        {/* ─── Quick Action Grid (Spotify shortcut style) ─── */}
+        <div className="grid grid-cols-2 gap-2.5 px-5 pt-5">
           <motion.button
-            whileTap={{ scale: 0.96 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/register")}
-            className="flex items-center gap-2 p-4 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left"
+            className="flex items-center gap-3 p-3 rounded-lg bg-secondary overflow-hidden"
           >
-            <span className="text-xl">📝</span>
-            <div>
-              <span className="text-xs font-medium text-foreground block">เพิ่มร้านใหม่</span>
-              <span className="text-[10px] font-light text-muted-foreground">ลงทะเบียนร้าน</span>
+            <div className="w-10 h-10 rounded-md bg-score-emerald/20 flex items-center justify-center shrink-0">
+              <Plus size={18} className="text-score-emerald" />
             </div>
+            <span className="text-[12px] font-semibold text-foreground leading-tight">เพิ่มร้านใหม่</span>
           </motion.button>
           <motion.button
-            whileTap={{ scale: 0.96 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/my-stores")}
-            className="flex items-center gap-2 p-4 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 text-left"
+            className="flex items-center gap-3 p-3 rounded-lg bg-secondary overflow-hidden"
           >
-            <span className="text-xl">🏪</span>
-            <div>
-              <span className="text-xs font-medium text-foreground block">ร้านของฉัน</span>
-              <span className="text-[10px] font-light text-muted-foreground">ดูร้าน & ฟีดแบค</span>
+            <div className="w-10 h-10 rounded-md bg-score-amber/20 flex items-center justify-center shrink-0">
+              <Store size={18} className="text-score-amber" />
             </div>
+            <span className="text-[12px] font-semibold text-foreground leading-tight">ร้านของฉัน</span>
           </motion.button>
         </div>
 
-        {/* ─── Store List ─── */}
-        <div className="px-6 pt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-foreground tracking-tight">
-              {tabTitle[activeTab]}
-            </h2>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/store-list")}
-              className="text-[11px] font-medium text-score-emerald"
-            >
-              ดูทั้งหมด →
-            </motion.button>
+        {/* ─── Content Sections ─── */}
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-8 h-8 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
           </div>
+        ) : categoryFiltered.length === 0 ? (
+          <div className="flex flex-col items-center py-16 gap-3">
+            <span className="text-4xl">🍽️</span>
+            <p className="text-sm text-muted-foreground">ยังไม่มีร้านอาหาร</p>
+          </div>
+        ) : (
+          <>
+            {/* Nearby Section */}
+            <HorizontalSection
+              title="ใกล้คุณ"
+              emoji="📍"
+              stores={nearbyStores}
+              showAll={() => navigate("/store-list")}
+            />
 
-          {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <div className="w-8 h-8 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-            </div>
-          ) : filteredStores.length === 0 ? (
-            <div className="flex flex-col items-center py-10 gap-2">
-              <span className="text-3xl">🍽️</span>
-              <p className="text-xs text-muted-foreground">
-                {activeTab === "match" && !user
-                  ? "เข้าสู่ระบบเพื่อดูร้านที่แมตช์กับคุณ"
-                  : activeTab === "match"
-                  ? "รีวิว Dish DNA เพิ่มเติมเพื่อให้ระบบแมตช์ได้แม่นยำขึ้น"
-                  : "ยังไม่มีร้านอาหาร"}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredStores.map((store, i) => {
-                const overallTier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
-                const popInfo = getPopularityTierInfo(getPopularityTier(store.reviewCount));
-                const topMetrics = [...(store.metrics || [])]
-                  .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-                  .slice(0, 4);
-                const isTrending = activeTab === "trending" && store.recentActivityCount > 0;
+            {/* Trending Section */}
+            {trendingStores.length > 0 && (
+              <HorizontalSection
+                title="กำลังเป็นเทรนด์"
+                emoji="🔥"
+                stores={trendingStores}
+              />
+            )}
 
-                return (
-                  <motion.button
-                    key={store.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.06, duration: 0.4 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate(`/store/${store.id}/order`)}
-                    className={`w-full rounded-2xl bg-surface-elevated border border-border/50 text-left overflow-hidden relative ${popInfo.borderClass} ${popInfo.glowClass || 'shadow-luxury'}`}
-                  >
-                    {/* Trending badge */}
-                    {isTrending && (
-                      <div className="absolute top-2 right-2 z-10">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-score-amber/15 text-score-amber text-[9px] font-bold tracking-wide">
-                          🔥 Trending
-                        </span>
-                      </div>
-                    )}
+            {/* Match Section */}
+            {matchStores.length > 0 && (
+              <HorizontalSection
+                title="แมตช์กับคุณ"
+                emoji="💎"
+                stores={matchStores}
+              />
+            )}
 
-                    {/* Match badge */}
-                    {activeTab === "match" && store.matchPercent != null && (
-                      <div className="absolute top-2 right-2 z-10">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-score-emerald/15 text-score-emerald text-[9px] font-bold tracking-wide">
-                          💎 {store.matchPercent}% Match
-                        </span>
-                      </div>
-                    )}
+            {/* Category Sections (Spotify genre-style) */}
+            {categoryGroups.map(([catId, group], idx) => (
+              <HorizontalSection
+                key={catId}
+                title={group.label}
+                emoji={group.icon}
+                stores={group.stores}
+                gradient={sectionGradients[idx % sectionGradients.length]}
+              />
+            ))}
 
-                    {/* Card Header */}
-                    <div className="flex items-center gap-3 p-4 pb-2">
-                      <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-xl shrink-0">
-                        {categoryEmoji[store.category_id || ""] || "🍽️"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate">{store.name}</h3>
-                        {store.categoryLabel && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{store.categoryLabel}</p>
-                        )}
-                        <p className="text-[9px] text-muted-foreground mt-0.5">
-                          {store.menuCount} เมนู · {store.reviewCount} รีวิว
-                          {store.dnaCount > 0 && <> · 🧬 {store.dnaCount}</>}
-                          {store.menuReviewCount > 0 && <> · ⭐ {store.menuReviewCount}</>}
-                          {activeTab === "nearby" && store.distanceKm != null && (
-                            <> · 📍 {store.distanceKm} km</>
-                          )}
-                        </p>
-                      </div>
-                      {overallTier && store.avgScore !== null && (
-                        <div className={cn("px-2.5 py-1.5 rounded-xl", tierColors[overallTier].bg)}>
-                          <span className="text-xs font-bold text-primary-foreground tabular-nums">
-                            {store.avgScore > 0 ? "+" : ""}{store.avgScore.toFixed(1)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+            {/* Bottom spacer */}
+            <div className="h-6" />
+          </>
+        )}
 
-                    {/* Top Tags */}
-                    {topMetrics.length > 0 && (
-                      <div className="flex flex-wrap gap-1 px-4 pb-3">
-                        {topMetrics.map((m) => {
-                          const t = getScoreTier(m.score);
-                          const bgOpacity = getIntensityOpacity(m.count);
-                          return (
-                            <span
-                              key={m.id}
-                              className="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-semibold relative overflow-hidden"
-                            >
-                              <span
-                                className={cn("absolute inset-0 rounded-lg", tierColors[t].bg)}
-                                style={{ opacity: bgOpacity }}
-                              />
-                              <span className={cn("relative z-10", tierColors[t].text)}>
-                                {m.icon} {m.label}
-                              </span>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
+        <BottomNav />
 
-                    {/* No reviews yet */}
-                    {(store.metrics || []).length === 0 && (
-                      <div className="px-4 pb-3">
-                        <p className="text-[10px] text-muted-foreground italic">ยังไม่มีรีวิว — เป็นคนแรกที่ให้ฟีดแบค!</p>
-                      </div>
-                    )}
-                    {popInfo.label && (
-                      <span className="absolute bottom-2 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
-                        {popInfo.label}
-                      </span>
-                    )}
-                  </motion.button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </motion.div>
-
-      <BottomNav />
-
-      <LocationPickerSheet
-        open={showLocationPicker}
-        onClose={() => setShowLocationPicker(false)}
-        onConfirm={(pos) => setCustomPos(pos)}
-        currentPosition={customPos}
-        gpsPosition={position}
-      />
-    </div>
+        <LocationPickerSheet
+          open={showLocationPicker}
+          onClose={() => setShowLocationPicker(false)}
+          onConfirm={(pos) => setCustomPos(pos)}
+          currentPosition={customPos}
+          gpsPosition={position}
+        />
+      </div>
     </PageTransition>
   );
 };
