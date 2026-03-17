@@ -258,7 +258,8 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
 
             {/* Header */}
             <div className="flex items-center gap-3 px-4 pb-3 flex-shrink-0">
-              <div className="w-9 h-9 rounded-full bg-secondary overflow-hidden flex-shrink-0">
+              <button onClick={() => { if (post?.user_id) { onClose(); navigate(`/user/${post.user_id}`); } }}
+                className="w-9 h-9 rounded-full bg-secondary overflow-hidden flex-shrink-0 active:scale-95 transition-transform">
                 {author?.avatar_url ? (
                   <img src={author.avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -266,7 +267,7 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
                     {(author?.display_name || "?").charAt(0)}
                   </div>
                 )}
-              </div>
+              </button>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">
                   {author?.display_name || "ผู้ใช้"}
