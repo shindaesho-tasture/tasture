@@ -684,7 +684,16 @@ const HomeFeed = () => {
         </div>
 
         {/* Scrollable Content */}
-        <div ref={containerRef} className="flex-1 overflow-y-auto pb-24">
+        <div ref={containerRef} className="flex-1 overflow-y-auto pb-24 overflow-x-hidden">
+          <AnimatePresence mode="wait" custom={slideDirection}>
+            <motion.div
+              key={activeTab}
+              custom={slideDirection}
+              initial={{ x: slideDirection * 60, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: slideDirection * -60, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+            >
           {/* Suggested Users for "foryou" tab */}
           {activeTab === "foryou" && user && !loading && (
             <div className="px-4 pt-2">
