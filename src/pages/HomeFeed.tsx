@@ -643,11 +643,11 @@ const HomeFeed = () => {
 
   return (
     <PageTransition>
-      <div ref={containerRef} className="min-h-screen bg-background pb-24 overflow-y-auto">
-        {/* Sticky Header + Pull-to-refresh */}
-        <div className={`sticky top-0 z-40 bg-background transition-shadow duration-300 ${scrolled ? 'shadow-md' : ''}`}>
+      <div className="h-screen flex flex-col bg-background">
+        {/* Fixed Header */}
+        <div className={`flex-shrink-0 z-40 bg-background transition-shadow duration-300 ${scrolled ? 'shadow-md' : ''}`}>
           <TastureHeader />
-          {/* Pull-to-refresh indicator inside sticky header */}
+          {/* Pull-to-refresh indicator */}
           <motion.div
             animate={{ height: pullDistance, opacity: pullProgress }}
             transition={refreshing ? { duration: 0.2 } : { duration: 0 }}
@@ -671,8 +671,8 @@ const HomeFeed = () => {
           </motion.div>
         </div>
 
-        {/* Sticky Title + Tabs */}
-        <div className={`sticky top-[56px] z-30 bg-background border-b border-border/50 transition-shadow duration-300 ${scrolled ? 'shadow-sm' : ''}`}>
+        {/* Fixed Title + Tabs */}
+        <div className={`flex-shrink-0 z-30 bg-background border-b border-border/50 transition-shadow duration-300 ${scrolled ? 'shadow-sm' : ''}`}>
           <div className="px-6 pt-2 pb-2">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               ฟีด
@@ -684,76 +684,79 @@ const HomeFeed = () => {
           <HomeFeedTabs active={activeTab} onChange={handleTabChange} />
         </div>
 
-        {/* Suggested Users for "foryou" tab */}
-        {activeTab === "foryou" && user && !loading && (
-          <div className="px-4 pt-2">
-            <SuggestedUsers userId={user.id} followingIds={followingIds} onFollowChange={refreshFollowingIds} />
-          </div>
-        )}
-
-        {/* Feed */}
-        <div className="px-4 space-y-4">
-          {loading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-2xl bg-surface-elevated border border-border/50 p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="w-10 h-10 rounded-full" />
-                  <div className="space-y-1.5 flex-1">
-                    <Skeleton className="h-3 w-24" />
-                    <Skeleton className="h-2.5 w-32" />
-                  </div>
-                </div>
-                <Skeleton className="h-40 w-full rounded-xl" />
-                <Skeleton className="h-3 w-3/4" />
-              </div>
-            ))
-          ) : filteredPosts.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center py-16 gap-3"
-            >
-              <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
-                <ChefHat size={28} className="text-muted-foreground" />
-              </div>
-              <p className="text-sm text-muted-foreground">{emptyMessages[activeTab]}</p>
-              {activeTab === "explore" && (
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => navigate("/store-list")}
-                  className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
-                >
-                  เริ่มสำรวจร้าน
-                </motion.button>
-              )}
-              {activeTab === "following" && (
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => navigate("/discover")}
-                  className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
-                >
-                  ค้นหาคนเพื่อติดตาม
-                </motion.button>
-              )}
-            </motion.div>
-          ) : (
-            <AnimatePresence>
-              {filteredPosts.map((post, i) => (
-                <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
-              ))}
-            </AnimatePresence>
-          )}
-
-          {/* Infinite scroll sentinel */}
-          <div ref={sentinelRef} className="h-1" />
-          {loadingMore && (
-            <div className="flex justify-center py-6">
-              <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+        {/* Scrollable Content */}
+        <div ref={containerRef} className="flex-1 overflow-y-auto pb-24">
+          {/* Suggested Users for "foryou" tab */}
+          {activeTab === "foryou" && user && !loading && (
+            <div className="px-4 pt-2">
+              <SuggestedUsers userId={user.id} followingIds={followingIds} onFollowChange={refreshFollowingIds} />
             </div>
           )}
-          {!hasMore && filteredPosts.length > 0 && (
-            <p className="text-center text-[11px] text-muted-foreground/50 py-4">ไม่มีโพสเพิ่มเติม</p>
-          )}
+
+          {/* Feed */}
+          <div className="px-4 space-y-4">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-2xl bg-surface-elevated border border-border/50 p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-10 h-10 rounded-full" />
+                    <div className="space-y-1.5 flex-1">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-2.5 w-32" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-40 w-full rounded-xl" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              ))
+            ) : filteredPosts.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center py-16 gap-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
+                  <ChefHat size={28} className="text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">{emptyMessages[activeTab]}</p>
+                {activeTab === "explore" && (
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => navigate("/store-list")}
+                    className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
+                  >
+                    เริ่มสำรวจร้าน
+                  </motion.button>
+                )}
+                {activeTab === "following" && (
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => navigate("/discover")}
+                    className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
+                  >
+                    ค้นหาคนเพื่อติดตาม
+                  </motion.button>
+                )}
+              </motion.div>
+            ) : (
+              <AnimatePresence>
+                {filteredPosts.map((post, i) => (
+                  <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
+                ))}
+              </AnimatePresence>
+            )}
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-1" />
+            {loadingMore && (
+              <div className="flex justify-center py-6">
+                <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            {!hasMore && filteredPosts.length > 0 && (
+              <p className="text-center text-[11px] text-muted-foreground/50 py-4">ไม่มีโพสเพิ่มเติม</p>
+            )}
+          </div>
         </div>
 
         <BottomNav />
