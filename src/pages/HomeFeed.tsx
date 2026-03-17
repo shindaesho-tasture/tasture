@@ -353,11 +353,9 @@ const PostCard = ({ post, index, navigate, user }: PostCardProps) => {
   const [commentCount, setCommentCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Derive refId from post
-  const refType = post.type;
-  const refId = post.type === "menu_review"
-    ? post.id.replace("review-", "")
-    : post.id.replace("dna-", "");
+  // Derive refId for comments - use consistent key based on user+menuItem
+  const refType = "post";
+  const refId = `${post.userId}-${post.menuItemId}`;
 
   // Fetch comment count on mount
   useEffect(() => {
