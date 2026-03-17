@@ -416,7 +416,7 @@ const PostOrderReview = () => {
         if (sensoryReviewChoice[id] === "same" && hasPreviousSensory[id]) {
           // Re-upsert previous score to update timestamp
           await supabase.from("menu_reviews").upsert(
-            { menu_item_id: id, user_id: user.id, score: previousSensoryScore[id] },
+            { menu_item_id: id, user_id: user.id, score: previousSensoryScore[id], shared: shareToFeed } as any,
             { onConflict: "menu_item_id,user_id" }
           );
         } else {
