@@ -199,6 +199,7 @@ const HomeFeed = () => {
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
           .eq("shared", true)
+          .eq("hidden", false)
           .order("created_at", { ascending: false })
           .limit(limit),
         supabase
