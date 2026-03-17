@@ -238,6 +238,7 @@ const AdminDashboard = () => {
         menu_item_name: menu?.name || "เมนู",
         store_name: menu ? (storeNameMap.get(menu.store_id) || "ร้าน") : "ร้าน",
         shared: r.shared ?? true,
+        hidden: (r as any).hidden ?? false,
       };
     }));
   };
