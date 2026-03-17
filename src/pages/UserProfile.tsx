@@ -287,6 +287,7 @@ const UserProfile = () => {
         <div className="flex border-b border-border">
           {[
             { key: "posts" as const, icon: Grid3X3 },
+            { key: "dna" as const, icon: Dna },
             { key: "badges" as const, icon: Trophy },
           ].map(({ key, icon: Icon }) => (
             <button key={key} onClick={() => setActiveTab(key)}
