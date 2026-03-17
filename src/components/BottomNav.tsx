@@ -1,12 +1,11 @@
 import { motion } from "framer-motion";
-import { Home, Compass, Globe, Split, ClipboardList, User } from "lucide-react";
+import { Home, Compass, PlusCircle, ClipboardList, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const navItems = [
   { id: "home", label: "Home", icon: Home, path: "/" },
   { id: "discover", label: "Discover", icon: Compass, path: "/discover" },
-  { id: "world", label: "World Map", icon: Globe, path: "/world" },
-  { id: "split", label: "Smart Split", icon: Split, path: "/split" },
+  { id: "post", label: "โพส", icon: PlusCircle, path: "/post", isCenter: true },
   { id: "orders", label: "รายการ", icon: ClipboardList, path: "/orders" },
   { id: "profile", label: "Profile", icon: User, path: "/profile" },
 ];
@@ -29,22 +28,32 @@ const BottomNav = () => {
                 key={item.id}
                 onClick={() => navigate(item.path)}
                 whileTap={{ scale: 0.9 }}
-                className="flex flex-col items-center gap-1 py-1 min-w-[60px]"
+                className={`flex flex-col items-center gap-1 py-1 min-w-[56px] ${
+                  (item as any).isCenter ? "-mt-3" : ""
+                }`}
               >
-                <Icon
-                  size={22}
-                  strokeWidth={isActive ? 2 : 1.5}
-                  className={`transition-colors duration-200 ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                />
-                <span
-                  className={`text-[10px] font-medium transition-colors duration-200 ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  {item.label}
-                </span>
+                {(item as any).isCenter ? (
+                  <div className="w-12 h-12 rounded-full bg-score-emerald flex items-center justify-center shadow-[0_2px_16px_hsl(163_78%_20%/0.4)]">
+                    <Icon size={24} strokeWidth={2} className="text-white" />
+                  </div>
+                ) : (
+                  <>
+                    <Icon
+                      size={22}
+                      strokeWidth={isActive ? 2 : 1.5}
+                      className={`transition-colors duration-200 ${
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    />
+                    <span
+                      className={`text-[10px] font-medium transition-colors duration-200 ${
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </>
+                )}
               </motion.button>
             );
           })}
