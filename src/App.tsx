@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/lib/store-context";
 import { OrderProvider } from "@/lib/order-context";
+import { CategoriesProvider } from "@/hooks/use-categories";
 import HomeFeed from "./pages/HomeFeed.tsx";
 import Index from "./pages/Index.tsx";
 import CategorySelect from "./pages/CategorySelect.tsx";
