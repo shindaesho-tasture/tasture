@@ -132,10 +132,23 @@ const UserProfile = () => {
         });
       }
 
-      // Follow status
+      // Follow status + my Taste DNA (for compare)
       if (me && me.id !== userId) {
-        const { data } = await supabase.from("follows").select("id").eq("follower_id", me.id).eq("following_id", userId).maybeSingle();
-        setIsFollowing(!!data);
+        const [followRes, myRatings] = await Promise.all([
+          supabase.from("follows").select("id").eq("follower_id", me.id).eq("following_id", userId).maybeSingle(),
+          supabase.from("satisfaction_ratings").select("taste, cleanliness, texture, value, overall").eq("user_id", me.id),
+        ]);
+        setIsFollowing(!!followRes.data);
+        if (myRatings.data && myRatings.data.length > 0) {
+          const avg2 = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
+          setMyTasteDNA({
+            salty: avg2(myRatings.data.map((s) => s.overall)),
+            sweet: avg2(myRatings.data.map((s) => s.taste)),
+            sour: avg2(myRatings.data.map((s) => s.texture)),
+            spicy: avg2(myRatings.data.map((s) => s.value)),
+            umami: avg2(myRatings.data.map((s) => s.cleanliness)),
+          });
+        }
       }
 
       setLoading(false);
