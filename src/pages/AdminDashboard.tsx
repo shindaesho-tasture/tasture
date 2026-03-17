@@ -617,13 +617,19 @@ const AdminDashboard = () => {
                   {contentTab === "posts" && (
                     <div className="space-y-2">
                       {filteredPosts.map((p) => (
-                        <motion.div key={p.id} layout className="rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 overflow-hidden">
+                        <motion.div key={p.id} layout className={cn(
+                          "rounded-2xl bg-surface-elevated shadow-luxury border overflow-hidden",
+                          p.hidden ? "border-score-amber/30 bg-score-amber/5" : "border-border/50"
+                        )}>
                           <div className="flex gap-3 p-3">
-                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-secondary shrink-0">
+                            <div className={cn("w-16 h-16 rounded-xl overflow-hidden bg-secondary shrink-0", p.hidden && "opacity-40")}>
                               <img src={p.image_url} alt="" className="w-full h-full object-cover" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-foreground truncate">{p.userName}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-xs font-semibold text-foreground truncate">{p.userName}</p>
+                                {p.hidden && <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-amber/10 text-score-amber font-bold">ซ่อน</span>}
+                              </div>
                               <p className="text-[10px] text-muted-foreground truncate mt-0.5">{p.caption || "ไม่มีคำอธิบาย"}</p>
                               {p.store_name && <p className="text-[10px] text-muted-foreground mt-0.5">🏪 {p.store_name}</p>}
                               <div className="flex items-center gap-2 mt-1.5">
@@ -632,7 +638,18 @@ const AdminDashboard = () => {
                                 <span className="text-[10px] text-muted-foreground/60 ml-auto">{timeAgo(p.created_at)}</span>
                               </div>
                             </div>
-                            <ConfirmDeleteButton onDelete={() => deletePost(p.id)} />
+                            <div className="flex flex-col gap-1">
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => toggleHidePost(p.id, p.hidden)}
+                                className={cn("p-1.5 rounded-lg transition-colors",
+                                  p.hidden ? "bg-score-emerald/10 text-score-emerald" : "bg-score-amber/10 text-score-amber"
+                                )}
+                              >
+                                {p.hidden ? <Eye size={12} /> : <EyeOff size={12} />}
+                              </motion.button>
+                              <ConfirmDeleteButton onDelete={() => deletePost(p.id)} />
+                            </div>
                           </div>
                         </motion.div>
                       ))}
