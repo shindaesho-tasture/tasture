@@ -70,7 +70,7 @@ const FeedRadarChart = ({ data, size = 160, dark = false, className }: FeedRadar
               key={ring}
               d={ringPath}
               fill="none"
-              stroke={ring === 3 ? "hsl(163 78% 20% / 0.25)" : "hsl(0 0% 0% / 0.06)"}
+              stroke={ring === 3 ? "hsl(163 78% 20% / 0.25)" : dark ? "hsl(0 0% 100% / 0.1)" : "hsl(0 0% 0% / 0.06)"}
               strokeWidth={ring === 3 ? 1.5 : 0.5}
               strokeDasharray={ring === 3 ? "3 2" : undefined}
             />
@@ -82,7 +82,7 @@ const FeedRadarChart = ({ data, size = 160, dark = false, className }: FeedRadar
           const outer = getPoint(a.angle, 5);
           return (
             <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y}
-              stroke="hsl(0 0% 0% / 0.06)" strokeWidth={0.5} />
+              stroke={dark ? "hsl(0 0% 100% / 0.1)" : "hsl(0 0% 0% / 0.06)"} strokeWidth={0.5} />
           );
         })}
 
@@ -91,8 +91,8 @@ const FeedRadarChart = ({ data, size = 160, dark = false, className }: FeedRadar
 
         {/* Data shape */}
         <path d={dataPath}
-          fill="hsl(163 78% 20% / 0.12)"
-          stroke="hsl(163 78% 20% / 0.8)"
+          fill={dark ? "hsl(163 78% 40% / 0.2)" : "hsl(163 78% 20% / 0.12)"}
+          stroke={dark ? "hsl(163 78% 50% / 0.9)" : "hsl(163 78% 20% / 0.8)"}
           strokeWidth={1.5} strokeLinejoin="round" />
 
         {/* Data points */}
