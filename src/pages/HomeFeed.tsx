@@ -217,9 +217,14 @@ const HomeFeed = () => {
         storeIds.add(m.store_id);
       });
 
-      const { data: storesData } = await supabase.from("stores").select("id, name").in("id", [...storeIds]);
+      const { data: storesData } = await supabase.from("stores").select("id, name, pin_lat, pin_lng").in("id", [...storeIds]);
       const storeMap = new Map<string, string>();
-      (storesData || []).forEach((s) => storeMap.set(s.id, s.name));
+      const locMap = new Map<string, { lat: number; lng: number }>();
+      (storesData || []).forEach((s) => {
+        storeMap.set(s.id, s.name);
+        if (s.pin_lat != null && s.pin_lng != null) locMap.set(s.id, { lat: s.pin_lat, lng: s.pin_lng });
+      });
+      setStoreLocations(locMap);
 
       // Group everything by user+menu_item to create combined posts
       const postMap = new Map<string, {
