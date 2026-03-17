@@ -28,22 +28,32 @@ const BottomNav = () => {
                 key={item.id}
                 onClick={() => navigate(item.path)}
                 whileTap={{ scale: 0.9 }}
-                className="flex flex-col items-center gap-1 py-1 min-w-[60px]"
+                className={`flex flex-col items-center gap-1 py-1 min-w-[56px] ${
+                  (item as any).isCenter ? "-mt-3" : ""
+                }`}
               >
-                <Icon
-                  size={22}
-                  strokeWidth={isActive ? 2 : 1.5}
-                  className={`transition-colors duration-200 ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                />
-                <span
-                  className={`text-[10px] font-medium transition-colors duration-200 ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  {item.label}
-                </span>
+                {(item as any).isCenter ? (
+                  <div className="w-12 h-12 rounded-full bg-score-emerald flex items-center justify-center shadow-[0_2px_16px_hsl(163_78%_20%/0.4)]">
+                    <Icon size={24} strokeWidth={2} className="text-white" />
+                  </div>
+                ) : (
+                  <>
+                    <Icon
+                      size={22}
+                      strokeWidth={isActive ? 2 : 1.5}
+                      className={`transition-colors duration-200 ${
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    />
+                    <span
+                      className={`text-[10px] font-medium transition-colors duration-200 ${
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </>
+                )}
               </motion.button>
             );
           })}
