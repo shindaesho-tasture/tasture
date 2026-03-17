@@ -327,7 +327,7 @@ const StoreRegistration = () => {
             </div>
 
             <div className="relative overflow-hidden rounded-2xl shadow-luxury">
-              <div className="relative h-48 bg-secondary overflow-hidden rounded-t-2xl">
+              <div className="relative h-64 bg-secondary overflow-hidden rounded-t-2xl">
                 {isLoaded ? (
                   <GoogleMap
                     mapContainerStyle={mapContainerStyle}
@@ -360,6 +360,18 @@ const StoreRegistration = () => {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Loader2 size={24} className="text-muted-foreground animate-spin" />
+                  </div>
+                )}
+
+                {/* Tap-to-pin hint */}
+                {!pinned && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <MapPin size={28} className="text-score-emerald drop-shadow-lg animate-bounce" />
+                      <span className="text-[10px] font-medium text-foreground bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full shadow">
+                        แตะแผนที่เพื่อปักหมุด
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
