@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
@@ -13,6 +14,7 @@ import TastureHeader from "@/components/TastureHeader";
 import DiscoveryTabs, { type DiscoveryTab } from "@/components/DiscoveryTabs";
 import SensorySearch from "@/components/SensorySearch";
 import HeroFoodCard from "@/components/HeroFoodCard";
+import LocationPickerSheet from "@/components/LocationPickerSheet";
 import BottomNav from "@/components/BottomNav";
 
 /* ─── Types ─── */
