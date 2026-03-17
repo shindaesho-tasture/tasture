@@ -556,9 +556,14 @@ const AdminDashboard = () => {
                     {filteredUsers.map((u) => {
                       const RoleIcon = roleIcons[u.role] || UserIcon;
                       return (
-                        <motion.div key={u.id} layout className="rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 p-4">
+                         <motion.div key={u.id} layout className={cn(
+                           "rounded-2xl bg-surface-elevated shadow-luxury border p-4",
+                           u.banned ? "border-destructive/30 bg-destructive/5" : "border-border/50"
+                         )}>
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/30">
+                            <div className={cn("w-10 h-10 rounded-full bg-secondary overflow-hidden shrink-0 ring-2",
+                              u.banned ? "ring-destructive/40 opacity-60" : "ring-border/30"
+                            )}>
                               {u.avatar_url ? (
                                 <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                               ) : (
@@ -568,7 +573,10 @@ const AdminDashboard = () => {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-foreground truncate">{u.display_name || "ไม่มีชื่อ"}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className={cn("text-sm font-semibold truncate", u.banned ? "text-destructive line-through" : "text-foreground")}>{u.display_name || "ไม่มีชื่อ"}</p>
+                                {u.banned && <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-destructive/10 text-destructive font-bold">BANNED</span>}
+                              </div>
                               <p className="text-[10px] text-muted-foreground truncate">{u.email || "—"}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-[10px] text-muted-foreground">📸 {u.postCount}</span>
@@ -576,7 +584,19 @@ const AdminDashboard = () => {
                                 <span className="text-[10px] text-muted-foreground">· {timeAgo(u.created_at)}</span>
                               </div>
                             </div>
-                            <RoleSelector currentRole={u.role} onChange={(role) => changeRole(u.id, role)} />
+                            <div className="flex flex-col items-end gap-1.5">
+                              <RoleSelector currentRole={u.role} onChange={(role) => changeRole(u.id, role)} />
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => toggleBanUser(u.id, u.banned)}
+                                className={cn("flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors",
+                                  u.banned ? "bg-score-emerald/10 text-score-emerald" : "bg-destructive/10 text-destructive"
+                                )}
+                              >
+                                <Ban size={10} />
+                                {u.banned ? "ปลดแบน" : "แบน"}
+                              </motion.button>
+                            </div>
                           </div>
                         </motion.div>
                       );
