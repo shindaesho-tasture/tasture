@@ -169,65 +169,65 @@ const HomeFeed = () => {
       const storeMap = new Map<string, string>();
       (storesData || []).forEach((s) => storeMap.set(s.id, s.name));
 
-      // Build feed posts from reviews
-      const reviewPosts: FeedPost[] = (reviewsRes.data || []).map((r) => {
-        const profile = profileMap.get(r.user_id);
-        const menu = menuMap.get(r.menu_item_id);
-        return {
-          id: `review-${r.id}`,
-          type: "menu_review",
-          userId: r.user_id,
-          userName: profile?.name || "ผู้ใช้",
-          userAvatar: profile?.avatar || null,
-          storeName: menu ? (storeMap.get(menu.storeId) || "ร้านค้า") : "ร้านค้า",
-          storeId: menu?.storeId || "",
-          menuItemName: menu?.name || "เมนู",
-          menuItemId: r.menu_item_id,
-          menuItemImage: menu?.image || null,
-          score: r.score,
-          createdAt: r.created_at,
-        };
+      // Group everything by user+menu_item to create combined posts
+      const postMap = new Map<string, {
+        userId: string;
+        menuItemId: string;
+        score: number | null;
+        reviewId: string | null;
+        dnaComponents: { name: string; icon: string; tag: string; score: number }[];
+        latestTime: string;
+      }>();
+
+      // Add reviews
+      (reviewsRes.data || []).forEach((r) => {
+        const key = `${r.user_id}-${r.menu_item_id}`;
+        if (!postMap.has(key)) {
+          postMap.set(key, { userId: r.user_id, menuItemId: r.menu_item_id, score: null, reviewId: null, dnaComponents: [], latestTime: r.created_at });
+        }
+        const entry = postMap.get(key)!;
+        entry.score = r.score;
+        entry.reviewId = r.id;
+        if (new Date(r.created_at) > new Date(entry.latestTime)) entry.latestTime = r.created_at;
       });
 
-      // Group DNA by user+menu_item (same submission)
-      const dnaGrouped = new Map<string, typeof dnaRes.data>();
+      // Add DNA
       (dnaRes.data || []).forEach((d) => {
         const key = `${d.user_id}-${d.menu_item_id}`;
-        if (!dnaGrouped.has(key)) dnaGrouped.set(key, []);
-        dnaGrouped.get(key)!.push(d);
+        if (!postMap.has(key)) {
+          postMap.set(key, { userId: d.user_id, menuItemId: d.menu_item_id, score: null, reviewId: null, dnaComponents: [], latestTime: d.created_at });
+        }
+        const entry = postMap.get(key)!;
+        entry.dnaComponents.push({ name: d.component_name, icon: d.component_icon, tag: d.selected_tag, score: d.selected_score });
+        if (new Date(d.created_at) > new Date(entry.latestTime)) entry.latestTime = d.created_at;
       });
 
-      const dnaPosts: FeedPost[] = [...dnaGrouped.entries()].map(([key, items]) => {
-        const first = items![0];
-        const profile = profileMap.get(first.user_id);
-        const menu = menuMap.get(first.menu_item_id);
+      // Build combined posts
+      const allPosts: FeedPost[] = [...postMap.entries()].map(([key, entry]) => {
+        const profile = profileMap.get(entry.userId);
+        const menu = menuMap.get(entry.menuItemId);
+        const hasReview = entry.score != null;
+        const hasDna = entry.dnaComponents.length > 0;
+        const type = hasReview && hasDna ? "combined" : hasReview ? "menu_review" : "dish_dna";
+
         return {
-          id: `dna-${key}`,
-          type: "dish_dna",
-          userId: first.user_id,
+          id: `post-${key}`,
+          type,
+          userId: entry.userId,
           userName: profile?.name || "ผู้ใช้",
           userAvatar: profile?.avatar || null,
           storeName: menu ? (storeMap.get(menu.storeId) || "ร้านค้า") : "ร้านค้า",
           storeId: menu?.storeId || "",
           menuItemName: menu?.name || "เมนู",
-          menuItemId: first.menu_item_id,
+          menuItemId: entry.menuItemId,
           menuItemImage: menu?.image || null,
-          score: null,
-          dnaComponents: items!.map((d) => ({
-            name: d.component_name,
-            icon: d.component_icon,
-            tag: d.selected_tag,
-            score: d.selected_score,
-          })),
-          createdAt: first.created_at,
+          score: entry.score,
+          dnaComponents: hasDna ? entry.dnaComponents : undefined,
+          createdAt: entry.latestTime,
         };
       });
 
-      // Merge and sort by time
-      const allPosts = [...reviewPosts, ...dnaPosts].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
+      allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setPosts(allPosts.slice(0, 30));
     } catch (err) {
       console.error("Feed fetch error:", err);
