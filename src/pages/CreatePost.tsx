@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Image, X, Send, MapPin, Loader2, Search, ChevronDown } from "lucide-react";
+import { Camera, Image, X, Send, MapPin, Loader2, Search, ChevronDown, Star, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -14,8 +14,32 @@ interface StoreOption {
   name: string;
 }
 
+interface RecentReview {
+  id: string;
+  menu_item_id: string;
+  menu_item_name: string;
+  store_name: string;
+  store_id: string;
+  score: number;
+  created_at: string;
+}
+
+const scoreEmoji = (s: number) => (s === 2 ? "🤩" : s === 0 ? "😐" : "😔");
+
+const timeAgo = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "เมื่อสักครู่";
+  if (mins < 60) return `${mins} นาทีที่แล้ว`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} ชม.ที่แล้ว`;
+  const days = Math.floor(hrs / 24);
+  return `${days} วันที่แล้ว`;
+};
+
 const CreatePost = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -33,9 +57,31 @@ const CreatePost = () => {
   const [storeSearch, setStoreSearch] = useState("");
   const [loadingStores, setLoadingStores] = useState(false);
 
+  // Review link
+  const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
+  const [selectedReview, setSelectedReview] = useState<RecentReview | null>(null);
+  const [showReviewPicker, setShowReviewPicker] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+
   useEffect(() => {
     fetchStores();
-  }, []);
+    if (user) fetchRecentReviews();
+  }, [user]);
+
+  // Auto-link review from query param (from MenuFeedback redirect)
+  useEffect(() => {
+    const reviewId = searchParams.get("review");
+    if (reviewId && recentReviews.length > 0) {
+      const found = recentReviews.find((r) => r.id === reviewId);
+      if (found) {
+        setSelectedReview(found);
+        // Auto-select the store too
+        if (found.store_id) {
+          setSelectedStore({ id: found.store_id, name: found.store_name });
+        }
+      }
+    }
+  }, [searchParams, recentReviews]);
 
   const fetchStores = async () => {
     setLoadingStores(true);
@@ -45,6 +91,52 @@ const CreatePost = () => {
       .order("name");
     setStores(data || []);
     setLoadingStores(false);
+  };
+
+  const fetchRecentReviews = async () => {
+    if (!user) return;
+    setLoadingReviews(true);
+    const { data } = await supabase
+      .from("menu_reviews")
+      .select("id, menu_item_id, score, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (data && data.length > 0) {
+      const menuIds = [...new Set(data.map((r) => r.menu_item_id))];
+      const { data: menuItems } = await supabase
+        .from("menu_items")
+        .select("id, name, store_id")
+        .in("id", menuIds);
+
+      const menuMap = new Map(
+        (menuItems || []).map((m) => [m.id, { name: m.name, store_id: m.store_id }])
+      );
+
+      const storeIds = [...new Set((menuItems || []).map((m) => m.store_id))];
+      const { data: storesData } = await supabase
+        .from("stores")
+        .select("id, name")
+        .in("id", storeIds);
+      const storeMap = new Map((storesData || []).map((s) => [s.id, s.name]));
+
+      setRecentReviews(
+        data.map((r) => {
+          const menu = menuMap.get(r.menu_item_id);
+          return {
+            id: r.id,
+            menu_item_id: r.menu_item_id,
+            menu_item_name: menu?.name || "เมนู",
+            store_name: menu?.store_id ? (storeMap.get(menu.store_id) || "ร้านค้า") : "ร้านค้า",
+            store_id: menu?.store_id || "",
+            score: r.score,
+            created_at: r.created_at,
+          };
+        })
+      );
+    }
+    setLoadingReviews(false);
   };
 
   const filteredStores = storeSearch
@@ -89,7 +181,8 @@ const CreatePost = () => {
         image_url: urlData.publicUrl,
         caption: caption.trim() || null,
         store_id: selectedStore?.id || null,
-      });
+        menu_review_id: selectedReview?.id || null,
+      } as any);
 
       if (insertErr) throw insertErr;
 
@@ -197,6 +290,101 @@ const CreatePost = () => {
             )}
           </AnimatePresence>
 
+          {/* Link Review */}
+          <div className="relative">
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowReviewPicker(!showReviewPicker)}
+              className={cn(
+                "w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all",
+                selectedReview
+                  ? "bg-score-amber/5 border-score-amber/30"
+                  : "bg-card border-border/30 shadow-luxury"
+              )}
+            >
+              <Star size={16} className={selectedReview ? "text-score-amber" : "text-muted-foreground"} />
+              <span className={cn(
+                "flex-1 text-left text-sm truncate",
+                selectedReview ? "font-semibold text-foreground" : "text-muted-foreground"
+              )}>
+                {selectedReview
+                  ? `${scoreEmoji(selectedReview.score)} ${selectedReview.menu_item_name} — ${selectedReview.store_name}`
+                  : "แนบรีวิวล่าสุด (ไม่บังคับ)"}
+              </span>
+              {selectedReview ? (
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedReview(null); }}
+                  className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center"
+                >
+                  <X size={12} className="text-muted-foreground" />
+                </motion.div>
+              ) : (
+                <ChevronDown size={14} className={cn(
+                  "text-muted-foreground transition-transform",
+                  showReviewPicker && "rotate-180"
+                )} />
+              )}
+            </motion.button>
+
+            <AnimatePresence>
+              {showReviewPicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -8, height: 0 }}
+                  className="mt-2 rounded-2xl bg-card border border-border/30 shadow-luxury overflow-hidden"
+                >
+                  <div className="px-4 py-2.5 border-b border-border/20">
+                    <p className="text-[10px] font-medium text-muted-foreground tracking-wide">รีวิวล่าสุดของคุณ</p>
+                  </div>
+                  <div className="max-h-56 overflow-y-auto">
+                    {loadingReviews ? (
+                      <div className="flex justify-center py-4">
+                        <div className="w-5 h-5 border-2 border-score-amber border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : recentReviews.length === 0 ? (
+                      <p className="text-center text-xs text-muted-foreground py-4">ยังไม่มีรีวิว</p>
+                    ) : (
+                      recentReviews.map((review) => (
+                        <motion.button
+                          key={review.id}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setSelectedReview(review);
+                            setShowReviewPicker(false);
+                            // Auto-set store
+                            if (review.store_id && !selectedStore) {
+                              setSelectedStore({ id: review.store_id, name: review.store_name });
+                            }
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border/10 last:border-b-0",
+                            selectedReview?.id === review.id
+                              ? "bg-score-amber/10"
+                              : "hover:bg-secondary/50"
+                          )}
+                        >
+                          <span className="text-lg shrink-0">{scoreEmoji(review.score)}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{review.menu_item_name}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <MapPin size={10} className="text-muted-foreground shrink-0" />
+                              <span className="text-[10px] text-muted-foreground truncate">{review.store_name}</span>
+                              <span className="text-[10px] text-muted-foreground/50">•</span>
+                              <Clock size={9} className="text-muted-foreground/50 shrink-0" />
+                              <span className="text-[10px] text-muted-foreground/50">{timeAgo(review.created_at)}</span>
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           {/* Store Tag */}
           <div className="relative">
             <motion.button
@@ -232,7 +420,6 @@ const CreatePost = () => {
               )}
             </motion.button>
 
-            {/* Store Picker Dropdown */}
             <AnimatePresence>
               {showStorePicker && (
                 <motion.div
@@ -241,7 +428,6 @@ const CreatePost = () => {
                   exit={{ opacity: 0, y: -8, height: 0 }}
                   className="mt-2 rounded-2xl bg-card border border-border/30 shadow-luxury overflow-hidden"
                 >
-                  {/* Search */}
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/20">
                     <Search size={14} className="text-muted-foreground shrink-0" />
                     <input
@@ -258,8 +444,6 @@ const CreatePost = () => {
                       </button>
                     )}
                   </div>
-
-                  {/* List */}
                   <div className="max-h-48 overflow-y-auto">
                     {loadingStores ? (
                       <div className="flex justify-center py-4">
