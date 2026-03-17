@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Crown, Gem, Store, LogIn, Pencil, Check, X, Camera, Users, ChefHat, Grid3X3, Bookmark, Heart, MessageCircle } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
+import PostDetailSheet from "@/components/PostDetailSheet";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,8 @@ const Profile = () => {
   // Saved stores
   const [savedStores, setSavedStores] = useState<SavedStoreItem[]>([]);
 
+  // Post detail sheet
+  const [selectedPost, setSelectedPost] = useState<UserPost | null>(null);
   const handleSaveName = async () => {
     if (!user || !nameInput.trim()) return;
     setSavingName(true);
@@ -349,7 +352,7 @@ const Profile = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="relative aspect-square bg-secondary overflow-hidden group"
-                    onClick={() => navigate(`/`)} // navigate to feed/post detail later
+                    onClick={() => setSelectedPost(post)}
                   >
                     <img
                       src={post.images[0] || post.image_url}
@@ -428,6 +431,20 @@ const Profile = () => {
             )}
           </div>
         )}
+
+        {/* Post Detail Sheet */}
+        <PostDetailSheet
+          open={!!selectedPost}
+          onClose={() => setSelectedPost(null)}
+          postId={selectedPost?.id || ""}
+          preload={selectedPost ? {
+            imageUrl: selectedPost.image_url,
+            images: selectedPost.images,
+            caption: selectedPost.caption,
+            likeCount: selectedPost.likeCount,
+            commentCount: selectedPost.commentCount,
+          } : undefined}
+        />
 
         <BottomNav />
       </div>
