@@ -9,6 +9,7 @@ import PageTransition from "@/components/PageTransition";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import FeedRadarChart from "@/components/FeedRadarChart";
+import CompareRadarChart from "@/components/CompareRadarChart";
 
 /* ── Types ── */
 interface UserPost {
@@ -71,6 +72,8 @@ const UserProfile = () => {
   const [totalReviews, setTotalReviews] = useState(0);
   const [dnaEntryCount, setDnaEntryCount] = useState(0);
   const [tasteDNA, setTasteDNA] = useState<TasteDNA>({ salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 });
+  const [myTasteDNA, setMyTasteDNA] = useState<TasteDNA | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
 
   // Tabs & posts
   const [activeTab, setActiveTab] = useState<"posts" | "badges" | "dna">("posts");
@@ -129,10 +132,23 @@ const UserProfile = () => {
         });
       }
 
-      // Follow status
+      // Follow status + my Taste DNA (for compare)
       if (me && me.id !== userId) {
-        const { data } = await supabase.from("follows").select("id").eq("follower_id", me.id).eq("following_id", userId).maybeSingle();
-        setIsFollowing(!!data);
+        const [followRes, myRatings] = await Promise.all([
+          supabase.from("follows").select("id").eq("follower_id", me.id).eq("following_id", userId).maybeSingle(),
+          supabase.from("satisfaction_ratings").select("taste, cleanliness, texture, value, overall").eq("user_id", me.id),
+        ]);
+        setIsFollowing(!!followRes.data);
+        if (myRatings.data && myRatings.data.length > 0) {
+          const avg2 = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
+          setMyTasteDNA({
+            salty: avg2(myRatings.data.map((s) => s.overall)),
+            sweet: avg2(myRatings.data.map((s) => s.taste)),
+            sour: avg2(myRatings.data.map((s) => s.texture)),
+            spicy: avg2(myRatings.data.map((s) => s.value)),
+            umami: avg2(myRatings.data.map((s) => s.cleanliness)),
+          });
+        }
       }
 
       setLoading(false);
@@ -343,44 +359,69 @@ const UserProfile = () => {
         {/* Taste DNA Tab */}
         {activeTab === "dna" && (
           <div className="px-4 pt-6 pb-8">
-            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              🧬 Taste DNA
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                🧬 Taste DNA
+              </h2>
+              {/* Compare toggle — only show when viewing someone else and both have data */}
+              {!isMe && myTasteDNA && (tasteDNA.salty + tasteDNA.sweet + tasteDNA.sour + tasteDNA.spicy + tasteDNA.umami) > 0 && (
+                <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCompareMode((v) => !v)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1 transition-all",
+                    compareMode ? "bg-score-emerald text-background" : "bg-secondary text-foreground"
+                  )}>
+                  {compareMode ? "✦ เปรียบเทียบ" : "⚡ เทียบกัน"}
+                </motion.button>
+              )}
+            </div>
 
             {(tasteDNA.salty + tasteDNA.sweet + tasteDNA.sour + tasteDNA.spicy + tasteDNA.umami) > 0 ? (
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4 }} className="flex flex-col items-center">
-                <FeedRadarChart
-                  data={{
-                    overall: tasteDNA.salty,
-                    taste: tasteDNA.sweet,
-                    texture: tasteDNA.sour,
-                    value: tasteDNA.spicy,
-                    cleanliness: tasteDNA.umami,
-                  }}
-                  size={240}
-                  showBarBreakdown
-                />
 
-                {/* Taste highlights */}
-                <div className="mt-6 w-full grid grid-cols-5 gap-1.5">
-                  {([
-                    { label: "เค็ม", icon: "🧂", val: tasteDNA.salty },
-                    { label: "หวาน", icon: "🍯", val: tasteDNA.sweet },
-                    { label: "เปรี้ยว", icon: "🍋", val: tasteDNA.sour },
-                    { label: "เผ็ด", icon: "🌶️", val: tasteDNA.spicy },
-                    { label: "อูมามิ", icon: "🍄", val: tasteDNA.umami },
-                  ] as const).map((t) => {
-                    const color = t.val >= 4 ? "text-score-emerald" : t.val >= 2.5 ? "text-foreground" : "text-muted-foreground";
-                    return (
-                      <div key={t.label} className="flex flex-col items-center py-2 rounded-xl bg-secondary/50">
-                        <span className="text-base">{t.icon}</span>
-                        <span className={cn("text-xs font-bold mt-0.5", color)}>{t.val.toFixed(1)}</span>
-                        <span className="text-[9px] text-muted-foreground">{t.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+                {compareMode && myTasteDNA ? (
+                  <CompareRadarChart
+                    userA={myTasteDNA}
+                    userB={tasteDNA}
+                    nameA="ฉัน"
+                    nameB={profile?.display_name || "เพื่อน"}
+                    size={260}
+                  />
+                ) : (
+                  <>
+                    <FeedRadarChart
+                      data={{
+                        overall: tasteDNA.salty,
+                        taste: tasteDNA.sweet,
+                        texture: tasteDNA.sour,
+                        value: tasteDNA.spicy,
+                        cleanliness: tasteDNA.umami,
+                      }}
+                      size={240}
+                      showBarBreakdown
+                    />
+
+                    {/* Taste highlights */}
+                    <div className="mt-6 w-full grid grid-cols-5 gap-1.5">
+                      {([
+                        { label: "เค็ม", icon: "🧂", val: tasteDNA.salty },
+                        { label: "หวาน", icon: "🍯", val: tasteDNA.sweet },
+                        { label: "เปรี้ยว", icon: "🍋", val: tasteDNA.sour },
+                        { label: "เผ็ด", icon: "🌶️", val: tasteDNA.spicy },
+                        { label: "อูมามิ", icon: "🍄", val: tasteDNA.umami },
+                      ] as const).map((t) => {
+                        const color = t.val >= 4 ? "text-score-emerald" : t.val >= 2.5 ? "text-foreground" : "text-muted-foreground";
+                        return (
+                          <div key={t.label} className="flex flex-col items-center py-2 rounded-xl bg-secondary/50">
+                            <span className="text-base">{t.icon}</span>
+                            <span className={cn("text-xs font-bold mt-0.5", color)}>{t.val.toFixed(1)}</span>
+                            <span className="text-[9px] text-muted-foreground">{t.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </motion.div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
