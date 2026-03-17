@@ -22,6 +22,8 @@ const DishTemplateEditor = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<DishTemplate | null>(null);
   const [saving, setSaving] = useState(false);
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [newDishName, setNewDishName] = useState("");
 
   useEffect(() => { fetchTemplates(); }, []);
 
@@ -103,6 +105,36 @@ const DishTemplateEditor = () => {
     setSaving(false);
   };
 
+  const createTemplate = async () => {
+    const name = newDishName.trim();
+    if (!name) { toast({ title: "กรุณาใส่ชื่อเมนู", variant: "destructive" }); return; }
+    if (templates.some((t) => t.dish_name.toLowerCase() === name.toLowerCase())) {
+      toast({ title: "มีเทมเพลตชื่อนี้แล้ว", variant: "destructive" }); return;
+    }
+    setSaving(true);
+    haptic();
+    const defaultComponents: DishComponent[] = [
+      { name: "ส่วนประกอบ 1", icon: "🍽️", tags: { emerald: "สุดยอด", neutral: "ปกติ", ruby: "ผิดหวัง" } },
+    ];
+    const { data, error } = await supabase
+      .from("dish_templates")
+      .insert({ dish_name: name, components: defaultComponents as any })
+      .select()
+      .single();
+    if (error) {
+      toast({ title: "สร้างไม่สำเร็จ", description: error.message, variant: "destructive" });
+    } else if (data) {
+      const newT: DishTemplate = { ...data, components: defaultComponents };
+      setTemplates((prev) => [newT, ...prev]);
+      setCreatingNew(false);
+      setNewDishName("");
+      setExpandedId(newT.id);
+      startEdit(newT);
+      toast({ title: "✅ สร้างเทมเพลตใหม่แล้ว" });
+    }
+    setSaving(false);
+  };
+
   const filtered = templates.filter(
     (t) => !search || t.dish_name.toLowerCase().includes(search.toLowerCase())
   );
@@ -125,6 +157,54 @@ const DishTemplateEditor = () => {
         </div>
         <p className="text-[10px] text-muted-foreground">แก้ไข เพิ่ม หรือลบแท็กของแต่ละส่วนประกอบในเทมเพลต</p>
       </div>
+
+      {/* Create new */}
+      <AnimatePresence>
+        {creatingNew ? (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="rounded-2xl bg-surface-elevated border border-score-emerald/30 p-4 space-y-3 overflow-hidden"
+          >
+            <p className="text-xs font-semibold text-foreground">สร้างเทมเพลตใหม่</p>
+            <input
+              type="text"
+              placeholder="ชื่อเมนู เช่น ข้าวมันไก่, ผัดไทย..."
+              value={newDishName}
+              onChange={(e) => setNewDishName(e.target.value)}
+              autoFocus
+              className="w-full px-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground placeholder:text-muted-foreground outline-none border border-border/50 focus:border-score-emerald/50 transition-colors"
+            />
+            <div className="flex gap-2 justify-end">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { setCreatingNew(false); setNewDishName(""); }}
+                className="px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground text-[11px] font-medium"
+              >
+                ยกเลิก
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={createTemplate}
+                disabled={saving || !newDishName.trim()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-score-emerald text-white text-[11px] font-semibold disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                สร้าง
+              </motion.button>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { haptic(); setCreatingNew(true); }}
+            className="w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl border-2 border-dashed border-score-emerald/30 text-score-emerald text-[12px] font-semibold hover:bg-score-emerald/5 transition-colors"
+          >
+            <Plus size={15} /> สร้างเทมเพลตใหม่
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Search */}
       <div className="relative">
