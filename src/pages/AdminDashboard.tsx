@@ -608,6 +608,13 @@ const AdminDashboard = () => {
                               >
                                 {store.verified ? <><XCircle size={12} /> ยกเลิก</> : <><CheckCircle2 size={12} /> ยืนยัน</>}
                               </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => { haptic(); setEditingStoreId(store.id); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-secondary text-foreground hover:bg-accent transition-colors"
+                              >
+                                <Eye size={12} /> จัดการ
+                              </motion.button>
                             </div>
                           </div>
                         </motion.div>
