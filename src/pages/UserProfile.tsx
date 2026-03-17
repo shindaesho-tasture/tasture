@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Gem, Store, Users, ChefHat, UserPlus, UserCheck, Crown } from "lucide-react";
+import { ArrowLeft, Gem, Store, Users, ChefHat, UserPlus, UserCheck, Crown, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import PageTransition from "@/components/PageTransition";
 
 interface PublicProfile {
@@ -13,6 +14,43 @@ interface PublicProfile {
   avatar_url: string | null;
   email: string | null;
 }
+
+interface RecentReview {
+  id: string;
+  menuItemName: string;
+  menuItemImage: string | null;
+  storeName: string;
+  storeId: string;
+  score: number;
+  createdAt: string;
+}
+
+const tierColors: Record<ScoreTier, string> = {
+  emerald: "text-score-emerald",
+  mint: "text-score-mint",
+  slate: "text-score-slate",
+  amber: "text-score-amber",
+  ruby: "text-score-ruby",
+};
+const tierBg: Record<ScoreTier, string> = {
+  emerald: "bg-score-emerald/10",
+  mint: "bg-score-mint/10",
+  slate: "bg-score-slate/10",
+  amber: "bg-score-amber/10",
+  ruby: "bg-score-ruby/10",
+};
+
+const timeAgo = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "เมื่อสักครู่";
+  if (mins < 60) return `${mins} นาที`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} ชม.`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days} วัน`;
+  return new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+};
 
 const ACHIEVEMENTS = [
   { id: "first-emerald", icon: "💎", titleTh: "เพชรดวงแรก", check: (e: number) => e >= 1, tier: "emerald" },
@@ -29,6 +67,7 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [stats, setStats] = useState({ emeralds: 0, stores: 0, followers: 0, following: 0 });
+  const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
 
   const isMe = me?.id === userId;
 
@@ -73,6 +112,25 @@ const UserProfile = () => {
         .maybeSingle();
       setIsFollowing(!!data);
     }
+
+    // Fetch recent reviews
+    const { data: reviews } = await supabase
+      .from("menu_reviews")
+      .select("id, score, created_at, menu_item_id, menu_items(name, image_url, store_id, stores(name))")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    const mapped: RecentReview[] = (reviews || []).map((r: any) => ({
+      id: r.id,
+      menuItemName: r.menu_items?.name || "เมนู",
+      menuItemImage: r.menu_items?.image_url || null,
+      storeName: r.menu_items?.stores?.name || "ร้านค้า",
+      storeId: r.menu_items?.store_id || "",
+      score: r.score,
+      createdAt: r.created_at,
+    }));
+    setRecentReviews(mapped);
 
     setLoading(false);
   };
@@ -191,8 +249,62 @@ const UserProfile = () => {
             >
               แก้ไขโปรไฟล์
             </motion.button>
-          )}
-        </div>
+        )}
+
+        {/* Recent Reviews */}
+        {recentReviews.length > 0 && (
+          <motion.section
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mx-6 mb-8"
+          >
+            <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <span className="text-base">📝</span> รีวิวล่าสุด
+            </h2>
+            <div className="space-y-2.5">
+              {recentReviews.map((r, i) => {
+                const tier = getScoreTier(r.score);
+                const scoreLabel = r.score === 2 ? "💎" : r.score === 0 ? "😐" : "👎";
+                return (
+                  <motion.div
+                    key={r.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + i * 0.04 }}
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-card shadow-luxury border border-border/30"
+                  >
+                    {/* Menu image */}
+                    <div className="w-12 h-12 rounded-xl bg-secondary overflow-hidden shrink-0">
+                      {r.menuItemImage ? (
+                        <img src={r.menuItemImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-lg">🍜</div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{r.menuItemName}</p>
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <span className="truncate">{r.storeName}</span>
+                        <span>·</span>
+                        <Clock size={9} />
+                        <span>{timeAgo(r.createdAt)}</span>
+                      </div>
+                    </div>
+
+                    {/* Score */}
+                    <div className={cn("px-2.5 py-1 rounded-full text-xs font-bold", tierBg[tier], tierColors[tier])}>
+                      {scoreLabel}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.section>
+        )}
+      </div>
 
         {/* Stats */}
         <motion.div
