@@ -267,7 +267,13 @@ const Index = () => {
 
   // Sort/filter based on active tab
   const filteredStores = useMemo(() => {
-    const sorted = [...stores];
+    let sorted = [...stores];
+    
+    // Apply category filter
+    if (selectedCategoryFilter) {
+      sorted = sorted.filter((s) => s.category_id === selectedCategoryFilter);
+    }
+    
     switch (activeTab) {
       case "nearby":
         return sorted.sort((a, b) => {
@@ -291,7 +297,7 @@ const Index = () => {
       default:
         return sorted;
     }
-  }, [stores, activeTab]);
+  }, [stores, activeTab, selectedCategoryFilter]);
 
   const tabTitle: Record<DiscoveryTab, string> = {
     nearby: "📍 ร้านใกล้คุณ",
