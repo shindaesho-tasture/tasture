@@ -707,7 +707,21 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     }
   };
 
-  const toggleFollow = async () => {
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!liked && user) {
+        setLiked(true);
+        setLikeCount((c) => c + 1);
+        navigator.vibrate?.(8);
+        supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
+      }
+      setShowHeartAnim(true);
+      setTimeout(() => setShowHeartAnim(false), 900);
+    }
+    lastTapRef.current = now;
+  };
+
     if (!user || user.id === post.userId) return;
     setFollowLoading(true);
     if (isFollowing) {
