@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Gem, Store, LogIn, Pencil, Check, X, Camera, Users, ChefHat, Grid3X3, Bookmark, Heart, MessageCircle } from "lucide-react";
+import { Crown, Gem, Store, LogIn, Pencil, Check, X, Camera, Users, ChefHat, Grid3X3, Bookmark, Heart, MessageCircle, Trophy } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import PostDetailSheet from "@/components/PostDetailSheet";
