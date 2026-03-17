@@ -183,7 +183,7 @@ const AdminDashboard = () => {
 
   const fetchPosts = async () => {
     const { data } = await supabase
-      .from("posts").select("id, user_id, caption, image_url, store_id, created_at")
+      .from("posts").select("id, user_id, caption, image_url, store_id, created_at, hidden")
       .order("created_at", { ascending: false }).limit(100);
     if (!data) { setPosts([]); return; }
     const userIds = [...new Set(data.map((p) => p.user_id))];
