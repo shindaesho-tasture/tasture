@@ -1186,38 +1186,14 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
                     </div>
                   )}
 
-                  {/* Sensory feedback mini bars */}
-                  {post.slides[slideIndex].satisfaction && (() => {
-                    const sat = post.slides[slideIndex].satisfaction!;
-                    const axes = [
-                      { key: "taste", label: "👅 รสชาติ", val: sat.taste },
-                      { key: "texture", label: "🫧 เท็กซ์เจอร์", val: sat.texture },
-                      { key: "cleanliness", label: "✨ ความสะอาด", val: sat.cleanliness },
-                      { key: "overall", label: "🏪 ภาพรวม", val: sat.overall },
-                    ].filter((a) => a.val != null);
-                    if (axes.length === 0) return null;
-                    return (
-                      <div className="px-2 py-1.5 rounded-xl bg-black/50 backdrop-blur-md border border-white/10">
-                        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                          {axes.map((a) => (
-                            <div key={a.key} className="flex items-center gap-1.5">
-                              <span className="text-[8px] text-white/70 w-16 truncate">{a.label}</span>
-                              <div className="flex-1 h-1.5 rounded-full bg-white/15 overflow-hidden">
-                                <div
-                                  className={cn(
-                                    "h-full rounded-full transition-all",
-                                    a.val! >= 4 ? "bg-score-emerald" : a.val! <= 2 ? "bg-score-ruby" : "bg-score-mint"
-                                  )}
-                                  style={{ width: `${((a.val! - 1) / 4) * 100}%` }}
-                                />
-                              </div>
-                              <span className="text-[8px] text-white/60 w-3 text-right">{a.val}</span>
-                            </div>
-                          ))}
-                        </div>
+                  {/* Sensory feedback radar chart */}
+                  {post.slides[slideIndex].satisfaction && (
+                    <div className="flex justify-center px-1">
+                      <div className="px-2 py-1.5 rounded-xl bg-black/50 backdrop-blur-md border border-white/10 inline-flex items-center">
+                        <FeedRadarChart data={post.slides[slideIndex].satisfaction!} size={100} className="[&_text]:!fill-white/70 [&_line]:!stroke-white/10 [&_path[stroke='hsl(0_0%_0%_/_0.06)']]:!stroke-white/10" />
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
