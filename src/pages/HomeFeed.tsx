@@ -382,7 +382,30 @@ const HomeFeed = () => {
           satisfaction,
           dnaComponents: hasDna ? entry.dnaComponents : undefined,
           createdAt: entry.latestTime,
-        };
+        } as FeedPost;
+      });
+
+      // Add photo posts from posts table
+      (photoPostsRes.data || []).forEach((pp) => {
+        const profile = profileMap.get(pp.user_id);
+        const ppStoreId = pp.store_id || "";
+        allPosts.push({
+          id: `photo-${pp.id}`,
+          type: "photo_post",
+          userId: pp.user_id,
+          userName: profile?.name || "ผู้ใช้",
+          userAvatar: profile?.avatar || null,
+          storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "",
+          storeId: ppStoreId,
+          menuItemName: "",
+          menuItemId: "",
+          menuItemImage: null,
+          score: null,
+          satisfaction: null,
+          caption: pp.caption,
+          photoUrl: pp.image_url,
+          createdAt: pp.created_at,
+        });
       });
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
