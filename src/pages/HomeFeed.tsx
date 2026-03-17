@@ -69,9 +69,11 @@ const HomeFeed = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const isPulling = useRef(false);
+  const knownPostIds = useRef<Set<string>>(new Set());
 
   const PULL_THRESHOLD = 80;
 
