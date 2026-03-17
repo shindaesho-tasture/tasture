@@ -246,7 +246,21 @@ const HomeFeed = () => {
         }
       });
 
-      // Merge function: combine satisfaction_ratings + store reviews + menu score into one SatisfactionAxes
+      // Build Dish DNA → texture lookup: average selected_score per user+menuItem, normalize -2..+2 to 1-5
+      const dnaTextureLookup = new Map<string, number>();
+      const dnaAccum = new Map<string, { total: number; count: number }>();
+      (dnaRes.data || []).forEach((d) => {
+        const key = `${d.user_id}-${d.menu_item_id}`;
+        if (!dnaAccum.has(key)) dnaAccum.set(key, { total: 0, count: 0 });
+        const acc = dnaAccum.get(key)!;
+        acc.total += d.selected_score;
+        acc.count++;
+      });
+      dnaAccum.forEach((acc, key) => {
+        dnaTextureLookup.set(key, norm(acc.total / acc.count));
+      });
+
+      // Merge function: combine satisfaction_ratings + store reviews + menu score + DNA texture
       const buildSatisfaction = (userId: string, menuItemId: string, menuScore: number | null, storeId: string | null): SatisfactionAxes | null => {
         const satKey = `${userId}-${menuItemId}`;
         const sat = satLookup.get(satKey);
@@ -270,6 +284,12 @@ const HomeFeed = () => {
         // Layer 3: menu review score → taste (if missing)
         if (menuScore != null && merged.taste == null) {
           merged.taste = normMenu(menuScore);
+        }
+
+        // Layer 4: Dish DNA average → texture (if missing)
+        const dnaTexture = dnaTextureLookup.get(satKey);
+        if (dnaTexture != null && merged.texture == null) {
+          merged.texture = dnaTexture;
         }
 
         return Object.keys(merged).length > 0 ? merged : null;
