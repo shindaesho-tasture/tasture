@@ -634,33 +634,32 @@ const HomeFeed = () => {
   return (
     <PageTransition>
       <div ref={containerRef} className="min-h-screen bg-background pb-24 overflow-y-auto">
-        {/* Sticky Header */}
+        {/* Sticky Header + Pull-to-refresh */}
         <div className="sticky top-0 z-40 bg-background">
           <TastureHeader />
-        </div>
-
-        {/* Pull-to-refresh indicator */}
-        <motion.div
-          animate={{ height: pullDistance, opacity: pullProgress }}
-          transition={refreshing ? { duration: 0.2 } : { duration: 0 }}
-          className="flex items-center justify-center overflow-hidden"
-        >
+          {/* Pull-to-refresh indicator inside sticky header */}
           <motion.div
-            animate={{ rotate: refreshing ? 360 : pullProgress * 180 }}
-            transition={refreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : { duration: 0 }}
+            animate={{ height: pullDistance, opacity: pullProgress }}
+            transition={refreshing ? { duration: 0.2 } : { duration: 0 }}
+            className="flex items-center justify-center overflow-hidden"
           >
-            <RefreshCw
-              size={20}
-              className={pullProgress >= 1 ? "text-score-emerald" : "text-muted-foreground"}
-            />
+            <motion.div
+              animate={{ rotate: refreshing ? 360 : pullProgress * 180 }}
+              transition={refreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : { duration: 0 }}
+            >
+              <RefreshCw
+                size={20}
+                className={pullProgress >= 1 ? "text-score-emerald" : "text-muted-foreground"}
+              />
+            </motion.div>
+            {pullProgress >= 1 && !refreshing && (
+              <span className="ml-2 text-[11px] font-medium text-score-emerald">ปล่อยเพื่อรีเฟรช</span>
+            )}
+            {refreshing && (
+              <span className="ml-2 text-[11px] font-medium text-muted-foreground">กำลังโหลด…</span>
+            )}
           </motion.div>
-          {pullProgress >= 1 && !refreshing && (
-            <span className="ml-2 text-[11px] font-medium text-score-emerald">ปล่อยเพื่อรีเฟรช</span>
-          )}
-          {refreshing && (
-            <span className="ml-2 text-[11px] font-medium text-muted-foreground">กำลังโหลด…</span>
-          )}
-        </motion.div>
+        </div>
 
         {/* Sticky Title + Tabs */}
         <div className="sticky top-[56px] z-30 bg-background border-b border-border/50">
