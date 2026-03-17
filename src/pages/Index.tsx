@@ -78,7 +78,7 @@ const Index = () => {
 
   useEffect(() => {
     fetchStores();
-  }, [user, position]);
+  }, [user, activePosition]);
 
   const fetchStores = async () => {
     setLoading(true);
