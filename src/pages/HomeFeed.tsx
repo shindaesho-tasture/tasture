@@ -21,6 +21,8 @@ interface PostImageSlide {
   menuItemName: string | null;
   storeName: string | null;
   storeId: string | null;
+  dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
+  satisfaction?: SatisfactionAxes | null;
 }
 
 interface FeedPost {
@@ -432,6 +434,50 @@ const HomeFeed = () => {
           (srData || []).forEach((sr) => slideReviewMap.set(sr.id, { score: sr.score, menu_item_id: sr.menu_item_id }));
         }
 
+        // Collect menu_item_ids and user_ids from slides for DNA + satisfaction fetch
+        const slideMenuItemIds = new Set<string>();
+        const slideUserIds = new Set<string>();
+        slideReviewMap.forEach((sr) => slideMenuItemIds.add(sr.menu_item_id));
+        (photoPostsRes.data || []).forEach((pp) => slideUserIds.add(pp.user_id));
+
+        // Fetch dish_dna and satisfaction_ratings for slide-linked items
+        let slideDnaMap = new Map<string, { name: string; icon: string; tag: string; score: number }[]>();
+        let slideSatMap = new Map<string, SatisfactionAxes>();
+
+        if (slideMenuItemIds.size > 0) {
+          const [slideDnaRes, slideSatRes] = await Promise.all([
+            supabase
+              .from("dish_dna")
+              .select("user_id, menu_item_id, component_name, component_icon, selected_tag, selected_score")
+              .in("menu_item_id", [...slideMenuItemIds]),
+            supabase
+              .from("satisfaction_ratings")
+              .select("user_id, menu_item_id, texture, taste, overall, cleanliness, value")
+              .in("menu_item_id", [...slideMenuItemIds]),
+          ]);
+
+          (slideDnaRes.data || []).forEach((d) => {
+            const key = `${d.user_id}-${d.menu_item_id}`;
+            if (!slideDnaMap.has(key)) slideDnaMap.set(key, []);
+            slideDnaMap.get(key)!.push({
+              name: d.component_name,
+              icon: d.component_icon,
+              tag: d.selected_tag,
+              score: d.selected_score,
+            });
+          });
+
+          (slideSatRes.data || []).forEach((s) => {
+            const key = `${s.user_id}-${s.menu_item_id}`;
+            const axes: SatisfactionAxes = {};
+            if (s.taste != null) axes.taste = s.taste;
+            if (s.texture != null) axes.texture = s.texture;
+            if (s.overall != null) axes.overall = s.overall;
+            if (s.cleanliness != null) axes.cleanliness = s.cleanliness;
+            if (Object.keys(axes).length > 0) slideSatMap.set(key, axes);
+          });
+        }
+
         // Build slides for each photo post
         (photoPostsRes.data || []).forEach((pp) => {
           const profile = profileMap.get(pp.user_id);
@@ -442,12 +488,15 @@ const HomeFeed = () => {
             ? piList.map((pi) => {
                 const review = pi.menu_review_id ? slideReviewMap.get(pi.menu_review_id) : null;
                 const menuItem = review ? menuMap.get(review.menu_item_id) : null;
+                const slideKey = review ? `${pp.user_id}-${review.menu_item_id}` : null;
                 return {
                   imageUrl: pi.image_url,
                   reviewScore: review?.score ?? null,
                   menuItemName: menuItem?.name || (review ? "เมนู" : null),
                   storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
                   storeId: menuItem?.storeId || null,
+                  dnaComponents: slideKey ? slideDnaMap.get(slideKey) : undefined,
+                  satisfaction: slideKey ? slideSatMap.get(slideKey) : undefined,
                 };
               })
             : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }];
@@ -1076,42 +1125,99 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
 
             {/* Review overlay for current slide */}
             <AnimatePresence mode="wait">
-              {post.slides[slideIndex].reviewScore !== null && (
+              {(post.slides[slideIndex].reviewScore !== null || post.slides[slideIndex].dnaComponents?.length || post.slides[slideIndex].satisfaction) && (
                 <motion.div
                   key={`review-${slideIndex}`}
                   initial={{ y: 8, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: -8, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute bottom-10 left-3 right-3"
+                  className="absolute bottom-10 left-3 right-3 space-y-1.5"
                 >
-                  <div
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 ${post.slides[slideIndex].storeId ? "cursor-pointer active:scale-[0.97] transition-transform" : ""}`}
-                    onClick={(e) => {
-                      const sid = post.slides[slideIndex].storeId;
-                      if (sid) {
-                        e.stopPropagation();
-                        navigate(`/store/${sid}/order`);
-                      }
-                    }}
-                  >
-                    <span className="text-xl">
-                      {post.slides[slideIndex].reviewScore === 2 ? "🤩" : post.slides[slideIndex].reviewScore === 0 ? "😐" : "😔"}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-white truncate">
-                        {post.slides[slideIndex].menuItemName}
-                      </p>
-                      {post.slides[slideIndex].storeName && (
-                        <p className="text-[9px] text-white/70 truncate">
-                          📍 {post.slides[slideIndex].storeName}
+                  {/* Main review chip */}
+                  {post.slides[slideIndex].reviewScore !== null && (
+                    <div
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 ${post.slides[slideIndex].storeId ? "cursor-pointer active:scale-[0.97] transition-transform" : ""}`}
+                      onClick={(e) => {
+                        const sid = post.slides[slideIndex].storeId;
+                        if (sid) {
+                          e.stopPropagation();
+                          navigate(`/store/${sid}/order`);
+                        }
+                      }}
+                    >
+                      <span className="text-xl">
+                        {post.slides[slideIndex].reviewScore === 2 ? "🤩" : post.slides[slideIndex].reviewScore === 0 ? "😐" : "😔"}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-semibold text-white truncate">
+                          {post.slides[slideIndex].menuItemName}
                         </p>
+                        {post.slides[slideIndex].storeName && (
+                          <p className="text-[9px] text-white/70 truncate">
+                            📍 {post.slides[slideIndex].storeName}
+                          </p>
+                        )}
+                      </div>
+                      {post.slides[slideIndex].storeId && (
+                        <span className="text-white/50 text-xs">›</span>
                       )}
                     </div>
-                    {post.slides[slideIndex].storeId && (
-                      <span className="text-white/50 text-xs">›</span>
-                    )}
-                  </div>
+                  )}
+
+                  {/* Dish DNA tags */}
+                  {post.slides[slideIndex].dnaComponents && post.slides[slideIndex].dnaComponents!.length > 0 && (
+                    <div className="flex flex-wrap gap-1 px-1">
+                      {post.slides[slideIndex].dnaComponents!.slice(0, 6).map((dna, di) => (
+                        <span
+                          key={di}
+                          className={cn(
+                            "inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-[9px] font-semibold backdrop-blur-md border",
+                            dna.score === 2
+                              ? "bg-score-emerald/70 border-score-emerald/30 text-white"
+                              : dna.score === -2
+                              ? "bg-score-ruby/70 border-score-ruby/30 text-white"
+                              : "bg-white/20 border-white/10 text-white/90"
+                          )}
+                        >
+                          {dna.icon} {dna.tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Sensory feedback mini bars */}
+                  {post.slides[slideIndex].satisfaction && (() => {
+                    const sat = post.slides[slideIndex].satisfaction!;
+                    const axes = [
+                      { key: "taste", label: "👅 รสชาติ", val: sat.taste },
+                      { key: "texture", label: "🫧 เท็กซ์เจอร์", val: sat.texture },
+                      { key: "cleanliness", label: "✨ ความสะอาด", val: sat.cleanliness },
+                      { key: "overall", label: "🏪 ภาพรวม", val: sat.overall },
+                    ].filter((a) => a.val != null);
+                    if (axes.length === 0) return null;
+                    return (
+                      <div className="px-2 py-1.5 rounded-xl bg-black/50 backdrop-blur-md border border-white/10">
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                          {axes.map((a) => (
+                            <div key={a.key} className="flex items-center gap-1.5">
+                              <span className="text-[8px] text-white/70 w-16 truncate">{a.label}</span>
+                              <div className="flex-1 h-1.5 rounded-full bg-white/15 overflow-hidden">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full transition-all",
+                                    a.val! >= 4 ? "bg-score-emerald" : a.val! <= 2 ? "bg-score-ruby" : "bg-score-mint"
+                                  )}
+                                  style={{ width: `${((a.val! - 1) / 4) * 100}%` }}
+                                />
+                              </div>
+                              <span className="text-[8px] text-white/60 w-3 text-right">{a.val}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </motion.div>
               )}
             </AnimatePresence>
