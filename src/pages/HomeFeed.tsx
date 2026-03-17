@@ -856,6 +856,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         setLiked(true);
         setLikeCount((c) => c + 1);
         navigator.vibrate?.(8);
+        burstParticles();
         supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
       }
       setShowHeartAnim(true);
