@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
@@ -13,6 +14,7 @@ import TastureHeader from "@/components/TastureHeader";
 import DiscoveryTabs, { type DiscoveryTab } from "@/components/DiscoveryTabs";
 import SensorySearch from "@/components/SensorySearch";
 import HeroFoodCard from "@/components/HeroFoodCard";
+import LocationPickerSheet from "@/components/LocationPickerSheet";
 import BottomNav from "@/components/BottomNav";
 
 /* ─── Types ─── */
@@ -68,10 +70,15 @@ const Index = () => {
   const [stores, setStores] = useState<StoreCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DiscoveryTab>("nearby");
+  const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+  // Use custom pinned position if set, otherwise GPS
+  const activePosition = customPos || position;
 
   useEffect(() => {
     fetchStores();
-  }, [user, position]);
+  }, [user, activePosition]);
 
   const fetchStores = async () => {
     setLoading(true);
@@ -205,8 +212,8 @@ const Index = () => {
 
         // Distance
         let distanceKm: number | null = null;
-        if (position && s.pin_lat != null && s.pin_lng != null) {
-          distanceKm = Math.round(haversineKm(position.lat, position.lng, s.pin_lat, s.pin_lng) * 10) / 10;
+        if (activePosition && s.pin_lat != null && s.pin_lng != null) {
+          distanceKm = Math.round(haversineKm(activePosition.lat, activePosition.lng, s.pin_lat, s.pin_lng) * 10) / 10;
         }
 
         // Match percent
@@ -311,6 +318,27 @@ const Index = () => {
 
         {/* Discovery Trinity Tabs */}
         <DiscoveryTabs active={activeTab} onChange={setActiveTab} />
+
+        {/* Location picker trigger */}
+        <div className="px-6 pb-2">
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setShowLocationPicker(true)}
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-2 rounded-xl text-[11px] font-medium transition-all",
+              customPos
+                ? "bg-score-emerald/10 text-score-emerald border border-score-emerald/20"
+                : "bg-secondary text-muted-foreground"
+            )}
+          >
+            <MapPin size={13} strokeWidth={2} />
+            {customPos
+              ? `📍 ตำแหน่งที่เลือก (${customPos.lat.toFixed(3)}, ${customPos.lng.toFixed(3)})`
+              : activePosition
+              ? "📍 ใช้ GPS ปัจจุบัน — แตะเพื่อเปลี่ยน"
+              : "📍 เลือกตำแหน่ง"}
+          </motion.button>
+        </div>
 
         <SensorySearch />
         <HeroFoodCard />
@@ -481,6 +509,14 @@ const Index = () => {
       </motion.div>
 
       <BottomNav />
+
+      <LocationPickerSheet
+        open={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        onConfirm={(pos) => setCustomPos(pos)}
+        currentPosition={customPos}
+        gpsPosition={position}
+      />
     </div>
     </PageTransition>
   );
