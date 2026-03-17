@@ -179,7 +179,7 @@ const HomeFeed = () => {
     if (!isRefresh) setLoading(true);
     try {
       // Fetch recent menu reviews, dish DNA, satisfaction ratings, and store reviews in parallel
-      const [reviewsRes, dnaRes, satRes, storeReviewsRes] = await Promise.all([
+      const [reviewsRes, dnaRes, satRes, storeReviewsRes, photoPostsRes] = await Promise.all([
         supabase
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
@@ -200,6 +200,11 @@ const HomeFeed = () => {
           .select("user_id, store_id, metric_id, score, created_at")
           .order("created_at", { ascending: false })
           .limit(limit * 3),
+        supabase
+          .from("posts")
+          .select("id, user_id, image_url, caption, store_id, created_at")
+          .order("created_at", { ascending: false })
+          .limit(limit),
       ]);
 
       // Collect unique user_ids and menu_item_ids
