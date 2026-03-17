@@ -703,6 +703,14 @@ const HomeFeed = () => {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: slideDirection * 60, opacity: 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_e, info) => {
+                if (Math.abs(info.offset.x) > 50) {
+                  handleSwipe(info.offset.x < 0 ? "left" : "right");
+                }
+              }}
             >
           {/* Suggested Users for "foryou" tab */}
           {activeTab === "foryou" && user && !loading && (
