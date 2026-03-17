@@ -8,14 +8,12 @@ import { useCategories } from "@/hooks/use-categories";
 import { useStore } from "@/lib/store-context";
 import { useAuth } from "@/hooks/use-auth";
 import type { MenuItem } from "@/lib/menu-types";
-import { GOOGLE_MAPS_API_KEY, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
+import { GOOGLE_MAPS_API_KEY, MAPS_LIBRARIES, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import ScanningOverlay from "@/components/menu/ScanningOverlay";
 import MenuCardList from "@/components/menu/MenuCardList";
 import { useToast } from "@/hooks/use-toast";
-
-const LIBRARIES: ("places")[] = ["places"];
 
 const mapContainerStyle = { width: "100%", height: "100%" };
 
