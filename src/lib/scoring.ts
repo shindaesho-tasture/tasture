@@ -29,8 +29,9 @@ export interface ResultCardData {
  */
 export function getIntensityOpacity(reviewCount: number): number {
   if (reviewCount >= 100) return 1.0;
-  if (reviewCount < 10) return 0.2;
-  return 0.2 + ((reviewCount - 10) / 90) * 0.8;
+  if (reviewCount < 5) return 0.45; // Minimum opacity for readability on white
+  if (reviewCount < 10) return 0.45 + ((reviewCount - 5) / 5) * 0.1;
+  return 0.55 + ((Math.min(reviewCount, 100) - 10) / 90) * 0.45;
 }
 
 /**
