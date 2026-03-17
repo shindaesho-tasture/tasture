@@ -212,8 +212,8 @@ const Index = () => {
 
         // Distance
         let distanceKm: number | null = null;
-        if (position && s.pin_lat != null && s.pin_lng != null) {
-          distanceKm = Math.round(haversineKm(position.lat, position.lng, s.pin_lat, s.pin_lng) * 10) / 10;
+        if (activePosition && s.pin_lat != null && s.pin_lng != null) {
+          distanceKm = Math.round(haversineKm(activePosition.lat, activePosition.lng, s.pin_lat, s.pin_lng) * 10) / 10;
         }
 
         // Match percent
