@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera, Users, Bookmark, Trash2 } from "lucide-react";
+import { Crown, Gem, Store, LogIn, Pencil, Check, X, Camera, Users, ChefHat, Grid3X3, Bookmark, Heart, MessageCircle } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,244 +9,54 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 /* ── Types ── */
-interface TasteDNA {
-  salty: number;
-  sweet: number;
-  sour: number;
-  spicy: number;
-  umami: number;
-}
-
-interface EmeraldDish {
+interface UserPost {
   id: string;
-  name: string;
-  storeName: string;
-  date: string;
+  image_url: string;
+  caption: string | null;
+  created_at: string;
+  store_id: string | null;
+  likeCount: number;
+  commentCount: number;
+  images: string[]; // all carousel images
 }
 
-interface StoreVerdict {
+interface SavedStoreItem {
+  id: string;
   storeId: string;
   storeName: string;
-  visits: number;
-  consistent: boolean;
-  lastVisit: string;
+  savedAt: string;
 }
-
-interface Achievement {
-  id: string;
-  icon: string;
-  title: string;
-  titleTh: string;
-  description: string;
-  check: (ctx: AchievementCtx) => boolean;
-  tier: "emerald" | "gold" | "ruby";
-}
-
-interface AchievementCtx {
-  emeraldCount: number;
-  storeCount: number;
-  totalReviews: number;
-  tasteDNA: TasteDNA;
-  dnaEntryCount: number;
-}
-
-const ACHIEVEMENTS: Achievement[] = [
-  { id: "first-emerald", icon: "💎", title: "First Emerald", titleTh: "เพชรดวงแรก", description: "ให้คะแนน +2 ครั้งแรก", check: (c) => c.emeraldCount >= 1, tier: "emerald" },
-  { id: "emerald-5", icon: "💎", title: "Emerald Collector", titleTh: "นักสะสมเพชร", description: "สะสม Emerald 5 ดวง", check: (c) => c.emeraldCount >= 5, tier: "emerald" },
-  { id: "emerald-20", icon: "👑", title: "Emerald Crown", titleTh: "มงกุฎเพชร", description: "สะสม Emerald 20 ดวง", check: (c) => c.emeraldCount >= 20, tier: "gold" },
-  { id: "store-1", icon: "🏪", title: "First Visit", titleTh: "ก้าวแรก", description: "รีวิวร้านแรก", check: (c) => c.storeCount >= 1, tier: "emerald" },
-  { id: "store-10", icon: "🗺️", title: "10 Stores", titleTh: "นักสำรวจ", description: "เยือน 10 ร้าน", check: (c) => c.storeCount >= 10, tier: "gold" },
-  { id: "store-30", icon: "🌍", title: "World Taster", titleTh: "ผู้พิชิตโลกรส", description: "เยือน 30 ร้าน", check: (c) => c.storeCount >= 30, tier: "ruby" },
-  { id: "reviews-10", icon: "📝", title: "10 Reviews", titleTh: "นักวิจารณ์", description: "รีวิว 10 เมนู", check: (c) => c.totalReviews >= 10, tier: "emerald" },
-  { id: "reviews-50", icon: "🔥", title: "50 Reviews", titleTh: "จอมวิจารณ์", description: "รีวิว 50 เมนู", check: (c) => c.totalReviews >= 50, tier: "gold" },
-  { id: "spice-lord", icon: "🌶️", title: "Spice Lord", titleTh: "ราชาความเผ็ด", description: "Taste DNA เผ็ดสูงสุด", check: (c) => c.tasteDNA.spicy >= 4, tier: "ruby" },
-  { id: "sweet-tooth", icon: "🍯", title: "Sweet Tooth", titleTh: "คนรักหวาน", description: "Taste DNA หวานสูงสุด", check: (c) => c.tasteDNA.sweet >= 4, tier: "gold" },
-  { id: "umami-sage", icon: "🍄", title: "Umami Sage", titleTh: "ปราชญ์อูมามิ", description: "Taste DNA อูมามิสูงสุด", check: (c) => c.tasteDNA.umami >= 4, tier: "emerald" },
-  { id: "dna-explorer", icon: "🧬", title: "DNA Explorer", titleTh: "นักวิเคราะห์ DNA", description: "ส่ง Dish DNA 5 ครั้ง", check: (c) => c.dnaEntryCount >= 5, tier: "emerald" },
-];
-
-/* ── Helpers ── */
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-  return `${d.getDate()} ${months[d.getMonth()]} ${(d.getFullYear() + 543) % 100}`;
-};
-
-/* ── Spider Chart Component ── */
-const TasteDNAChart = ({ dna }: { dna: TasteDNA }) => {
-  const axes = [
-    { name: "เค็ม", key: "salty" as keyof TasteDNA },
-    { name: "หวาน", key: "sweet" as keyof TasteDNA },
-    { name: "เปรี้ยว", key: "sour" as keyof TasteDNA },
-    { name: "เผ็ด", key: "spicy" as keyof TasteDNA },
-    { name: "อูมามิ", key: "umami" as keyof TasteDNA },
-  ];
-
-  const cx = 120, cy = 120, maxR = 85, rings = 5, n = axes.length;
-  const angleStep = (2 * Math.PI) / n;
-
-  const getPoint = (index: number, level: number) => {
-    const angle = angleStep * index - Math.PI / 2;
-    const r = (level / rings) * maxR;
-    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
-  };
-
-  const dataPoints = axes.map((a, i) => getPoint(i, Math.min(dna[a.key], 5)));
-  const dataPath = dataPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
-
-  return (
-    <svg viewBox="0 0 240 240" className="w-full max-w-[260px] mx-auto">
-      <defs>
-        <radialGradient id="emeraldGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="hsl(163,78%,20%)" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="hsl(163,78%,20%)" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      {/* Grid rings */}
-      {[1, 2, 3, 4, 5].map((ring) => {
-        const pts = axes.map((_, i) => getPoint(i, ring));
-        const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
-        return <path key={ring} d={d} fill="none" stroke="hsl(var(--border))" strokeWidth={0.5} opacity={0.6} />;
-      })}
-
-      {/* Axis lines */}
-      {axes.map((_, i) => {
-        const outer = getPoint(i, 5);
-        return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="hsl(var(--border))" strokeWidth={0.5} />;
-      })}
-
-      {/* Data fill */}
-      <motion.path
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        d={dataPath}
-        fill="url(#emeraldGlow)"
-        stroke="hsl(163,78%,20%)"
-        strokeWidth={2}
-        strokeLinejoin="round"
-        style={{ transformOrigin: `${cx}px ${cy}px` }}
-      />
-
-      {/* Data dots */}
-      {dataPoints.map((p, i) => (
-        <motion.circle
-          key={i}
-          initial={{ r: 0 }}
-          animate={{ r: 3.5 }}
-          transition={{ delay: 0.4 + i * 0.08 }}
-          cx={p.x} cy={p.y}
-          fill="hsl(163,78%,20%)"
-          stroke="white"
-          strokeWidth={2}
-        />
-      ))}
-
-      {/* Labels */}
-      {axes.map((a, i) => {
-        const lp = getPoint(i, 6.2);
-        return (
-          <text key={i} x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle"
-            fill="hsl(var(--muted-foreground))" fontSize="10" fontWeight="500">
-            {a.name}
-          </text>
-        );
-      })}
-    </svg>
-  );
-};
-
-/* ── Swipeable Saved Store Row ── */
-const SavedStoreRow = ({ store, index, onNavigate, onRemove }: {
-  store: { id: string; storeId: string; storeName: string; savedAt: string };
-  index: number;
-  onNavigate: () => void;
-  onRemove: () => void;
-}) => {
-  const touchStartX = useRef(0);
-  const [offsetX, setOffsetX] = useState(0);
-  const [removing, setRemoving] = useState(false);
-  const DELETE_THRESHOLD = -70;
-
-  return (
-    <motion.div
-      layout
-      initial={{ x: 30, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: -300, opacity: 0, height: 0, marginBottom: 0 }}
-      transition={{ delay: removing ? 0 : 0.7 + index * 0.05 }}
-      className="relative overflow-hidden rounded-2xl"
-    >
-      {/* Delete background */}
-      <div className="absolute inset-0 bg-score-ruby rounded-2xl flex items-center justify-end pr-5">
-        <Trash2 size={18} className="text-white" />
-      </div>
-
-      {/* Foreground card */}
-      <motion.div
-        className="bg-card rounded-2xl shadow-luxury p-4 flex items-center gap-3 cursor-pointer relative"
-        style={{ x: offsetX }}
-        animate={{ x: offsetX }}
-        transition={{ type: "spring", stiffness: 500, damping: 35 }}
-        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
-        onTouchMove={(e) => {
-          const dx = e.touches[0].clientX - touchStartX.current;
-          if (dx < 0) setOffsetX(Math.max(dx, -100));
-        }}
-        onTouchEnd={() => {
-          if (offsetX <= DELETE_THRESHOLD) {
-            setRemoving(true);
-            setOffsetX(-300);
-            setTimeout(onRemove, 200);
-          } else {
-            setOffsetX(0);
-          }
-        }}
-        onClick={() => {
-          if (Math.abs(offsetX) < 10) onNavigate();
-        }}
-      >
-        <div className="w-10 h-10 rounded-xl bg-score-emerald/10 flex items-center justify-center shrink-0">
-          <Store size={18} className="text-score-emerald" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-foreground block truncate">{store.storeName}</span>
-          <span className="text-[10px] text-muted-foreground">บันทึกเมื่อ {formatDate(store.savedAt)}</span>
-        </div>
-        <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-      </motion.div>
-    </motion.div>
-  );
-};
 
 /* ── Main Page ── */
 const Profile = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ display_name: string | null; email: string | null; avatar_url: string | null } | null>(null);
-  const [emeraldCount, setEmeraldCount] = useState(0);
-  const [storeCount, setStoreCount] = useState(0);
-  const [tasteDNA, setTasteDNA] = useState<TasteDNA>({ salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 });
-  const [emeraldDishes, setEmeraldDishes] = useState<EmeraldDish[]>([]);
-  const [verdicts, setVerdicts] = useState<StoreVerdict[]>([]);
-  const [totalReviews, setTotalReviews] = useState(0);
-  const [dnaEntryCount, setDnaEntryCount] = useState(0);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Stats
+  const [postCount, setPostCount] = useState(0);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [savedStores, setSavedStores] = useState<{ id: string; storeId: string; storeName: string; savedAt: string }[]>([]);
+
+  // Tabs
+  const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
+
+  // Posts grid
+  const [posts, setPosts] = useState<UserPost[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // Saved stores
+  const [savedStores, setSavedStores] = useState<SavedStoreItem[]>([]);
 
   const handleSaveName = async () => {
     if (!user || !nameInput.trim()) return;
     setSavingName(true);
     const { error } = await supabase.from("profiles").update({ display_name: nameInput.trim() } as any).eq("id", user.id);
-    if (!error) {
-      setProfile((p) => p ? { ...p, display_name: nameInput.trim() } : p);
-    }
+    if (!error) setProfile((p) => p ? { ...p, display_name: nameInput.trim() } : p);
     setSavingName(false);
     setEditingName(false);
   };
@@ -254,175 +64,107 @@ const Profile = () => {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (file.size > 2 * 1024 * 1024) return; // max 2MB
-
+    if (file.size > 2 * 1024 * 1024) return;
     setUploadingAvatar(true);
     const ext = file.name.split(".").pop();
     const filePath = `${user.id}/avatar.${ext}`;
-
-    // Upload (upsert)
     const { error: uploadErr } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
     if (uploadErr) { setUploadingAvatar(false); return; }
-
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
     const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-
     await supabase.from("profiles").update({ avatar_url: avatarUrl } as any).eq("id", user.id);
     setProfile((p) => p ? { ...p, avatar_url: avatarUrl } : p);
     setUploadingAvatar(false);
   };
 
+  // Load profile, stats
   useEffect(() => {
     if (!user) return;
-
     const load = async () => {
-      // Profile
-      const { data: prof } = await supabase.from("profiles").select("display_name, email, avatar_url" as any).eq("id", user.id).single();
-      if (prof) setProfile(prof as any);
-
-      // Follow counts
-      const [{ count: followers }, { count: following }] = await Promise.all([
+      const [profRes, followersRes, followingRes, postsCountRes] = await Promise.all([
+        supabase.from("profiles").select("display_name, email, avatar_url" as any).eq("id", user.id).single(),
         supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", user.id),
         supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
+        supabase.from("posts").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("hidden", false),
       ]);
-      setFollowerCount(followers || 0);
-      setFollowingCount(following || 0);
+      if (profRes.data) setProfile(profRes.data as any);
+      setFollowerCount(followersRes.count || 0);
+      setFollowingCount(followingRes.count || 0);
+      setPostCount(postsCountRes.count || 0);
 
-      const { data: reviews } = await supabase.from("menu_reviews").select("id, score, menu_item_id, created_at").eq("user_id", user.id);
-      if (!reviews) return;
-
-      const emeralds = reviews.filter((r) => r.score === 2);
-      setEmeraldCount(emeralds.length);
-      setTotalReviews(reviews.length);
-
-      // Get all reviewed item IDs
-      const itemIds = [...new Set(reviews.map((r) => r.menu_item_id))];
-      if (itemIds.length === 0) return;
-
-      const { data: items } = await supabase.from("menu_items").select("id, name, store_id").in("id", itemIds);
-      if (!items) return;
-
-      const itemMap = new Map(items.map((it) => [it.id, it]));
-      const storeIds = [...new Set(items.map((it) => it.store_id))];
-      setStoreCount(storeIds.length);
-
-      const { data: stores } = await supabase.from("stores").select("id, name").in("id", storeIds);
-      const storeMap = new Map((stores || []).map((s) => [s.id, s.name]));
-
-      // Emerald Vault
-      const vault: EmeraldDish[] = emeralds
-        .filter((r) => itemMap.has(r.menu_item_id))
-        .map((r) => {
-          const item = itemMap.get(r.menu_item_id)!;
-          return {
-            id: r.id,
-            name: item.name,
-            storeName: storeMap.get(item.store_id) || "—",
-            date: r.created_at,
-          };
-        })
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setEmeraldDishes(vault);
-
-      // Taste DNA from sensory feedback (dish_dna with taste-related components)
-      const { data: dnaEntries } = await supabase
-        .from("dish_dna")
-        .select("component_name, selected_score")
-        .eq("user_id", user.id);
-
-      setDnaEntryCount(dnaEntries?.length || 0);
-      if (dnaEntries && dnaEntries.length > 0) {
-        const tasteMap: Record<string, { total: number; count: number }> = {};
-        const tasteKeywords: Record<string, keyof TasteDNA> = {
-          "เค็ม": "salty", "salty": "salty", "salt": "salty",
-          "หวาน": "sweet", "sweet": "sweet", "sugar": "sweet",
-          "เปรี้ยว": "sour", "sour": "sour", "acid": "sour",
-          "เผ็ด": "spicy", "spicy": "spicy", "chili": "spicy",
-          "อูมามิ": "umami", "umami": "umami", "savory": "umami",
-        };
-
-        for (const entry of dnaEntries) {
-          const lower = entry.component_name.toLowerCase();
-          for (const [keyword, key] of Object.entries(tasteKeywords)) {
-            if (lower.includes(keyword)) {
-              if (!tasteMap[key]) tasteMap[key] = { total: 0, count: 0 };
-              tasteMap[key].total += entry.selected_score;
-              tasteMap[key].count += 1;
-            }
-          }
-        }
-
-        const dna: TasteDNA = { salty: 0, sweet: 0, sour: 0, spicy: 0, umami: 0 };
-        for (const [key, val] of Object.entries(tasteMap)) {
-          // Normalize to 0-5 scale (scores are -2 to +2, map to 0-5)
-          dna[key as keyof TasteDNA] = Math.max(0, Math.min(5, ((val.total / val.count) + 2) * 1.25));
-        }
-        setTasteDNA(dna);
-      }
-
-      // Verdict History — group reviews by store, check consistency
-      const storeReviewGroups: Record<string, number[]> = {};
-      for (const rev of reviews) {
-        const item = itemMap.get(rev.menu_item_id);
-        if (!item) continue;
-        if (!storeReviewGroups[item.store_id]) storeReviewGroups[item.store_id] = [];
-        storeReviewGroups[item.store_id].push(rev.score);
-      }
-
-      const storeReviewDates: Record<string, string[]> = {};
-      for (const rev of reviews) {
-        const item = itemMap.get(rev.menu_item_id);
-        if (!item) continue;
-        if (!storeReviewDates[item.store_id]) storeReviewDates[item.store_id] = [];
-        storeReviewDates[item.store_id].push(rev.created_at);
-      }
-
-      const vList: StoreVerdict[] = storeIds.map((sid) => {
-        const scores = storeReviewGroups[sid] || [];
-        const dates = storeReviewDates[sid] || [];
-        const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-        const latestDate = dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || "";
-        return {
-          storeId: sid,
-          storeName: storeMap.get(sid) || "—",
-          visits: scores.length,
-          consistent: avg >= 0, // positive avg = consistent
-          lastVisit: latestDate,
-        };
-      }).sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime());
-
-      setVerdicts(vList);
-
-      // Fetch saved stores
+      // Saved stores
       const { data: savedData } = await supabase
         .from("saved_stores")
         .select("id, store_id, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-
       if (savedData && savedData.length > 0) {
         const savedStoreIds = savedData.map((s) => s.store_id);
-        const { data: savedStoresData } = await supabase.from("stores").select("id, name").in("id", savedStoreIds);
-        const savedStoreNameMap = new Map((savedStoresData || []).map((s) => [s.id, s.name]));
-
+        const { data: storesData } = await supabase.from("stores").select("id, name").in("id", savedStoreIds);
+        const nameMap = new Map((storesData || []).map((s) => [s.id, s.name]));
         setSavedStores(savedData.map((s) => ({
           id: s.id,
           storeId: s.store_id,
-          storeName: savedStoreNameMap.get(s.store_id) || "ร้านค้า",
+          storeName: nameMap.get(s.store_id) || "ร้านค้า",
           savedAt: s.created_at,
         })));
       }
     };
-
     load();
   }, [user]);
 
-  const palateLevel = Math.min(99, Math.floor((emeraldCount * 3 + storeCount * 2) * 1.5));
-  const hasTasteDNA = Object.values(tasteDNA).some((v) => v > 0);
+  // Load posts
+  useEffect(() => {
+    if (!user) return;
+    const loadPosts = async () => {
+      setLoadingPosts(true);
+      const { data: rawPosts } = await supabase
+        .from("posts")
+        .select("id, image_url, caption, created_at, store_id")
+        .eq("user_id", user.id)
+        .eq("hidden", false)
+        .order("created_at", { ascending: false })
+        .limit(60);
 
-  const achievementCtx: AchievementCtx = { emeraldCount, storeCount, totalReviews, tasteDNA, dnaEntryCount };
-  const unlockedBadges = ACHIEVEMENTS.filter((a) => a.check(achievementCtx));
-  const lockedBadges = ACHIEVEMENTS.filter((a) => !a.check(achievementCtx));
+      if (!rawPosts || rawPosts.length === 0) { setPosts([]); setLoadingPosts(false); return; }
+
+      const postIds = rawPosts.map((p) => p.id);
+
+      // Get likes, comments, carousel images in parallel
+      const [likesRes, commentsRes, imagesRes] = await Promise.all([
+        supabase.from("post_likes").select("ref_id").in("ref_id", postIds),
+        supabase.from("feed_comments").select("ref_id").in("ref_id", postIds),
+        supabase.from("post_images").select("post_id, image_url, sort_order").in("post_id", postIds).order("sort_order", { ascending: true }),
+      ]);
+
+      const likesMap = new Map<string, number>();
+      (likesRes.data || []).forEach((l) => likesMap.set(l.ref_id, (likesMap.get(l.ref_id) || 0) + 1));
+
+      const commentsMap = new Map<string, number>();
+      (commentsRes.data || []).forEach((c) => commentsMap.set(c.ref_id, (commentsMap.get(c.ref_id) || 0) + 1));
+
+      const imagesMap = new Map<string, string[]>();
+      (imagesRes.data || []).forEach((img) => {
+        if (!imagesMap.has(img.post_id)) imagesMap.set(img.post_id, []);
+        imagesMap.get(img.post_id)!.push(img.image_url);
+      });
+
+      const enriched: UserPost[] = rawPosts.map((p) => ({
+        id: p.id,
+        image_url: p.image_url,
+        caption: p.caption,
+        created_at: p.created_at,
+        store_id: p.store_id,
+        likeCount: likesMap.get(p.id) || 0,
+        commentCount: commentsMap.get(p.id) || 0,
+        images: imagesMap.get(p.id) || [p.image_url],
+      }));
+
+      setPosts(enriched);
+      setLoadingPosts(false);
+    };
+    loadPosts();
+  }, [user]);
 
   if (loading) {
     return (
@@ -444,10 +186,7 @@ const Profile = () => {
             </div>
             <h1 className="text-xl font-medium text-foreground">Sovereign Profile</h1>
             <p className="text-sm text-muted-foreground text-center">เข้าสู่ระบบเพื่อดูโปรไฟล์ของคุณ</p>
-            <button
-              onClick={() => navigate("/auth")}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-medium mt-2"
-            >
+            <button onClick={() => navigate("/auth")} className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-medium mt-2">
               <LogIn size={16} /> เข้าสู่ระบบ
             </button>
           </div>
@@ -461,44 +200,65 @@ const Profile = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background pb-28">
-        {/* ── Header ── */}
-        <div className="flex flex-col items-center pt-10 pb-6 px-6">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="relative"
-          >
-            <label className="cursor-pointer block">
-              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
-              <div
-                className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center overflow-hidden"
-                style={{
-                  boxShadow: "0 0 0 3px hsl(163,78%,20%), 0 0 24px hsla(163,78%,20%,0.35)",
-                }}
-              >
-                {uploadingAvatar ? (
-                  <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
-                ) : profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <Crown size={32} strokeWidth={1.5} className="text-score-emerald" />
-                )}
-              </div>
-              {/* Camera badge */}
-              <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-card shadow-luxury flex items-center justify-center border-2 border-background">
-                <Camera size={12} className="text-muted-foreground" />
-              </div>
-            </label>
-          </motion.div>
+      <div className="min-h-screen bg-background pb-24">
+        {/* ── IG-style Header ── */}
+        <div className="px-5 pt-safe-top">
+          {/* Top bar with username */}
+          <div className="flex items-center justify-between py-3">
+            <h1 className="text-lg font-bold text-foreground">{displayName}</h1>
+            <button
+              onClick={signOut}
+              className="text-xs text-muted-foreground px-3 py-1.5 rounded-lg border border-border"
+            >
+              ออกจากระบบ
+            </button>
+          </div>
 
-          <motion.div
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="mt-4 flex items-center gap-1.5"
-          >
+          {/* Profile row: avatar + stats */}
+          <div className="flex items-center gap-5 pb-4">
+            {/* Avatar */}
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative flex-shrink-0">
+              <label className="cursor-pointer block">
+                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+                <div
+                  className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center overflow-hidden"
+                  style={{ boxShadow: "0 0 0 3px hsl(163,78%,20%), 0 0 24px hsla(163,78%,20%,0.35)" }}
+                >
+                  {uploadingAvatar ? (
+                    <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+                  ) : profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <Crown size={32} strokeWidth={1.5} className="text-score-emerald" />
+                  )}
+                </div>
+                <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-score-emerald flex items-center justify-center border-2 border-background">
+                  <Camera size={10} className="text-white" />
+                </div>
+              </label>
+            </motion.div>
+
+            {/* Stats */}
+            <div className="flex-1 flex justify-around">
+              {[
+                { value: postCount, label: "โพสต์", link: null },
+                { value: followerCount, label: "ผู้ติดตาม", link: "/follows?tab=followers" },
+                { value: followingCount, label: "ติดตาม", link: "/follows?tab=following" },
+              ].map(({ value, label, link }) => (
+                <button
+                  key={label}
+                  onClick={() => link && navigate(link)}
+                  className="flex flex-col items-center"
+                >
+                  <span className="text-lg font-bold text-foreground">{value}</span>
+                  <span className="text-[11px] text-muted-foreground">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Name + edit */}
+          <div className="pb-3">
             {editingName ? (
               <div className="flex items-center gap-1.5">
                 <input
@@ -506,305 +266,168 @@ const Profile = () => {
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
-                  className="text-lg font-semibold text-foreground bg-transparent border-b-2 border-score-emerald outline-none text-center w-40 pb-0.5"
+                  className="text-sm font-semibold text-foreground bg-transparent border-b-2 border-score-emerald outline-none w-40 pb-0.5"
                   maxLength={30}
                 />
-                <button onClick={handleSaveName} disabled={savingName} className="w-7 h-7 rounded-full bg-score-emerald/10 flex items-center justify-center">
-                  <Check size={14} className="text-score-emerald" />
+                <button onClick={handleSaveName} disabled={savingName} className="w-6 h-6 rounded-full bg-score-emerald/10 flex items-center justify-center">
+                  <Check size={12} className="text-score-emerald" />
                 </button>
-                <button onClick={() => setEditingName(false)} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
-                  <X size={14} className="text-muted-foreground" />
+                <button onClick={() => setEditingName(false)} className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                  <X size={12} className="text-muted-foreground" />
                 </button>
               </div>
             ) : (
-              <>
-                <h1 className="text-lg font-semibold text-foreground">{displayName}</h1>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-foreground">{displayName}</span>
                 <button
                   onClick={() => { setNameInput(profile?.display_name || ""); setEditingName(true); }}
-                  className="w-6 h-6 rounded-full bg-muted flex items-center justify-center"
+                  className="w-5 h-5 rounded-full bg-muted flex items-center justify-center"
                 >
-                  <Pencil size={11} className="text-muted-foreground" />
+                  <Pencil size={9} className="text-muted-foreground" />
                 </button>
-              </>
+              </div>
             )}
-          </motion.div>
-
-          <motion.p
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.25 }}
-            className="text-xs text-muted-foreground mt-0.5"
-          >
-            {profile?.email}
-          </motion.p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{profile?.email}</p>
+          </div>
 
           {/* Founding Sovereign Badge */}
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.35, type: "spring", stiffness: 300 }}
-            className="mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full"
+            transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4"
             style={{
               background: "linear-gradient(135deg, hsl(43,74%,49%), hsl(43,74%,65%))",
               boxShadow: "0 2px 12px hsla(43,74%,49%,0.3)",
             }}
           >
-            <Crown size={12} className="text-white" />
-            <span className="text-[11px] font-semibold text-white tracking-wide">Founding Sovereign · ×20</span>
+            <Crown size={11} className="text-white" />
+            <span className="text-[10px] font-semibold text-white tracking-wide">Founding Sovereign · ×20</span>
           </motion.div>
         </div>
 
-        {/* ── Sovereign Stats ── */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mx-6 grid grid-cols-4 gap-2.5 mb-8"
-        >
-          {[
-            { icon: Gem, label: "Emeralds", value: emeraldCount, link: null },
-            { icon: Store, label: "Stores", value: storeCount, link: null },
-            { icon: Users, label: "ผู้ติดตาม", value: followerCount, link: "/follows?tab=followers" },
-            { icon: ChefHat, label: "ติดตาม", value: followingCount, link: "/follows?tab=following" },
-          ].map(({ icon: Icon, label, value, link }) => (
-            <div
-              key={label}
-              onClick={() => link && navigate(link)}
-              className={cn(
-                "flex flex-col items-center py-3.5 rounded-2xl bg-card shadow-luxury",
-                link && "cursor-pointer active:scale-95 transition-transform"
-              )}
-            >
-              <Icon size={16} strokeWidth={1.5} className="text-score-emerald mb-1" />
-              <span className="text-lg font-bold text-foreground">{value}</span>
-              <span className="text-[9px] text-muted-foreground font-medium mt-0.5">{label}</span>
-            </div>
-          ))}
-        </motion.div>
+        {/* ── Tab Bar (Grid / Saved) ── */}
+        <div className="flex border-t border-border">
+          <button
+            onClick={() => setActiveTab("posts")}
+            className={cn(
+              "flex-1 flex items-center justify-center py-3 transition-colors border-b-2",
+              activeTab === "posts"
+                ? "border-foreground text-foreground"
+                : "border-transparent text-muted-foreground"
+            )}
+          >
+            <Grid3X3 size={20} strokeWidth={activeTab === "posts" ? 2 : 1.5} />
+          </button>
+          <button
+            onClick={() => setActiveTab("saved")}
+            className={cn(
+              "flex-1 flex items-center justify-center py-3 transition-colors border-b-2",
+              activeTab === "saved"
+                ? "border-foreground text-foreground"
+                : "border-transparent text-muted-foreground"
+            )}
+          >
+            <Bookmark size={20} strokeWidth={activeTab === "saved" ? 2 : 1.5} />
+          </button>
+        </div>
 
-        {/* ── Achievement Badges ── */}
-        <motion.section
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.45 }}
-          className="mx-6 mb-8"
-        >
-          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <span className="text-base">🏆</span>
-            Achievements
-            <span className="text-[10px] text-muted-foreground font-normal">
-              {unlockedBadges.length}/{ACHIEVEMENTS.length}
-            </span>
-          </h2>
-
-          {/* Unlocked */}
-          {unlockedBadges.length > 0 && (
-            <div className="grid grid-cols-4 gap-2.5 mb-3">
-              {unlockedBadges.map((badge, i) => {
-                const tierColors = {
-                  emerald: { bg: "bg-score-emerald/10", ring: "shadow-[0_0_0_1.5px_hsl(163,78%,20%),0_0_12px_hsla(163,78%,20%,0.2)]" },
-                  gold: { bg: "bg-gold/10", ring: "shadow-[0_0_0_1.5px_hsl(43,74%,49%),0_0_12px_hsla(43,74%,49%,0.2)]" },
-                  ruby: { bg: "bg-score-ruby/10", ring: "shadow-[0_0_0_1.5px_hsl(0,68%,35%),0_0_12px_hsla(0,68%,35%,0.2)]" },
-                };
-                const tc = tierColors[badge.tier];
-                return (
-                  <motion.div
-                    key={badge.id}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.5 + i * 0.06, type: "spring", stiffness: 400, damping: 20 }}
-                    className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc.ring}`}
+        {/* ── Content ── */}
+        {activeTab === "posts" && (
+          <div>
+            {loadingPosts ? (
+              <div className="grid grid-cols-3 gap-[1px]">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="aspect-square bg-secondary animate-pulse" />
+                ))}
+              </div>
+            ) : posts.length > 0 ? (
+              <div className="grid grid-cols-3 gap-[1px]">
+                {posts.map((post) => (
+                  <motion.button
+                    key={post.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="relative aspect-square bg-secondary overflow-hidden group"
+                    onClick={() => navigate(`/`)} // navigate to feed/post detail later
                   >
-                    <span className="text-xl mb-1">{badge.icon}</span>
-                    <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{badge.titleTh}</span>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
+                    <img
+                      src={post.images[0] || post.image_url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
 
-          {/* Locked */}
-          {lockedBadges.length > 0 && (
-            <div className="grid grid-cols-4 gap-2.5">
-              {lockedBadges.map((badge) => (
-                <div
-                  key={badge.id}
-                  className="flex flex-col items-center py-3 rounded-2xl bg-muted/50 opacity-40"
-                >
-                  <span className="text-xl mb-1 grayscale">🔒</span>
-                  <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{badge.titleTh}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </motion.section>
+                    {/* Carousel indicator */}
+                    {post.images.length > 1 && (
+                      <div className="absolute top-2 right-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" className="drop-shadow-md">
+                          <rect x="3" y="3" width="14" height="14" rx="2" />
+                          <path d="M7 21h14a2 2 0 0 0 2-2V7" />
+                        </svg>
+                      </div>
+                    )}
 
-        <motion.section
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mx-6 mb-8"
-        >
-          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-score-emerald" />
-            Taste DNA
-          </h2>
-          <div className="bg-card rounded-2xl shadow-luxury p-4">
-            {hasTasteDNA ? (
-              <TasteDNAChart dna={tasteDNA} />
+                    {/* Hover overlay with likes/comments */}
+                    <div className="absolute inset-0 bg-foreground/40 opacity-0 group-active:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <Heart size={16} fill="white" className="text-white" />
+                        <span className="text-white text-sm font-bold">{post.likeCount}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MessageCircle size={16} fill="white" className="text-white" />
+                        <span className="text-white text-sm font-bold">{post.commentCount}</span>
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
             ) : (
-              <div className="flex flex-col items-center py-8 text-center">
-                <span className="text-2xl mb-2">🧬</span>
-                <p className="text-xs text-muted-foreground">ยังไม่มีข้อมูล Taste DNA</p>
-                <p className="text-[10px] text-muted-foreground mt-1">รีวิวเมนูเพิ่มเพื่อสร้างลายนิ้วมือรสชาติของคุณ</p>
+              <div className="flex flex-col items-center justify-center py-20 px-6">
+                <div className="w-16 h-16 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center mb-4">
+                  <Camera size={28} strokeWidth={1.5} className="text-muted-foreground/50" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-1">แชร์รูปอาหาร</h3>
+                <p className="text-sm text-muted-foreground text-center">เมื่อคุณโพสรูป จะแสดงในโปรไฟล์ของคุณ</p>
               </div>
             )}
           </div>
-        </motion.section>
+        )}
 
-        {/* ── Emerald Vault ── */}
-        <motion.section
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mx-6 mb-8"
-        >
-          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Gem size={14} className="text-score-emerald" />
-            Emerald Vault
-            {emeraldDishes.length > 0 && (
-              <span className="text-[10px] text-muted-foreground font-normal">({emeraldDishes.length})</span>
-            )}
-          </h2>
-
-          {emeraldDishes.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2.5">
-              {emeraldDishes.slice(0, 6).map((dish, i) => (
-                <motion.div
-                  key={dish.id}
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.65 + i * 0.05 }}
-                  className="bg-card rounded-2xl shadow-luxury p-3.5 flex flex-col"
-                >
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-5 h-5 rounded-full bg-score-emerald/10 flex items-center justify-center">
-                      <Gem size={10} className="text-score-emerald" />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{formatDate(dish.date)}</span>
-                  </div>
-                  <span className="text-xs font-semibold text-foreground leading-tight line-clamp-2">{dish.name}</span>
-                  <span className="text-[10px] text-muted-foreground mt-1 truncate">{dish.storeName}</span>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-card rounded-2xl shadow-luxury p-6 text-center">
-              <span className="text-2xl mb-2 block">💎</span>
-              <p className="text-xs text-muted-foreground">ยังไม่มีเมนู Emerald</p>
-              <p className="text-[10px] text-muted-foreground mt-1">ให้คะแนน +2 (ดีเลิศ) เพื่อเก็บเข้า Vault</p>
-            </div>
-          )}
-        </motion.section>
-
-        {/* ── ร้านที่บันทึก ── */}
-        <motion.section
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.65 }}
-          className="mx-6 mb-8"
-        >
-          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Bookmark size={14} className="text-score-emerald" />
-            ร้านที่บันทึก
-            {savedStores.length > 0 && (
-              <span className="text-[10px] text-muted-foreground font-normal">({savedStores.length})</span>
-            )}
-          </h2>
-
-          {savedStores.length > 0 ? (
-            <div className="space-y-2">
-              <AnimatePresence>
+        {activeTab === "saved" && (
+          <div className="px-4 pt-4">
+            {savedStores.length > 0 ? (
+              <div className="space-y-2">
                 {savedStores.map((s, i) => (
-                  <SavedStoreRow
+                  <motion.button
                     key={s.id}
-                    store={s}
-                    index={i}
-                    onNavigate={() => navigate(`/store/${s.storeId}/order`)}
-                    onRemove={async () => {
-                      navigator.vibrate?.(8);
-                      await supabase.from("saved_stores").delete().eq("id", s.id);
-                      setSavedStores((prev) => prev.filter((p) => p.id !== s.id));
-                    }}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <div className="bg-card rounded-2xl shadow-luxury p-6 text-center">
-              <span className="text-2xl mb-2 block">🔖</span>
-              <p className="text-xs text-muted-foreground">ยังไม่ได้บันทึกร้านค้า</p>
-              <p className="text-[10px] text-muted-foreground mt-1">กดปุ่มบันทึกในฟีดเพื่อเก็บร้านที่ชอบ</p>
-            </div>
-          )}
-        </motion.section>
-
-        {/* ── Verdict History ── */}
-        <motion.section
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="mx-6 mb-8"
-        >
-          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-score-emerald" />
-            Verdict History
-          </h2>
-
-          {verdicts.length > 0 ? (
-            <div className="space-y-2">
-              {verdicts.map((v, i) => (
-                <motion.div
-                  key={v.storeId}
-                  initial={{ x: 30, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.75 + i * 0.05 }}
-                  onClick={() => navigate(`/menu-feedback/${v.storeId}`)}
-                  className="bg-card rounded-2xl shadow-luxury p-4 flex items-center gap-3 active:scale-[0.98] transition-transform cursor-pointer"
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${v.consistent ? "bg-score-emerald/10" : "bg-score-amber/10"}`}>
-                    <span className="text-base">{v.consistent ? "✨" : "🔄"}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-foreground block truncate">{v.storeName}</span>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-[10px] font-medium ${v.consistent ? "text-score-emerald" : "text-score-amber"}`}>
-                        {v.consistent ? "เสน่ห์คงเดิม" : "กลายเป็นอื่น"}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">· {v.visits} เมนู · {formatDate(v.lastVisit)}</span>
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    onClick={() => navigate(`/store/${s.storeId}/order`)}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-card shadow-luxury border border-border/30 text-left active:scale-[0.98] transition-transform"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-score-emerald/10 flex items-center justify-center shrink-0">
+                      <Store size={18} className="text-score-emerald" />
                     </div>
-                  </div>
-                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-card rounded-2xl shadow-luxury p-6 text-center">
-              <span className="text-2xl mb-2 block">📋</span>
-              <p className="text-xs text-muted-foreground">ยังไม่มีประวัติการรีวิวร้าน</p>
-            </div>
-          )}
-        </motion.section>
-
-        {/* ── Sign Out ── */}
-        <div className="mx-6 mb-6">
-          <button
-            onClick={signOut}
-            className="w-full py-3 rounded-2xl border border-border text-sm text-muted-foreground font-medium active:scale-[0.98] transition-transform"
-          >
-            ออกจากระบบ
-          </button>
-        </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-foreground block truncate">{s.storeName}</span>
+                      <span className="text-[10px] text-muted-foreground">บันทึกเมื่อ {new Date(s.savedAt).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}</span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 px-6">
+                <div className="w-16 h-16 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center mb-4">
+                  <Bookmark size={28} strokeWidth={1.5} className="text-muted-foreground/50" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-1">บันทึกร้าน</h3>
+                <p className="text-sm text-muted-foreground text-center">กดปุ่มบันทึกในฟีดเพื่อเก็บร้านที่ชอบ</p>
+              </div>
+            )}
+          </div>
+        )}
 
         <BottomNav />
       </div>
