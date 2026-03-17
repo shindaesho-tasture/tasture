@@ -95,7 +95,10 @@ const PostOrderReview = () => {
     items.forEach((item) => {
       s.push({ type: "sensory", label: item.name, icon: "🎯", menuItemId: item.menuItemId, menuItemName: item.name });
     });
-    s.push({ type: "results", label: "สรุปผล", icon: "📊" });
+    items.forEach((item) => {
+      s.push({ type: "satisfaction", label: item.name, icon: "📊", menuItemId: item.menuItemId, menuItemName: item.name });
+    });
+    s.push({ type: "results", label: "สรุปผล", icon: "🏆" });
     return s;
   }, [items]);
 
