@@ -381,9 +381,10 @@ interface PostCardProps {
   index: number;
   navigate: ReturnType<typeof useNavigate>;
   user: any;
+  isNew?: boolean;
 }
 
-const PostCard = ({ post, index, navigate, user }: PostCardProps) => {
+const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [liked, setLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<FeedComment[]>([]);
