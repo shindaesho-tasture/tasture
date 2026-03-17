@@ -10,6 +10,7 @@ import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import BottomNav from "@/components/BottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
+import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
 
 /* ─── Types ─── */
 interface FeedPost {
