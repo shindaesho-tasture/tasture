@@ -489,7 +489,7 @@ const HomeFeed = () => {
                 <Skeleton className="h-3 w-3/4" />
               </div>
             ))
-          ) : posts.length === 0 ? (
+          ) : filteredPosts.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -498,18 +498,29 @@ const HomeFeed = () => {
               <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
                 <ChefHat size={28} className="text-muted-foreground" />
               </div>
-              <p className="text-sm text-muted-foreground">ยังไม่มีรีวิวจากชุมชน</p>
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={() => navigate("/store-list")}
-                className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
-              >
-                เริ่มสำรวจร้าน
-              </motion.button>
+              <p className="text-sm text-muted-foreground">{emptyMessages[activeTab]}</p>
+              {activeTab === "explore" && (
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => navigate("/store-list")}
+                  className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
+                >
+                  เริ่มสำรวจร้าน
+                </motion.button>
+              )}
+              {activeTab === "following" && (
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => navigate("/discover")}
+                  className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
+                >
+                  ค้นหาคนเพื่อติดตาม
+                </motion.button>
+              )}
             </motion.div>
           ) : (
             <AnimatePresence>
-              {posts.map((post, i) => (
+              {filteredPosts.map((post, i) => (
                 <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
               ))}
             </AnimatePresence>
