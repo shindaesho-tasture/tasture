@@ -152,6 +152,7 @@ const Profile = () => {
 
   // Post detail sheet
   const [selectedPost, setSelectedPost] = useState<UserPost | null>(null);
+  const [selectedBadge, setSelectedBadge] = useState<Achievement | null>(null);
 
   // Achievement / DNA data
   const [emeraldCount, setEmeraldCount] = useState(0);
