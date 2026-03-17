@@ -4,10 +4,11 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ShieldCheck, Search, CheckCircle2, XCircle, Users, Store,
   MessageSquare, Dna, BarChart3, TrendingUp, Eye, EyeOff, Trash2, UserCog,
-  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2,
+  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags,
 } from "lucide-react";
 import DishTemplateEditor from "@/components/admin/DishTemplateEditor";
 import AdminStoreEditor from "@/components/admin/AdminStoreEditor";
+import AdminCategoryEditor from "@/components/admin/AdminCategoryEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -19,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 /* ─── Types ─── */
-type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates";
+type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories";
 
 interface AdminStore {
   id: string; name: string; category_id: string | null; verified: boolean;
@@ -66,6 +67,7 @@ const tabs: { id: AdminTab; label: string; icon: typeof BarChart3 }[] = [
   { id: "content", label: "เนื้อหา", icon: MessageSquare },
   { id: "feedback", label: "ฟีดแบค", icon: Dna },
   { id: "templates", label: "แท็ก DNA", icon: Settings2 },
+  { id: "categories", label: "กลุ่มร้าน", icon: Tags },
 ];
 
 const roleIcons: Record<string, typeof Crown> = { admin: Crown, moderator: Shield, user: UserIcon };
@@ -846,6 +848,13 @@ const AdminDashboard = () => {
               {activeTab === "templates" && (
                 <motion.div key="templates" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                   <DishTemplateEditor />
+                </motion.div>
+              )}
+
+              {/* ─── Categories Tab ─── */}
+              {activeTab === "categories" && (
+                <motion.div key="categories" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <AdminCategoryEditor />
                 </motion.div>
               )}
             </AnimatePresence>

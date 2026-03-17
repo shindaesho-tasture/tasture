@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Check, RotateCcw } from "lucide-react";
-import { categories, scoreTiers } from "@/lib/categories";
+import { scoreTiers } from "@/lib/categories";
+import { useCategories } from "@/hooks/use-categories";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import MetricRater from "@/components/MetricRater";
@@ -18,6 +19,7 @@ const ReviewFlow = () => {
   const [searchParams] = useSearchParams();
   const storeId = searchParams.get("store");
   const { user } = useAuth();
+  const { categories } = useCategories();
   const category = categories.find((c) => c.id === categoryId);
 
   const [scores, setScores] = useState<Record<string, number | null>>({});
