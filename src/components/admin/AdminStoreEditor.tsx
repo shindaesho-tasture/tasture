@@ -180,6 +180,36 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
     }
   };
 
+  const deleteStore = async () => {
+    haptic();
+    setSaving(true);
+    try {
+      // Delete all related data
+      const menuIds = menuItems.map((m) => m.id);
+      if (menuIds.length > 0) {
+        await Promise.all([
+          supabase.from("menu_reviews").delete().in("menu_item_id", menuIds),
+          supabase.from("dish_dna").delete().in("menu_item_id", menuIds),
+          supabase.from("satisfaction_ratings").delete().in("menu_item_id", menuIds),
+        ]);
+        await supabase.from("menu_items").delete().eq("store_id", storeId);
+      }
+      await Promise.all([
+        supabase.from("reviews").delete().eq("store_id", storeId),
+        supabase.from("saved_stores").delete().eq("store_id", storeId),
+        supabase.from("posts").update({ store_id: null }).eq("store_id", storeId),
+      ]);
+      const { error } = await supabase.from("stores").delete().eq("id", storeId);
+      if (error) throw error;
+      toast({ title: "🗑️ ลบร้านทั้งหมดแล้ว" });
+      onUpdated();
+      onClose();
+    } catch (err: any) {
+      toast({ title: "ลบไม่สำเร็จ", description: err.message, variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
   const scoreColor = (s: number) => {
     if (s >= 1.5) return "text-score-emerald bg-score-emerald/10";
     if (s >= 0.5) return "text-score-mint bg-score-mint/10";
