@@ -633,6 +633,7 @@ const HomeFeed = () => {
   }, [posts, activeTab, followingIds, geoPos, storeLocations, user]);
 
   const tabIndexMap: Record<FeedTab, number> = { explore: 0, nearby: 1, following: 2, foryou: 3 };
+  const tabOrder: FeedTab[] = ["explore", "nearby", "following", "foryou"];
   const handleTabChange = useCallback((tab: FeedTab) => {
     const newIndex = tabIndexMap[tab];
     const dir = newIndex > prevTabIndexRef.current ? 1 : -1;
@@ -640,6 +641,15 @@ const HomeFeed = () => {
     prevTabIndexRef.current = newIndex;
     setActiveTab(tab);
   }, []);
+
+  const handleSwipe = useCallback((direction: "left" | "right") => {
+    const currentIndex = tabIndexMap[activeTab];
+    const nextIndex = direction === "left" ? currentIndex + 1 : currentIndex - 1;
+    if (nextIndex >= 0 && nextIndex < tabOrder.length) {
+      handleTabChange(tabOrder[nextIndex]);
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
+  }, [activeTab, handleTabChange]);
 
   const emptyMessages: Record<FeedTab, string> = {
     explore: "ยังไม่มีรีวิวจากชุมชน",
@@ -693,6 +703,14 @@ const HomeFeed = () => {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: slideDirection * 60, opacity: 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_e, info) => {
+                if (Math.abs(info.offset.x) > 50) {
+                  handleSwipe(info.offset.x < 0 ? "left" : "right");
+                }
+              }}
             >
           {/* Suggested Users for "foryou" tab */}
           {activeTab === "foryou" && user && !loading && (
