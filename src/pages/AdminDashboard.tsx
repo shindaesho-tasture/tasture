@@ -212,7 +212,7 @@ const AdminDashboard = () => {
 
   const fetchReviews = async () => {
     const { data } = await supabase
-      .from("menu_reviews").select("id, user_id, menu_item_id, score, created_at, shared")
+      .from("menu_reviews").select("id, user_id, menu_item_id, score, created_at, shared, hidden")
       .order("created_at", { ascending: false }).limit(200);
     if (!data) { setReviews([]); return; }
     const userIds = [...new Set(data.map((r) => r.user_id))];
