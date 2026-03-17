@@ -113,6 +113,25 @@ const UserProfile = () => {
       setIsFollowing(!!data);
     }
 
+    // Fetch recent reviews
+    const { data: reviews } = await supabase
+      .from("menu_reviews")
+      .select("id, score, created_at, menu_item_id, menu_items(name, image_url, store_id, stores(name))")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    const mapped: RecentReview[] = (reviews || []).map((r: any) => ({
+      id: r.id,
+      menuItemName: r.menu_items?.name || "เมนู",
+      menuItemImage: r.menu_items?.image_url || null,
+      storeName: r.menu_items?.stores?.name || "ร้านค้า",
+      storeId: r.menu_items?.store_id || "",
+      score: r.score,
+      createdAt: r.created_at,
+    }));
+    setRecentReviews(mapped);
+
     setLoading(false);
   };
 
