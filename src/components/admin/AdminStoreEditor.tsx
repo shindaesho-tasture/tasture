@@ -34,6 +34,13 @@ interface ReviewTag {
   count: number;
 }
 
+interface ReviewRow {
+  id: string;
+  metric_id: string;
+  score: number;
+  user_id: string;
+}
+
 interface AdminStoreEditorProps {
   storeId: string;
   onClose: () => void;
