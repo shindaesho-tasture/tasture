@@ -43,8 +43,7 @@ const AnimatedRoutes = () => {
         <Route path="/register" element={<StoreRegistration />} />
         <Route path="/review/:categoryId" element={<ReviewFlow />} />
         <Route path="/results" element={<Results />} />
-        <Route path="/world" element={<WorldMap />} />
-        <Route path="/split" element={<SmartSplit />} />
+        <Route path="/post" element={<CreatePost />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/orders" element={<OrderHistory />} />
         <Route path="/auth" element={<Auth />} />
