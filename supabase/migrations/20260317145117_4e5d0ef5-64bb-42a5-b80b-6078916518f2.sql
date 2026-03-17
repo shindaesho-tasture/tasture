@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_reviews ADD COLUMN shared boolean NOT NULL DEFAULT true;

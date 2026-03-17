@@ -10,6 +10,8 @@ import {
   Sparkles,
   Store,
   Star,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -85,6 +87,7 @@ const PostOrderReview = () => {
   const [satisfactionScores, setSatisfactionScores] = useState<Record<string, { texture: number; taste: number; overall: number; cleanliness: number }>>({});
 
   const [saving, setSaving] = useState(false);
+  const [shareToFeed, setShareToFeed] = useState(true);
 
   // Build steps
   const steps = useMemo<Step[]>(() => {
@@ -413,7 +416,7 @@ const PostOrderReview = () => {
         if (sensoryReviewChoice[id] === "same" && hasPreviousSensory[id]) {
           // Re-upsert previous score to update timestamp
           await supabase.from("menu_reviews").upsert(
-            { menu_item_id: id, user_id: user.id, score: previousSensoryScore[id] },
+            { menu_item_id: id, user_id: user.id, score: previousSensoryScore[id], shared: shareToFeed } as any,
             { onConflict: "menu_item_id,user_id" }
           );
         } else {
@@ -425,7 +428,7 @@ const PostOrderReview = () => {
               const balanceDistance = levels.reduce((sum, v) => sum + Math.abs(v - 3), 0) / levels.length;
               const score = balanceDistance <= 0.5 ? 2 : balanceDistance <= 1.5 ? 0 : -2;
               await supabase.from("menu_reviews").upsert(
-                { menu_item_id: id, user_id: user.id, score },
+                { menu_item_id: id, user_id: user.id, score, shared: shareToFeed } as any,
                 { onConflict: "menu_item_id,user_id" }
               );
             }
@@ -1029,8 +1032,51 @@ const PostOrderReview = () => {
                           )}>
                             {dish.sensoryScore > 0 ? "+" : ""}{dish.sensoryScore.toFixed(1)}
                           </p>
-                        </div>
-                      )}
+                {/* Share to Feed Toggle */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury p-4"
+                >
+                  <button
+                    onClick={() => { setShareToFeed((v) => !v); navigator.vibrate?.(8); }}
+                    className="flex items-center justify-between w-full"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                        shareToFeed ? "bg-score-emerald/10" : "bg-secondary"
+                      )}>
+                        {shareToFeed ? (
+                          <Eye size={18} className="text-score-emerald" />
+                        ) : (
+                          <EyeOff size={18} className="text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-foreground">
+                          {shareToFeed ? "แชร์ลงฟีด" : "ไม่แชร์ลงฟีด"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {shareToFeed ? "รีวิวจะแสดงในฟีดให้ทุกคนเห็น" : "บันทึกไว้ส่วนตัว ไม่แสดงในฟีด"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={cn(
+                      "w-12 h-7 rounded-full p-0.5 transition-colors duration-200",
+                      shareToFeed ? "bg-score-emerald" : "bg-secondary"
+                    )}>
+                      <motion.div
+                        animate={{ x: shareToFeed ? 20 : 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        className="w-6 h-6 rounded-full bg-white shadow-md"
+                      />
+                    </div>
+                  </button>
+                </motion.div>
+              </div>
+            )}
                     </div>
                   </motion.div>
                 ))}

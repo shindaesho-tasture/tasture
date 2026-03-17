@@ -198,6 +198,7 @@ const HomeFeed = () => {
         supabase
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
+          .eq("shared", true)
           .order("created_at", { ascending: false })
           .limit(limit),
         supabase
