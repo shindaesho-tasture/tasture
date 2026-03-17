@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send, Trash2, UserPlus, UserCheck } from "lucide-react";
@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import BottomNav from "@/components/BottomNav";
+import HomeFeedTabs, { type FeedTab } from "@/components/HomeFeedTabs";
+import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
 import { Skeleton } from "@/components/ui/skeleton";
 import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
-
 /* ─── Types ─── */
 interface FeedPost {
   id: string;
