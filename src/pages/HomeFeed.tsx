@@ -325,15 +325,129 @@ const HomeFeed = () => {
   );
 };
 
+/* ─── Comment Type ─── */
+interface FeedComment {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string | null;
+  content: string;
+  createdAt: string;
+}
+
 /* ─── Post Card Component ─── */
 interface PostCardProps {
   post: FeedPost;
   index: number;
   navigate: ReturnType<typeof useNavigate>;
+  user: any;
 }
 
-const PostCard = ({ post, index, navigate }: PostCardProps) => {
+const PostCard = ({ post, index, navigate, user }: PostCardProps) => {
   const [liked, setLiked] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<FeedComment[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Derive refId from post
+  const refType = post.type;
+  const refId = post.type === "menu_review"
+    ? post.id.replace("review-", "")
+    : post.id.replace("dna-", "");
+
+  // Fetch comment count on mount
+  useEffect(() => {
+    supabase
+      .from("feed_comments")
+      .select("id", { count: "exact", head: true })
+      .eq("ref_type", refType)
+      .eq("ref_id", refId)
+      .then(({ count }) => setCommentCount(count || 0));
+  }, [refType, refId]);
+
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    const { data } = await supabase
+      .from("feed_comments")
+      .select("id, user_id, content, created_at")
+      .eq("ref_type", refType)
+      .eq("ref_id", refId)
+      .order("created_at", { ascending: true })
+      .limit(50);
+
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map((c) => c.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", userIds);
+
+      const profileMap = new Map<string, { name: string; avatar: string | null }>();
+      (profiles || []).forEach((p) => profileMap.set(p.id, { name: p.display_name || "ผู้ใช้", avatar: p.avatar_url }));
+
+      setComments(data.map((c) => ({
+        id: c.id,
+        userId: c.user_id,
+        userName: profileMap.get(c.user_id)?.name || "ผู้ใช้",
+        userAvatar: profileMap.get(c.user_id)?.avatar || null,
+        content: c.content,
+        createdAt: c.created_at,
+      })));
+    } else {
+      setComments([]);
+    }
+    setLoadingComments(false);
+  };
+
+  const toggleComments = () => {
+    const next = !showComments;
+    setShowComments(next);
+    if (next && comments.length === 0) fetchComments();
+    if (next) setTimeout(() => inputRef.current?.focus(), 200);
+  };
+
+  const submitComment = async () => {
+    const trimmed = commentText.trim();
+    if (!trimmed || !user || submitting) return;
+    if (trimmed.length > 500) return;
+    setSubmitting(true);
+
+    const { data, error } = await supabase
+      .from("feed_comments")
+      .insert({ user_id: user.id, ref_type: refType, ref_id: refId, content: trimmed })
+      .select("id, created_at")
+      .single();
+
+    if (!error && data) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      setComments((prev) => [...prev, {
+        id: data.id,
+        userId: user.id,
+        userName: profile?.display_name || "ผู้ใช้",
+        userAvatar: profile?.avatar_url || null,
+        content: trimmed,
+        createdAt: data.created_at,
+      }]);
+      setCommentCount((c) => c + 1);
+      setCommentText("");
+    }
+    setSubmitting(false);
+  };
+
+  const deleteComment = async (commentId: string) => {
+    await supabase.from("feed_comments").delete().eq("id", commentId);
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    setCommentCount((c) => Math.max(0, c - 1));
+  };
 
   return (
     <motion.div
@@ -468,11 +582,19 @@ const PostCard = ({ post, index, navigate }: PostCardProps) => {
 
         <motion.button
           whileTap={{ scale: 0.85 }}
-          onClick={() => navigate(`/store/${post.storeId}/order`)}
+          onClick={toggleComments}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
         >
-          <MessageCircle size={16} className="text-muted-foreground" />
-          <span className="text-[11px] font-medium text-muted-foreground">ดูร้าน</span>
+          <MessageCircle
+            size={16}
+            className={cn(showComments ? "text-score-emerald" : "text-muted-foreground")}
+          />
+          <span className={cn(
+            "text-[11px] font-medium",
+            showComments ? "text-score-emerald" : "text-muted-foreground"
+          )}>
+            {commentCount > 0 ? commentCount : "คอมเมนต์"}
+          </span>
         </motion.button>
 
         <motion.button
@@ -482,6 +604,108 @@ const PostCard = ({ post, index, navigate }: PostCardProps) => {
           <Share2 size={16} className="text-muted-foreground" />
         </motion.button>
       </div>
+
+      {/* Comments Section */}
+      <AnimatePresence>
+        {showComments && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="overflow-hidden border-t border-border/30"
+          >
+            <div className="px-4 py-3 space-y-3">
+              {/* Comments list */}
+              {loadingComments ? (
+                <div className="flex justify-center py-3">
+                  <div className="w-5 h-5 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
+                </div>
+              ) : comments.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground text-center py-2">
+                  ยังไม่มีคอมเมนต์ — เป็นคนแรก!
+                </p>
+              ) : (
+                <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                  {comments.map((c) => (
+                    <motion.div
+                      key={c.id}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex gap-2.5 group"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-secondary overflow-hidden shrink-0">
+                        {c.userAvatar ? (
+                          <img src={c.userAvatar} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[9px]">
+                            {c.userName.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="bg-secondary rounded-2xl rounded-tl-md px-3 py-2">
+                          <p className="text-[11px] font-semibold text-foreground">{c.userName}</p>
+                          <p className="text-[11px] text-foreground/80 leading-relaxed break-words">{c.content}</p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 px-1">
+                          <span className="text-[9px] text-muted-foreground">{timeAgo(c.createdAt)}</span>
+                          {user && c.userId === user.id && (
+                            <button
+                              onClick={() => deleteComment(c.id)}
+                              className="text-[9px] text-muted-foreground hover:text-score-ruby transition-colors opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 size={10} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+
+              {/* Comment input */}
+              {user ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <div className="w-7 h-7 rounded-full bg-secondary shrink-0 overflow-hidden">
+                    <div className="w-full h-full flex items-center justify-center text-[9px] text-muted-foreground">
+                      ✍️
+                    </div>
+                  </div>
+                  <div className="flex-1 flex items-center gap-1.5 bg-secondary rounded-full px-3 py-1.5">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
+                      onKeyDown={(e) => e.key === "Enter" && submitComment()}
+                      placeholder="เขียนคอมเมนต์…"
+                      className="flex-1 bg-transparent text-[11px] text-foreground placeholder:text-muted-foreground outline-none"
+                      maxLength={500}
+                    />
+                    <motion.button
+                      whileTap={{ scale: 0.85 }}
+                      onClick={submitComment}
+                      disabled={!commentText.trim() || submitting}
+                      className={cn(
+                        "p-1 rounded-full transition-colors",
+                        commentText.trim() ? "text-score-emerald" : "text-muted-foreground/40"
+                      )}
+                    >
+                      <Send size={14} />
+                    </motion.button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[10px] text-muted-foreground text-center">
+                  เข้าสู่ระบบเพื่อคอมเมนต์
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
