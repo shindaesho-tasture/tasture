@@ -645,7 +645,7 @@ const HomeFeed = () => {
     <PageTransition>
       <div className="h-screen flex flex-col bg-background">
         {/* Fixed Header */}
-        <div className={`flex-shrink-0 z-40 bg-background transition-shadow duration-300 ${scrolled ? 'shadow-md' : ''}`}>
+        <div className="flex-shrink-0 z-40 bg-background transition-shadow duration-300" style={scrolled ? { boxShadow: '0 4px 12px -2px hsla(163, 78%, 20%, 0.12)' } : undefined}>
           <TastureHeader />
           {/* Pull-to-refresh indicator */}
           <motion.div
