@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera, Users } from "lucide-react";
+import { Crown, Gem, Store, ChefHat, LogIn, ChevronRight, Pencil, Check, X, Camera, Users, Bookmark } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
