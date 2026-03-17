@@ -185,7 +185,7 @@ const Index = () => {
 
       setStores(allStores.map((s) => {
         const sm = metricMap.get(s.id);
-        const cat = categories.find((c) => c.id === s.category_id);
+        const cat = dynamicCategories.find((c) => c.id === s.category_id) || defaultCategories.find((c) => c.id === s.category_id);
 
         const metrics: MetricAvg[] = [];
         let totalScore = 0;
