@@ -397,6 +397,41 @@ const HomeFeed = () => {
 
   const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
 
+  // Filter posts based on active tab
+  const filteredPosts = useMemo(() => {
+    switch (activeTab) {
+      case "following":
+        return posts.filter((p) => followingIds.has(p.userId));
+      case "nearby": {
+        if (!geoPos) return posts; // fallback to all if no location
+        const NEARBY_KM = 10;
+        return posts.filter((p) => {
+          const loc = storeLocations.get(p.storeId);
+          if (!loc) return false;
+          return haversineKm(geoPos.lat, geoPos.lng, loc.lat, loc.lng) <= NEARBY_KM;
+        });
+      }
+      case "foryou":
+        // Show posts from users the current user follows + own posts, prioritized
+        if (!user) return posts;
+        return posts.filter((p) => followingIds.has(p.userId) || p.userId === user.id);
+      case "explore":
+      default:
+        return posts;
+    }
+  }, [posts, activeTab, followingIds, geoPos, storeLocations, user]);
+
+  const handleTabChange = useCallback((tab: FeedTab) => {
+    setActiveTab(tab);
+  }, []);
+
+  const emptyMessages: Record<FeedTab, string> = {
+    explore: "ยังไม่มีรีวิวจากชุมชน",
+    nearby: geoPos ? "ไม่พบรีวิวร้านใกล้เคียง" : "กรุณาเปิดตำแหน่งที่ตั้ง",
+    following: "ยังไม่มีรีวิวจากคนที่คุณติดตาม",
+    foryou: "ยังไม่มีรีวิวที่แนะนำสำหรับคุณ",
+  };
+
   return (
     <PageTransition>
       <div ref={containerRef} className="min-h-screen bg-background pb-24 overflow-y-auto">
@@ -426,7 +461,7 @@ const HomeFeed = () => {
         </motion.div>
 
         {/* Page Title */}
-        <div className="px-6 pt-2 pb-4">
+        <div className="px-6 pt-2 pb-2">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             ฟีด
           </h1>
@@ -434,6 +469,9 @@ const HomeFeed = () => {
             รีวิวล่าสุดจากชุมชน
           </p>
         </div>
+
+        {/* Feed Tabs */}
+        <HomeFeedTabs active={activeTab} onChange={handleTabChange} />
 
         {/* Feed */}
         <div className="px-4 space-y-4">
