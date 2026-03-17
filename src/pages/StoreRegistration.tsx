@@ -276,9 +276,58 @@ const StoreRegistration = () => {
             />
           </motion.section>
 
-          {/* Input 2: Map with Pin */}
+          {/* Input 2: Map with Pin + Search */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
             <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">ปักหมุดตำแหน่ง</label>
+
+            {/* Place Search */}
+            <div className="relative mb-2">
+              <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-surface-elevated shadow-luxury border border-border/30 focus-within:ring-2 focus-within:ring-score-emerald/30 transition-shadow">
+                <Search size={16} strokeWidth={1.5} className="text-muted-foreground shrink-0" />
+                <input
+                  type="text"
+                  value={placeQuery}
+                  onChange={(e) => setPlaceQuery(e.target.value)}
+                  placeholder="ค้นหาชื่อร้านหรือสถานที่..."
+                  lang="th"
+                  autoComplete="off"
+                  className="flex-1 bg-transparent text-sm font-light text-foreground placeholder:text-muted-foreground/60 outline-none"
+                />
+                {placeQuery && (
+                  <button onClick={() => { setPlaceQuery(""); setPlaceResults([]); }} className="p-1 rounded-full hover:bg-secondary">
+                    <X size={14} className="text-muted-foreground" />
+                  </button>
+                )}
+                {searchingPlace && <Loader2 size={14} className="text-score-emerald animate-spin" />}
+              </div>
+
+              {/* Search results dropdown */}
+              <AnimatePresence>
+                {placeResults.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute left-0 right-0 top-full mt-1 z-20 rounded-2xl bg-surface-elevated shadow-luxury border border-border/50 overflow-hidden"
+                  >
+                    {placeResults.map((place) => (
+                      <button
+                        key={place.place_id}
+                        onClick={() => handleSelectPlace(place)}
+                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-secondary/60 transition-colors border-b border-border/20 last:border-0"
+                      >
+                        <MapPin size={14} strokeWidth={1.5} className="text-score-emerald shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{place.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{place.formatted_address}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="relative overflow-hidden rounded-2xl shadow-luxury">
               <div className="relative h-48 bg-secondary overflow-hidden rounded-t-2xl">
                 {isLoaded ? (
