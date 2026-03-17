@@ -20,6 +20,7 @@ const item = {
 
 const CategorySelect = () => {
   const navigate = useNavigate();
+  const { categories } = useCategories();
 
   return (
     <PageTransition>

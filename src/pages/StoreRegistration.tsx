@@ -22,6 +22,7 @@ const StoreRegistration = () => {
   const { store, setStore } = useStore();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { categories } = useCategories();
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);

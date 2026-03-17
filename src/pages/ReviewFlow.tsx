@@ -19,6 +19,7 @@ const ReviewFlow = () => {
   const [searchParams] = useSearchParams();
   const storeId = searchParams.get("store");
   const { user } = useAuth();
+  const { categories } = useCategories();
   const category = categories.find((c) => c.id === categoryId);
 
   const [scores, setScores] = useState<Record<string, number | null>>({});
