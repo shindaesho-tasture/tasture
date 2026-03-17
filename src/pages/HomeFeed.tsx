@@ -235,12 +235,14 @@ const HomeFeed = () => {
 
       // Fetch profiles, menu items, stores
       const [profilesRes, menuItemsRes] = await Promise.all([
-        supabase.from("profiles").select("id, display_name, avatar_url").in("id", [...userIds]),
+        supabase.from("profiles").select("id, display_name, avatar_url, banned").in("id", [...userIds]),
         supabase.from("menu_items").select("id, name, store_id, image_url").in("id", [...menuItemIds]),
       ]);
 
+      const bannedUsers = new Set<string>();
       const profileMap = new Map<string, { name: string; avatar: string | null }>();
-      (profilesRes.data || []).forEach((p) => {
+      (profilesRes.data || []).forEach((p: any) => {
+        if (p.banned) bannedUsers.add(p.id);
         profileMap.set(p.id, { name: p.display_name || "ผู้ใช้", avatar: p.avatar_url });
       });
 
