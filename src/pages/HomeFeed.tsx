@@ -481,7 +481,7 @@ const HomeFeed = () => {
             storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "", storeId: ppStoreId,
             menuItemName: "", menuItemId: "", menuItemImage: null, score: null, satisfaction: null,
             caption: pp.caption, photoUrl: pp.image_url,
-            slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null }],
+            slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }],
             createdAt: pp.created_at,
           });
         });
