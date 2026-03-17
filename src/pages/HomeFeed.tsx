@@ -72,7 +72,11 @@ const HomeFeed = () => {
   const [activeTab, setActiveTab] = useState<FeedTab>("explore");
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [storeLocations, setStoreLocations] = useState<Map<string, { lat: number; lng: number }>>(new Map());
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const pageSize = useRef(30);
   const containerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const isPulling = useRef(false);
   const knownPostIds = useRef<Set<string>>(new Set());
@@ -169,7 +173,7 @@ const HomeFeed = () => {
     };
   }, [pullDistance, refreshing, handleRefresh]);
 
-  const fetchFeed = async (isRefresh = false, isRealtime = false) => {
+  const fetchFeed = async (isRefresh = false, isRealtime = false, limit = 30) => {
     if (!isRefresh) setLoading(true);
     try {
       // Fetch recent menu reviews, dish DNA, satisfaction ratings, and store reviews in parallel
@@ -178,22 +182,22 @@ const HomeFeed = () => {
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
           .order("created_at", { ascending: false })
-          .limit(20),
+          .limit(limit),
         supabase
           .from("dish_dna")
           .select("id, user_id, menu_item_id, component_name, component_icon, selected_tag, selected_score, created_at")
           .order("created_at", { ascending: false })
-          .limit(60),
+          .limit(limit * 3),
         supabase
           .from("satisfaction_ratings")
           .select("user_id, menu_item_id, texture, taste, overall, cleanliness, value, created_at")
           .order("created_at", { ascending: false })
-          .limit(40),
+          .limit(limit * 2),
         supabase
           .from("reviews")
           .select("user_id, store_id, metric_id, score, created_at")
           .order("created_at", { ascending: false })
-          .limit(60),
+          .limit(limit * 3),
       ]);
 
       // Collect unique user_ids and menu_item_ids
@@ -374,7 +378,9 @@ const HomeFeed = () => {
       });
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      const finalPosts = allPosts.slice(0, 30);
+      const finalPosts = allPosts.slice(0, limit);
+      setHasMore(allPosts.length > limit);
+      pageSize.current = limit;
 
       // Track new posts from realtime
       if (isRealtime) {
@@ -396,8 +402,31 @@ const HomeFeed = () => {
       console.error("Feed fetch error:", err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    fetchFeed(true, false, pageSize.current + 20);
+  }, [loadingMore, hasMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !loading && !loadingMore && hasMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loading, loadingMore, hasMore, loadMore]);
 
   const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
 
@@ -535,6 +564,17 @@ const HomeFeed = () => {
                 <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
               ))}
             </AnimatePresence>
+          )}
+
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="h-1" />
+          {loadingMore && (
+            <div className="flex justify-center py-6">
+              <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {!hasMore && filteredPosts.length > 0 && (
+            <p className="text-center text-[11px] text-muted-foreground/50 py-4">ไม่มีโพสเพิ่มเติม</p>
           )}
         </div>
 
