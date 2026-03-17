@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      dish_descriptions: {
+        Row: {
+          component_name: string
+          created_at: string
+          description: string
+          id: string
+          menu_item_id: string
+        }
+        Insert: {
+          component_name: string
+          created_at?: string
+          description: string
+          id?: string
+          menu_item_id: string
+        }
+        Update: {
+          component_name?: string
+          created_at?: string
+          description?: string
+          id?: string
+          menu_item_id?: string
+        }
+        Relationships: []
+      }
       dish_dna: {
         Row: {
           component_icon: string
