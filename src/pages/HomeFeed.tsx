@@ -146,7 +146,7 @@ const HomeFeed = () => {
     };
   }, [pullDistance, refreshing, handleRefresh]);
 
-  const fetchFeed = async (isRefresh = false) => {
+  const fetchFeed = async (isRefresh = false, isRealtime = false) => {
     if (!isRefresh) setLoading(true);
     try {
       // Fetch recent menu reviews and dish DNA in parallel
