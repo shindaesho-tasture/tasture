@@ -406,6 +406,28 @@ const HomeFeed = () => {
     }
   };
 
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    fetchFeed(true, false, pageSize.current + 20);
+  }, [loadingMore, hasMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !loading && !loadingMore && hasMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loading, loadingMore, hasMore, loadMore]);
+
   const pullProgress = Math.min(pullDistance / PULL_THRESHOLD, 1);
 
   // Filter posts based on active tab
