@@ -1146,8 +1146,8 @@ const LEVEL_LABELS: Record<number, { label: string; color: string }> = {
 interface SatisfactionStepProps {
   menuItemId: string;
   menuItemName: string;
-  scores: { texture: number; taste: number; overall: number; cleanliness: number; value: number };
-  onChange: (scores: { texture: number; taste: number; overall: number; cleanliness: number; value: number }) => void;
+  scores: { texture: number; taste: number; overall: number; cleanliness: number };
+  onChange: (scores: { texture: number; taste: number; overall: number; cleanliness: number }) => void;
 }
 
 const SatisfactionStep = ({ menuItemId, menuItemName, scores, onChange }: SatisfactionStepProps) => {
