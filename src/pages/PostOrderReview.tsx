@@ -946,7 +946,7 @@ const PostOrderReview = () => {
               <SatisfactionStep
                 menuItemId={step.menuItemId}
                 menuItemName={step.menuItemName || ""}
-                scores={satisfactionScores[step.menuItemId] || { texture: 3, taste: 3, overall: 3, cleanliness: 3, value: 3 }}
+                scores={satisfactionScores[step.menuItemId] || { texture: 3, taste: 3, overall: 3, cleanliness: 3 }}
                 onChange={(scores) => setSatisfactionScores((prev) => ({ ...prev, [step.menuItemId!]: scores }))}
               />
             )}
