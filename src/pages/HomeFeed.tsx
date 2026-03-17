@@ -13,6 +13,7 @@ import HomeFeedTabs, { type FeedTab } from "@/components/HomeFeedTabs";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
 import { Skeleton } from "@/components/ui/skeleton";
 import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
+import SuggestedUsers from "@/components/SuggestedUsers";
 /* ─── Types ─── */
 interface FeedPost {
   id: string;
