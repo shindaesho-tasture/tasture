@@ -349,6 +349,43 @@ const Index = () => {
           </motion.button>
         </div>
 
+        {/* Category Filter Chips */}
+        <div className="px-6 pb-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedCategoryFilter(null)}
+              className={cn(
+                "shrink-0 px-3.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
+                !selectedCategoryFilter
+                  ? "bg-foreground text-primary-foreground shadow-luxury"
+                  : "bg-secondary/80 text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              ทั้งหมด
+            </motion.button>
+            {dynamicCategories.map((cat) => {
+              const isActive = selectedCategoryFilter === cat.id;
+              return (
+                <motion.button
+                  key={cat.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedCategoryFilter(isActive ? null : cat.id)}
+                  className={cn(
+                    "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11px] font-semibold transition-all",
+                    isActive
+                      ? "bg-foreground text-primary-foreground shadow-luxury"
+                      : "bg-secondary/80 text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  <span className="text-sm">{cat.icon}</span>
+                  {cat.labelTh || cat.label}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+
         <SensorySearch />
         <HeroFoodCard />
 
