@@ -1,13 +1,18 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Image, X, Send, MapPin, Loader2 } from "lucide-react";
+import { Camera, Image, X, Send, MapPin, Loader2, Search, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useToast } from "@/hooks/use-toast";
+
+interface StoreOption {
+  id: string;
+  name: string;
+}
 
 const CreatePost = () => {
   const navigate = useNavigate();
@@ -20,6 +25,31 @@ const CreatePost = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  // Store tag
+  const [stores, setStores] = useState<StoreOption[]>([]);
+  const [selectedStore, setSelectedStore] = useState<StoreOption | null>(null);
+  const [showStorePicker, setShowStorePicker] = useState(false);
+  const [storeSearch, setStoreSearch] = useState("");
+  const [loadingStores, setLoadingStores] = useState(false);
+
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  const fetchStores = async () => {
+    setLoadingStores(true);
+    const { data } = await supabase
+      .from("stores")
+      .select("id, name")
+      .order("name");
+    setStores(data || []);
+    setLoadingStores(false);
+  };
+
+  const filteredStores = storeSearch
+    ? stores.filter((s) => s.name.toLowerCase().includes(storeSearch.toLowerCase()))
+    : stores;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,7 +74,6 @@ const CreatePost = () => {
     setUploading(true);
 
     try {
-      // Upload image
       const ext = imageFile.name.split(".").pop() || "jpg";
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error: uploadErr } = await supabase.storage
@@ -55,11 +84,11 @@ const CreatePost = () => {
 
       const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(path);
 
-      // Insert post
       const { error: insertErr } = await supabase.from("posts").insert({
         user_id: user.id,
         image_url: urlData.publicUrl,
         caption: caption.trim() || null,
+        store_id: selectedStore?.id || null,
       });
 
       if (insertErr) throw insertErr;
@@ -110,11 +139,7 @@ const CreatePost = () => {
                   : "bg-secondary text-muted-foreground"
               )}
             >
-              {uploading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Send size={14} />
-              )}
+              {uploading ? <Loader2 size={16} className="animate-spin" /> : <Send size={14} />}
               {uploading ? "กำลังโพส..." : "โพส"}
             </motion.button>
           </div>
@@ -131,11 +156,7 @@ const CreatePost = () => {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="relative rounded-2xl overflow-hidden shadow-luxury border border-border/30"
               >
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full aspect-square object-cover"
-                />
+                <img src={imagePreview} alt="Preview" className="w-full aspect-square object-cover" />
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={clearImage}
@@ -154,7 +175,6 @@ const CreatePost = () => {
               >
                 <div className="text-4xl">📸</div>
                 <p className="text-sm text-muted-foreground font-medium">แชร์รูปอาหารของคุณ</p>
-
                 <div className="flex gap-3">
                   <motion.button
                     whileTap={{ scale: 0.95 }}
@@ -176,6 +196,104 @@ const CreatePost = () => {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Store Tag */}
+          <div className="relative">
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowStorePicker(!showStorePicker)}
+              className={cn(
+                "w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all",
+                selectedStore
+                  ? "bg-score-emerald/5 border-score-emerald/30"
+                  : "bg-card border-border/30 shadow-luxury"
+              )}
+            >
+              <MapPin size={16} className={selectedStore ? "text-score-emerald" : "text-muted-foreground"} />
+              <span className={cn(
+                "flex-1 text-left text-sm",
+                selectedStore ? "font-semibold text-foreground" : "text-muted-foreground"
+              )}>
+                {selectedStore ? selectedStore.name : "แท็กร้านอาหาร (ไม่บังคับ)"}
+              </span>
+              {selectedStore ? (
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedStore(null); }}
+                  className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center"
+                >
+                  <X size={12} className="text-muted-foreground" />
+                </motion.div>
+              ) : (
+                <ChevronDown size={14} className={cn(
+                  "text-muted-foreground transition-transform",
+                  showStorePicker && "rotate-180"
+                )} />
+              )}
+            </motion.button>
+
+            {/* Store Picker Dropdown */}
+            <AnimatePresence>
+              {showStorePicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -8, height: 0 }}
+                  className="mt-2 rounded-2xl bg-card border border-border/30 shadow-luxury overflow-hidden"
+                >
+                  {/* Search */}
+                  <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/20">
+                    <Search size={14} className="text-muted-foreground shrink-0" />
+                    <input
+                      type="text"
+                      value={storeSearch}
+                      onChange={(e) => setStoreSearch(e.target.value)}
+                      placeholder="ค้นหาร้าน..."
+                      className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
+                      autoFocus
+                    />
+                    {storeSearch && (
+                      <button onClick={() => setStoreSearch("")}>
+                        <X size={12} className="text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* List */}
+                  <div className="max-h-48 overflow-y-auto">
+                    {loadingStores ? (
+                      <div className="flex justify-center py-4">
+                        <div className="w-5 h-5 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : filteredStores.length === 0 ? (
+                      <p className="text-center text-xs text-muted-foreground py-4">ไม่พบร้าน</p>
+                    ) : (
+                      filteredStores.map((store) => (
+                        <motion.button
+                          key={store.id}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setSelectedStore(store);
+                            setShowStorePicker(false);
+                            setStoreSearch("");
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                            selectedStore?.id === store.id
+                              ? "bg-score-emerald/10"
+                              : "hover:bg-secondary/50"
+                          )}
+                        >
+                          <MapPin size={12} className="text-muted-foreground shrink-0" />
+                          <span className="text-sm text-foreground truncate">{store.name}</span>
+                        </motion.button>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Caption */}
           <div className="rounded-2xl bg-card border border-border/30 shadow-luxury overflow-hidden">
@@ -199,21 +317,8 @@ const CreatePost = () => {
         </div>
 
         {/* Hidden file inputs */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+        <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
 
         <BottomNav />
       </div>
