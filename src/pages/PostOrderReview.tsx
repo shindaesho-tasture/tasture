@@ -1032,6 +1032,12 @@ const PostOrderReview = () => {
                           )}>
                             {dish.sensoryScore > 0 ? "+" : ""}{dish.sensoryScore.toFixed(1)}
                           </p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+
                 {/* Share to Feed Toggle */}
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -1075,11 +1081,6 @@ const PostOrderReview = () => {
                     </div>
                   </button>
                 </motion.div>
-              </div>
-            )}
-                    </div>
-                  </motion.div>
-                ))}
               </div>
             )}
           </motion.div>
