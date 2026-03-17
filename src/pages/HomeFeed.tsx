@@ -88,12 +88,12 @@ const HomeFeed = () => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "menu_reviews" },
-        () => fetchFeed(true)
+        () => fetchFeed(true, true)
       )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "dish_dna" },
-        () => fetchFeed(true)
+        () => fetchFeed(true, true)
       )
       .subscribe();
 
