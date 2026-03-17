@@ -1392,25 +1392,41 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
 
       {/* Interaction bar */}
       <div className="flex items-center gap-1 px-4 py-3 border-t border-border/30">
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={toggleLike}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
-        >
-          <Heart
-            size={16}
-            className={cn(
-              "transition-all duration-200",
-              liked ? "fill-score-ruby text-score-ruby" : "text-muted-foreground"
-            )}
-          />
-          <span className={cn(
-            "text-[11px] font-medium",
-            liked ? "text-score-ruby" : "text-muted-foreground"
-          )}>
-            {likeCount > 0 ? likeCount : "ถูกใจ"}
-          </span>
-        </motion.button>
+        <div className="relative">
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={toggleLike}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
+          >
+            <Heart
+              size={16}
+              className={cn(
+                "transition-all duration-200",
+                liked ? "fill-score-ruby text-score-ruby" : "text-muted-foreground"
+              )}
+            />
+            <span className={cn(
+              "text-[11px] font-medium",
+              liked ? "text-score-ruby" : "text-muted-foreground"
+            )}>
+              {likeCount > 0 ? likeCount : "ถูกใจ"}
+            </span>
+          </motion.button>
+          <AnimatePresence>
+            {particles.map((p) => (
+              <motion.span
+                key={p.id}
+                initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
+                animate={{ opacity: 0, x: p.x, y: p.y, scale: p.scale }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+                className="absolute left-3 top-0 pointer-events-none text-sm"
+              >
+                {p.emoji}
+              </motion.span>
+            ))}
+          </AnimatePresence>
+        </div>
 
         <motion.button
           whileTap={{ scale: 0.85 }}
