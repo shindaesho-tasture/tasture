@@ -22,6 +22,8 @@ const DishTemplateEditor = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<DishTemplate | null>(null);
   const [saving, setSaving] = useState(false);
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [newDishName, setNewDishName] = useState("");
 
   useEffect(() => { fetchTemplates(); }, []);
 
