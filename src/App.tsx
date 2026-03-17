@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/lib/store-context";
 import { OrderProvider } from "@/lib/order-context";
+import HomeFeed from "./pages/HomeFeed.tsx";
 import Index from "./pages/Index.tsx";
 import CategorySelect from "./pages/CategorySelect.tsx";
 import StoreRegistration from "./pages/StoreRegistration.tsx";
@@ -35,7 +36,8 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<HomeFeed />} />
+        <Route path="/discover" element={<Index />} />
         <Route path="/categories" element={<CategorySelect />} />
         <Route path="/register" element={<StoreRegistration />} />
         <Route path="/review/:categoryId" element={<ReviewFlow />} />
