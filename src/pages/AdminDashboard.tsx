@@ -32,7 +32,7 @@ interface AdminUser {
 interface AdminPost {
   id: string; user_id: string; userName: string; caption: string | null;
   image_url: string; store_name: string | null; created_at: string;
-  likeCount: number; commentCount: number;
+  likeCount: number; commentCount: number; hidden: boolean;
 }
 
 interface AdminReview {
