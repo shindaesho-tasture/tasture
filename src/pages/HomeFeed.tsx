@@ -1350,6 +1350,28 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
           </span>
         </motion.button>
 
+        {post.storeId && user && (
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={toggleSaveStore}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
+          >
+            <Bookmark
+              size={16}
+              className={cn(
+                "transition-all duration-200",
+                saved ? "fill-score-emerald text-score-emerald" : "text-muted-foreground"
+              )}
+            />
+            <span className={cn(
+              "text-[11px] font-medium",
+              saved ? "text-score-emerald" : "text-muted-foreground"
+            )}>
+              {saved ? "บันทึกแล้ว" : "บันทึก"}
+            </span>
+          </motion.button>
+        )}
+
         <motion.button
           whileTap={{ scale: 0.85 }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors ml-auto"
