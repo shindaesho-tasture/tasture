@@ -151,8 +151,8 @@ const HomeFeed = () => {
   const fetchFeed = async (isRefresh = false, isRealtime = false) => {
     if (!isRefresh) setLoading(true);
     try {
-      // Fetch recent menu reviews, dish DNA, and satisfaction ratings in parallel
-      const [reviewsRes, dnaRes, satRes] = await Promise.all([
+      // Fetch recent menu reviews, dish DNA, satisfaction ratings, and store reviews in parallel
+      const [reviewsRes, dnaRes, satRes, storeReviewsRes] = await Promise.all([
         supabase
           .from("menu_reviews")
           .select("id, score, user_id, menu_item_id, created_at")
@@ -168,6 +168,11 @@ const HomeFeed = () => {
           .select("user_id, menu_item_id, texture, taste, overall, cleanliness, value, created_at")
           .order("created_at", { ascending: false })
           .limit(40),
+        supabase
+          .from("reviews")
+          .select("user_id, store_id, metric_id, score, created_at")
+          .order("created_at", { ascending: false })
+          .limit(60),
       ]);
 
       // Collect unique user_ids and menu_item_ids
