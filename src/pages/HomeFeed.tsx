@@ -684,6 +684,22 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          {user && user.id !== post.userId && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleFollow}
+              disabled={followLoading}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide transition-all",
+                isFollowing
+                  ? "bg-score-emerald/10 text-score-emerald"
+                  : "bg-secondary text-muted-foreground hover:bg-accent"
+              )}
+            >
+              {isFollowing ? <UserCheck size={10} /> : <UserPlus size={10} />}
+              {isFollowing ? "ติดตามแล้ว" : "ติดตาม"}
+            </motion.button>
+          )}
           {(post.type === "combined" || post.type === "menu_review") && (
             <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-score-amber/10 text-score-amber">
               ⭐ รีวิว
