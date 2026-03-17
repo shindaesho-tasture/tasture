@@ -14,6 +14,7 @@ import TrustTierBadge from "@/components/TrustTierBadge";
 import PageTransition from "@/components/PageTransition";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 /* ─── Types ─── */
 type AdminTab = "overview" | "stores" | "users" | "content" | "feedback";
