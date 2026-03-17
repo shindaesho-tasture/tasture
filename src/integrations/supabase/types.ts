@@ -191,6 +191,45 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          body: string
+          created_at: string
+          id: string
+          is_read: boolean
+          ref_id: string | null
+          ref_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          ref_id?: string | null
+          ref_type?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          ref_id?: string | null
+          ref_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
