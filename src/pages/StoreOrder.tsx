@@ -302,7 +302,7 @@ const StoreOrder = () => {
                       name={item.name}
                       price={item.price}
                       priceSpecial={item.price_special}
-                      imageUrl={item.image_url ?? undefined}
+                      imageUrl={topPhotoByItem.get(item.id)?.[0] || item.image_url || undefined}
                       tags={tags}
                       totalReviews={totalRevs}
                       onPress={() => setDetailItem(item)}
