@@ -124,6 +124,11 @@ const HomeFeed = () => {
         { event: "INSERT", schema: "public", table: "satisfaction_ratings" },
         () => fetchFeed(true, true)
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "posts" },
+        () => fetchFeed(true, true)
+      )
       .subscribe();
 
     return () => {
