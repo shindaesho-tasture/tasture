@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ShieldCheck, Search, CheckCircle2, XCircle, Users, Store,
   MessageSquare, Dna, BarChart3, TrendingUp, Eye, EyeOff, Trash2, UserCog,
-  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban,
+  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2,
 } from "lucide-react";
+import DishTemplateEditor from "@/components/admin/DishTemplateEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
