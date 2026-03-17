@@ -175,6 +175,7 @@ const Profile = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [savedStores, setSavedStores] = useState<{ id: string; storeId: string; storeName: string; savedAt: string }[]>([]);
 
   const handleSaveName = async () => {
     if (!user || !nameInput.trim()) return;
