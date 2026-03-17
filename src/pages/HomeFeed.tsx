@@ -80,9 +80,6 @@ const HomeFeed = () => {
 
   const PULL_THRESHOLD = 80;
 
-  // Fetch following IDs
-  useEffect(() => {
-    if (!user) return;
   const refreshFollowingIds = useCallback(() => {
     if (!user) return;
     supabase
