@@ -40,8 +40,9 @@ interface SovereignMenuCardProps {
   totalReviews: number;
   onPress: () => void;
   index?: number;
-  popularityRank?: number; // 1 = most reviewed
-  avgSatisfaction?: number; // 1-5 satisfaction average
+  popularityRank?: number;
+  avgSatisfaction?: number;
+  userPhotos?: string[]; // top user-posted photo URLs (sorted by likes)
 }
 
 /** Format compact review count */
