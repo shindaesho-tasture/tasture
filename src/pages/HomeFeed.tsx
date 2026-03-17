@@ -490,6 +490,8 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Derive refId for comments - use consistent key based on user+menuItem
