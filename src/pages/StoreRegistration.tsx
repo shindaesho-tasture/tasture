@@ -16,11 +16,6 @@ import MenuCardList from "@/components/menu/MenuCardList";
 import { useToast } from "@/hooks/use-toast";
 
 const LIBRARIES: ("places")[] = ["places"];
-import PageTransition from "@/components/PageTransition";
-import BottomNav from "@/components/BottomNav";
-import ScanningOverlay from "@/components/menu/ScanningOverlay";
-import MenuCardList from "@/components/menu/MenuCardList";
-import { useToast } from "@/hooks/use-toast";
 
 const mapContainerStyle = { width: "100%", height: "100%" };
 
