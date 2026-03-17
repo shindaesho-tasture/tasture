@@ -79,6 +79,27 @@ const HomeFeed = () => {
     fetchFeed();
   }, []);
 
+  // Realtime subscription for new reviews and DNA
+  useEffect(() => {
+    const channel = supabase
+      .channel("feed-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "menu_reviews" },
+        () => fetchFeed(true)
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "dish_dna" },
+        () => fetchFeed(true)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchFeed(true);
