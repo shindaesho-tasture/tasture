@@ -941,16 +941,34 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         </p>
       </div>
 
-      {/* Photo post image */}
+      {/* Photo post image with double-tap to like */}
       {post.type === "photo_post" && post.photoUrl && (
         <div className="px-4 pb-3">
-          <div className="relative rounded-xl overflow-hidden aspect-square">
+          <div
+            className="relative rounded-xl overflow-hidden aspect-square select-none"
+            onClick={handleDoubleTap}
+          >
             <img
               src={post.photoUrl}
               alt={post.caption || "รูปอาหาร"}
               className="w-full h-full object-cover"
               loading="lazy"
+              draggable={false}
             />
+            {/* Double-tap heart animation */}
+            <AnimatePresence>
+              {showHeartAnim && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.4, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                  <Heart size={72} className="fill-white text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.3)]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       )}
