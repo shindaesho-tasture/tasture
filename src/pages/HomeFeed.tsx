@@ -220,6 +220,7 @@ const HomeFeed = () => {
         supabase
           .from("posts")
           .select("id, user_id, image_url, caption, store_id, created_at")
+          .eq("hidden", false)
           .order("created_at", { ascending: false })
           .limit(limit),
       ]);
