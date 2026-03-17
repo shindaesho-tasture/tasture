@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Check, Loader2, Sparkles } from "lucide-react";
+import { ChevronLeft, Check, Loader2, Sparkles, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
@@ -77,6 +77,8 @@ const MenuFeedback = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [menuReviewChoice, setMenuReviewChoice] = useState<"same" | "changed" | null>(null);
   const [hasPreviousMenuReview, setHasPreviousMenuReview] = useState(false);
+  const [showPostPrompt, setShowPostPrompt] = useState(false);
+  const [lastSavedReviewId, setLastSavedReviewId] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -190,6 +192,22 @@ const MenuFeedback = () => {
 
       setSaveSuccess(true);
       toast({ title: "✅ บันทึกสำเร็จ", description: `ให้คะแนน ${ratedCount} เมนู` });
+
+      // Get the most recent review id for linking to a post
+      if (upsertRows.length > 0) {
+        const { data: latestReview } = await supabase
+          .from("menu_reviews")
+          .select("id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (latestReview) {
+          setLastSavedReviewId(latestReview.id);
+          setShowPostPrompt(true);
+        }
+      }
+
       setTimeout(() => setSaveSuccess(false), 2000);
       fetchData();
     } catch (err: any) {
@@ -449,6 +467,56 @@ const MenuFeedback = () => {
                   </AnimatePresence>
                 </motion.button>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Post Prompt after review */}
+        <AnimatePresence>
+          {showPostPrompt && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6"
+              onClick={() => setShowPostPrompt(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className="w-full max-w-sm rounded-3xl bg-card border border-border/30 shadow-luxury p-6 space-y-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center space-y-2">
+                  <div className="text-4xl">📸</div>
+                  <h3 className="text-base font-bold text-foreground">แชร์รูปอาหารพร้อมรีวิว?</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    ถ่ายรูปอาหารที่คุณเพิ่งรีวิวแล้วโพสให้เพื่อนเห็น พร้อมแนบคะแนนรีวิวอัตโนมัติ
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2.5">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setShowPostPrompt(false);
+                      navigate(`/post?review=${lastSavedReviewId}`);
+                    }}
+                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-foreground text-background text-sm font-semibold"
+                  >
+                    <Camera size={16} />
+                    โพสรูปพร้อมรีวิว
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowPostPrompt(false)}
+                    className="py-3 rounded-2xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
+                  >
+                    ข้ามไปก่อน
+                  </motion.button>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
