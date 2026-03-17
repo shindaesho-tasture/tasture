@@ -776,6 +776,8 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastTapRef = useRef(0);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -896,6 +898,31 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     }
   };
 
+  const handleDeletePost = async () => {
+    if (!user || user.id !== post.userId) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 3000);
+      return;
+    }
+    navigator.vibrate?.(8);
+    if (post.type === "photo_post") {
+      const realId = post.id.replace("photo-", "");
+      await supabase.from("post_images").delete().eq("post_id", realId);
+      await supabase.from("post_likes").delete().eq("ref_id", realId);
+      await supabase.from("feed_comments").delete().eq("ref_id", realId);
+      await supabase.from("posts").delete().eq("id", realId);
+    } else {
+      // Delete menu review, dish_dna, satisfaction for this user+menuItem
+      await supabase.from("dish_dna").delete().eq("user_id", user.id).eq("menu_item_id", post.menuItemId);
+      await supabase.from("satisfaction_ratings").delete().eq("user_id", user.id).eq("menu_item_id", post.menuItemId);
+      await supabase.from("menu_reviews").delete().eq("user_id", user.id).eq("menu_item_id", post.menuItemId);
+      await supabase.from("post_likes").delete().eq("ref_id", refId);
+      await supabase.from("feed_comments").delete().eq("ref_id", refId);
+    }
+    setDeleted(true);
+  };
+
   const fetchComments = async () => {
     setLoadingComments(true);
     const { data } = await supabase
@@ -975,6 +1002,17 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     setCommentCount((c) => Math.max(0, c - 1));
   };
+
+  if (deleted) {
+    return (
+      <motion.div
+        initial={{ opacity: 1, height: "auto" }}
+        animate={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.3 }}
+        className="overflow-hidden"
+      />
+    );
+  }
 
   return (
     <motion.div
@@ -1378,9 +1416,26 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         >
           <Share2 size={16} className="text-muted-foreground" />
         </motion.button>
+
+        {user && user.id === post.userId && (
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={handleDeletePost}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors",
+              confirmDelete
+                ? "bg-destructive/10 text-destructive"
+                : "hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+            )}
+          >
+            <Trash2 size={16} />
+            <span className="text-[11px] font-medium">
+              {confirmDelete ? "กดอีกครั้ง" : "ลบ"}
+            </span>
+          </motion.button>
+        )}
       </div>
 
-      {/* Comments Section */}
       <AnimatePresence>
         {showComments && (
           <motion.div
