@@ -661,25 +661,21 @@ const Profile = () => {
 
           {savedStores.length > 0 ? (
             <div className="space-y-2">
-              {savedStores.map((s, i) => (
-                <motion.div
-                  key={s.id}
-                  initial={{ x: 30, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.7 + i * 0.05 }}
-                  onClick={() => navigate(`/store/${s.storeId}/order`)}
-                  className="bg-card rounded-2xl shadow-luxury p-4 flex items-center gap-3 active:scale-[0.98] transition-transform cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-score-emerald/10 flex items-center justify-center shrink-0">
-                    <Store size={18} className="text-score-emerald" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-foreground block truncate">{s.storeName}</span>
-                    <span className="text-[10px] text-muted-foreground">บันทึกเมื่อ {formatDate(s.savedAt)}</span>
-                  </div>
-                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-                </motion.div>
-              ))}
+              <AnimatePresence>
+                {savedStores.map((s, i) => (
+                  <SavedStoreRow
+                    key={s.id}
+                    store={s}
+                    index={i}
+                    onNavigate={() => navigate(`/store/${s.storeId}/order`)}
+                    onRemove={async () => {
+                      navigator.vibrate?.(8);
+                      await supabase.from("saved_stores").delete().eq("id", s.id);
+                      setSavedStores((prev) => prev.filter((p) => p.id !== s.id));
+                    }}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="bg-card rounded-2xl shadow-luxury p-6 text-center">
