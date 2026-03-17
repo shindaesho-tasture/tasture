@@ -544,6 +544,17 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     }
   };
 
+  // Check follow state
+  useEffect(() => {
+    if (!user || user.id === post.userId) return;
+    supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", user.id)
+      .eq("following_id", post.userId)
+      .maybeSingle()
+      .then(({ data }) => setIsFollowing(!!data));
+  }, [user, post.userId]);
 
   const fetchComments = async () => {
     setLoadingComments(true);
