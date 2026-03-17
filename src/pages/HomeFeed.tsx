@@ -775,6 +775,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const [particles, setParticles] = useState<{ id: number; x: number; y: number; emoji: string; scale: number }[]>([]);
   const [slideIndex, setSlideIndex] = useState(0);
   const [saved, setSaved] = useState(false);
   const [deleted, setDeleted] = useState(false);
@@ -820,6 +821,19 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       .then(({ count }) => setCommentCount(count || 0));
   }, [refType, refId]);
 
+  const burstParticles = () => {
+    const emojis = ["❤️", "🧡", "💛", "💖", "✨", "💫", "🌟", "💕"];
+    const burst = Array.from({ length: 8 }, (_, i) => ({
+      id: Date.now() + i,
+      x: (Math.random() - 0.5) * 120,
+      y: -(Math.random() * 80 + 30),
+      emoji: emojis[Math.floor(Math.random() * emojis.length)],
+      scale: 0.6 + Math.random() * 0.6,
+    }));
+    setParticles(burst);
+    setTimeout(() => setParticles([]), 900);
+  };
+
   const toggleLike = async () => {
     if (!user) return;
     if (liked) {
@@ -830,6 +844,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
       setLiked(true);
       setLikeCount((c) => c + 1);
       navigator.vibrate?.(8);
+      burstParticles();
       await supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
     }
   };
@@ -841,6 +856,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
         setLiked(true);
         setLikeCount((c) => c + 1);
         navigator.vibrate?.(8);
+        burstParticles();
         supabase.from("post_likes").insert({ ref_id: refId, user_id: user.id });
       }
       setShowHeartAnim(true);
@@ -1376,25 +1392,41 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
 
       {/* Interaction bar */}
       <div className="flex items-center gap-1 px-4 py-3 border-t border-border/30">
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={toggleLike}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
-        >
-          <Heart
-            size={16}
-            className={cn(
-              "transition-all duration-200",
-              liked ? "fill-score-ruby text-score-ruby" : "text-muted-foreground"
-            )}
-          />
-          <span className={cn(
-            "text-[11px] font-medium",
-            liked ? "text-score-ruby" : "text-muted-foreground"
-          )}>
-            {likeCount > 0 ? likeCount : "ถูกใจ"}
-          </span>
-        </motion.button>
+        <div className="relative">
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            onClick={toggleLike}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-secondary transition-colors"
+          >
+            <Heart
+              size={16}
+              className={cn(
+                "transition-all duration-200",
+                liked ? "fill-score-ruby text-score-ruby" : "text-muted-foreground"
+              )}
+            />
+            <span className={cn(
+              "text-[11px] font-medium",
+              liked ? "text-score-ruby" : "text-muted-foreground"
+            )}>
+              {likeCount > 0 ? likeCount : "ถูกใจ"}
+            </span>
+          </motion.button>
+          <AnimatePresence>
+            {particles.map((p) => (
+              <motion.span
+                key={p.id}
+                initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
+                animate={{ opacity: 0, x: p.x, y: p.y, scale: p.scale }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+                className="absolute left-3 top-0 pointer-events-none text-sm"
+              >
+                {p.emoji}
+              </motion.span>
+            ))}
+          </AnimatePresence>
+        </div>
 
         <motion.button
           whileTap={{ scale: 0.85 }}
