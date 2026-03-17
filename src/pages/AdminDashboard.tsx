@@ -37,7 +37,7 @@ interface AdminPost {
 
 interface AdminReview {
   id: string; user_id: string; userName: string; menu_item_name: string;
-  store_name: string; score: number; created_at: string; shared: boolean;
+  store_name: string; score: number; created_at: string; shared: boolean; hidden: boolean;
 }
 
 interface AdminDna {
