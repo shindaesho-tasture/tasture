@@ -69,9 +69,11 @@ const HomeFeed = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const isPulling = useRef(false);
+  const knownPostIds = useRef<Set<string>>(new Set());
 
   const PULL_THRESHOLD = 80;
 
@@ -86,12 +88,12 @@ const HomeFeed = () => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "menu_reviews" },
-        () => fetchFeed(true)
+        () => fetchFeed(true, true)
       )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "dish_dna" },
-        () => fetchFeed(true)
+        () => fetchFeed(true, true)
       )
       .subscribe();
 
@@ -144,7 +146,7 @@ const HomeFeed = () => {
     };
   }, [pullDistance, refreshing, handleRefresh]);
 
-  const fetchFeed = async (isRefresh = false) => {
+  const fetchFeed = async (isRefresh = false, isRealtime = false) => {
     if (!isRefresh) setLoading(true);
     try {
       // Fetch recent menu reviews and dish DNA in parallel
@@ -249,7 +251,24 @@ const HomeFeed = () => {
       });
 
       allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setPosts(allPosts.slice(0, 30));
+      const finalPosts = allPosts.slice(0, 30);
+
+      // Track new posts from realtime
+      if (isRealtime) {
+        const freshIds = new Set<string>();
+        finalPosts.forEach((p) => {
+          if (!knownPostIds.current.has(p.id)) freshIds.add(p.id);
+        });
+        if (freshIds.size > 0) {
+          setNewPostIds(freshIds);
+          navigator.vibrate?.(8);
+          setTimeout(() => setNewPostIds(new Set()), 3000);
+        }
+      }
+
+      // Update known IDs
+      finalPosts.forEach((p) => knownPostIds.current.add(p.id));
+      setPosts(finalPosts);
     } catch (err) {
       console.error("Feed fetch error:", err);
     } finally {
@@ -334,7 +353,7 @@ const HomeFeed = () => {
           ) : (
             <AnimatePresence>
               {posts.map((post, i) => (
-                <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} />
+                <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
               ))}
             </AnimatePresence>
           )}
@@ -362,9 +381,10 @@ interface PostCardProps {
   index: number;
   navigate: ReturnType<typeof useNavigate>;
   user: any;
+  isNew?: boolean;
 }
 
-const PostCard = ({ post, index, navigate, user }: PostCardProps) => {
+const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const [liked, setLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<FeedComment[]>([]);
@@ -470,10 +490,18 @@ const PostCard = ({ post, index, navigate, user }: PostCardProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury overflow-hidden"
+      initial={isNew ? { opacity: 0, y: -40, scale: 0.95 } : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={isNew
+        ? { type: "spring", stiffness: 380, damping: 34, mass: 0.8 }
+        : { delay: index * 0.05, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
+      }
+      className={cn(
+        "rounded-2xl bg-surface-elevated border shadow-luxury overflow-hidden transition-all duration-700",
+        isNew
+          ? "border-score-emerald/50 ring-2 ring-score-emerald/20 shadow-[0_0_20px_hsl(var(--score-emerald)/0.15)]"
+          : "border-border/50"
+      )}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
