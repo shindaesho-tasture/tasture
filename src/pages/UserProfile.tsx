@@ -67,6 +67,7 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [stats, setStats] = useState({ emeralds: 0, stores: 0, followers: 0, following: 0 });
+  const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
 
   const isMe = me?.id === userId;
 
