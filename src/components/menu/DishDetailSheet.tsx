@@ -65,11 +65,74 @@ const DishDetailSheet = ({
 
   const emerald = hasEmeraldSeal(dnaTags, totalReviews);
 
-  // Fetch AI descriptions when opening
+  // Fetch AI descriptions and user photos when opening
   useEffect(() => {
-    if (!open || dnaTags.length === 0) return;
-    fetchDescriptions();
+    if (!open) return;
+    if (dnaTags.length > 0) fetchDescriptions();
+    fetchUserPhotos();
+    setActivePhotoIdx(0);
   }, [open, menuItemId]);
+
+  const fetchUserPhotos = async () => {
+    try {
+      // Get menu_review ids for this menu item
+      const { data: reviews } = await supabase
+        .from("menu_reviews")
+        .select("id")
+        .eq("menu_item_id", menuItemId);
+
+      if (!reviews || reviews.length === 0) { setUserPhotos([]); return; }
+
+      const reviewIds = reviews.map((r) => r.id);
+
+      // Get post_images linked to these reviews
+      const { data: images } = await supabase
+        .from("post_images")
+        .select("id, image_url, post_id, menu_review_id, created_at")
+        .in("menu_review_id", reviewIds)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (!images || images.length === 0) { setUserPhotos([]); return; }
+
+      // Get post user_ids
+      const postIds = [...new Set(images.map((i) => i.post_id))];
+      const { data: posts } = await supabase
+        .from("posts")
+        .select("id, user_id")
+        .in("id", postIds);
+
+      const postUserMap = new Map<string, string>();
+      (posts || []).forEach((p) => postUserMap.set(p.id, p.user_id));
+
+      // Get profiles
+      const userIds = [...new Set((posts || []).map((p) => p.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", userIds);
+
+      const profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
+      (profiles || []).forEach((p) => profileMap.set(p.id, { display_name: p.display_name, avatar_url: p.avatar_url }));
+
+      setUserPhotos(images.map((img) => {
+        const userId = postUserMap.get(img.post_id) || "";
+        const profile = profileMap.get(userId);
+        return {
+          id: img.id,
+          image_url: img.image_url,
+          user_id: userId,
+          display_name: profile?.display_name || null,
+          avatar_url: profile?.avatar_url || null,
+          created_at: img.created_at,
+          post_id: img.post_id,
+        };
+      }));
+    } catch (e) {
+      console.error("fetchUserPhotos error:", e);
+      setUserPhotos([]);
+    }
+  };
 
   const fetchDescriptions = async () => {
     setLoadingDesc(true);
