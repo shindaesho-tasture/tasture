@@ -6,6 +6,7 @@ import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 /* ── Types ── */
 interface TasteDNA {
