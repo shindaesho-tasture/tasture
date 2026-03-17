@@ -63,7 +63,9 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
     store_id: string | null;
   } | null>(null);
   const [author, setAuthor] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+  const [slides, setSlides] = useState<ImageSlide[]>([]);
   const [images, setImages] = useState<string[]>(preload?.images || []);
+  const [reviewMap, setReviewMap] = useState<Record<string, ReviewInfo>>({});
   const [activeIdx, setActiveIdx] = useState(0);
 
   // Likes
