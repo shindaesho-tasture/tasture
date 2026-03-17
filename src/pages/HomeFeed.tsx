@@ -262,6 +262,7 @@ const HomeFeed = () => {
           menuItemId: entry.menuItemId,
           menuItemImage: menu?.image || null,
           score: entry.score,
+          satisfaction: entry.satisfaction,
           dnaComponents: hasDna ? entry.dnaComponents : undefined,
           createdAt: entry.latestTime,
         };
