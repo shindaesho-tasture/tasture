@@ -241,7 +241,7 @@ const HomeFeed = () => {
       (satRes.data || []).forEach((s) => {
         const key = `${s.user_id}-${s.menu_item_id}`;
         if (!satLookup.has(key)) {
-          satLookup.set(key, { texture: s.texture, taste: s.taste, overall: s.overall, cleanliness: s.cleanliness, value: s.value });
+          satLookup.set(key, { texture: s.texture, taste: s.taste, overall: s.overall, cleanliness: s.cleanliness });
         }
       });
 
