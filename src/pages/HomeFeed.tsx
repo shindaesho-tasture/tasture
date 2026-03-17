@@ -544,6 +544,20 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     }
   };
 
+  const toggleFollow = async () => {
+    if (!user || user.id === post.userId) return;
+    setFollowLoading(true);
+    if (isFollowing) {
+      setIsFollowing(false);
+      await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", post.userId);
+    } else {
+      setIsFollowing(true);
+      navigator.vibrate?.(8);
+      await supabase.from("follows").insert({ follower_id: user.id, following_id: post.userId });
+    }
+    setFollowLoading(false);
+  };
+
   // Check follow state
   useEffect(() => {
     if (!user || user.id === post.userId) return;
