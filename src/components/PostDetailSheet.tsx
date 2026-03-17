@@ -55,6 +55,7 @@ const timeAgo = (iso: string) => {
 
 const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Post data
   const [post, setPost] = useState<{
