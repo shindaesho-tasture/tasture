@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { MapPin, Navigation, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GOOGLE_MAPS_API_KEY, MAPS_SILVER_STYLE, DEFAULT_CENTER } from "@/lib/maps-config";
+import { GOOGLE_MAPS_API_KEY, MAPS_LIBRARIES, MAPS_SILVER_STYLE, DEFAULT_CENTER } from "@/lib/maps-config";
 
 interface LocationPickerSheetProps {
   open: boolean;
