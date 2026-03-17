@@ -34,8 +34,18 @@ const hasEmeraldSeal = (tags: DnaTag[], reviews: number) => {
   const avg = tags.reduce((s, t) => s + t.selected_score, 0) / tags.length;
   return avg >= 1.0;
 };
+/** Photo posted by users */
+interface UserPhoto {
+  id: string;
+  image_url: string;
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  post_id: string;
+}
 
-const DishDetailSheet = ({
+
   open,
   onClose,
   menuItemId,
