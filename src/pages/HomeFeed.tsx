@@ -1123,81 +1123,6 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
               </div>
             )}
 
-            {/* Review overlay for current slide */}
-            <AnimatePresence mode="wait">
-              {(post.slides[slideIndex].reviewScore !== null || post.slides[slideIndex].dnaComponents?.length || post.slides[slideIndex].satisfaction) && (
-                <motion.div
-                  key={`review-${slideIndex}`}
-                  initial={{ y: 8, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -8, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute bottom-10 left-3 right-3 space-y-1.5"
-                >
-                  {/* Main review chip */}
-                  {post.slides[slideIndex].reviewScore !== null && (
-                    <div
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 ${post.slides[slideIndex].storeId ? "cursor-pointer active:scale-[0.97] transition-transform" : ""}`}
-                      onClick={(e) => {
-                        const sid = post.slides[slideIndex].storeId;
-                        if (sid) {
-                          e.stopPropagation();
-                          navigate(`/store/${sid}/order`);
-                        }
-                      }}
-                    >
-                      <span className="text-xl">
-                        {post.slides[slideIndex].reviewScore === 2 ? "🤩" : post.slides[slideIndex].reviewScore === 0 ? "😐" : "😔"}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-semibold text-white truncate">
-                          {post.slides[slideIndex].menuItemName}
-                        </p>
-                        {post.slides[slideIndex].storeName && (
-                          <p className="text-[9px] text-white/70 truncate">
-                            📍 {post.slides[slideIndex].storeName}
-                          </p>
-                        )}
-                      </div>
-                      {post.slides[slideIndex].storeId && (
-                        <span className="text-white/50 text-xs">›</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Dish DNA tags */}
-                  {post.slides[slideIndex].dnaComponents && post.slides[slideIndex].dnaComponents!.length > 0 && (
-                    <div className="flex flex-wrap gap-1 px-1">
-                      {post.slides[slideIndex].dnaComponents!.slice(0, 6).map((dna, di) => (
-                        <span
-                          key={di}
-                          className={cn(
-                            "inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-[9px] font-semibold backdrop-blur-md border",
-                            dna.score === 2
-                              ? "bg-score-emerald/70 border-score-emerald/30 text-white"
-                              : dna.score === -2
-                              ? "bg-score-ruby/70 border-score-ruby/30 text-white"
-                              : "bg-white/20 border-white/10 text-white/90"
-                          )}
-                        >
-                          {dna.icon} {dna.tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Sensory feedback radar chart */}
-                  {post.slides[slideIndex].satisfaction && (
-                    <div className="flex justify-center">
-                      <div className="rounded-xl bg-black/50 backdrop-blur-md border border-white/10 p-1">
-                        <FeedRadarChart data={post.slides[slideIndex].satisfaction!} size={100} dark />
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Double-tap heart */}
             <AnimatePresence>
               {showHeartAnim && (
@@ -1213,6 +1138,79 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
               )}
             </AnimatePresence>
           </div>
+
+          {/* Review data below image */}
+          <AnimatePresence mode="wait">
+            {(post.slides[slideIndex].reviewScore !== null || post.slides[slideIndex].dnaComponents?.length || post.slides[slideIndex].satisfaction) && (
+              <motion.div
+                key={`review-${slideIndex}`}
+                initial={{ y: 6, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -6, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-2.5 space-y-2"
+              >
+                {/* Review score + menu name + store link */}
+                {post.slides[slideIndex].reviewScore !== null && (
+                  <div
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2 rounded-xl bg-secondary border border-border/50",
+                      post.slides[slideIndex].storeId && "cursor-pointer active:scale-[0.98] transition-transform"
+                    )}
+                    onClick={() => {
+                      const sid = post.slides[slideIndex].storeId;
+                      if (sid) navigate(`/store/${sid}/order`);
+                    }}
+                  >
+                    <span className="text-xl">
+                      {post.slides[slideIndex].reviewScore === 2 ? "🤩" : post.slides[slideIndex].reviewScore === 0 ? "😐" : "😔"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-foreground truncate">
+                        {post.slides[slideIndex].menuItemName}
+                      </p>
+                      {post.slides[slideIndex].storeName && (
+                        <p className="text-[9px] text-muted-foreground truncate">
+                          📍 {post.slides[slideIndex].storeName}
+                        </p>
+                      )}
+                    </div>
+                    {post.slides[slideIndex].storeId && (
+                      <span className="text-muted-foreground text-xs">›</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Dish DNA tags */}
+                {post.slides[slideIndex].dnaComponents && post.slides[slideIndex].dnaComponents!.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {post.slides[slideIndex].dnaComponents!.slice(0, 6).map((dna, di) => (
+                      <span
+                        key={di}
+                        className={cn(
+                          "inline-flex items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-semibold border",
+                          dna.score === 2
+                            ? "bg-score-emerald/15 border-score-emerald/30 text-score-emerald"
+                            : dna.score === -2
+                            ? "bg-score-ruby/15 border-score-ruby/30 text-score-ruby"
+                            : "bg-secondary border-border/50 text-muted-foreground"
+                        )}
+                      >
+                        {dna.icon} {dna.tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Sensory feedback radar chart */}
+                {post.slides[slideIndex].satisfaction && (
+                  <div className="flex justify-center">
+                    <FeedRadarChart data={post.slides[slideIndex].satisfaction!} size={120} />
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
