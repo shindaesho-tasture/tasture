@@ -21,7 +21,7 @@ interface FeedRadarChartProps {
   className?: string;
 }
 
-const FeedRadarChart = ({ data, size = 160, className }: FeedRadarChartProps) => {
+const FeedRadarChart = ({ data, size = 160, dark = false, className }: FeedRadarChartProps) => {
   // Filter to only axes that have data
   const activeAxes = ALL_AXES.filter((a) => data[a.key] != null && data[a.key]! > 0);
 
