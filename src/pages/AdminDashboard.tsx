@@ -314,6 +314,27 @@ const AdminDashboard = () => {
     toast({ title: "🗑️ ลบรีวิวแล้ว" });
   };
 
+  const toggleBanUser = async (userId: string, currentBanned: boolean) => {
+    haptic();
+    await supabase.from("profiles").update({ banned: !currentBanned } as any).eq("id", userId);
+    setUsers((p) => p.map((u) => u.id === userId ? { ...u, banned: !currentBanned } : u));
+    toast({ title: !currentBanned ? "🚫 แบนผู้ใช้แล้ว" : "✅ ปลดแบนผู้ใช้แล้ว" });
+  };
+
+  const toggleHidePost = async (postId: string, currentHidden: boolean) => {
+    haptic();
+    await supabase.from("posts").update({ hidden: !currentHidden } as any).eq("id", postId);
+    setPosts((p) => p.map((x) => x.id === postId ? { ...x, hidden: !currentHidden } : x));
+    toast({ title: !currentHidden ? "🙈 ซ่อนโพสแล้ว" : "👁️ แสดงโพสแล้ว" });
+  };
+
+  const toggleHideReview = async (reviewId: string, currentHidden: boolean) => {
+    haptic();
+    await supabase.from("menu_reviews").update({ hidden: !currentHidden } as any).eq("id", reviewId);
+    setReviews((p) => p.map((r) => r.id === reviewId ? { ...r, hidden: !currentHidden } : r));
+    toast({ title: !currentHidden ? "🙈 ซ่อนรีวิวแล้ว" : "👁️ แสดงรีวิวแล้ว" });
+  };
+
   /* ─── Filters ─── */
   const filteredStores = stores.filter((s) => {
     const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase()) ||
