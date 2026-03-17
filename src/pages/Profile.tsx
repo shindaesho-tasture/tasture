@@ -600,14 +600,15 @@ const Profile = () => {
                       ruby: "shadow-[0_0_0_1.5px_hsl(0,68%,35%),0_0_12px_hsla(0,68%,35%,0.2)]",
                     }[badge.tier];
                     return (
-                      <motion.div key={badge.id} initial={{ scale: 0, opacity: 0 }}
+                      <motion.button key={badge.id} initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.1 + i * 0.06, type: "spring", stiffness: 400, damping: 20 }}
-                        className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc}`}>
+                        onClick={() => setSelectedBadge(badge)}
+                        className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc} active:scale-95 transition-transform`}>
                         <span className="text-xl mb-1">{badge.icon}</span>
                         <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{badge.titleTh}</span>
                         <span className="text-[8px] text-muted-foreground mt-0.5 text-center px-1">{badge.description}</span>
-                      </motion.div>
+                      </motion.button>
                     );
                   })}
                 </div>
