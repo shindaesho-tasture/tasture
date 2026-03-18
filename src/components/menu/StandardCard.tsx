@@ -32,13 +32,20 @@ const StandardCard = ({ item, onChange }: StandardCardProps) => {
         </div>
 
         {/* Price */}
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="text-[10px] text-muted-foreground">฿</span>
-          <input
-            value={editPrice}
-            onChange={(e) => { setEditPrice(e.target.value); onChange({ ...item, price: Number(e.target.value) || 0 }); }}
-            className="w-14 text-right text-sm font-semibold text-foreground bg-transparent outline-none border-b border-transparent focus:border-border transition-colors"
-          />
+        <div className="flex flex-col items-end shrink-0">
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground">฿</span>
+            <input
+              value={editPrice}
+              onChange={(e) => { setEditPrice(e.target.value); onChange({ ...item, price: Number(e.target.value) || 0 }); }}
+              className="w-14 text-right text-sm font-semibold text-foreground bg-transparent outline-none border-b border-transparent focus:border-border transition-colors"
+            />
+          </div>
+          {item.original_currency && item.original_currency !== "THB" && item.original_price != null && (
+            <span className="text-[9px] text-muted-foreground/70 mt-0.5">
+              ≈ {item.original_currency} {item.original_price.toLocaleString()}
+            </span>
+          )}
         </div>
 
         {/* Rating */}
