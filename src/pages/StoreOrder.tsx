@@ -175,16 +175,21 @@ const StoreOrder = () => {
                 component_icon: r.component_icon,
                 component_name: r.component_name,
                 selected_tag: r.selected_tag,
-                selected_score: r.selected_score,
+                selected_score: 0, // will hold sum, then averaged
                 count: 0,
               });
             }
-            itemMap.get(key)!.count++;
+            const entry = itemMap.get(key)!;
+            entry.selected_score += r.selected_score;
+            entry.count++;
           });
 
           const result = new Map<string, DnaTag[]>();
           tagMap.forEach((itemMap, menuItemId) => {
-            const tags = Array.from(itemMap.values())
+            const tags = Array.from(itemMap.values()).map((t) => ({
+              ...t,
+              selected_score: t.count > 0 ? t.selected_score / t.count : 0, // average
+            }))
               .sort((a, b) => b.count - a.count)
               .slice(0, 3);
             result.set(menuItemId, tags);
@@ -387,7 +392,7 @@ const StoreOrder = () => {
                       .map((t) => ({
                         icon: t.component_icon,
                         label: t.selected_tag,
-                        score: 0, // texture tags show popularity, not sentiment
+                        score: t.selected_score, // average sentiment from community
                         count: t.count,
                         type: "texture" as const,
                       }));

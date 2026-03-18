@@ -146,10 +146,18 @@ const SovereignMenuCard = ({
 
                 // Texture tags: neutral style, show popularity count
                 if (tag.type === "texture") {
+                  const tier = getScoreTier(tag.score);
+                  const hsl = tierHsl[tier];
+                  const opacity = getIntensityOpacity(tag.count);
+                  const bgOpacity = Math.max(0.45, opacity);
                   return (
                     <span
                       key={`${tag.icon}-${tag.label}`}
-                      className="inline-flex items-center gap-0.5 px-2 py-[3px] rounded-full text-[9px] font-bold leading-none bg-secondary text-foreground/80"
+                      className={cn(
+                        "inline-flex items-center gap-0.5 px-2 py-[3px] rounded-full text-[9px] font-bold leading-none text-white transition-shadow",
+                        tierGlow[tier]
+                      )}
+                      style={{ backgroundColor: `hsla(${hsl},${bgOpacity})` }}
                     >
                       <span>{tag.icon}</span>
                       <span className="truncate max-w-[72px]">{tag.label}</span>
