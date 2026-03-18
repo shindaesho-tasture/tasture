@@ -271,6 +271,7 @@ const StoreOrder = () => {
 
   const handleAddWithOptions = () => {
     if (!optionsItem) return;
+    if (navigator.vibrate) navigator.vibrate(8);
     const useSpecial = selectedSize === "พิเศษ" && optionsItem.price_special != null;
     addItem({
       menuItemId: optionsItem.id,
