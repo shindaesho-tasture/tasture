@@ -83,9 +83,6 @@ const PostOrderReview = () => {
   // Taste satisfaction gate per menu item
   const [tasteSatisfaction, setTasteSatisfaction] = useState<Record<string, "perfect" | "ok" | "bad">>({});
 
-  // 5-axis satisfaction ratings per menu item
-  const [satisfactionScores, setSatisfactionScores] = useState<Record<string, { texture: number; taste: number; overall: number; cleanliness: number }>>({});
-
   const [saving, setSaving] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(true);
 
