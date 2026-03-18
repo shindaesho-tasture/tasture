@@ -115,7 +115,7 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
 
               {/* Badge icon + confetti */}
               <div className="relative flex justify-center mb-4">
-                {unlocked && showConfetti && <ConfettiBurst />}
+                {unlocked && <Confetti show={showConfetti} />}
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={unlocked ? { scale: [0, 1.2, 1], rotate: [0, -8, 8, 0] } : { scale: 1 }}
