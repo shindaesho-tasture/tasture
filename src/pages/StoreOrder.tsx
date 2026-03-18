@@ -186,7 +186,10 @@ const StoreOrder = () => {
 
           const result = new Map<string, DnaTag[]>();
           tagMap.forEach((itemMap, menuItemId) => {
-            const tags = Array.from(itemMap.values())
+            const tags = Array.from(itemMap.values()).map((t) => ({
+              ...t,
+              selected_score: t.count > 0 ? t.selected_score / t.count : 0, // average
+            }))
               .sort((a, b) => b.count - a.count)
               .slice(0, 3);
             result.set(menuItemId, tags);
