@@ -98,11 +98,19 @@ Prices should be numbers only (no currency symbols). If a price is not clearly v
                         },
                         price: {
                           type: "number",
-                          description: "Price for standard items, or normal price for dual_price items",
+                          description: "Price converted to Thai Baht (THB). For foreign currencies, use approximate conversion.",
+                        },
+                        original_price: {
+                          type: "number",
+                          description: "Original price as shown on the menu before conversion. Same as price if THB.",
+                        },
+                        original_currency: {
+                          type: "string",
+                          description: "3-letter currency code detected (e.g. JPY, USD, EUR, KRW, THB).",
                         },
                         price_special: {
                           type: "number",
-                          description: "Special/large price for dual_price items. 0 if not applicable.",
+                          description: "Special/large price (converted to THB) for dual_price items. 0 if not applicable.",
                         },
                         noodle_types: {
                           type: "array",
