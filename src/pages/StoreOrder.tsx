@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import SovereignMenuCard from "@/components/menu/SovereignMenuCard";
 import DishDetailSheet from "@/components/menu/DishDetailSheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { formatDistanceToNow } from "date-fns";
+import { th } from "date-fns/locale";
 
 interface MenuItemRow {
   id: string;
