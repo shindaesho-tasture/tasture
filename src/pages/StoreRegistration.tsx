@@ -192,7 +192,7 @@ const StoreRegistration = () => {
           category_id: selectedCategory,
           pin_lat: pinLocation?.lat ?? null,
           pin_lng: pinLocation?.lng ?? null,
-          menu_photo: menuPhoto,
+          menu_photo: menuPhotos[0] || null,
         })
         .select()
         .single();
