@@ -144,7 +144,8 @@ const StoreRegistration = () => {
         toppings: item.toppings || [],
       }));
 
-      setMenuItems(items);
+      // Merge with existing items instead of replacing
+      setMenuItems((prev) => [...prev, ...items]);
       toast({ title: `สแกนสำเร็จ`, description: `พบ ${items.length} รายการ` });
     } catch (err: any) {
       console.error("Scan error:", err);
