@@ -242,7 +242,8 @@ const StoreRegistration = () => {
     const saved = await saveToDatabase();
     if (saved) {
       toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
-      navigate("/discover");
+      setShowConfetti(true);
+      setTimeout(() => navigate("/discover"), 1800);
     }
   };
 
