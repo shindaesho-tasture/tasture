@@ -122,6 +122,22 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
         </div>
       )}
 
+      {/* Description */}
+      {item.description && (
+        <p className="text-[10px] text-muted-foreground leading-relaxed">{item.description}</p>
+      )}
+
+      {/* Texture pills */}
+      {item.textures && item.textures.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {item.textures.map((t) => (
+            <span key={t} className="px-2 py-0.5 rounded-full bg-secondary text-[9px] font-medium text-muted-foreground">
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Rating */}
       <div className="flex items-center justify-between pt-1">
         <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">ให้คะแนน</span>
