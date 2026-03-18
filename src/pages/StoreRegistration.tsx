@@ -14,6 +14,7 @@ import BottomNav from "@/components/BottomNav";
 import ScanningOverlay from "@/components/menu/ScanningOverlay";
 import MenuCardList from "@/components/menu/MenuCardList";
 import { useToast } from "@/hooks/use-toast";
+import Confetti from "@/components/Confetti";
 
 const mapContainerStyle = { width: "100%", height: "100%" };
 
