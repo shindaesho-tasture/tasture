@@ -136,6 +136,9 @@ const StoreRegistration = () => {
       const items: MenuItem[] = (data.items || []).map((item: any, idx: number) => ({
         id: `item-${idx}-${Date.now()}`,
         name: item.name || "",
+        original_name: item.original_name || undefined,
+        description: item.description || undefined,
+        textures: item.textures || [],
         type: item.type || "standard",
         price: item.price || 0,
         price_special: item.price_special || undefined,
