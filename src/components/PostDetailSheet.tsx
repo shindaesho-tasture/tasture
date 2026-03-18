@@ -209,6 +209,7 @@ const PostDetailSheet = ({ open, onClose, postId, preload }: PostDetailSheetProp
   // Send comment
   const sendComment = async () => {
     if (!user || !commentText.trim()) return;
+    if (navigator.vibrate) navigator.vibrate(8);
     setSendingComment(true);
     const content = commentText.trim();
     setCommentText("");
