@@ -21,7 +21,7 @@ const tierGlow: Record<ScoreTier, string> = {
   ruby: "shadow-[0_2px_8px_hsla(0,68%,35%,0.2)]",
 };
 
-export type TagType = "score" | "price" | "popularity" | "recommendation";
+export type TagType = "score" | "price" | "popularity" | "recommendation" | "texture";
 
 export interface IntensityTag {
   icon: string;

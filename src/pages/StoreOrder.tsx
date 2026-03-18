@@ -382,12 +382,15 @@ const StoreOrder = () => {
                 <AnimatePresence>
                   {menuItems.map((item, i) => {
                     const qty = getItemQuantity(item.id);
-                    const tags = (dnaByItem.get(item.id) || []).map((t) => ({
-                      icon: t.component_icon,
-                      label: t.selected_tag,
-                      score: t.selected_score,
-                      count: t.count,
-                    }));
+                    const tags = (dnaByItem.get(item.id) || [])
+                      .sort((a, b) => b.count - a.count)
+                      .map((t) => ({
+                        icon: t.component_icon,
+                        label: t.selected_tag,
+                        score: 0, // texture tags show popularity, not sentiment
+                        count: t.count,
+                        type: "texture" as const,
+                      }));
                     const totalRevs = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
 
                     return (
