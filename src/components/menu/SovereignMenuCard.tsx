@@ -21,7 +21,7 @@ const tierGlow: Record<ScoreTier, string> = {
   ruby: "shadow-[0_2px_8px_hsla(0,68%,35%,0.2)]",
 };
 
-export type TagType = "score" | "price" | "popularity" | "recommendation";
+export type TagType = "score" | "price" | "popularity" | "recommendation" | "texture";
 
 export interface IntensityTag {
   icon: string;
@@ -142,7 +142,23 @@ const SovereignMenuCard = ({
           {enrichedTags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {enrichedTags.slice(0, 4).map((tag) => {
-                const isMetaTag = tag.type && tag.type !== "score";
+                const isMetaTag = tag.type && !["score", "texture"].includes(tag.type);
+
+                // Texture tags: neutral style, show popularity count
+                if (tag.type === "texture") {
+                  return (
+                    <span
+                      key={`${tag.icon}-${tag.label}`}
+                      className="inline-flex items-center gap-0.5 px-2 py-[3px] rounded-full text-[9px] font-bold leading-none bg-secondary text-foreground/80"
+                    >
+                      <span>{tag.icon}</span>
+                      <span className="truncate max-w-[72px]">{tag.label}</span>
+                      {tag.count >= 2 && (
+                        <span className="opacity-50 text-[7px] ml-0.5">({formatCount(tag.count)})</span>
+                      )}
+                    </span>
+                  );
+                }
 
                 if (isMetaTag) {
                   const metaStyles: Record<string, string> = {
