@@ -271,6 +271,7 @@ const StoreOrder = () => {
 
   const handleAddWithOptions = () => {
     if (!optionsItem) return;
+    if (navigator.vibrate) navigator.vibrate(8);
     const useSpecial = selectedSize === "พิเศษ" && optionsItem.price_special != null;
     addItem({
       menuItemId: optionsItem.id,
@@ -293,6 +294,7 @@ const StoreOrder = () => {
       openOptionsPopup(item);
       return;
     }
+    if (navigator.vibrate) navigator.vibrate(8);
     addItem({
       menuItemId: item.id,
       name: item.name,
@@ -303,6 +305,7 @@ const StoreOrder = () => {
   };
 
   const handleMinus = (menuItemId: string) => {
+    if (navigator.vibrate) navigator.vibrate(8);
     const qty = getItemQuantity(menuItemId);
     if (qty <= 1) {
       removeItem(menuItemId);
