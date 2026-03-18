@@ -175,11 +175,13 @@ const StoreOrder = () => {
                 component_icon: r.component_icon,
                 component_name: r.component_name,
                 selected_tag: r.selected_tag,
-                selected_score: r.selected_score,
+                selected_score: 0, // will hold sum, then averaged
                 count: 0,
               });
             }
-            itemMap.get(key)!.count++;
+            const entry = itemMap.get(key)!;
+            entry.selected_score += r.selected_score;
+            entry.count++;
           });
 
           const result = new Map<string, DnaTag[]>();
