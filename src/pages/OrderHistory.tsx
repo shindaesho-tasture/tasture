@@ -238,9 +238,8 @@ const OrderHistory = () => {
             </p>
           </div>
         ) : (
-          <div className="px-4 pt-3 space-y-3">
+          <div className="px-4 pt-3 space-y-4">
             {visits.map((visit, i) => {
-              const isOpen = expanded === visit.storeId;
               const reviewedCount = visit.items.filter((x) => x.hasReview).length;
               return (
                 <motion.div
@@ -252,7 +251,7 @@ const OrderHistory = () => {
                 >
                   {/* Store header */}
                   <button
-                    onClick={() => setExpanded(isOpen ? null : visit.storeId)}
+                    onClick={() => navigate(`/store/${visit.storeId}/order`)}
                     className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
                   >
                     <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center shrink-0">
@@ -263,55 +262,44 @@ const OrderHistory = () => {
                         {visit.storeName}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {visit.items.length} เมนู · {reviewedCount} รีวิวแล้ว ·{" "}
-                        {formatDate(visit.lastVisit)}
+                        {formatDate(visit.lastVisit)} · {reviewedCount}/{visit.items.length} รีวิวแล้ว
                       </p>
                     </div>
-                    <ChevronRight
-                      size={16}
-                      className={`text-muted-foreground transition-transform duration-200 ${
-                        isOpen ? "rotate-90" : ""
-                      }`}
-                    />
+                    <ChevronRight size={16} className="text-muted-foreground shrink-0" />
                   </button>
 
-                  {/* Expanded items */}
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="border-t border-border"
-                    >
-                      {visit.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between px-4 py-2.5 border-b border-border last:border-b-0"
-                        >
-                          <span className="text-[13px] text-foreground truncate pr-3">
-                            {item.name}
+                  {/* Menu items always visible */}
+                  <div className="border-t border-border/50">
+                    {visit.items.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-3 px-4 py-2.5 border-b border-border/30 last:border-b-0"
+                      >
+                        <span className="text-[11px] font-bold text-muted-foreground/50 w-5 text-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span className="text-[13px] text-foreground truncate flex-1">
+                          {item.name}
+                        </span>
+                        {item.hasReview ? (
+                          <span className="text-base shrink-0">
+                            {scoreEmoji(item.score)}
                           </span>
-                          {item.hasReview ? (
-                            <span className="text-base shrink-0">
-                              {scoreEmoji(item.score)}
-                            </span>
-                          ) : (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/menu-feedback/${visit.storeId}`);
-                              }}
-                              className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
-                            >
-                              <Star size={12} />
-                              ให้คะแนน
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/menu-feedback/${visit.storeId}`);
+                            }}
+                            className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
+                          >
+                            <Star size={12} />
+                            ให้คะแนน
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </motion.div>
               );
             })}
