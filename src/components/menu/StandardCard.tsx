@@ -16,7 +16,7 @@ const StandardCard = ({ item, onChange }: StandardCardProps) => {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-surface-elevated rounded-2xl shadow-luxury p-4"
+      className="bg-surface-elevated rounded-2xl shadow-luxury p-4 space-y-2"
     >
       <div className="flex items-center justify-between gap-3">
         {/* Name */}
@@ -26,6 +26,9 @@ const StandardCard = ({ item, onChange }: StandardCardProps) => {
             onChange={(e) => { setEditName(e.target.value); onChange({ ...item, name: e.target.value }); }}
             className="w-full text-sm font-medium text-foreground bg-transparent outline-none border-b border-transparent focus:border-border transition-colors truncate"
           />
+          {item.original_name && (
+            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{item.original_name}</p>
+          )}
         </div>
 
         {/* Price */}
@@ -41,6 +44,22 @@ const StandardCard = ({ item, onChange }: StandardCardProps) => {
         {/* Rating */}
         <MenuRatingButtons rating={item.rating} onRate={(v) => onChange({ ...item, rating: v })} />
       </div>
+
+      {/* Description */}
+      {item.description && (
+        <p className="text-[10px] text-muted-foreground leading-relaxed">{item.description}</p>
+      )}
+
+      {/* Texture pills */}
+      {item.textures && item.textures.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {item.textures.map((t) => (
+            <span key={t} className="px-2 py-0.5 rounded-full bg-secondary text-[9px] font-medium text-muted-foreground">
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };

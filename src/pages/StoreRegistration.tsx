@@ -206,6 +206,9 @@ const StoreRegistration = () => {
         const itemsToInsert = menuItems.map((item) => ({
           store_id: storeData.id,
           name: item.name,
+          original_name: item.original_name ?? null,
+          description: item.description ?? null,
+          textures: item.textures ?? [],
           type: item.type,
           price: item.price,
           price_special: item.price_special ?? null,
