@@ -29,7 +29,7 @@ const OrderHistory = () => {
   const navigate = useNavigate();
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  
 
   useEffect(() => {
     if (authLoading) return;
