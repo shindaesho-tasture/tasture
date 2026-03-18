@@ -162,7 +162,7 @@ const StoreRegistration = () => {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
-      setMenuPhoto(base64);
+      setMenuPhotos((prev) => [...prev, base64]);
       setPhotoLoading(false);
       // Auto-trigger OCR scan
       scanMenuWithAI(base64);
