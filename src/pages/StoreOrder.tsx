@@ -55,6 +55,11 @@ const StoreOrder = () => {
   const [dnaCounts, setDnaCounts] = useState<Map<string, number>>(new Map());
   const [topPhotoByItem, setTopPhotoByItem] = useState<Map<string, string[]>>(new Map());
 
+  // Store posts state
+  const [storePosts, setStorePosts] = useState<StorePost[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("menu");
+
   // Noodle options popup state
   const [optionsItem, setOptionsItem] = useState<MenuItemRow | null>(null);
   const [selectedNoodleType, setSelectedNoodleType] = useState<string>("");
