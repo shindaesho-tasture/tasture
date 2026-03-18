@@ -58,22 +58,37 @@ const DishDetailSheet = ({
   dnaTags,
   totalReviews,
 }: DishDetailSheetProps) => {
+  const { user } = useAuth();
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
   const [sensoryValues, setSensoryValues] = useState<Record<string, number>>({});
   const [userPhotos, setUserPhotos] = useState<UserPhoto[]>([]);
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+  const [myDnaTags, setMyDnaTags] = useState<DnaTag[]>([]);
 
   const emerald = hasEmeraldSeal(dnaTags, totalReviews);
 
-  // Fetch AI descriptions and user photos when opening
+  // Fetch AI descriptions, user photos, and my DNA when opening
   useEffect(() => {
     if (!open) return;
     if (dnaTags.length > 0) fetchDescriptions();
     fetchUserPhotos();
+    fetchMyDna();
     setActivePhotoIdx(0);
   }, [open, menuItemId]);
+
+  const fetchMyDna = async () => {
+    if (!user) { setMyDnaTags([]); return; }
+    const { data } = await supabase
+      .from("dish_dna")
+      .select("component_icon, component_name, selected_tag, selected_score")
+      .eq("menu_item_id", menuItemId)
+      .eq("user_id", user.id);
+    setMyDnaTags(
+      (data || []).map((d) => ({ ...d, count: 1 }))
+    );
+  };
 
   const fetchUserPhotos = async () => {
     try {
