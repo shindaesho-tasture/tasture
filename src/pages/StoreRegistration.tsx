@@ -32,8 +32,9 @@ const StoreRegistration = () => {
   const [name, setName] = useState(store.name);
   const [pinned, setPinned] = useState(!!store.pinLocation);
   const [pinLocation, setPinLocation] = useState(store.pinLocation);
-  const [menuPhoto, setMenuPhoto] = useState<string | null>(store.menuPhoto);
+  const [menuPhotos, setMenuPhotos] = useState<string[]>(store.menuPhoto ? [store.menuPhoto] : []);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [scanningIndex, setScanningIndex] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(store.categoryId);
@@ -143,7 +144,8 @@ const StoreRegistration = () => {
         toppings: item.toppings || [],
       }));
 
-      setMenuItems(items);
+      // Merge with existing items instead of replacing
+      setMenuItems((prev) => [...prev, ...items]);
       toast({ title: `สแกนสำเร็จ`, description: `พบ ${items.length} รายการ` });
     } catch (err: any) {
       console.error("Scan error:", err);
@@ -160,7 +162,7 @@ const StoreRegistration = () => {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
-      setMenuPhoto(base64);
+      setMenuPhotos((prev) => [...prev, base64]);
       setPhotoLoading(false);
       // Auto-trigger OCR scan
       scanMenuWithAI(base64);
@@ -190,7 +192,7 @@ const StoreRegistration = () => {
           category_id: selectedCategory,
           pin_lat: pinLocation?.lat ?? null,
           pin_lng: pinLocation?.lng ?? null,
-          menu_photo: menuPhoto,
+          menu_photo: menuPhotos[0] || null,
         })
         .select()
         .single();
@@ -238,7 +240,7 @@ const StoreRegistration = () => {
 
   const handleProceed = async () => {
     if (!canProceed) return;
-    setStore({ name: name.trim(), pinLocation, menuPhoto, categoryId: selectedCategory, menuItems });
+    setStore({ name: name.trim(), pinLocation, menuPhoto: menuPhotos[0] || null, categoryId: selectedCategory, menuItems });
     const saved = await saveToDatabase();
     if (saved) {
       toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
@@ -412,18 +414,64 @@ const StoreRegistration = () => {
             <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">📷 Smart Menu Digitizer</label>
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
 
-            {!menuPhoto && !photoLoading && !scanning && (
+            {/* Photo grid */}
+            {menuPhotos.length > 0 && (
+              <div className="space-y-3 mb-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {menuPhotos.map((photo, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative rounded-xl overflow-hidden shadow-luxury aspect-[4/3]"
+                    >
+                      <img src={photo} alt={`เมนู ${idx + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => setMenuPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-foreground/60 backdrop-blur-sm flex items-center justify-center"
+                      >
+                        <X size={12} className="text-background" />
+                      </button>
+                      <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-score-emerald/90">
+                        <span className="text-[8px] font-medium text-primary-foreground">รูปที่ {idx + 1}</span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {scanning && (
+                  <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-elevated">
+                    <Loader2 size={14} className="text-score-emerald animate-spin" />
+                    <span className="text-xs text-muted-foreground">กำลังสแกนเมนู...</span>
+                  </div>
+                )}
+
+                {!scanning && menuItems.length > 0 && (
+                  <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-score-emerald/10">
+                    <Check size={14} className="text-score-emerald" />
+                    <span className="text-[11px] font-medium text-score-emerald">{menuItems.length} รายการจาก {menuPhotos.length} รูป</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Add photo button */}
+            {!photoLoading && (
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handlePhotoCapture}
-                className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-2xl bg-surface-elevated shadow-luxury border border-dashed border-border/60 transition-colors hover:border-score-emerald/30"
+                className={`w-full flex ${menuPhotos.length > 0 ? "flex-row gap-2.5 py-3.5" : "flex-col gap-3 py-10"} items-center justify-center rounded-2xl bg-surface-elevated shadow-luxury border border-dashed border-border/60 transition-colors hover:border-score-emerald/30`}
               >
-                <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center">
-                  <Camera size={24} strokeWidth={1.5} className="text-muted-foreground" />
+                <div className={`${menuPhotos.length > 0 ? "w-8 h-8 rounded-xl" : "w-14 h-14 rounded-2xl"} bg-secondary flex items-center justify-center`}>
+                  <Camera size={menuPhotos.length > 0 ? 16 : 24} strokeWidth={1.5} className="text-muted-foreground" />
                 </div>
-                <div className="text-center">
-                  <span className="text-xs font-medium text-foreground tracking-wide block uppercase">Capture Full Menu</span>
-                  <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">ถ่ายรูปเมนูเพื่อสแกนอัตโนมัติ</span>
+                <div className={menuPhotos.length > 0 ? "" : "text-center"}>
+                  <span className="text-xs font-medium text-foreground tracking-wide block uppercase">
+                    {menuPhotos.length > 0 ? "เพิ่มรูปเมนู" : "Capture Full Menu"}
+                  </span>
+                  {menuPhotos.length === 0 && (
+                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">ถ่ายรูปเมนูเพื่อสแกนอัตโนมัติ</span>
+                  )}
                 </div>
               </motion.button>
             )}
@@ -434,45 +482,6 @@ const StoreRegistration = () => {
                   <Loader2 size={24} className="text-score-emerald animate-spin" />
                 </motion.div>
                 <span className="text-xs font-light text-muted-foreground">กำลังโหลดภาพ...</span>
-              </div>
-            )}
-
-            {menuPhoto && (
-              <div className="space-y-4">
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative rounded-2xl overflow-hidden shadow-luxury">
-                  <img src={menuPhoto} alt="เมนูอาหาร" className="w-full h-52 object-cover" />
-
-                  {/* Scanning overlay */}
-                  {scanning && <ScanningOverlay />}
-
-                  {/* Status badges */}
-                  {!scanning && (
-                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-score-emerald/90">
-                      <Check size={12} className="text-primary-foreground" />
-                      <span className="text-[10px] font-medium text-primary-foreground">
-                        {menuItems.length > 0 ? `${menuItems.length} รายการ` : "ถ่ายรูปแล้ว"}
-                      </span>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handlePhotoCapture}
-                    className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm text-[10px] font-medium text-foreground"
-                  >
-                    ถ่ายใหม่
-                  </button>
-                </motion.div>
-
-                {/* Rescan button */}
-                {!scanning && menuPhoto && (
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => scanMenuWithAI(menuPhoto)}
-                    className="w-full py-2.5 rounded-xl bg-secondary text-[11px] font-medium text-foreground uppercase tracking-wider hover:bg-muted transition-colors"
-                  >
-                    🔄 สแกนเมนูอีกครั้ง
-                  </motion.button>
-                )}
               </div>
             )}
           </motion.section>
