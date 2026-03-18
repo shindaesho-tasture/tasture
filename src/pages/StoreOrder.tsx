@@ -32,6 +32,17 @@ interface DnaTag {
   count: number;
 }
 
+interface StorePost {
+  id: string;
+  image_url: string;
+  caption: string | null;
+  created_at: string;
+  user_id: string;
+  profile: { display_name: string | null; avatar_url: string | null } | null;
+  likes_count: number;
+  comments_count: number;
+}
+
 const StoreOrder = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
