@@ -239,6 +239,7 @@ const StoreRegistration = () => {
     setStore({ name: name.trim(), pinLocation, menuPhoto, categoryId: selectedCategory, menuItems });
     const saved = await saveToDatabase();
     if (saved) {
+      toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
       navigate("/discover");
     }
   };
