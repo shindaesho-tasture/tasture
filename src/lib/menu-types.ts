@@ -4,6 +4,8 @@ export interface MenuItem {
   original_name?: string;
   description?: string;
   textures?: string[];
+  original_price?: number;
+  original_currency?: string;
   type: "noodle" | "dual_price" | "standard";
   price: number;
   price_special?: number;

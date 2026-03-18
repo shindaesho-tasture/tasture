@@ -48,6 +48,13 @@ For EACH item:
 - "dual_price" if the item has two prices (e.g. 40/50, 50-60) or size variants (ธรรมดา/พิเศษ, S/L, 並/大)
 - "standard" for all other items
 
+6. **Currency detection & conversion**: Detect the currency from the menu (symbols like ¥, $, €, ₩, £, RM, or context clues).
+   - **price**: ALWAYS output the price converted to Thai Baht (THB). Use approximate rates:
+     JPY→THB: ÷4.5, USD→THB: ×35, EUR→THB: ×38, KRW→THB: ÷38, GBP→THB: ×44, CNY→THB: ×5, MYR→THB: ×7.5, SGD→THB: ×26, VND→THB: ÷700, PHP→THB: ×0.6, IDR→THB: ÷450, AUD→THB: ×23, TWD→THB: ×1.1, HKD→THB: ×4.5, INR→THB: ×0.42
+   - If the menu is already in THB, just use the price as-is.
+   - **original_currency**: The 3-letter currency code detected (e.g. "JPY", "USD", "EUR", "KRW"). Use "THB" if Thai.
+   - **original_price**: The original price number as shown on the menu (before conversion). Same as price if THB.
+
 Extract ALL items visible on the menu.
 Prices should be numbers only (no currency symbols). If a price is not clearly visible, use 0.`,
           },
@@ -91,11 +98,19 @@ Prices should be numbers only (no currency symbols). If a price is not clearly v
                         },
                         price: {
                           type: "number",
-                          description: "Price for standard items, or normal price for dual_price items",
+                          description: "Price converted to Thai Baht (THB). For foreign currencies, use approximate conversion.",
+                        },
+                        original_price: {
+                          type: "number",
+                          description: "Original price as shown on the menu before conversion. Same as price if THB.",
+                        },
+                        original_currency: {
+                          type: "string",
+                          description: "3-letter currency code detected (e.g. JPY, USD, EUR, KRW, THB).",
                         },
                         price_special: {
                           type: "number",
-                          description: "Special/large price for dual_price items. 0 if not applicable.",
+                          description: "Special/large price (converted to THB) for dual_price items. 0 if not applicable.",
                         },
                         noodle_types: {
                           type: "array",
@@ -113,7 +128,7 @@ Prices should be numbers only (no currency symbols). If a price is not clearly v
                           description: "Available toppings. Empty if none.",
                         },
                       },
-                      required: ["name", "original_name", "description", "textures", "type", "price"],
+                      required: ["name", "original_name", "description", "textures", "type", "price", "original_price", "original_currency"],
                       additionalProperties: false,
                     },
                   },
