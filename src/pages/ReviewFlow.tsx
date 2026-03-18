@@ -120,6 +120,7 @@ const ReviewFlow = () => {
   }
 
   const handleScore = (metricId: string, value: number) => {
+    if (navigator.vibrate) navigator.vibrate(8);
     setScores((prev) => ({
       ...prev,
       [metricId]: prev[metricId] === value ? null : value,
