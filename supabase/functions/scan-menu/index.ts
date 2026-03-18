@@ -21,7 +21,6 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Strip data URL prefix if present
     const base64Data = imageBase64.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -35,21 +34,27 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a Thai menu OCR expert. Analyze the menu photo and extract every menu item.
+            content: `You are a multilingual menu OCR expert. Analyze the menu photo and extract every menu item.
+The menu can be in ANY language (Thai, Japanese, Korean, Chinese, English, etc.).
 
-For EACH item, determine its type:
-- "noodle" if the item contains keywords like ก๋วยเตี๋ยว, บะหมี่, เส้น, เกาเหลา, วุ้นเส้น, เส้นเล็ก, เส้นใหญ่, เส้นหมี่, มาม่า, or is clearly a noodle dish
-- "dual_price" if the item has two prices (e.g. 40/50, 50-60) or keywords like ธรรมดา/พิเศษ, เล็ก/ใหญ่, S/L
-- "standard" for all other items with a single name and single price
+For EACH item:
+1. **name**: Always translate to Thai. If already Thai, keep as-is.
+2. **original_name**: The original text exactly as shown on the menu. If the menu is in Thai, leave this empty string "".
+3. **description**: A brief Thai description (1 sentence) explaining ingredients, cooking method, or what the dish is. Max 60 chars.
+4. **textures**: Key textures of the dish in Thai (e.g. กรอบ, นุ่ม, เหนียว, ฉ่ำ, เนื้อแน่น, ซอสเข้มข้น, ละมุน, เด้ง, ร่วน, ฟู). Pick 1-3 most relevant.
 
-Extract ALL items visible on the menu. For noodle items, also extract available noodle types, styles, and toppings if visible.
-Prices should be numbers only (no ฿ symbol).
-If a price is not clearly visible, use 0.`,
+5. Determine its **type**:
+- "noodle" if the item contains noodle keywords (ก๋วยเตี๋ยว, บะหมี่, เส้น, ramen, udon, soba, pho, 麺, 면, etc.)
+- "dual_price" if the item has two prices (e.g. 40/50, 50-60) or size variants (ธรรมดา/พิเศษ, S/L, 並/大)
+- "standard" for all other items
+
+Extract ALL items visible on the menu.
+Prices should be numbers only (no currency symbols). If a price is not clearly visible, use 0.`,
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "สแกนเมนูนี้และดึงรายการอาหารทั้งหมดออกมา" },
+              { type: "text", text: "สแกนเมนูนี้และดึงรายการอาหารทั้งหมดออกมา แปลเป็นภาษาไทย พร้อมเทคเจอร์และคำอธิบาย" },
               {
                 type: "image_url",
                 image_url: { url: `data:image/jpeg;base64,${base64Data}` },
@@ -62,7 +67,7 @@ If a price is not clearly visible, use 0.`,
             type: "function",
             function: {
               name: "extract_menu_items",
-              description: "Extract all menu items from the Thai menu photo with categorization",
+              description: "Extract all menu items from the menu photo with translation, textures, and descriptions",
               parameters: {
                 type: "object",
                 properties: {
@@ -71,7 +76,14 @@ If a price is not clearly visible, use 0.`,
                     items: {
                       type: "object",
                       properties: {
-                        name: { type: "string", description: "Thai name of the dish" },
+                        name: { type: "string", description: "Thai name of the dish (translated if foreign)" },
+                        original_name: { type: "string", description: "Original name as shown on the menu. Empty string if already Thai." },
+                        description: { type: "string", description: "Brief Thai description of the dish (ingredients, cooking method). Max 60 chars." },
+                        textures: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Key textures in Thai (e.g. กรอบ, นุ่ม, ฉ่ำ). 1-3 items.",
+                        },
                         type: {
                           type: "string",
                           enum: ["noodle", "dual_price", "standard"],
@@ -88,12 +100,12 @@ If a price is not clearly visible, use 0.`,
                         noodle_types: {
                           type: "array",
                           items: { type: "string" },
-                          description: "Available noodle types (e.g. เส้นเล็ก, เส้นใหญ่, บะหมี่, วุ้นเส้น, มาม่า). Empty if not noodle type.",
+                          description: "Available noodle types. Empty if not noodle type.",
                         },
                         noodle_styles: {
                           type: "array",
                           items: { type: "string" },
-                          description: "Available styles (e.g. น้ำ, แห้ง, ต้มยำ, เย็นตาโฟ). Empty if not noodle type.",
+                          description: "Available styles. Empty if not noodle type.",
                         },
                         toppings: {
                           type: "array",
@@ -101,7 +113,7 @@ If a price is not clearly visible, use 0.`,
                           description: "Available toppings. Empty if none.",
                         },
                       },
-                      required: ["name", "type", "price"],
+                      required: ["name", "original_name", "description", "textures", "type", "price"],
                       additionalProperties: false,
                     },
                   },
