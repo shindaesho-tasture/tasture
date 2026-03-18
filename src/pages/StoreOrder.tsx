@@ -199,6 +199,55 @@ const StoreOrder = () => {
     }
   };
 
+  const fetchStorePosts = async () => {
+    if (!storeId) return;
+    setPostsLoading(true);
+    try {
+      const { data: postsData } = await supabase
+        .from("posts")
+        .select("id, image_url, caption, created_at, user_id")
+        .eq("store_id", storeId)
+        .eq("hidden", false)
+        .order("created_at", { ascending: false });
+
+      if (!postsData || postsData.length === 0) {
+        setStorePosts([]);
+        return;
+      }
+
+      const userIds = [...new Set(postsData.map((p) => p.user_id))];
+      const postIds = postsData.map((p) => p.id);
+
+      const [profilesRes, likesRes, commentsRes] = await Promise.all([
+        supabase.from("profiles").select("id, display_name, avatar_url").in("id", userIds),
+        supabase.from("post_likes").select("ref_id").in("ref_id", postIds),
+        supabase.from("feed_comments").select("ref_id").in("ref_id", postIds),
+      ]);
+
+      const profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
+      (profilesRes.data || []).forEach((p) => profileMap.set(p.id, p));
+
+      const likesMap = new Map<string, number>();
+      (likesRes.data || []).forEach((l) => likesMap.set(l.ref_id, (likesMap.get(l.ref_id) || 0) + 1));
+
+      const commentsMap = new Map<string, number>();
+      (commentsRes.data || []).forEach((c) => commentsMap.set(c.ref_id, (commentsMap.get(c.ref_id) || 0) + 1));
+
+      setStorePosts(
+        postsData.map((p) => ({
+          ...p,
+          profile: profileMap.get(p.user_id) || null,
+          likes_count: likesMap.get(p.id) || 0,
+          comments_count: commentsMap.get(p.id) || 0,
+        }))
+      );
+    } catch (err) {
+      console.error("Failed to fetch store posts:", err);
+    } finally {
+      setPostsLoading(false);
+    }
+  };
+
   const getItemQuantity = (menuItemId: string) => {
     return items.find((i) => i.menuItemId === menuItemId)?.quantity || 0;
   };
