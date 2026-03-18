@@ -9,7 +9,7 @@ import {
   Dna,
   Sparkles,
   Store,
-  Star,
+  
   Eye,
   EyeOff,
 } from "lucide-react";
