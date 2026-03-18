@@ -69,6 +69,7 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
   useEffect(() => {
     if (open && badge && badge.check(ctx)) {
       setShowConfetti(true);
+      if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
       const t = setTimeout(() => setShowConfetti(false), 1200);
       return () => clearTimeout(t);
     }
