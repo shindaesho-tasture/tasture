@@ -392,7 +392,7 @@ const StoreOrder = () => {
                       .map((t) => ({
                         icon: t.component_icon,
                         label: t.selected_tag,
-                        score: 0, // texture tags show popularity, not sentiment
+                        score: t.selected_score, // average sentiment from community
                         count: t.count,
                         type: "texture" as const,
                       }));
