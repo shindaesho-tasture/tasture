@@ -333,93 +333,191 @@ const StoreOrder = () => {
             </button>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-medium tracking-tight text-foreground truncate">
-                {storeName || "เมนู"}
+                {storeName || "ร้านอาหาร"}
               </h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                เลือกเมนูสั่งอาหาร
-              </p>
             </div>
           </div>
         </div>
 
-        <div className="px-4 pt-4 space-y-2">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-              <span className="text-xs text-muted-foreground">กำลังโหลดเมนู...</span>
-            </div>
-          ) : menuItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <p className="text-sm text-muted-foreground">ยังไม่มีเมนูในร้านนี้</p>
-            </div>
-          ) : (
-            <AnimatePresence>
-              {menuItems.map((item, i) => {
-                const qty = getItemQuantity(item.id);
-                const tags = (dnaByItem.get(item.id) || []).map((t) => ({
-                  icon: t.component_icon,
-                  label: t.selected_tag,
-                  score: t.selected_score,
-                  count: t.count,
-                }));
-                const totalRevs = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            setActiveTab(v);
+            if (v === "posts" && storePosts.length === 0 && !postsLoading) {
+              fetchStorePosts();
+            }
+          }}
+          className="w-full"
+        >
+          <TabsList className="w-full rounded-none bg-secondary/50 h-11 p-0 border-b border-border/30">
+            <TabsTrigger
+              value="menu"
+              className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
+            >
+              🍽️ เมนู
+            </TabsTrigger>
+            <TabsTrigger
+              value="posts"
+              className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
+            >
+              📸 โพสจากลูกค้า
+            </TabsTrigger>
+          </TabsList>
 
-                return (
-                  <div key={item.id} className="relative">
-                    <SovereignMenuCard
-                      name={item.name}
-                      price={item.price}
-                      priceSpecial={item.price_special}
-                      imageUrl={topPhotoByItem.get(item.id)?.[0] || item.image_url || undefined}
-                      tags={tags}
-                      totalReviews={totalRevs}
-                      onPress={() => setDetailItem(item)}
-                      index={i}
-                      userPhotos={topPhotoByItem.get(item.id)}
-                    />
+          <TabsContent value="menu" className="mt-0">
+            <div className="px-4 pt-4 space-y-2">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
+                  <span className="text-xs text-muted-foreground">กำลังโหลดเมนู...</span>
+                </div>
+              ) : menuItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <p className="text-sm text-muted-foreground">ยังไม่มีเมนูในร้านนี้</p>
+                </div>
+              ) : (
+                <AnimatePresence>
+                  {menuItems.map((item, i) => {
+                    const qty = getItemQuantity(item.id);
+                    const tags = (dnaByItem.get(item.id) || []).map((t) => ({
+                      icon: t.component_icon,
+                      label: t.selected_tag,
+                      score: t.selected_score,
+                      count: t.count,
+                    }));
+                    const totalRevs = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
 
-                    {/* Quantity overlay */}
-                    <div className="absolute top-2 right-2 z-10">
-                      {qty === 0 ? (
-                        <motion.button
-                          whileTap={{ scale: 0.85 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item);
-                          }}
-                          className="w-9 h-9 rounded-xl bg-score-emerald flex items-center justify-center shadow-sm"
-                        >
-                          <Plus size={16} strokeWidth={2.5} className="text-primary-foreground" />
-                        </motion.button>
-                      ) : (
-                        <div className="flex items-center gap-1.5 bg-background/90 rounded-xl px-1.5 py-1 shadow-sm border border-border/40">
-                          <motion.button
-                            whileTap={{ scale: 0.85 }}
-                            onClick={(e) => { e.stopPropagation(); handleMinus(item.id); }}
-                            className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center"
-                          >
-                            <Minus size={12} strokeWidth={2} className="text-foreground" />
-                          </motion.button>
-                          <span className="text-xs font-bold text-foreground w-4 text-center">{qty}</span>
-                          <motion.button
-                            whileTap={{ scale: 0.85 }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item);
-                            }}
-                            className="w-7 h-7 rounded-lg bg-score-emerald flex items-center justify-center"
-                          >
-                            <Plus size={12} strokeWidth={2} className="text-primary-foreground" />
-                          </motion.button>
+                    return (
+                      <div key={item.id} className="relative">
+                        <SovereignMenuCard
+                          name={item.name}
+                          price={item.price}
+                          priceSpecial={item.price_special}
+                          imageUrl={topPhotoByItem.get(item.id)?.[0] || item.image_url || undefined}
+                          tags={tags}
+                          totalReviews={totalRevs}
+                          onPress={() => setDetailItem(item)}
+                          index={i}
+                          userPhotos={topPhotoByItem.get(item.id)}
+                        />
+
+                        {/* Quantity overlay */}
+                        <div className="absolute top-2 right-2 z-10">
+                          {qty === 0 ? (
+                            <motion.button
+                              whileTap={{ scale: 0.85 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item);
+                              }}
+                              className="w-9 h-9 rounded-xl bg-score-emerald flex items-center justify-center shadow-sm"
+                            >
+                              <Plus size={16} strokeWidth={2.5} className="text-primary-foreground" />
+                            </motion.button>
+                          ) : (
+                            <div className="flex items-center gap-1.5 bg-background/90 rounded-xl px-1.5 py-1 shadow-sm border border-border/40">
+                              <motion.button
+                                whileTap={{ scale: 0.85 }}
+                                onClick={(e) => { e.stopPropagation(); handleMinus(item.id); }}
+                                className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center"
+                              >
+                                <Minus size={12} strokeWidth={2} className="text-foreground" />
+                              </motion.button>
+                              <span className="text-xs font-bold text-foreground w-4 text-center">{qty}</span>
+                              <motion.button
+                                whileTap={{ scale: 0.85 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  hasOptions(item) ? openOptionsPopup(item) : handleAddSimple(item);
+                                }}
+                                className="w-7 h-7 rounded-lg bg-score-emerald flex items-center justify-center"
+                              >
+                                <Plus size={12} strokeWidth={2} className="text-primary-foreground" />
+                              </motion.button>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </AnimatePresence>
-          )}
-        </div>
+                      </div>
+                    );
+                  })}
+                </AnimatePresence>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="posts" className="mt-0">
+            <div className="px-4 pt-4">
+              {postsLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
+                  <span className="text-xs text-muted-foreground">กำลังโหลดโพส...</span>
+                </div>
+              ) : storePosts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <span className="text-4xl">📸</span>
+                  <p className="text-sm text-muted-foreground">ยังไม่มีโพสจากลูกค้า</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {storePosts.map((post) => (
+                    <motion.div
+                      key={post.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-2xl overflow-hidden border border-border/40 bg-card"
+                    >
+                      {/* Post image */}
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img
+                          src={post.image_url}
+                          alt={post.caption || "โพสจากลูกค้า"}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+
+                      <div className="p-3 space-y-2">
+                        {/* Author row */}
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-secondary overflow-hidden flex-shrink-0">
+                            {post.profile?.avatar_url ? (
+                              <img src={post.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">👤</div>
+                            )}
+                          </div>
+                          <span className="text-xs font-medium text-foreground truncate">
+                            {post.profile?.display_name || "ผู้ใช้"}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground ml-auto flex-shrink-0">
+                            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: th })}
+                          </span>
+                        </div>
+
+                        {/* Caption */}
+                        {post.caption && (
+                          <p className="text-xs text-foreground/80 line-clamp-2">{post.caption}</p>
+                        )}
+
+                        {/* Likes & Comments */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Heart size={14} strokeWidth={1.5} />
+                            <span className="text-[11px]">{post.likes_count}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <MessageCircle size={14} strokeWidth={1.5} />
+                            <span className="text-[11px]">{post.comments_count}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Options Popup */}
         <AnimatePresence>
