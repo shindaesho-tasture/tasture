@@ -14,6 +14,7 @@ import BottomNav from "@/components/BottomNav";
 import ScanningOverlay from "@/components/menu/ScanningOverlay";
 import MenuCardList from "@/components/menu/MenuCardList";
 import { useToast } from "@/hooks/use-toast";
+import Confetti from "@/components/Confetti";
 
 const mapContainerStyle = { width: "100%", height: "100%" };
 
@@ -24,6 +25,7 @@ const StoreRegistration = () => {
   const { toast } = useToast();
   const { categories } = useCategories();
   const [saving, setSaving] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
@@ -240,12 +242,14 @@ const StoreRegistration = () => {
     const saved = await saveToDatabase();
     if (saved) {
       toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
-      navigate("/discover");
+      setShowConfetti(true);
+      setTimeout(() => navigate("/discover"), 1800);
     }
   };
 
   return (
     <PageTransition>
+      <Confetti show={showConfetti} />
       <div className="min-h-screen bg-background pb-36">
         {/* Header */}
         <div className="sticky top-0 z-10 glass-effect glass-border">
