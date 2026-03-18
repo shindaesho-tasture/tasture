@@ -17,7 +17,7 @@ import CreatePost from "./pages/CreatePost.tsx";
 import OrderHistory from "./pages/OrderHistory.tsx";
 import Profile from "./pages/Profile.tsx";
 import Auth from "./pages/Auth.tsx";
-import MyStores from "./pages/MyStores.tsx";
+
 import StoreList from "./pages/StoreList.tsx";
 import StoreOrder from "./pages/StoreOrder.tsx";
 import OrderSummary from "./pages/OrderSummary.tsx";
