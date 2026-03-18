@@ -46,7 +46,7 @@ const MenuImageManager = () => {
         setStoreName(storeRes.data.name);
         if (storeRes.data.user_id !== user?.id) {
           toast({ title: "ไม่มีสิทธิ์เข้าถึง", variant: "destructive" });
-          navigate("/my-stores");
+          navigate("/discover");
           return;
         }
       }

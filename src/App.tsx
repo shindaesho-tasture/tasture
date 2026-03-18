@@ -17,7 +17,7 @@ import CreatePost from "./pages/CreatePost.tsx";
 import OrderHistory from "./pages/OrderHistory.tsx";
 import Profile from "./pages/Profile.tsx";
 import Auth from "./pages/Auth.tsx";
-import MyStores from "./pages/MyStores.tsx";
+
 import StoreList from "./pages/StoreList.tsx";
 import StoreOrder from "./pages/StoreOrder.tsx";
 import OrderSummary from "./pages/OrderSummary.tsx";
@@ -48,7 +48,7 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/orders" element={<OrderHistory />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/my-stores" element={<MyStores />} />
+        
         <Route path="/store-list" element={<StoreList />} />
         <Route path="/store/:storeId/order" element={<StoreOrder />} />
         <Route path="/order-summary" element={<OrderSummary />} />

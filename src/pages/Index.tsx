@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Search, Plus, Store } from "lucide-react";
+import { MapPin, Search, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
@@ -545,16 +545,6 @@ const Index = () => {
               <Plus size={18} className="text-score-emerald" />
             </div>
             <span className="text-[12px] font-semibold text-foreground leading-tight">เพิ่มร้านใหม่</span>
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/my-stores")}
-            className="flex items-center gap-3 p-3 rounded-lg bg-secondary overflow-hidden"
-          >
-            <div className="w-10 h-10 rounded-md bg-score-amber/20 flex items-center justify-center shrink-0">
-              <Store size={18} className="text-score-amber" />
-            </div>
-            <span className="text-[12px] font-semibold text-foreground leading-tight">ร้านของฉัน</span>
           </motion.button>
         </div>
 
