@@ -305,6 +305,7 @@ const StoreOrder = () => {
   };
 
   const handleMinus = (menuItemId: string) => {
+    if (navigator.vibrate) navigator.vibrate(8);
     const qty = getItemQuantity(menuItemId);
     if (qty <= 1) {
       removeItem(menuItemId);
