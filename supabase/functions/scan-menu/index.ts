@@ -128,7 +128,7 @@ Prices should be numbers only (no currency symbols). If a price is not clearly v
                           description: "Available toppings. Empty if none.",
                         },
                       },
-                      required: ["name", "original_name", "description", "textures", "type", "price"],
+                      required: ["name", "original_name", "description", "textures", "type", "price", "original_price", "original_currency"],
                       additionalProperties: false,
                     },
                   },
