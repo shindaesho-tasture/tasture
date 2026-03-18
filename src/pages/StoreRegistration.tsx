@@ -249,6 +249,7 @@ const StoreRegistration = () => {
 
   return (
     <PageTransition>
+      <Confetti show={showConfetti} />
       <div className="min-h-screen bg-background pb-36">
         {/* Header */}
         <div className="sticky top-0 z-10 glass-effect glass-border">
