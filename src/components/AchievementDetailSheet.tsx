@@ -2,50 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-
-/* ── Confetti / sparkle particles ── */
-const PARTICLE_COUNT = 18;
-const COLORS = ["#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#3b82f6", "#ec4899", "#14b8a6"];
-const randomBetween = (a: number, b: number) => a + Math.random() * (b - a);
-
-const ConfettiBurst = () => {
-  const [particles] = useState(() =>
-    Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
-      id: i,
-      color: COLORS[i % COLORS.length],
-      angle: (360 / PARTICLE_COUNT) * i + randomBetween(-15, 15),
-      distance: randomBetween(60, 130),
-      size: randomBetween(4, 8),
-      rotation: randomBetween(0, 360),
-      shape: i % 3, // 0=circle, 1=star, 2=rect
-      delay: randomBetween(0, 0.15),
-    }))
-  );
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {particles.map((p) => {
-        const rad = (p.angle * Math.PI) / 180;
-        const tx = Math.cos(rad) * p.distance;
-        const ty = Math.sin(rad) * p.distance;
-        return (
-          <motion.div
-            key={p.id}
-            initial={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }}
-            animate={{ opacity: 0, x: tx, y: ty, scale: 0.3, rotate: p.rotation + 180 }}
-            transition={{ duration: 0.9, delay: p.delay, ease: "easeOut" }}
-            className="absolute left-1/2 top-1/2"
-            style={{ width: p.size, height: p.size }}
-          >
-            {p.shape === 0 && <div className="w-full h-full rounded-full" style={{ background: p.color }} />}
-            {p.shape === 1 && <span style={{ fontSize: p.size * 1.5, lineHeight: 1, color: p.color }}>✦</span>}
-            {p.shape === 2 && <div className="w-full h-full rounded-sm" style={{ background: p.color, transform: `rotate(${p.rotation}deg)` }} />}
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-};
+import Confetti from "@/components/Confetti";
 
 interface TasteDNA {
   salty: number;
