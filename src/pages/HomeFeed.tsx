@@ -1034,6 +1034,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     const trimmed = commentText.trim();
     if (!trimmed || !user || submitting) return;
     if (trimmed.length > 500) return;
+    if (navigator.vibrate) navigator.vibrate(8);
     setSubmitting(true);
 
     const { data, error } = await supabase
