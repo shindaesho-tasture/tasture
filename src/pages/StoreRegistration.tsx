@@ -239,7 +239,7 @@ const StoreRegistration = () => {
     setStore({ name: name.trim(), pinLocation, menuPhoto, categoryId: selectedCategory, menuItems });
     const saved = await saveToDatabase();
     if (saved) {
-      navigate("/my-stores");
+      navigate("/discover");
     }
   };
 

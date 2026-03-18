@@ -251,10 +251,10 @@ const ReviewFlow = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => storeId ? navigate("/my-stores") : navigate("/categories")}
+            onClick={() => storeId ? navigate("/discover") : navigate("/categories")}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-foreground text-background font-semibold text-sm shadow-luxury"
           >
-            {storeId ? "กลับหน้าร้านของฉัน" : "กลับหน้าหมวดหมู่"}
+            {storeId ? "กลับหน้าสำรวจ" : "กลับหน้าหมวดหมู่"}
           </motion.button>
         </div>
 
