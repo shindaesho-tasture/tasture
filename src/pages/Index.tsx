@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Search, Plus, Store } from "lucide-react";
+import { MapPin, Search, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
