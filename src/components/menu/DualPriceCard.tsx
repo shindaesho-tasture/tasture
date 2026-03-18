@@ -31,6 +31,9 @@ const DualPriceCard = ({ item, onChange }: DualPriceCardProps) => {
         onChange={(e) => { setEditName(e.target.value); onChange({ ...item, name: e.target.value }); }}
         className="w-full text-sm font-medium text-foreground bg-transparent outline-none border-b border-transparent focus:border-border transition-colors"
       />
+      {item.original_name && (
+        <p className="text-[10px] text-muted-foreground truncate">{item.original_name}</p>
+      )}
 
       {/* Dual Price Fields */}
       <div className="flex gap-3">
