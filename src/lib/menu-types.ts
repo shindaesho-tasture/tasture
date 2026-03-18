@@ -1,6 +1,9 @@
 export interface MenuItem {
   id: string;
   name: string;
+  original_name?: string;
+  description?: string;
+  textures?: string[];
   type: "noodle" | "dual_price" | "standard";
   price: number;
   price_special?: number;
