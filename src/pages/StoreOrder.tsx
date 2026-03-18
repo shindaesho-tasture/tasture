@@ -185,7 +185,7 @@ const StoreOrder = () => {
           const result = new Map<string, DnaTag[]>();
           tagMap.forEach((itemMap, menuItemId) => {
             const tags = Array.from(itemMap.values())
-              .sort((a, b) => Math.abs(b.selected_score) - Math.abs(a.selected_score) || b.count - a.count)
+              .sort((a, b) => b.count - a.count)
               .slice(0, 3);
             result.set(menuItemId, tags);
           });
