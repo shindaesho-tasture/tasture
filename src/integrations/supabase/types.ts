@@ -154,43 +154,52 @@ export type Database = {
       menu_items: {
         Row: {
           created_at: string
+          description: string | null
           id: string
           image_url: string | null
           name: string
           noodle_styles: string[] | null
           noodle_types: string[] | null
+          original_name: string | null
           price: number
           price_special: number | null
           rating: number | null
           store_id: string
+          textures: string[] | null
           toppings: string[] | null
           type: string
         }
         Insert: {
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           name: string
           noodle_styles?: string[] | null
           noodle_types?: string[] | null
+          original_name?: string | null
           price?: number
           price_special?: number | null
           rating?: number | null
           store_id: string
+          textures?: string[] | null
           toppings?: string[] | null
           type?: string
         }
         Update: {
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
           name?: string
           noodle_styles?: string[] | null
           noodle_types?: string[] | null
+          original_name?: string | null
           price?: number
           price_special?: number | null
           rating?: number | null
           store_id?: string
+          textures?: string[] | null
           toppings?: string[] | null
           type?: string
         }
