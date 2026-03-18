@@ -294,6 +294,7 @@ const StoreOrder = () => {
       openOptionsPopup(item);
       return;
     }
+    if (navigator.vibrate) navigator.vibrate(8);
     addItem({
       menuItemId: item.id,
       name: item.name,
