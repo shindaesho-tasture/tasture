@@ -365,28 +365,18 @@ const DishDetailSheet = ({
                 </div>
               )}
 
-              {/* Sensory Explainer */}
+              {/* Popular Textures — community */}
               {dnaTags.length > 0 && (
                 <div className="px-5 py-3">
                   <h3 className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wider">
-                    📖 คัมภีร์รสชาติ
+                    🏷️ เทคเจอร์ยอดนิยม
                   </h3>
-                  <div className="space-y-3">
-                    {dnaTags.map((tag) => {
-                      const tier = getScoreTier(tag.selected_score);
-                      const opacity = getIntensityOpacity(tag.count);
-                      const tierHsl: Record<ScoreTier, string> = {
-                        emerald: "163,78%,20%",
-                        mint: "105,24%,70%",
-                        slate: "215,16%,47%",
-                        amber: "32,95%,44%",
-                        ruby: "0,68%,35%",
-                      };
-                      const hsl = tierHsl[tier];
-
-                      return (
+                  <div className="space-y-2">
+                    {[...dnaTags]
+                      .sort((a, b) => b.count - a.count)
+                      .map((tag) => (
                         <div
-                          key={`${tag.component_name}-${tag.selected_tag}`}
+                          key={`pop-${tag.component_name}-${tag.selected_tag}`}
                           className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/30"
                         >
                           <span className="text-2xl flex-shrink-0 mt-0.5">{tag.component_icon}</span>
@@ -395,13 +385,10 @@ const DishDetailSheet = ({
                               <span className="text-sm font-semibold text-foreground">
                                 {tag.component_name}
                               </span>
-                              <span
-                                className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold text-white leading-none"
-                                style={{ backgroundColor: `hsla(${hsl},${opacity})` }}
-                              >
+                              <span className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold leading-none bg-secondary text-foreground/80">
                                 {tag.selected_tag}
                                 {tag.count > 1 && (
-                                  <span className="ml-1 opacity-70">×{tag.count}</span>
+                                  <span className="ml-1 opacity-60">×{tag.count}</span>
                                 )}
                               </span>
                             </div>
@@ -420,6 +407,52 @@ const DishDetailSheet = ({
                               </p>
                             ) : null}
                           </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* My Sentiment — personal */}
+              {myDnaTags.length > 0 && (
+                <div className="px-5 py-3">
+                  <h3 className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                    <User size={12} className="text-muted-foreground" />
+                    ความรู้สึกของฉัน
+                  </h3>
+                  <div className="space-y-2">
+                    {myDnaTags.map((tag) => {
+                      const tier = getScoreTier(tag.selected_score);
+                      const tierHsl: Record<ScoreTier, string> = {
+                        emerald: "163,78%,20%",
+                        mint: "105,24%,70%",
+                        slate: "215,16%,47%",
+                        amber: "32,95%,44%",
+                        ruby: "0,68%,35%",
+                      };
+                      const hsl = tierHsl[tier];
+                      const emoji = tag.selected_score === 2 ? "🤩" : tag.selected_score === 0 ? "😐" : "😔";
+
+                      return (
+                        <div
+                          key={`my-${tag.component_name}-${tag.selected_tag}`}
+                          className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border/30"
+                        >
+                          <span className="text-2xl flex-shrink-0">{tag.component_icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-semibold text-foreground">
+                              {tag.component_name}
+                            </span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span
+                                className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold text-white leading-none"
+                                style={{ backgroundColor: `hsla(${hsl},0.85)` }}
+                              >
+                                {tag.selected_tag}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-xl flex-shrink-0">{emoji}</span>
                         </div>
                       );
                     })}
