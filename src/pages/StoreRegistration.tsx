@@ -23,6 +23,7 @@ const StoreRegistration = () => {
   const navigate = useNavigate();
   const { store, setStore } = useStore();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const { toast } = useToast();
   const { categories } = useCategories();
   const [saving, setSaving] = useState(false);
