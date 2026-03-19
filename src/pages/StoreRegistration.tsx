@@ -130,7 +130,7 @@ const StoreRegistration = () => {
     setScanning(true);
     try {
       const { data, error } = await supabase.functions.invoke("scan-menu", {
-        body: { imageBase64: base64 },
+        body: { imageBase64: base64, language },
       });
 
       if (error) throw error;

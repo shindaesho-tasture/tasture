@@ -69,17 +69,19 @@ const AnimatedRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <CategoriesProvider>
-        <StoreProvider>
-          <OrderProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AnimatedRoutes />
-            </BrowserRouter>
-          </OrderProvider>
-        </StoreProvider>
-      </CategoriesProvider>
+      <LanguageProvider>
+        <CategoriesProvider>
+          <StoreProvider>
+            <OrderProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AnimatedRoutes />
+              </BrowserRouter>
+            </OrderProvider>
+          </StoreProvider>
+        </CategoriesProvider>
+      </LanguageProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
