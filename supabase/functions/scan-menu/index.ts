@@ -85,9 +85,13 @@ STEP 3 — FOR EACH MENU ITEM:
 Extract ALL items visible on the menu. Prices as numbers only (no symbols). Use 0 if price is not visible.`;
           },
           {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
             role: "user",
             content: [
-              { type: "text", text: "สแกนเมนูนี้และดึงรายการอาหารทั้งหมดออกมา แปลเป็นภาษาไทย พร้อมเทคเจอร์และคำอธิบาย" },
+              { type: "text", text: "Scan this menu and extract all food items. Analyze as a culinary expert and explain for someone unfamiliar with this cuisine." },
               {
                 type: "image_url",
                 image_url: { url: `data:image/jpeg;base64,${base64Data}` },

@@ -424,6 +424,28 @@ const Profile = () => {
             <p className="text-[11px] text-muted-foreground mt-0.5">{profile?.email}</p>
           </div>
 
+          {/* Language Selector */}
+          <div className="flex items-center gap-2 mb-3">
+            <Globe size={14} className="text-muted-foreground" />
+            <span className="text-[11px] text-muted-foreground">ภาษา:</span>
+            <div className="flex gap-1.5">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-[11px] font-medium transition-all",
+                    language === lang.code
+                      ? "bg-score-emerald text-white shadow-sm"
+                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  )}
+                >
+                  {lang.flag} {lang.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Badge */}
           <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
