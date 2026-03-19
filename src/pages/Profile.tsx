@@ -9,6 +9,7 @@ import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useLanguage, LANGUAGES } from "@/lib/language-context";
 
 /* ── Types ── */
 interface UserPost {
