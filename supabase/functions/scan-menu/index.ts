@@ -83,7 +83,16 @@ STEP 3 — FOR EACH MENU ITEM:
    - **original_price**: Original price number before conversion.
 
 Extract ALL items visible on the menu. Prices as numbers only (no symbols). Use 0 if price is not visible.`;
-          },
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
           {
             role: "system",
             content: systemPrompt,
