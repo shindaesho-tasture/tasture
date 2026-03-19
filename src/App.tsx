@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/lib/store-context";
 import { OrderProvider } from "@/lib/order-context";
 import { CategoriesProvider } from "@/hooks/use-categories";
+import { LanguageProvider } from "@/lib/language-context";
 import HomeFeed from "./pages/HomeFeed.tsx";
 import Index from "./pages/Index.tsx";
 import CategorySelect from "./pages/CategorySelect.tsx";
@@ -68,17 +69,19 @@ const AnimatedRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <CategoriesProvider>
-        <StoreProvider>
-          <OrderProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AnimatedRoutes />
-            </BrowserRouter>
-          </OrderProvider>
-        </StoreProvider>
-      </CategoriesProvider>
+      <LanguageProvider>
+        <CategoriesProvider>
+          <StoreProvider>
+            <OrderProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AnimatedRoutes />
+              </BrowserRouter>
+            </OrderProvider>
+          </StoreProvider>
+        </CategoriesProvider>
+      </LanguageProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Gem, Store, LogIn, Pencil, Check, X, Camera, Users, ChefHat, Grid3X3, Bookmark, Heart, MessageCircle, Trophy } from "lucide-react";
+import { Crown, Gem, Store, LogIn, Pencil, Check, X, Camera, Users, ChefHat, Grid3X3, Bookmark, Heart, MessageCircle, Trophy, Globe } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import PostDetailSheet from "@/components/PostDetailSheet";
@@ -9,6 +9,7 @@ import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useLanguage, LANGUAGES } from "@/lib/language-context";
 
 /* ── Types ── */
 interface UserPost {
@@ -128,6 +129,7 @@ const TasteDNAChart = ({ dna }: { dna: TasteDNA }) => {
 /* ── Main Page ── */
 const Profile = () => {
   const { user, loading, signOut } = useAuth();
+  const { language, setLanguage, currentOption } = useLanguage();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ display_name: string | null; email: string | null; avatar_url: string | null } | null>(null);
   const [editingName, setEditingName] = useState(false);
@@ -420,6 +422,28 @@ const Profile = () => {
               </div>
             )}
             <p className="text-[11px] text-muted-foreground mt-0.5">{profile?.email}</p>
+          </div>
+
+          {/* Language Selector */}
+          <div className="flex items-center gap-2 mb-3">
+            <Globe size={14} className="text-muted-foreground" />
+            <span className="text-[11px] text-muted-foreground">ภาษา:</span>
+            <div className="flex gap-1.5">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-[11px] font-medium transition-all",
+                    language === lang.code
+                      ? "bg-score-emerald text-white shadow-sm"
+                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  )}
+                >
+                  {lang.flag} {lang.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Badge */}
