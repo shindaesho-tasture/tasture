@@ -129,6 +129,7 @@ const TasteDNAChart = ({ dna }: { dna: TasteDNA }) => {
 /* ── Main Page ── */
 const Profile = () => {
   const { user, loading, signOut } = useAuth();
+  const { language, setLanguage, currentOption } = useLanguage();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ display_name: string | null; email: string | null; avatar_url: string | null } | null>(null);
   const [editingName, setEditingName] = useState(false);
