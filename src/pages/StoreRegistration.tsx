@@ -214,41 +214,84 @@ const StoreRegistration = () => {
     }
     setSaving(true);
     try {
-      const { data: storeData, error: storeError } = await supabase
+      // Check if user already has a store with the same name
+      const normalizedName = name.trim();
+      const { data: existingStores } = await supabase
         .from("stores")
-        .insert({
-          user_id: user.id,
-          name: name.trim(),
+        .select("id")
+        .eq("user_id", user.id)
+        .ilike("name", normalizedName);
+
+      let storeId: string;
+      let isExisting = false;
+
+      if (existingStores && existingStores.length > 0) {
+        // Store already exists — merge into it
+        storeId = existingStores[0].id;
+        isExisting = true;
+
+        // Update location/category if provided
+        await supabase.from("stores").update({
           category_id: selectedCategory,
           pin_lat: pinLocation?.lat ?? null,
           pin_lng: pinLocation?.lng ?? null,
           menu_photo: menuPhotos[0] || null,
-        })
-        .select()
-        .single();
+        }).eq("id", storeId);
+      } else {
+        // Create new store
+        const { data: storeData, error: storeError } = await supabase
+          .from("stores")
+          .insert({
+            user_id: user.id,
+            name: normalizedName,
+            category_id: selectedCategory,
+            pin_lat: pinLocation?.lat ?? null,
+            pin_lng: pinLocation?.lng ?? null,
+            menu_photo: menuPhotos[0] || null,
+          })
+          .select()
+          .single();
 
-      if (storeError) throw storeError;
+        if (storeError) throw storeError;
+        storeId = storeData.id;
+      }
 
       if (menuItems.length > 0) {
-        const itemsToInsert = menuItems.map((item) => ({
-          store_id: storeData.id,
-          name: item.name,
-          original_name: item.original_name ?? null,
-          description: item.description ?? null,
-          textures: item.textures ?? [],
-          type: item.type,
-          price: item.price,
-          price_special: item.price_special ?? null,
-          noodle_types: item.noodle_types ?? [],
-          noodle_styles: item.noodle_styles ?? [],
-          toppings: item.toppings ?? [],
-          rating: item.rating ?? 0,
-        }));
+        // Fetch existing menu items for this store to deduplicate
+        const { data: existingMenuItems } = await supabase
+          .from("menu_items")
+          .select("name")
+          .eq("store_id", storeId);
 
-        const { error: itemsError } = await supabase.from("menu_items").insert(itemsToInsert);
-        if (itemsError) throw itemsError;
+        const existingNames = new Set(
+          (existingMenuItems || []).map((m) => m.name.trim().toLowerCase())
+        );
 
-        // Auto-analyze dishes in background (don't block save)
+        const newItems = menuItems.filter(
+          (item) => !existingNames.has(item.name.trim().toLowerCase())
+        );
+
+        if (newItems.length > 0) {
+          const itemsToInsert = newItems.map((item) => ({
+            store_id: storeId,
+            name: item.name,
+            original_name: item.original_name ?? null,
+            description: item.description ?? null,
+            textures: item.textures ?? [],
+            type: item.type,
+            price: item.price,
+            price_special: item.price_special ?? null,
+            noodle_types: item.noodle_types ?? [],
+            noodle_styles: item.noodle_styles ?? [],
+            toppings: item.toppings ?? [],
+            rating: item.rating ?? 0,
+          }));
+
+          const { error: itemsError } = await supabase.from("menu_items").insert(itemsToInsert);
+          if (itemsError) throw itemsError;
+        }
+
+        // Auto-analyze dishes in background
         const dishNames = menuItems.map((item) => item.name.trim()).filter(Boolean);
         if (dishNames.length > 0) {
           supabase.functions.invoke("batch-analyze", {
@@ -258,9 +301,20 @@ const StoreRegistration = () => {
             else console.log("Dish templates cached:", Object.keys(data?.templates || {}).length);
           });
         }
+
+        const skippedCount = menuItems.length - (newItems?.length ?? menuItems.length);
+        if (isExisting && skippedCount > 0) {
+          toast({
+            title: "รวมเมนูสำเร็จ",
+            description: `เพิ่ม ${newItems?.length ?? 0} เมนูใหม่ (ข้าม ${skippedCount} เมนูซ้ำ)`,
+          });
+        }
       }
 
-      toast({ title: "บันทึกสำเร็จ", description: `ร้าน "${name.trim()}" ถูกบันทึกแล้ว` });
+      const successMsg = isExisting
+        ? `รวมเข้ากับร้าน "${normalizedName}" ที่มีอยู่แล้ว`
+        : `ร้าน "${normalizedName}" ถูกบันทึกแล้ว`;
+      toast({ title: "บันทึกสำเร็จ", description: successMsg });
       return true;
     } catch (err: any) {
       console.error("Save error:", err);
