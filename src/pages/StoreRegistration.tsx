@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Camera, Check, Loader2, Search, X } from "lucide-react";
+import { ChevronLeft, MapPin, Camera, Check, Loader2, Search, X, ImagePlus } from "lucide-react";
 import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/use-categories";
@@ -29,6 +29,7 @@ const StoreRegistration = () => {
   const [saving, setSaving] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   const [name, setName] = useState(store.name);
@@ -125,6 +126,7 @@ const StoreRegistration = () => {
   };
 
   const handlePhotoCapture = () => fileInputRef.current?.click();
+  const handleGalleryPick = () => galleryInputRef.current?.click();
 
   const scanMenuWithAI = async (base64: string) => {
     setScanning(true);
@@ -423,6 +425,7 @@ const StoreRegistration = () => {
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
             <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">📷 Smart Menu Digitizer</label>
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
+            <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
             {/* Photo grid */}
             {menuPhotos.length > 0 && (
@@ -465,25 +468,60 @@ const StoreRegistration = () => {
               </div>
             )}
 
-            {/* Add photo button */}
-            {!photoLoading && (
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={handlePhotoCapture}
-                className={`w-full flex ${menuPhotos.length > 0 ? "flex-row gap-2.5 py-3.5" : "flex-col gap-3 py-10"} items-center justify-center rounded-2xl bg-surface-elevated shadow-luxury border border-dashed border-border/60 transition-colors hover:border-score-emerald/30`}
-              >
-                <div className={`${menuPhotos.length > 0 ? "w-8 h-8 rounded-xl" : "w-14 h-14 rounded-2xl"} bg-secondary flex items-center justify-center`}>
-                  <Camera size={menuPhotos.length > 0 ? 16 : 24} strokeWidth={1.5} className="text-muted-foreground" />
-                </div>
-                <div className={menuPhotos.length > 0 ? "" : "text-center"}>
-                  <span className="text-xs font-medium text-foreground tracking-wide block uppercase">
-                    {menuPhotos.length > 0 ? "เพิ่มรูปเมนู" : "Capture Full Menu"}
-                  </span>
-                  {menuPhotos.length === 0 && (
-                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">ถ่ายรูปเมนูเพื่อสแกนอัตโนมัติ</span>
-                  )}
-                </div>
-              </motion.button>
+            {!photoLoading && menuPhotos.length === 0 && (
+              <div className="flex gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handlePhotoCapture}
+                  className="flex-1 flex flex-col gap-3 items-center justify-center py-10 rounded-2xl bg-surface-elevated shadow-luxury border border-dashed border-border/60 transition-colors hover:border-score-emerald/30"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center">
+                    <Camera size={24} strokeWidth={1.5} className="text-muted-foreground" />
+                  </div>
+                  <div className="text-center">
+                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">ถ่ายรูปเมนู</span>
+                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">เปิดกล้อง</span>
+                  </div>
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleGalleryPick}
+                  className="flex-1 flex flex-col gap-3 items-center justify-center py-10 rounded-2xl bg-surface-elevated shadow-luxury border border-dashed border-border/60 transition-colors hover:border-score-emerald/30"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center">
+                    <ImagePlus size={24} strokeWidth={1.5} className="text-muted-foreground" />
+                  </div>
+                  <div className="text-center">
+                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">เลือกจากเครื่อง</span>
+                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">อัลบั้มรูป</span>
+                  </div>
+                </motion.button>
+              </div>
+            )}
+
+            {!photoLoading && menuPhotos.length > 0 && !scanning && (
+              <div className="flex gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handlePhotoCapture}
+                  className="flex-1 flex flex-row gap-2.5 items-center justify-center py-3.5 rounded-2xl bg-surface-elevated shadow-luxury border border-dashed border-border/60 transition-colors hover:border-score-emerald/30"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center">
+                    <Camera size={16} strokeWidth={1.5} className="text-muted-foreground" />
+                  </div>
+                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">ถ่ายเพิ่ม</span>
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleGalleryPick}
+                  className="flex-1 flex flex-row gap-2.5 items-center justify-center py-3.5 rounded-2xl bg-surface-elevated shadow-luxury border border-dashed border-border/60 transition-colors hover:border-score-emerald/30"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center">
+                    <ImagePlus size={16} strokeWidth={1.5} className="text-muted-foreground" />
+                  </div>
+                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">เลือกรูป</span>
+                </motion.button>
+              </div>
             )}
 
             {photoLoading && (
