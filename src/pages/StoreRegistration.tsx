@@ -126,6 +126,7 @@ const StoreRegistration = () => {
   };
 
   const handlePhotoCapture = () => fileInputRef.current?.click();
+  const handleGalleryPick = () => galleryInputRef.current?.click();
 
   const scanMenuWithAI = async (base64: string) => {
     setScanning(true);
