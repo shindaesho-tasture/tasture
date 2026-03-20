@@ -164,19 +164,40 @@ const StoreRegistration = () => {
     }
   };
 
+  const processFile = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoLoading(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
+    processFile(file).then((base64) => {
       setMenuPhotos((prev) => [...prev, base64]);
       setPhotoLoading(false);
-      // Auto-trigger OCR scan
       scanMenuWithAI(base64);
-    };
-    reader.readAsDataURL(file);
+    });
+  };
+
+  const handleMultiFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setPhotoLoading(true);
+    for (const file of Array.from(files)) {
+      try {
+        const base64 = await processFile(file);
+        setMenuPhotos((prev) => [...prev, base64]);
+        await scanMenuWithAI(base64);
+      } catch (err) {
+        console.error("File read error:", err);
+      }
+    }
+    setPhotoLoading(false);
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
   const handleItemChange = (index: number, updated: MenuItem) => {
@@ -425,7 +446,7 @@ const StoreRegistration = () => {
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
             <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">📷 Smart Menu Digitizer</label>
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
-            <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleMultiFileChange} className="hidden" />
 
             {/* Photo grid */}
             {menuPhotos.length > 0 && (
