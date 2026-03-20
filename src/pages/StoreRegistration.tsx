@@ -164,19 +164,40 @@ const StoreRegistration = () => {
     }
   };
 
+  const processFile = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoLoading(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
+    processFile(file).then((base64) => {
       setMenuPhotos((prev) => [...prev, base64]);
       setPhotoLoading(false);
-      // Auto-trigger OCR scan
       scanMenuWithAI(base64);
-    };
-    reader.readAsDataURL(file);
+    });
+  };
+
+  const handleMultiFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setPhotoLoading(true);
+    for (const file of Array.from(files)) {
+      try {
+        const base64 = await processFile(file);
+        setMenuPhotos((prev) => [...prev, base64]);
+        await scanMenuWithAI(base64);
+      } catch (err) {
+        console.error("File read error:", err);
+      }
+    }
+    setPhotoLoading(false);
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
   const handleItemChange = (index: number, updated: MenuItem) => {
