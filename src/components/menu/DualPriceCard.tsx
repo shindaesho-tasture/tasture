@@ -35,6 +35,13 @@ const DualPriceCard = ({ item, onChange }: DualPriceCardProps) => {
         <p className="text-[10px] text-muted-foreground truncate">{item.original_name}</p>
       )}
 
+      {/* Original currency badge */}
+      {item.original_currency && item.original_currency !== "THB" && item.original_price != null && (
+        <span className="text-[9px] text-muted-foreground">
+          ราคาต้นฉบับ: {item.original_currency} {item.original_price.toLocaleString()}
+        </span>
+      )}
+
       {/* Dual Price Fields */}
       <div className="flex gap-3">
         <div className="flex-1 bg-secondary rounded-xl px-3 py-2.5 text-center">
