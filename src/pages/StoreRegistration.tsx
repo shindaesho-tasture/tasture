@@ -29,6 +29,7 @@ const StoreRegistration = () => {
   const [saving, setSaving] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   const [name, setName] = useState(store.name);
