@@ -47,13 +47,20 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
             <p className="text-[10px] text-muted-foreground truncate">{item.original_name}</p>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] text-muted-foreground">฿</span>
-          <input
-            value={editPrice}
-            onChange={(e) => { setEditPrice(e.target.value); onChange({ ...item, price: Number(e.target.value) || 0 }); }}
-            className="w-14 text-right text-sm font-semibold text-foreground bg-transparent outline-none border-b border-transparent focus:border-border transition-colors"
-          />
+        <div className="text-right">
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground">฿</span>
+            <input
+              value={editPrice}
+              onChange={(e) => { setEditPrice(e.target.value); onChange({ ...item, price: Number(e.target.value) || 0 }); }}
+              className="w-14 text-right text-sm font-semibold text-foreground bg-transparent outline-none border-b border-transparent focus:border-border transition-colors"
+            />
+          </div>
+          {item.original_currency && item.original_currency !== "THB" && item.original_price != null && (
+            <span className="text-[9px] text-muted-foreground">
+              {item.original_currency} {item.original_price.toLocaleString()}
+            </span>
+          )}
         </div>
       </div>
 
