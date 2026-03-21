@@ -188,8 +188,11 @@ const StoreRegistration = () => {
   const handleMultiFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    setScanTotal(fileArray.length);
+    setScanDone(0);
     setPhotoLoading(true);
-    for (const file of Array.from(files)) {
+    for (const file of fileArray) {
       try {
         const base64 = await processFile(file);
         setMenuPhotos((prev) => [...prev, base64]);
@@ -197,8 +200,11 @@ const StoreRegistration = () => {
       } catch (err) {
         console.error("File read error:", err);
       }
+      setScanDone((prev) => prev + 1);
     }
     setPhotoLoading(false);
+    setScanTotal(0);
+    setScanDone(0);
     if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
