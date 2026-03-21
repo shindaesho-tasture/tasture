@@ -612,7 +612,23 @@ const StoreRegistration = () => {
                 <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-14 h-14 rounded-2xl bg-score-emerald/10 flex items-center justify-center">
                   <Loader2 size={24} className="text-score-emerald animate-spin" />
                 </motion.div>
-                <span className="text-xs font-light text-muted-foreground">กำลังโหลดภาพ...</span>
+                {scanTotal > 1 ? (
+                  <div className="w-full max-w-[200px] flex flex-col items-center gap-1.5">
+                    <div className="w-full h-2 rounded-full bg-secondary overflow-hidden">
+                      <motion.div
+                        className="h-full bg-score-emerald rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(scanDone / scanTotal) * 100}%` }}
+                        transition={{ duration: 0.4 }}
+                      />
+                    </div>
+                    <span className="text-xs font-light text-muted-foreground">
+                      สแกนรูปที่ {scanDone + 1 > scanTotal ? scanTotal : scanDone + 1}/{scanTotal}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs font-light text-muted-foreground">กำลังโหลดภาพ...</span>
+                )}
               </div>
             )}
           </motion.section>
