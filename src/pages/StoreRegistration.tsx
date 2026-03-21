@@ -37,6 +37,8 @@ const StoreRegistration = () => {
   const [pinLocation, setPinLocation] = useState(store.pinLocation);
   const [menuPhotos, setMenuPhotos] = useState<string[]>(store.menuPhoto ? [store.menuPhoto] : []);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [scanTotal, setScanTotal] = useState(0);
+  const [scanDone, setScanDone] = useState(0);
   const [scanningIndex, setScanningIndex] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
