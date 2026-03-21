@@ -1,4 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, MapPin, Camera, Check, Loader2, Search, X, ImagePlus } from "lucide-react";
@@ -39,6 +49,9 @@ const StoreRegistration = () => {
   const [photoLoading, setPhotoLoading] = useState(false);
   const [scanTotal, setScanTotal] = useState(0);
   const [scanDone, setScanDone] = useState(0);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateStoreId, setDuplicateStoreId] = useState<string | null>(null);
+  const [mergeMode, setMergeMode] = useState<"merge" | "new" | null>(null);
   const [scanningIndex, setScanningIndex] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
@@ -214,7 +227,7 @@ const StoreRegistration = () => {
 
   const canProceed = name.trim().length > 0 && selectedCategory;
 
-  const saveToDatabase = async () => {
+  const saveToDatabase = async (forceMode: "merge" | "new") => {
     if (!user) {
       toast({ title: "กรุณาเข้าสู่ระบบ", description: "ต้องเข้าสู่ระบบก่อนบันทึกร้าน", variant: "destructive" });
       navigate("/auth");
@@ -222,23 +235,14 @@ const StoreRegistration = () => {
     }
     setSaving(true);
     try {
-      // Check if user already has a store with the same name
       const normalizedName = name.trim();
-      const { data: existingStores } = await supabase
-        .from("stores")
-        .select("id")
-        .eq("user_id", user.id)
-        .ilike("name", normalizedName);
-
       let storeId: string;
       let isExisting = false;
 
-      if (existingStores && existingStores.length > 0) {
-        // Store already exists — merge into it
-        storeId = existingStores[0].id;
+      if (forceMode === "merge" && duplicateStoreId) {
+        // Merge into existing store
+        storeId = duplicateStoreId;
         isExisting = true;
-
-        // Update location/category if provided
         await supabase.from("stores").update({
           category_id: selectedCategory,
           pin_lat: pinLocation?.lat ?? null,
@@ -259,13 +263,11 @@ const StoreRegistration = () => {
           })
           .select()
           .single();
-
         if (storeError) throw storeError;
         storeId = storeData.id;
       }
 
       if (menuItems.length > 0) {
-        // Fetch existing menu items for this store to deduplicate
         const { data: existingMenuItems } = await supabase
           .from("menu_items")
           .select("name")
@@ -294,17 +296,13 @@ const StoreRegistration = () => {
             toppings: item.toppings ?? [],
             rating: item.rating ?? 0,
           }));
-
           const { error: itemsError } = await supabase.from("menu_items").insert(itemsToInsert);
           if (itemsError) throw itemsError;
         }
 
-        // Auto-analyze dishes in background
         const dishNames = menuItems.map((item) => item.name.trim()).filter(Boolean);
         if (dishNames.length > 0) {
-          supabase.functions.invoke("batch-analyze", {
-            body: { dishNames },
-          }).then(({ data, error }) => {
+          supabase.functions.invoke("batch-analyze", { body: { dishNames } }).then(({ data, error }) => {
             if (error) console.error("Batch analyze error:", error);
             else console.log("Dish templates cached:", Object.keys(data?.templates || {}).length);
           });
@@ -330,13 +328,42 @@ const StoreRegistration = () => {
       return false;
     } finally {
       setSaving(false);
+      setDuplicateStoreId(null);
+      setMergeMode(null);
     }
   };
 
   const handleProceed = async () => {
-    if (!canProceed) return;
+    if (!canProceed || !user) return;
     setStore({ name: name.trim(), pinLocation, menuPhoto: menuPhotos[0] || null, categoryId: selectedCategory, menuItems });
-    const saved = await saveToDatabase();
+
+    // Check for duplicate store before saving
+    const normalizedName = name.trim();
+    const { data: existingStores } = await supabase
+      .from("stores")
+      .select("id")
+      .eq("user_id", user.id)
+      .ilike("name", normalizedName);
+
+    if (existingStores && existingStores.length > 0) {
+      // Found duplicate — ask user what to do
+      setDuplicateStoreId(existingStores[0].id);
+      setDuplicateDialogOpen(true);
+      return;
+    }
+
+    // No duplicate — save as new
+    const saved = await saveToDatabase("new");
+    if (saved) {
+      toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
+      setShowConfetti(true);
+      setTimeout(() => navigate("/discover"), 1800);
+    }
+  };
+
+  const handleDuplicateChoice = async (mode: "merge" | "new") => {
+    setDuplicateDialogOpen(false);
+    const saved = await saveToDatabase(mode);
     if (saved) {
       toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
       setShowConfetti(true);
@@ -347,6 +374,33 @@ const StoreRegistration = () => {
   return (
     <PageTransition>
       <Confetti show={showConfetti} />
+
+      {/* Duplicate Store Dialog */}
+      <AlertDialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>พบร้านชื่อเดียวกัน</AlertDialogTitle>
+            <AlertDialogDescription>
+              คุณมีร้าน "<span className="font-semibold text-foreground">{name.trim()}</span>" อยู่แล้ว ต้องการรวมเมนูเข้ากับร้านเดิม หรือสร้างร้านใหม่?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <AlertDialogAction
+              onClick={() => handleDuplicateChoice("merge")}
+              className="bg-score-emerald hover:bg-score-emerald/90 text-primary-foreground"
+            >
+              รวมเมนูเข้าร้านเดิม
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => handleDuplicateChoice("new")}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            >
+              สร้างร้านใหม่แยก
+            </AlertDialogAction>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="min-h-screen bg-background pb-36">
         {/* Header */}
         <div className="sticky top-0 z-10 glass-effect glass-border">
