@@ -49,6 +49,9 @@ const StoreRegistration = () => {
   const [photoLoading, setPhotoLoading] = useState(false);
   const [scanTotal, setScanTotal] = useState(0);
   const [scanDone, setScanDone] = useState(0);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateStoreId, setDuplicateStoreId] = useState<string | null>(null);
+  const [mergeMode, setMergeMode] = useState<"merge" | "new" | null>(null);
   const [scanningIndex, setScanningIndex] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
