@@ -227,7 +227,7 @@ const StoreRegistration = () => {
 
   const canProceed = name.trim().length > 0 && selectedCategory;
 
-  const saveToDatabase = async () => {
+  const saveToDatabase = async (forceMode: "merge" | "new") => {
     if (!user) {
       toast({ title: "กรุณาเข้าสู่ระบบ", description: "ต้องเข้าสู่ระบบก่อนบันทึกร้าน", variant: "destructive" });
       navigate("/auth");
@@ -235,23 +235,14 @@ const StoreRegistration = () => {
     }
     setSaving(true);
     try {
-      // Check if user already has a store with the same name
       const normalizedName = name.trim();
-      const { data: existingStores } = await supabase
-        .from("stores")
-        .select("id")
-        .eq("user_id", user.id)
-        .ilike("name", normalizedName);
-
       let storeId: string;
       let isExisting = false;
 
-      if (existingStores && existingStores.length > 0) {
-        // Store already exists — merge into it
-        storeId = existingStores[0].id;
+      if (forceMode === "merge" && duplicateStoreId) {
+        // Merge into existing store
+        storeId = duplicateStoreId;
         isExisting = true;
-
-        // Update location/category if provided
         await supabase.from("stores").update({
           category_id: selectedCategory,
           pin_lat: pinLocation?.lat ?? null,
@@ -272,13 +263,11 @@ const StoreRegistration = () => {
           })
           .select()
           .single();
-
         if (storeError) throw storeError;
         storeId = storeData.id;
       }
 
       if (menuItems.length > 0) {
-        // Fetch existing menu items for this store to deduplicate
         const { data: existingMenuItems } = await supabase
           .from("menu_items")
           .select("name")
@@ -307,17 +296,13 @@ const StoreRegistration = () => {
             toppings: item.toppings ?? [],
             rating: item.rating ?? 0,
           }));
-
           const { error: itemsError } = await supabase.from("menu_items").insert(itemsToInsert);
           if (itemsError) throw itemsError;
         }
 
-        // Auto-analyze dishes in background
         const dishNames = menuItems.map((item) => item.name.trim()).filter(Boolean);
         if (dishNames.length > 0) {
-          supabase.functions.invoke("batch-analyze", {
-            body: { dishNames },
-          }).then(({ data, error }) => {
+          supabase.functions.invoke("batch-analyze", { body: { dishNames } }).then(({ data, error }) => {
             if (error) console.error("Batch analyze error:", error);
             else console.log("Dish templates cached:", Object.keys(data?.templates || {}).length);
           });
@@ -343,13 +328,42 @@ const StoreRegistration = () => {
       return false;
     } finally {
       setSaving(false);
+      setDuplicateStoreId(null);
+      setMergeMode(null);
     }
   };
 
   const handleProceed = async () => {
-    if (!canProceed) return;
+    if (!canProceed || !user) return;
     setStore({ name: name.trim(), pinLocation, menuPhoto: menuPhotos[0] || null, categoryId: selectedCategory, menuItems });
-    const saved = await saveToDatabase();
+
+    // Check for duplicate store before saving
+    const normalizedName = name.trim();
+    const { data: existingStores } = await supabase
+      .from("stores")
+      .select("id")
+      .eq("user_id", user.id)
+      .ilike("name", normalizedName);
+
+    if (existingStores && existingStores.length > 0) {
+      // Found duplicate — ask user what to do
+      setDuplicateStoreId(existingStores[0].id);
+      setDuplicateDialogOpen(true);
+      return;
+    }
+
+    // No duplicate — save as new
+    const saved = await saveToDatabase("new");
+    if (saved) {
+      toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
+      setShowConfetti(true);
+      setTimeout(() => navigate("/discover"), 1800);
+    }
+  };
+
+  const handleDuplicateChoice = async (mode: "merge" | "new") => {
+    setDuplicateDialogOpen(false);
+    const saved = await saveToDatabase(mode);
     if (saved) {
       toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
       setShowConfetti(true);
