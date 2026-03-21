@@ -37,6 +37,8 @@ const StoreRegistration = () => {
   const [pinLocation, setPinLocation] = useState(store.pinLocation);
   const [menuPhotos, setMenuPhotos] = useState<string[]>(store.menuPhoto ? [store.menuPhoto] : []);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [scanTotal, setScanTotal] = useState(0);
+  const [scanDone, setScanDone] = useState(0);
   const [scanningIndex, setScanningIndex] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
@@ -186,8 +188,11 @@ const StoreRegistration = () => {
   const handleMultiFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    setScanTotal(fileArray.length);
+    setScanDone(0);
     setPhotoLoading(true);
-    for (const file of Array.from(files)) {
+    for (const file of fileArray) {
       try {
         const base64 = await processFile(file);
         setMenuPhotos((prev) => [...prev, base64]);
@@ -195,8 +200,11 @@ const StoreRegistration = () => {
       } catch (err) {
         console.error("File read error:", err);
       }
+      setScanDone((prev) => prev + 1);
     }
     setPhotoLoading(false);
+    setScanTotal(0);
+    setScanDone(0);
     if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
@@ -604,7 +612,23 @@ const StoreRegistration = () => {
                 <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-14 h-14 rounded-2xl bg-score-emerald/10 flex items-center justify-center">
                   <Loader2 size={24} className="text-score-emerald animate-spin" />
                 </motion.div>
-                <span className="text-xs font-light text-muted-foreground">กำลังโหลดภาพ...</span>
+                {scanTotal > 1 ? (
+                  <div className="w-full max-w-[200px] flex flex-col items-center gap-1.5">
+                    <div className="w-full h-2 rounded-full bg-secondary overflow-hidden">
+                      <motion.div
+                        className="h-full bg-score-emerald rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(scanDone / scanTotal) * 100}%` }}
+                        transition={{ duration: 0.4 }}
+                      />
+                    </div>
+                    <span className="text-xs font-light text-muted-foreground">
+                      สแกนรูปที่ {scanDone + 1 > scanTotal ? scanTotal : scanDone + 1}/{scanTotal}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs font-light text-muted-foreground">กำลังโหลดภาพ...</span>
+                )}
               </div>
             )}
           </motion.section>
