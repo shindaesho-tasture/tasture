@@ -78,7 +78,7 @@ const Index = () => {
   const { user } = useAuth();
   const { position } = useGeolocation();
   const { categories: dynamicCategories } = useCategories();
-  const [stores, setStores] = useState<StoreCard[]>([]);
+  // stores derived via useMemo below
   const [loading, setLoading] = useState(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
   const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
@@ -87,11 +87,25 @@ const Index = () => {
 
   const activePosition = customPos || position;
 
+  // Raw store data (fetched once, independent of position)
+  const [rawStores, setRawStores] = useState<any[] | null>(null);
+  const [rawData, setRawData] = useState<{
+    menuToStore: Map<string, string>;
+    menuCountMap: Map<string, number>;
+    storeImageMap: Map<string, string>;
+    metricMap: Map<string, Map<string, { total: number; count: number }>>;
+    recentActivityMap: Map<string, number>;
+    dnaCountMap: Map<string, number>;
+    storeDnaMap: Map<string, Map<string, { total: number; count: number }>>;
+    menuRevCountMap: Map<string, number>;
+    userPrefs: Map<string, number>;
+  } | null>(null);
+
   useEffect(() => {
     fetchStores();
-  }, [user, activePosition]);
+  }, [user]);
 
-  // ─── Data Fetching (unchanged logic) ───
+  // ─── Data Fetching (single round of parallel queries) ───
   const fetchStores = async () => {
     setLoading(true);
     try {
@@ -101,11 +115,12 @@ const Index = () => {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (!allStores || allStores.length === 0) { setStores([]); setLoading(false); return; }
+      if (!allStores || allStores.length === 0) { setRawStores([]); setLoading(false); return; }
 
       const storeIds = allStores.map((s) => s.id);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
+      // First: fetch menu items (needed for menu_item_id lists)
       const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes] = await Promise.all([
         supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
         supabase.from("menu_items").select("id, store_id, image_url").in("store_id", storeIds),
@@ -114,13 +129,22 @@ const Index = () => {
         user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
       ]);
 
+      const menuIds = (menuRes.data || []).map((m) => m.id);
+
+      // Second: fetch DNA + menu reviews in parallel using menuIds
+      const [allDnaRes, allMenuRevRes] = menuIds.length > 0
+        ? await Promise.all([
+            supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds),
+            supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds),
+          ])
+        : [{ data: [] }, { data: [] }];
+
       const menuToStore = new Map<string, string>();
       const menuCountMap = new Map<string, number>();
       const storeImageMap = new Map<string, string>();
       (menuRes.data || []).forEach((m: any) => {
         menuToStore.set(m.id, m.store_id);
         menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
-        // Use first menu item image as store image fallback
         if (m.image_url && !storeImageMap.has(m.store_id)) {
           storeImageMap.set(m.store_id, m.image_url);
         }
@@ -151,17 +175,9 @@ const Index = () => {
         if (d.selected_score !== 0) userPrefs.set(d.component_name, (userPrefs.get(d.component_name) || 0) + d.selected_score);
       });
 
-      const menuIds = (menuRes.data || []).map((m) => m.id);
-      const [dnaRes, menuRevRes] = menuIds.length > 0
-        ? await Promise.all([
-            supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds),
-            supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds),
-          ])
-        : [{ data: [] }, { data: [] }];
-
       const dnaCountMap = new Map<string, number>();
       const storeDnaMap = new Map<string, Map<string, { total: number; count: number }>>();
-      (dnaRes.data || []).forEach((d: any) => {
+      (allDnaRes.data || []).forEach((d: any) => {
         const sid = menuToStore.get(d.menu_item_id);
         if (!sid) return;
         dnaCountMap.set(sid, (dnaCountMap.get(sid) || 0) + 1);
@@ -174,85 +190,94 @@ const Index = () => {
       });
 
       const menuRevCountMap = new Map<string, number>();
-      ((menuRevRes as any).data || []).forEach((r: any) => {
+      (allMenuRevRes.data || []).forEach((r: any) => {
         const sid = menuToStore.get(r.menu_item_id);
         if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
 
-      setStores(allStores.map((s) => {
-        const sm = metricMap.get(s.id);
-        const cat = dynamicCategories.find((c) => c.id === s.category_id) || defaultCategories.find((c) => c.id === s.category_id);
-
-        const metrics: MetricAvg[] = [];
-        let totalScore = 0;
-        let totalCount = 0;
-
-        if (sm && cat) {
-          cat.metrics.flatMap((m) => m.smartGate ? m.smartGate.subMetrics : [m]).forEach((cm) => {
-            const data = sm.get(cm.id);
-            if (data) {
-              const avg = data.total / data.count;
-              metrics.push({ id: cm.id, label: cm.label, icon: cm.icon, score: Math.round(avg * 10) / 10, count: data.count });
-              totalScore += data.total;
-              totalCount += data.count;
-            }
-          });
-        } else if (sm) {
-          sm.forEach((data, metricId) => {
-            const avg = data.total / data.count;
-            metrics.push({ id: metricId, label: metricId, icon: "📊", score: Math.round(avg * 10) / 10, count: data.count });
-            totalScore += data.total;
-            totalCount += data.count;
-          });
-        }
-
-        let distanceKm: number | null = null;
-        if (activePosition && s.pin_lat != null && s.pin_lng != null) {
-          distanceKm = Math.round(haversineKm(activePosition.lat, activePosition.lng, s.pin_lat, s.pin_lng) * 10) / 10;
-        }
-
-        let matchPercent: number | null = null;
-        if (userPrefs.size > 0) {
-          const storeDna = storeDnaMap.get(s.id);
-          if (storeDna && storeDna.size > 0) {
-            let matchScore = 0, maxScore = 0;
-            userPrefs.forEach((prefScore, compName) => {
-              const storeEntry = storeDna.get(compName);
-              if (storeEntry && storeEntry.count > 0) {
-                const storeAvg = storeEntry.total / storeEntry.count;
-                if ((prefScore > 0 && storeAvg > 0) || (prefScore < 0 && storeAvg < 0)) {
-                  matchScore += Math.min(Math.abs(prefScore), Math.abs(storeAvg));
-                }
-                maxScore += Math.abs(prefScore);
-              } else { maxScore += Math.abs(prefScore); }
-            });
-            matchPercent = maxScore > 0 ? Math.round((matchScore / maxScore) * 100) : null;
-          }
-        }
-
-        return {
-          ...s,
-          categoryLabel: cat?.labelTh || cat?.label || null,
-          categoryIcon: cat?.icon || categoryEmoji[s.category_id || ""] || "🍽️",
-          verified: s.verified ?? false,
-          avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
-          reviewCount: totalCount,
-          menuCount: menuCountMap.get(s.id) || 0,
-          metrics,
-          dnaCount: dnaCountMap.get(s.id) || 0,
-          menuReviewCount: menuRevCountMap.get(s.id) || 0,
-          distanceKm,
-          recentActivityCount: recentActivityMap.get(s.id) || 0,
-          matchPercent,
-          imageUrl: s.menu_photo || storeImageMap.get(s.id) || null,
-        };
-      }));
+      setRawStores(allStores);
+      setRawData({ menuToStore, menuCountMap, storeImageMap, metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs });
     } catch (err) {
       console.error("Fetch stores error:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  // ─── Derive store cards from raw data + position (no refetch on GPS change) ───
+  const stores = useMemo(() => {
+    if (!rawStores || !rawData) return [];
+    const { menuCountMap, storeImageMap, metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs } = rawData;
+
+    return rawStores.map((s) => {
+      const sm = metricMap.get(s.id);
+      const cat = dynamicCategories.find((c) => c.id === s.category_id) || defaultCategories.find((c) => c.id === s.category_id);
+
+      const metrics: MetricAvg[] = [];
+      let totalScore = 0;
+      let totalCount = 0;
+
+      if (sm && cat) {
+        cat.metrics.flatMap((m) => m.smartGate ? m.smartGate.subMetrics : [m]).forEach((cm) => {
+          const data = sm.get(cm.id);
+          if (data) {
+            const avg = data.total / data.count;
+            metrics.push({ id: cm.id, label: cm.label, icon: cm.icon, score: Math.round(avg * 10) / 10, count: data.count });
+            totalScore += data.total;
+            totalCount += data.count;
+          }
+        });
+      } else if (sm) {
+        sm.forEach((data, metricId) => {
+          const avg = data.total / data.count;
+          metrics.push({ id: metricId, label: metricId, icon: "📊", score: Math.round(avg * 10) / 10, count: data.count });
+          totalScore += data.total;
+          totalCount += data.count;
+        });
+      }
+
+      let distanceKm: number | null = null;
+      if (activePosition && s.pin_lat != null && s.pin_lng != null) {
+        distanceKm = Math.round(haversineKm(activePosition.lat, activePosition.lng, s.pin_lat, s.pin_lng) * 10) / 10;
+      }
+
+      let matchPercent: number | null = null;
+      if (userPrefs.size > 0) {
+        const storeDna = storeDnaMap.get(s.id);
+        if (storeDna && storeDna.size > 0) {
+          let matchScore = 0, maxScore = 0;
+          userPrefs.forEach((prefScore, compName) => {
+            const storeEntry = storeDna.get(compName);
+            if (storeEntry && storeEntry.count > 0) {
+              const storeAvg = storeEntry.total / storeEntry.count;
+              if ((prefScore > 0 && storeAvg > 0) || (prefScore < 0 && storeAvg < 0)) {
+                matchScore += Math.min(Math.abs(prefScore), Math.abs(storeAvg));
+              }
+              maxScore += Math.abs(prefScore);
+            } else { maxScore += Math.abs(prefScore); }
+          });
+          matchPercent = maxScore > 0 ? Math.round((matchScore / maxScore) * 100) : null;
+        }
+      }
+
+      return {
+        ...s,
+        categoryLabel: cat?.labelTh || cat?.label || null,
+        categoryIcon: cat?.icon || categoryEmoji[s.category_id || ""] || "🍽️",
+        verified: s.verified ?? false,
+        avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
+        reviewCount: totalCount,
+        menuCount: menuCountMap.get(s.id) || 0,
+        metrics,
+        dnaCount: dnaCountMap.get(s.id) || 0,
+        menuReviewCount: menuRevCountMap.get(s.id) || 0,
+        distanceKm,
+        recentActivityCount: recentActivityMap.get(s.id) || 0,
+        matchPercent,
+        imageUrl: s.menu_photo || storeImageMap.get(s.id) || null,
+      } as StoreCard;
+    });
+  }, [rawStores, rawData, activePosition, dynamicCategories]);
 
   // ─── Derived Data ───
   const searchFiltered = useMemo(() => {
