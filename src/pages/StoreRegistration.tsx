@@ -227,7 +227,7 @@ const StoreRegistration = () => {
 
   const canProceed = name.trim().length > 0 && selectedCategory;
 
-  const saveToDatabase = async (forceMode: "merge" | "new") => {
+  const saveToDatabase = async (forceMode: "merge" | "new", existingStoreId?: string): Promise<{ success: true; newCount: number; skippedCount: number } | false> => {
     if (!user) {
       toast({ title: "กรุณาเข้าสู่ระบบ", description: "ต้องเข้าสู่ระบบก่อนบันทึกร้าน", variant: "destructive" });
       navigate("/auth");
@@ -237,12 +237,10 @@ const StoreRegistration = () => {
     try {
       const normalizedName = name.trim();
       let storeId: string;
-      let isExisting = false;
 
-      if (forceMode === "merge" && duplicateStoreId) {
-        // Merge into existing store
-        storeId = duplicateStoreId;
-        isExisting = true;
+      const resolvedMergeId = existingStoreId ?? duplicateStoreId;
+      if (forceMode === "merge" && resolvedMergeId) {
+        storeId = resolvedMergeId;
         await supabase.from("stores").update({
           category_id: selectedCategory,
           pin_lat: pinLocation?.lat ?? null,
@@ -250,7 +248,6 @@ const StoreRegistration = () => {
           menu_photo: menuPhotos[0] || null,
         }).eq("id", storeId);
       } else {
-        // Create new store
         const { data: storeData, error: storeError } = await supabase
           .from("stores")
           .insert({
@@ -267,6 +264,9 @@ const StoreRegistration = () => {
         storeId = storeData.id;
       }
 
+      let newCount = menuItems.length;
+      let skippedCount = 0;
+
       if (menuItems.length > 0) {
         const { data: existingMenuItems } = await supabase
           .from("menu_items")
@@ -280,6 +280,8 @@ const StoreRegistration = () => {
         const newItems = menuItems.filter(
           (item) => !existingNames.has(item.name.trim().toLowerCase())
         );
+        newCount = newItems.length;
+        skippedCount = menuItems.length - newCount;
 
         if (newItems.length > 0) {
           const itemsToInsert = newItems.map((item) => ({
@@ -294,6 +296,7 @@ const StoreRegistration = () => {
             noodle_types: item.noodle_types ?? [],
             noodle_styles: item.noodle_styles ?? [],
             toppings: item.toppings ?? [],
+            cooking_type: item.cooking_type ?? null,
             rating: item.rating ?? 0,
           }));
           const { error: itemsError } = await supabase.from("menu_items").insert(itemsToInsert);
@@ -307,21 +310,9 @@ const StoreRegistration = () => {
             else console.log("Dish templates cached:", Object.keys(data?.templates || {}).length);
           });
         }
-
-        const skippedCount = menuItems.length - (newItems?.length ?? menuItems.length);
-        if (isExisting && skippedCount > 0) {
-          toast({
-            title: "รวมเมนูสำเร็จ",
-            description: `เพิ่ม ${newItems?.length ?? 0} เมนูใหม่ (ข้าม ${skippedCount} เมนูซ้ำ)`,
-          });
-        }
       }
 
-      const successMsg = isExisting
-        ? `รวมเข้ากับร้าน "${normalizedName}" ที่มีอยู่แล้ว`
-        : `ร้าน "${normalizedName}" ถูกบันทึกแล้ว`;
-      toast({ title: "บันทึกสำเร็จ", description: successMsg });
-      return true;
+      return { success: true, newCount, skippedCount };
     } catch (err: any) {
       console.error("Save error:", err);
       toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
@@ -346,15 +337,27 @@ const StoreRegistration = () => {
       .ilike("name", normalizedName);
 
     if (existingStores && existingStores.length > 0) {
-      // Found duplicate — ask user what to do
-      setDuplicateStoreId(existingStores[0].id);
-      setDuplicateDialogOpen(true);
+      // Auto-merge into existing store
+      const existingId = existingStores[0].id;
+      setDuplicateStoreId(existingId);
+      const result = await saveToDatabase("merge", existingId);
+      if (result) {
+        const parts: string[] = [];
+        if (result.newCount > 0) parts.push(`เพิ่ม ${result.newCount} เมนูใหม่`);
+        if (result.skippedCount > 0) parts.push(`ข้าม ${result.skippedCount} เมนูที่มีอยู่แล้ว`);
+        toast({
+          title: `รวมร้าน "${name.trim()}" สำเร็จ! 🎉`,
+          description: parts.length > 0 ? parts.join(" · ") : "อัปเดตข้อมูลร้านแล้ว",
+        });
+        setShowConfetti(true);
+        setTimeout(() => navigate("/discover"), 1800);
+      }
       return;
     }
 
     // No duplicate — save as new
-    const saved = await saveToDatabase("new");
-    if (saved) {
+    const result = await saveToDatabase("new");
+    if (result) {
       toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
       setShowConfetti(true);
       setTimeout(() => navigate("/discover"), 1800);
@@ -363,9 +366,19 @@ const StoreRegistration = () => {
 
   const handleDuplicateChoice = async (mode: "merge" | "new") => {
     setDuplicateDialogOpen(false);
-    const saved = await saveToDatabase(mode);
-    if (saved) {
-      toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
+    const result = await saveToDatabase(mode);
+    if (result) {
+      if (mode === "merge") {
+        const parts: string[] = [];
+        if (result.newCount > 0) parts.push(`เพิ่ม ${result.newCount} เมนูใหม่`);
+        if (result.skippedCount > 0) parts.push(`ข้าม ${result.skippedCount} เมนูที่มีอยู่แล้ว`);
+        toast({
+          title: "รวมร้านสำเร็จ! 🎉",
+          description: parts.length > 0 ? parts.join(" · ") : "อัปเดตข้อมูลร้านแล้ว",
+        });
+      } else {
+        toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
+      }
       setShowConfetti(true);
       setTimeout(() => navigate("/discover"), 1800);
     }

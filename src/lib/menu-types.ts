@@ -16,6 +16,8 @@ export interface MenuItem {
   selected_noodle_type?: string;
   selected_noodle_style?: string;
   selected_toppings?: string[];
+  // Cooking method: ต้ม, ทอด, ผัด, ย่าง, นึ่ง, อบ
+  cooking_type?: string;
   // Rating: -2, 0, or +2
   rating?: number;
 }

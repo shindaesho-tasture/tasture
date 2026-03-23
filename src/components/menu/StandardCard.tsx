@@ -8,6 +8,8 @@ interface StandardCardProps {
   onChange: (updated: MenuItem) => void;
 }
 
+const COOKING_TYPES = ["ต้ม", "ทอด", "ผัด", "ย่าง", "นึ่ง", "อบ"];
+
 const StandardCard = ({ item, onChange }: StandardCardProps) => {
   const [editName, setEditName] = useState(item.name);
   const [editPrice, setEditPrice] = useState(String(item.price));
@@ -56,6 +58,26 @@ const StandardCard = ({ item, onChange }: StandardCardProps) => {
       {item.description && (
         <p className="text-[10px] text-muted-foreground leading-relaxed">{item.description}</p>
       )}
+
+      {/* Cooking type */}
+      <div className="flex flex-wrap gap-1">
+        {COOKING_TYPES.map((ct) => {
+          const active = item.cooking_type === ct;
+          return (
+            <button
+              key={ct}
+              onClick={() => onChange({ ...item, cooking_type: active ? undefined : ct })}
+              className={`px-2 py-0.5 rounded-full text-[9px] font-medium transition-colors ${
+                active
+                  ? "bg-foreground text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:bg-secondary/70"
+              }`}
+            >
+              {ct}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Texture pills */}
       {item.textures && item.textures.length > 0 && (

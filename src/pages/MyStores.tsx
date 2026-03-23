@@ -1,12 +1,18 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera } from "lucide-react";
+import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera, GitMerge } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 
@@ -32,8 +38,76 @@ const tierBgMap: Record<ScoreTier, string> = {
 const MyStores = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [stores, setStores] = useState<StoreWithReviews[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mergeDialogGroup, setMergeDialogGroup] = useState<StoreWithReviews[] | null>(null);
+  const [merging, setMerging] = useState(false);
+
+  // Detect groups of stores with the same name
+  const duplicateGroups = useMemo(() => {
+    const nameMap = new Map<string, StoreWithReviews[]>();
+    stores.forEach((s) => {
+      const key = s.name.trim().toLowerCase();
+      if (!nameMap.has(key)) nameMap.set(key, []);
+      nameMap.get(key)!.push(s);
+    });
+    return Array.from(nameMap.values()).filter((g) => g.length > 1);
+  }, [stores]);
+
+  const mergeStores = async (group: StoreWithReviews[]) => {
+    if (!user) return;
+    setMerging(true);
+    // Primary = oldest store (first created); duplicates = the rest
+    const sorted = [...group].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const primary = sorted[0];
+    const duplicates = sorted.slice(1);
+    try {
+      for (const dup of duplicates) {
+        // 1. Get primary menu item names
+        const { data: primaryItems } = await supabase.from("menu_items").select("id, name").eq("store_id", primary.id);
+        const existingNames = new Set((primaryItems || []).map((m) => m.name.trim().toLowerCase()));
+
+        // 2. Get duplicate menu items
+        const { data: dupItems } = await supabase.from("menu_items").select("id, name").eq("store_id", dup.id);
+        const toMove = (dupItems || []).filter((i) => !existingNames.has(i.name.trim().toLowerCase()));
+        const toDelete = (dupItems || []).filter((i) => existingNames.has(i.name.trim().toLowerCase()));
+
+        // 3. Move unique items to primary
+        if (toMove.length > 0) {
+          await supabase.from("menu_items").update({ store_id: primary.id }).in("id", toMove.map((i) => i.id));
+        }
+        // 4. Delete exact-name duplicates (CASCADE handles reviews/DNA)
+        if (toDelete.length > 0) {
+          await supabase.from("menu_items").delete().in("id", toDelete.map((i) => i.id));
+        }
+
+        // 5. Move reviews (skip conflicts from unique constraint)
+        const { data: primaryRevs } = await supabase.from("reviews").select("user_id, metric_id").eq("store_id", primary.id);
+        const primaryRevKeys = new Set((primaryRevs || []).map((r) => `${r.user_id}-${r.metric_id}`));
+        const { data: dupRevs } = await supabase.from("reviews").select("id, user_id, metric_id").eq("store_id", dup.id);
+        const revsToMove = (dupRevs || []).filter((r) => !primaryRevKeys.has(`${r.user_id}-${r.metric_id}`));
+        const revsToDelete = (dupRevs || []).filter((r) => primaryRevKeys.has(`${r.user_id}-${r.metric_id}`));
+        if (revsToMove.length > 0) await supabase.from("reviews").update({ store_id: primary.id }).in("id", revsToMove.map((r) => r.id));
+        if (revsToDelete.length > 0) await supabase.from("reviews").delete().in("id", revsToDelete.map((r) => r.id));
+
+        // 6. Move posts (store_id nullable, no unique constraint)
+        await supabase.from("posts").update({ store_id: primary.id }).eq("store_id", dup.id);
+
+        // 7. Delete duplicate store (CASCADE handles saved_stores, remaining data)
+        await supabase.from("stores").delete().eq("id", dup.id);
+      }
+
+      toast({ title: "รวมร้านสำเร็จ! 🎉", description: `รวม "${primary.name}" ${duplicates.length} สาขาเป็นร้านเดียวแล้ว` });
+      fetchStores();
+    } catch (err: any) {
+      console.error("Merge error:", err);
+      toast({ title: "รวมไม่สำเร็จ", description: err.message, variant: "destructive" });
+    } finally {
+      setMerging(false);
+      setMergeDialogGroup(null);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -179,6 +253,33 @@ const MyStores = () => {
           </div>
         </div>
 
+        {/* Duplicate Groups Banner */}
+        {duplicateGroups.length > 0 && (
+          <div className="px-4 pt-3 space-y-2">
+            {duplicateGroups.map((group) => (
+              <motion.div
+                key={group.map((s) => s.id).join("-")}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <GitMerge size={16} className="text-amber-500 shrink-0" />
+                  <p className="text-[12px] font-medium text-foreground truncate">
+                    พบ "{group[0].name}" {group.length} ร้าน
+                  </p>
+                </div>
+                <button
+                  onClick={() => setMergeDialogGroup(group)}
+                  className="shrink-0 px-3 py-1.5 rounded-xl bg-amber-500 text-white text-[11px] font-semibold"
+                >
+                  รวมร้าน
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
         <div className="px-4 pt-4 space-y-3">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -306,6 +407,30 @@ const MyStores = () => {
 
         <BottomNav />
       </div>
+
+      {/* Merge Confirmation Dialog */}
+      <AlertDialog open={!!mergeDialogGroup} onOpenChange={(o) => { if (!o) setMergeDialogGroup(null); }}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>รวมร้านซ้ำ</AlertDialogTitle>
+            <AlertDialogDescription>
+              รวม {mergeDialogGroup?.length ?? 0} ร้านชื่อ "
+              <span className="font-semibold text-foreground">{mergeDialogGroup?.[0]?.name}</span>
+              " เป็นร้านเดียว เมนูและข้อมูลทั้งหมดจะถูกรวมเข้ากับร้านที่เก่าที่สุด
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <AlertDialogAction
+              onClick={() => mergeDialogGroup && mergeStores(mergeDialogGroup)}
+              disabled={merging}
+              className="bg-score-emerald hover:bg-score-emerald/90 text-primary-foreground"
+            >
+              {merging ? "กำลังรวม..." : "รวมร้านเลย"}
+            </AlertDialogAction>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageTransition>
   );
 };

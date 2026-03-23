@@ -29,6 +29,7 @@ import PostOrderReview from "./pages/PostOrderReview.tsx";
 import MenuImageManager from "./pages/MenuImageManager.tsx";
 import FollowList from "./pages/FollowList.tsx";
 import UserProfile from "./pages/UserProfile.tsx";
+import MyStores from "./pages/MyStores.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const AnimatedRoutes = () => {
         <Route path="/menu-images/:storeId" element={<MenuImageManager />} />
         <Route path="/follows" element={<FollowList />} />
         <Route path="/user/:userId" element={<UserProfile />} />
+        <Route path="/my-stores" element={<MyStores />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

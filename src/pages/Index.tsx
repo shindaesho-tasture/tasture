@@ -13,6 +13,7 @@ import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import LocationPickerSheet from "@/components/LocationPickerSheet";
 import BottomNav from "@/components/BottomNav";
+import { usePlacesRestaurants, type PlaceRestaurant } from "@/hooks/use-places-restaurants";
 
 /* ─── Types ─── */
 interface MetricAvg {
@@ -73,6 +74,25 @@ const sectionGradients = [
   "from-orange-900/40 to-transparent",
 ];
 
+// Module-level cache: persist across SPA navigation
+let _storeCache: {
+  rawStores: any[];
+  rawData: {
+    menuToStore: Map<string, string>;
+    menuCountMap: Map<string, number>;
+    storeImageMap: Map<string, string>;
+    metricMap: Map<string, Map<string, { total: number; count: number }>>;
+    recentActivityMap: Map<string, number>;
+    dnaCountMap: Map<string, number>;
+    storeDnaMap: Map<string, Map<string, { total: number; count: number }>>;
+    menuRevCountMap: Map<string, number>;
+    userPrefs: Map<string, number>;
+  };
+  userId: string | null;
+  ts: number;
+} | null = null;
+const CACHE_TTL = 5 * 60 * 1000;
+
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -86,6 +106,9 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const activePosition = customPos || position;
+
+  // Google Places — Chiang Mai restaurants
+  const { restaurants: placeRestaurants, loading: placesLoading } = usePlacesRestaurants();
 
   // Raw store data (fetched once, independent of position)
   const [rawStores, setRawStores] = useState<any[] | null>(null);
@@ -102,10 +125,17 @@ const Index = () => {
   } | null>(null);
 
   useEffect(() => {
+    const uid = user?.id ?? null;
+    if (_storeCache && _storeCache.userId === uid && Date.now() - _storeCache.ts < CACHE_TTL) {
+      setRawStores(_storeCache.rawStores);
+      setRawData(_storeCache.rawData);
+      setLoading(false);
+      return;
+    }
     fetchStores();
   }, [user]);
 
-  // ─── Data Fetching (single round of parallel queries) ───
+  // ─── Data Fetching (all queries in one parallel batch, no waterfall) ───
   const fetchStores = async () => {
     setLoading(true);
     try {
@@ -120,30 +150,30 @@ const Index = () => {
       const storeIds = allStores.map((s) => s.id);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // First: fetch menu items (needed for menu_item_id lists)
-      const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes] = await Promise.all([
+      // Single parallel batch — no sequential waterfall
+      const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes, allDnaRes, allMenuRevRes] = await Promise.all([
         supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
         supabase.from("menu_items").select("id, store_id, image_url").in("store_id", storeIds),
-        supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
-        supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
+        supabase.from("menu_reviews")
+          .select("menu_item_id, menu_items!inner(store_id)")
+          .gte("created_at", sevenDaysAgo)
+          .in("menu_items.store_id", storeIds),
+        supabase.from("dish_dna")
+          .select("menu_item_id, menu_items!inner(store_id)")
+          .gte("created_at", sevenDaysAgo)
+          .in("menu_items.store_id", storeIds),
         user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
+        supabase.from("dish_dna")
+          .select("menu_item_id, component_name, selected_score, menu_items!inner(store_id)")
+          .in("menu_items.store_id", storeIds),
+        supabase.from("menu_reviews")
+          .select("menu_item_id, menu_items!inner(store_id)")
+          .in("menu_items.store_id", storeIds),
       ]);
 
-      const menuIds = (menuRes.data || []).map((m) => m.id);
-
-      // Second: fetch DNA + menu reviews in parallel using menuIds
-      const [allDnaRes, allMenuRevRes] = menuIds.length > 0
-        ? await Promise.all([
-            supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds),
-            supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds),
-          ])
-        : [{ data: [] }, { data: [] }];
-
-      const menuToStore = new Map<string, string>();
       const menuCountMap = new Map<string, number>();
       const storeImageMap = new Map<string, string>();
       (menuRes.data || []).forEach((m: any) => {
-        menuToStore.set(m.id, m.store_id);
         menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
         if (m.image_url && !storeImageMap.has(m.store_id)) {
           storeImageMap.set(m.store_id, m.image_url);
@@ -161,12 +191,12 @@ const Index = () => {
       });
 
       const recentActivityMap = new Map<string, number>();
-      (recentReviewsRes.data || []).forEach((r) => {
-        const sid = menuToStore.get(r.menu_item_id);
+      (recentReviewsRes.data || []).forEach((r: any) => {
+        const sid = (r.menu_items as any)?.store_id;
         if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
       });
-      (recentDnaRes.data || []).forEach((d) => {
-        const sid = menuToStore.get(d.menu_item_id);
+      (recentDnaRes.data || []).forEach((d: any) => {
+        const sid = (d.menu_items as any)?.store_id;
         if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
       });
 
@@ -178,7 +208,7 @@ const Index = () => {
       const dnaCountMap = new Map<string, number>();
       const storeDnaMap = new Map<string, Map<string, { total: number; count: number }>>();
       (allDnaRes.data || []).forEach((d: any) => {
-        const sid = menuToStore.get(d.menu_item_id);
+        const sid = (d.menu_items as any)?.store_id;
         if (!sid) return;
         dnaCountMap.set(sid, (dnaCountMap.get(sid) || 0) + 1);
         if (!storeDnaMap.has(sid)) storeDnaMap.set(sid, new Map());
@@ -191,12 +221,14 @@ const Index = () => {
 
       const menuRevCountMap = new Map<string, number>();
       (allMenuRevRes.data || []).forEach((r: any) => {
-        const sid = menuToStore.get(r.menu_item_id);
+        const sid = (r.menu_items as any)?.store_id;
         if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
 
+      const newRawData = { menuToStore: new Map(), menuCountMap, storeImageMap, metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs };
+      _storeCache = { rawStores: allStores, rawData: newRawData, userId: user?.id ?? null, ts: Date.now() };
       setRawStores(allStores);
-      setRawData({ menuToStore, menuCountMap, storeImageMap, metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs });
+      setRawData(newRawData);
     } catch (err) {
       console.error("Fetch stores error:", err);
     } finally {
@@ -435,6 +467,45 @@ const Index = () => {
     );
   };
 
+  // ─── Google Places Card ───
+  const PlaceCard = ({ place }: { place: PlaceRestaurant }) => (
+    <motion.button
+      whileTap={{ scale: 0.95 }}
+      onClick={() => place.storeId && navigate(`/store/${place.storeId}/order`)}
+      className="shrink-0 w-[150px] rounded-xl overflow-hidden text-left relative group"
+    >
+      <div className="aspect-square rounded-xl flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-muted to-secondary">
+        {place.imageUrl ? (
+          <img
+            src={place.imageUrl}
+            alt={place.name}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            loading="lazy"
+          />
+        ) : (
+          <span className="text-4xl">🍽️</span>
+        )}
+        {place.imageUrl && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+        )}
+
+        {/* Open/closed badge — realtime from Google Places */}
+        {place.isOpen != null && (
+          <div className={cn(
+            "absolute top-2 left-2 px-1.5 py-0.5 rounded-full text-[9px] font-bold backdrop-blur-sm",
+            place.isOpen ? "bg-score-emerald/90 text-white" : "bg-score-ruby/90 text-white"
+          )}>
+            {place.isOpen ? "เปิด" : "ปิด"}
+          </div>
+        )}
+      </div>
+      <div className="pt-2 pb-1 px-0.5">
+        <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{place.name}</p>
+        <p className="text-[10px] text-muted-foreground truncate mt-0.5">{place.vicinity}</p>
+      </div>
+    </motion.button>
+  );
+
   // ─── Horizontal Scroll Section ───
   const HorizontalSection = ({ title, emoji, stores: sectionStores, gradient, showAll }: {
     title: string;
@@ -578,49 +649,111 @@ const Index = () => {
           <div className="flex items-center justify-center py-16">
             <div className="w-8 h-8 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
           </div>
-        ) : categoryFiltered.length === 0 ? (
-          <div className="flex flex-col items-center py-16 gap-3">
-            <span className="text-4xl">🍽️</span>
-            <p className="text-sm text-muted-foreground">ยังไม่มีร้านอาหาร</p>
-          </div>
         ) : (
           <>
-            {/* Nearby Section */}
-            <HorizontalSection
-              title="ใกล้คุณ"
-              emoji="📍"
-              stores={nearbyStores}
-              showAll={() => navigate("/store-list")}
-            />
+            {categoryFiltered.length === 0 ? (
+              <div className="flex flex-col items-center py-16 gap-3">
+                <span className="text-4xl">🍽️</span>
+                <p className="text-sm text-muted-foreground">ยังไม่มีร้านอาหาร</p>
+              </div>
+            ) : (
+              <>
+                {/* Nearby Section */}
+                <HorizontalSection
+                  title="ใกล้คุณ"
+                  emoji="📍"
+                  stores={nearbyStores}
+                  showAll={() => navigate("/store-list")}
+                />
 
-            {/* Trending Section */}
-            {trendingStores.length > 0 && (
-              <HorizontalSection
-                title="กำลังเป็นเทรนด์"
-                emoji="🔥"
-                stores={trendingStores}
-              />
+                {/* Trending Section */}
+                {trendingStores.length > 0 && (
+                  <HorizontalSection
+                    title="กำลังเป็นเทรนด์"
+                    emoji="🔥"
+                    stores={trendingStores}
+                  />
+                )}
+
+                {/* Match Section */}
+                {matchStores.length > 0 && (
+                  <HorizontalSection
+                    title="แมตช์กับคุณ"
+                    emoji="💎"
+                    stores={matchStores}
+                  />
+                )}
+
+                {/* Category Sections (Spotify genre-style) */}
+                {categoryGroups.map(([catId, group], idx) => (
+                  <HorizontalSection
+                    key={catId}
+                    title={group.label}
+                    emoji={group.icon}
+                    stores={group.stores}
+                    gradient={sectionGradients[idx % sectionGradients.length]}
+                  />
+                ))}
+              </>
             )}
 
-            {/* Match Section */}
-            {matchStores.length > 0 && (
-              <HorizontalSection
-                title="แมตช์กับคุณ"
-                emoji="💎"
-                stores={matchStores}
-              />
+            {/* Chiang Mai — แยกโซน */}
+            {placesLoading ? (
+              /* Skeleton while loading */
+              <motion.section
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="mt-6"
+              >
+                <div className="px-5 mb-3">
+                  <h2 className="text-lg font-bold text-foreground tracking-tight">📍 สันติธรรม</h2>
+                </div>
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide px-5 pb-1">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="shrink-0 w-[150px] animate-pulse">
+                      <div className="aspect-square bg-secondary rounded-xl" />
+                      <div className="pt-2 space-y-1.5">
+                        <div className="h-3 bg-secondary rounded w-3/4" />
+                        <div className="h-2.5 bg-secondary rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.section>
+            ) : (
+              <>
+                {(["สันติธรรม", "คูเมือง", "นิมมาน"] as const).map((zoneName) => {
+                  const zoneEmoji: Record<string, string> = {
+                    สันติธรรม: "🏘️",
+                    คูเมือง: "🏯",
+                    นิมมาน: "✨",
+                  };
+                  const zoneList = placeRestaurants.filter((p) => p.zone === zoneName);
+                  if (zoneList.length === 0) return null;
+                  return (
+                    <motion.section
+                      key={zoneName}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="mt-6"
+                    >
+                      <div className="px-5 mb-3">
+                        <h2 className="text-lg font-bold text-foreground tracking-tight">
+                          {zoneEmoji[zoneName]} {zoneName}
+                        </h2>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto scrollbar-hide px-5 pb-1">
+                        {zoneList.map((place) => (
+                          <PlaceCard key={place.placeId} place={place} />
+                        ))}
+                      </div>
+                    </motion.section>
+                  );
+                })}
+              </>
             )}
-
-            {/* Category Sections (Spotify genre-style) */}
-            {categoryGroups.map(([catId, group], idx) => (
-              <HorizontalSection
-                key={catId}
-                title={group.label}
-                emoji={group.icon}
-                stores={group.stores}
-                gradient={sectionGradients[idx % sectionGradients.length]}
-              />
-            ))}
 
             {/* Bottom spacer */}
             <div className="h-6" />
