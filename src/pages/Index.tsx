@@ -78,7 +78,7 @@ const Index = () => {
   const { user } = useAuth();
   const { position } = useGeolocation();
   const { categories: dynamicCategories } = useCategories();
-  const [stores, setStores] = useState<StoreCard[]>([]);
+  // stores derived via useMemo below
   const [loading, setLoading] = useState(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
   const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
