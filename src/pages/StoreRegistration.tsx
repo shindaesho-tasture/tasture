@@ -56,6 +56,8 @@ const StoreRegistration = () => {
   const [scanning, setScanning] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(store.categoryId);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [checkingName, setCheckingName] = useState(false);
 
   const [placeQuery, setPlaceQuery] = useState("");
   const [placeResults, setPlaceResults] = useState<google.maps.places.PlaceResult[]>([]);
