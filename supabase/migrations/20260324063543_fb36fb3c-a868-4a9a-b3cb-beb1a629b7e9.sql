@@ -1,0 +1,2 @@
+DELETE FROM menu_items WHERE store_id = '09d07e28-af95-4e35-97cb-a8112372f906';
+DELETE FROM stores WHERE id = '09d07e28-af95-4e35-97cb-a8112372f906';
