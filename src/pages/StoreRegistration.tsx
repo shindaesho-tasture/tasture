@@ -112,6 +112,34 @@ const StoreRegistration = () => {
     return () => clearTimeout(timer);
   }, [placeQuery, searchPlaces]);
 
+  // Real-time duplicate name check
+  useEffect(() => {
+    if (!user || !name.trim()) {
+      setDuplicateWarning(null);
+      return;
+    }
+    setCheckingName(true);
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await supabase
+          .from("stores")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .ilike("name", name.trim());
+        if (data && data.length > 0) {
+          setDuplicateWarning(`คุณมีร้าน "${data[0].name}" อยู่แล้ว`);
+        } else {
+          setDuplicateWarning(null);
+        }
+      } catch {
+        setDuplicateWarning(null);
+      } finally {
+        setCheckingName(false);
+      }
+    }, 500);
+    return () => { clearTimeout(timer); setCheckingName(false); };
+  }, [name, user]);
+
   const handleSelectPlace = (place: google.maps.places.PlaceResult) => {
     if (place.geometry?.location) {
       const loc = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
