@@ -56,6 +56,8 @@ const StoreRegistration = () => {
   const [scanning, setScanning] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(store.menuItems);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(store.categoryId);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [checkingName, setCheckingName] = useState(false);
 
   const [placeQuery, setPlaceQuery] = useState("");
   const [placeResults, setPlaceResults] = useState<google.maps.places.PlaceResult[]>([]);
@@ -109,6 +111,34 @@ const StoreRegistration = () => {
     const timer = setTimeout(() => searchPlaces(placeQuery), 400);
     return () => clearTimeout(timer);
   }, [placeQuery, searchPlaces]);
+
+  // Real-time duplicate name check
+  useEffect(() => {
+    if (!user || !name.trim()) {
+      setDuplicateWarning(null);
+      return;
+    }
+    setCheckingName(true);
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await supabase
+          .from("stores")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .ilike("name", name.trim());
+        if (data && data.length > 0) {
+          setDuplicateWarning(`คุณมีร้าน "${data[0].name}" อยู่แล้ว`);
+        } else {
+          setDuplicateWarning(null);
+        }
+      } catch {
+        setDuplicateWarning(null);
+      } finally {
+        setCheckingName(false);
+      }
+    }, 500);
+    return () => { clearTimeout(timer); setCheckingName(false); };
+  }, [name, user]);
 
   const handleSelectPlace = (place: google.maps.places.PlaceResult) => {
     if (place.geometry?.location) {
@@ -426,8 +456,20 @@ const StoreRegistration = () => {
               placeholder="ระบุชื่อร้านอาหาร..."
               lang="th"
               autoComplete="off"
-              className="w-full px-5 py-4 rounded-2xl bg-surface-elevated shadow-luxury text-base font-light text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-score-emerald/30 transition-shadow border-0"
+              className={`w-full px-5 py-4 rounded-2xl bg-surface-elevated shadow-luxury text-base font-light text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-2 transition-shadow border-0 ${duplicateWarning ? 'ring-2 ring-score-amber/50 focus:ring-score-amber/50' : 'focus:ring-score-emerald/30'}`}
             />
+            <AnimatePresence>
+              {duplicateWarning && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="mt-2 text-xs text-score-amber flex items-center gap-1.5"
+                >
+                  ⚠️ {duplicateWarning} — กดบันทึกเพื่อเลือกรวมหรือสร้างใหม่
+                </motion.p>
+              )}
+            </AnimatePresence>
           </motion.section>
 
           {/* Input 2: Map with Pin + Search */}
