@@ -43,6 +43,7 @@ interface StoreCard {
   recentActivityCount: number;
   matchPercent: number | null;
   imageUrl: string | null;
+  hasTastureContent: boolean;
 }
 
 const tierColors: Record<ScoreTier, string> = {
@@ -141,7 +142,8 @@ const Index = () => {
     try {
       const { data: allStores } = await supabase
         .from("stores")
-        .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
+        .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo, has_tasture_content")
+        .eq("has_tasture_content", true)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -307,6 +309,7 @@ const Index = () => {
         recentActivityCount: recentActivityMap.get(s.id) || 0,
         matchPercent,
         imageUrl: s.menu_photo || storeImageMap.get(s.id) || null,
+        hasTastureContent: s.has_tasture_content ?? false,
       } as StoreCard;
     });
   }, [rawStores, rawData, activePosition, dynamicCategories]);
@@ -427,6 +430,13 @@ const Index = () => {
               {store.distanceKm} km
             </div>
           )}
+
+          {/* Tasture content badge */}
+          {store.hasTastureContent && (
+            <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-full bg-score-emerald/90 backdrop-blur-sm text-[9px] font-bold text-white">
+              🍽️ มีเมนู
+            </div>
+          )}
         </div>
 
         {/* Title area */}
@@ -496,6 +506,13 @@ const Index = () => {
             place.isOpen ? "bg-score-emerald/90 text-white" : "bg-score-ruby/90 text-white"
           )}>
             {place.isOpen ? "เปิด" : "ปิด"}
+          </div>
+        )}
+
+        {/* Tasture content badge */}
+        {place.hasTastureContent && (
+          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-full bg-score-emerald/90 backdrop-blur-sm text-[9px] font-bold text-white">
+            🍽️ มีเมนู
           </div>
         )}
       </div>

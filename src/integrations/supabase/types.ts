@@ -564,6 +564,8 @@ export type Database = {
         Row: {
           category_id: string | null
           created_at: string
+          google_place_id: string | null
+          has_tasture_content: boolean
           id: string
           menu_photo: string | null
           name: string
@@ -575,6 +577,8 @@ export type Database = {
         Insert: {
           category_id?: string | null
           created_at?: string
+          google_place_id?: string | null
+          has_tasture_content?: boolean
           id?: string
           menu_photo?: string | null
           name: string
@@ -586,6 +590,8 @@ export type Database = {
         Update: {
           category_id?: string | null
           created_at?: string
+          google_place_id?: string | null
+          has_tasture_content?: boolean
           id?: string
           menu_photo?: string | null
           name?: string

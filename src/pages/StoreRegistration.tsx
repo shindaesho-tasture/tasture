@@ -60,6 +60,7 @@ const StoreRegistration = () => {
   const [placeQuery, setPlaceQuery] = useState("");
   const [placeResults, setPlaceResults] = useState<google.maps.places.PlaceResult[]>([]);
   const [searchingPlace, setSearchingPlace] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
 
@@ -119,6 +120,7 @@ const StoreRegistration = () => {
       mapRef.current?.setZoom(17);
       if (place.name && !name.trim()) setName(place.name);
     }
+    setSelectedPlaceId(place.place_id || null);
     setPlaceQuery("");
     setPlaceResults([]);
   };
@@ -225,7 +227,7 @@ const StoreRegistration = () => {
     setMenuItems((prev) => prev.map((item, i) => (i === index ? updated : item)));
   };
 
-  const canProceed = name.trim().length > 0 && selectedCategory;
+  const canProceed = name.trim().length > 0 && selectedCategory && selectedPlaceId !== null;
 
   const saveToDatabase = async (forceMode: "merge" | "new", existingStoreId?: string): Promise<{ success: true; newCount: number; skippedCount: number } | false> => {
     if (!user) {
@@ -257,6 +259,7 @@ const StoreRegistration = () => {
             pin_lat: pinLocation?.lat ?? null,
             pin_lng: pinLocation?.lng ?? null,
             menu_photo: menuPhotos[0] || null,
+            google_place_id: selectedPlaceId ?? null,
           })
           .select()
           .single();
@@ -461,9 +464,12 @@ const StoreRegistration = () => {
                   className="flex-1 bg-transparent text-sm font-light text-foreground placeholder:text-muted-foreground/60 outline-none"
                 />
                 {placeQuery && (
-                  <button onClick={() => { setPlaceQuery(""); setPlaceResults([]); }} className="p-1 rounded-full hover:bg-secondary">
+                  <button onClick={() => { setPlaceQuery(""); setPlaceResults([]); setSelectedPlaceId(null); }} className="p-1 rounded-full hover:bg-secondary">
                     <X size={14} className="text-muted-foreground" />
                   </button>
+                )}
+                {selectedPlaceId && !placeQuery && (
+                  <Check size={14} className="text-score-emerald shrink-0" />
                 )}
                 {searchingPlace && <Loader2 size={14} className="text-score-emerald animate-spin" />}
               </div>
@@ -494,6 +500,17 @@ const StoreRegistration = () => {
                 )}
               </AnimatePresence>
             </div>
+
+            {!selectedPlaceId && (
+              <p className="text-[10px] text-muted-foreground px-1 mb-2">
+                🔍 ค้นหาและเลือกร้านจาก Google Places เพื่อยืนยันตำแหน่ง
+              </p>
+            )}
+            {selectedPlaceId && (
+              <p className="text-[10px] text-score-emerald px-1 mb-2 font-medium">
+                ✓ ยืนยันตำแหน่งจาก Google Places แล้ว
+              </p>
+            )}
 
             <div className="relative overflow-hidden rounded-2xl shadow-luxury">
               <div className="relative h-64 bg-secondary overflow-hidden rounded-t-2xl">

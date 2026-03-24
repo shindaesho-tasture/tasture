@@ -13,6 +13,7 @@ export interface PlaceRestaurant {
   isOpen: boolean | null; // realtime from Google Places
   vicinity: string | null;
   zone: string; // which zone this restaurant belongs to
+  hasTastureContent: boolean;
 }
 
 // 3 focus zones in Chiang Mai
@@ -112,6 +113,7 @@ export const usePlacesRestaurants = () => {
               isOpen: p.opening_hours?.isOpen() ?? null,
               vicinity: p.vicinity ?? null,
               zone: zone.name,
+              hasTastureContent: false,
             });
           }
         }
@@ -126,11 +128,14 @@ export const usePlacesRestaurants = () => {
         const placeIds = places.map((p) => p.placeId);
         const { data: existing } = await supabase
           .from("stores")
-          .select("id, google_place_id")
+          .select("id, google_place_id, has_tasture_content")
           .in("google_place_id", placeIds);
 
         const existingMap = new Map<string, string>(
           (existing ?? []).map((s: any) => [s.google_place_id as string, s.id as string])
+        );
+        const contentMap = new Map<string, boolean>(
+          (existing ?? []).map((s: any) => [s.google_place_id as string, s.has_tasture_content as boolean])
         );
 
         const toInsert = places
@@ -147,15 +152,17 @@ export const usePlacesRestaurants = () => {
           const { data: inserted } = await supabase
             .from("stores")
             .insert(toInsert)
-            .select("id, google_place_id");
-          (inserted ?? []).forEach((s: any) =>
-            existingMap.set(s.google_place_id as string, s.id as string)
-          );
+            .select("id, google_place_id, has_tasture_content");
+          (inserted ?? []).forEach((s: any) => {
+            existingMap.set(s.google_place_id as string, s.id as string);
+            contentMap.set(s.google_place_id as string, s.has_tasture_content as boolean);
+          });
         }
 
         const placesWithIds = places.map((p) => ({
           ...p,
           storeId: existingMap.get(p.placeId) ?? null,
+          hasTastureContent: contentMap.get(p.placeId) ?? false,
         }));
 
         try {
