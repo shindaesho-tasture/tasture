@@ -138,14 +138,14 @@ Extract ALL items visible on the menu. Prices as numbers only (no symbols). Use 
                     items: {
                       type: "object",
                       properties: {
-                        name: { type: "string", description: "Thai name of the dish (translated if foreign)" },
-                        original_name: { type: "string", description: "Original name as shown on the menu. Empty string if already Thai." },
-                        description: { type: "string", description: "Brief Thai description of the dish (ingredients, cooking method). Max 60 chars." },
-                        textures: {
-                          type: "array",
-                          items: { type: "string" },
-                          description: "Key textures in Thai (e.g. กรอบ, นุ่ม, ฉ่ำ). 1-3 items.",
-                        },
+                         name: { type: "string", description: "Dish name translated to the user's selected language" },
+                         original_name: { type: "string", description: "Original name as shown on the menu. Empty string if already in user's language." },
+                         description: { type: "string", description: "Brief description in user's language with cross-cultural food comparisons. Max 80 chars." },
+                         textures: {
+                           type: "array",
+                           items: { type: "string" },
+                           description: "Key textures in user's language (1-3 items). Use culturally specific texture vocabulary.",
+                         },
                         type: {
                           type: "string",
                           enum: ["noodle", "dual_price", "standard"],
