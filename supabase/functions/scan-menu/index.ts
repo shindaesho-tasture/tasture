@@ -84,7 +84,13 @@ STEP 3 — FOR EACH MENU ITEM:
 1. **name**: Translate to the user's language. Use the culturally accepted transliteration (e.g. ラーメン→ราเม็ง not ราเมน).
 2. **original_name**: The original text exactly as shown on the menu. Empty string "" if the menu is already in the user's language.
 3. **description**: Explain the dish so someone who has NEVER seen or tasted it can understand what it is. Use familiar food comparisons from the user's culture. Max 80 chars. Must be vivid and appetizing.
-4. **textures**: Pick 1-3 most accurate textures using expert knowledge. Use culture-specific texture terms from the user's language (e.g. もちもち→เหนียวนุ่มเด้ง not just นุ่ม).
+4. **textures**: CRITICAL — Analyze textures as a NATIVE EXPERT of the dish's cuisine, NOT generically.
+   - For Japanese dishes: think in terms of もちもち, サクサク, とろとろ, プリプリ, シャキシャキ — then translate to user's language with cultural equivalents
+   - For Korean dishes: think 쫄깃, 바삭, 촉촉, 탱글 — then translate
+   - For Chinese dishes: think 酥脆, Q弹, 滑嫩, 爽口 — then translate  
+   - For Italian dishes: think al dente, crispy, creamy — then translate
+   - For Thai dishes: think กรอบ, เด้ง, ฉ่ำ, ละมุน — use directly if user's language is Thai
+   Pick 1-3 textures that a native expert would use to describe this specific dish. Output in the user's language but with the depth of knowledge from the dish's home culture.
 
 5. Determine its **type**:
 - "noodle" if it contains noodle keywords (ก๋วยเตี๋ยว, บะหมี่, เส้น, ramen, udon, soba, pho, 麺, 면, pasta, etc.)
