@@ -11,6 +11,7 @@ interface NoodleCardProps {
 }
 
 const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
+  const { t } = useLanguage();
   const [editName, setEditName] = useState(item.name);
   const [editPrice, setEditPrice] = useState(String(item.price));
 
