@@ -239,7 +239,7 @@ const SovereignMenuCard = ({
                 +{userPhotos.length - 4}
               </span>
             )}
-            <span className="text-[9px] text-muted-foreground ml-auto">จากผู้ใช้</span>
+            <span className="text-[9px] text-muted-foreground ml-auto">{t("card.fromUsers")}</span>
           </div>
         </div>
       )}
