@@ -94,7 +94,7 @@ const SovereignMenuCard = ({
     const discount = Math.round(((price - priceSpecial) / price) * 100);
     enrichedTags.push({
       icon: "💰",
-      label: `ลด ${discount}%`,
+      label: `${t("common.discount")} ${discount}%`,
       score: 1,
       count: 100,
       type: "price",
