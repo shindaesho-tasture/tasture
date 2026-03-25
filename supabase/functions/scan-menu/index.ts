@@ -157,7 +157,7 @@ Extract ALL items visible on the menu. Prices as numbers only (no symbols). Use 
                          textures: {
                            type: "array",
                            items: { type: "string" },
-                           description: "Key textures in user's language (1-3 items). Use culturally specific texture vocabulary.",
+                           description: "Sensory tags: texture + aroma + mouthfeel (2-4 items). E.g. เผ็ดชา, กลิ่นเครื่องเทศ, กรอบนอกนุ่มใน. Use native culinary vocabulary.",
                          },
                         type: {
                           type: "string",
