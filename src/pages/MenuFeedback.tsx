@@ -488,9 +488,9 @@ const MenuFeedback = () => {
               >
                 <div className="text-center space-y-2">
                   <div className="text-4xl">📸</div>
-                  <h3 className="text-base font-bold text-foreground">แชร์รูปอาหารพร้อมรีวิว?</h3>
+                  <h3 className="text-base font-bold text-foreground">{t("post.sharePrompt")}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    ถ่ายรูปอาหารที่คุณเพิ่งรีวิวแล้วโพสให้เพื่อนเห็น พร้อมแนบคะแนนรีวิวอัตโนมัติ
+                    {t("post.shareDesc")}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2.5">
@@ -503,14 +503,14 @@ const MenuFeedback = () => {
                     className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-foreground text-background text-sm font-semibold"
                   >
                     <Camera size={16} />
-                    โพสรูปพร้อมรีวิว
+                    {t("post.share")}
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setShowPostPrompt(false)}
                     className="py-3 rounded-2xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
                   >
-                    ข้ามไปก่อน
+                    {t("post.skip")}
                   </motion.button>
                 </div>
               </motion.div>
