@@ -212,8 +212,7 @@ const MenuFeedback = () => {
       setTimeout(() => setSaveSuccess(false), 2000);
       fetchData();
     } catch (err: any) {
-      console.error("Save menu reviews error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("feedback.saveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
