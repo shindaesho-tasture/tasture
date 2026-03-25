@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import type { MenuItem } from "@/lib/menu-types";
 import MenuRatingButtons from "./MenuRatingButtons";
+import SensoryPills from "./SensoryPills";
 
 interface NoodleCardProps {
   item: MenuItem;
