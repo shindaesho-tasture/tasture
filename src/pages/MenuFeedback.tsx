@@ -231,8 +231,7 @@ const MenuFeedback = () => {
           .upsert(reRows, { onConflict: "menu_item_id,user_id" });
         if (error) throw error;
       }
-      setSaveSuccess(true);
-      toast({ title: "✅ บันทึกสำเร็จ", description: `ยืนยันคะแนนเดิม ${reRows.length} เมนู` });
+      toast({ title: `✅ ${t("feedback.saved")}`, description: t("gate.confirmedSame", { count: reRows.length }) });
       setTimeout(() => { setSaveSuccess(false); navigate(-1); }, 1500);
     } catch (err: any) {
       console.error("Re-save menu reviews error:", err);
