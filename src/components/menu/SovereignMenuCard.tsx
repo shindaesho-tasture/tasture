@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { Flame, TrendingUp, Star } from "lucide-react";
+import { classifyTag, CATEGORY_CONFIG } from "@/lib/sensory-classifier";
 
 /** HSL values for each score tier */
 const tierHsl: Record<ScoreTier, string> = {
@@ -150,6 +151,7 @@ const SovereignMenuCard = ({
                   const hsl = tierHsl[tier];
                   const opacity = getIntensityOpacity(tag.count);
                   const bgOpacity = Math.max(0.45, opacity);
+                  const classified = classifyTag(tag.label);
                   return (
                     <span
                       key={`${tag.icon}-${tag.label}`}
@@ -159,7 +161,7 @@ const SovereignMenuCard = ({
                       )}
                       style={{ backgroundColor: `hsla(${hsl},${bgOpacity})` }}
                     >
-                      <span>{tag.icon}</span>
+                      <span>{classified.icon}</span>
                       <span className="truncate max-w-[72px]">{tag.label}</span>
                       {tag.count >= 2 && (
                         <span className="opacity-50 text-[7px] ml-0.5">({formatCount(tag.count)})</span>
