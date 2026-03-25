@@ -253,7 +253,7 @@ const MenuFeedback = () => {
     if (sectionItems.length === 0) return null;
     return (
       <div className="space-y-2.5">
-        <SectionHeader icon={icon} label={label} count={sectionItems.length} />
+        <SectionHeader icon={icon} label={label} count={sectionItems.length} itemsLabel={t("feedback.items")} />
         {sectionItems.map((item) => {
           const ci = cardIndex++;
           return (
