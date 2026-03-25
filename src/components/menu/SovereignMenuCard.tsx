@@ -63,6 +63,7 @@ const SovereignMenuCard = ({
   avgSatisfaction,
   userPhotos,
 }: SovereignMenuCardProps) => {
+  const { t } = useLanguage();
   // Build enriched tags: score tags first, then auto-generated meta tags
   const enrichedTags: IntensityTag[] = [...tags];
 
