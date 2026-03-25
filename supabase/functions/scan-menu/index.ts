@@ -84,13 +84,20 @@ STEP 3 — FOR EACH MENU ITEM:
 1. **name**: Translate to the user's language. Use the culturally accepted transliteration (e.g. ラーメン→ราเม็ง not ราเมน).
 2. **original_name**: The original text exactly as shown on the menu. Empty string "" if the menu is already in the user's language.
 3. **description**: Explain the dish so someone who has NEVER seen or tasted it can understand what it is. Use familiar food comparisons from the user's culture. Max 80 chars. Must be vivid and appetizing.
-4. **textures**: CRITICAL — Analyze textures as a NATIVE EXPERT of the dish's cuisine, NOT generically.
-   - For Japanese dishes: think in terms of もちもち, サクサク, とろとろ, プリプリ, シャキシャキ — then translate to user's language with cultural equivalents
-   - For Korean dishes: think 쫄깃, 바삭, 촉촉, 탱글 — then translate
-   - For Chinese dishes: think 酥脆, Q弹, 滑嫩, 爽口 — then translate  
-   - For Italian dishes: think al dente, crispy, creamy — then translate
-   - For Thai dishes: think กรอบ, เด้ง, ฉ่ำ, ละมุน — use directly if user's language is Thai
-   Pick 1-3 textures that a native expert would use to describe this specific dish. Output in the user's language but with the depth of knowledge from the dish's home culture.
+4. **textures**: CRITICAL — Analyze textures, AROMA, and MOUTHFEEL as a NATIVE EXPERT of the dish's cuisine, NOT generically.
+   This field captures the FULL SENSORY EXPERIENCE — not just physical texture but also:
+   - **Mouthfeel/Sensation**: เผ็ดชา (numbing spice like mala 麻辣), ซ่า (tingling), แสบลิ้น (tongue-burning), ชุ่มคอ (throat-coating), มัน (oily richness)
+   - **Aroma/Scent**: กลิ่นเครื่องเทศ (spice aroma), กลิ่นเครื่องใน (offal/organ scent), หอมควัน (smoky), หอมเนย (buttery), หอมสมุนไพร (herbal), กลิ่นทะเล (briny/oceanic), หอมกระเทียม (garlicky)
+   - **Texture**: กรอบ, เด้ง, ฉ่ำ, ละมุน, etc.
+   
+   Culture-specific sensory vocabulary (think natively, then translate):
+   - Japanese: もちもち, サクサク, とろとろ, 香ばしい (savory aroma), 出汁の香り (dashi fragrance)
+   - Korean: 쫄깃, 바삭, 얼큰한 (spicy-warm), 고소한 (nutty/roasted aroma), 감칠맛 (umami depth)
+   - Chinese: 酥脆, Q弹, 麻辣 (numbing-spicy), 五香 (five-spice aroma), 镬气 (wok breath), 药膳香 (herbal-medicinal)
+   - Italian: al dente, creamy, 焦香 truffle aroma, garlic-forward, herbaceous
+   - Thai: กรอบ, เด้ง, ฉ่ำ, เผ็ดชา, หอมเครื่องแกง, กลิ่นกะปิ
+   
+   Pick 2-4 sensory tags that a native expert would highlight. ALWAYS include aroma or mouthfeel when the dish has a distinctive one (e.g. mala → เผ็ดชา+กลิ่นเครื่องเทศ, tom yum → เปรี้ยวแซ่บ+หอมสมุนไพร, ramen → หอมกระดูก). Output in the user's language.
 
 5. Determine its **type**:
 - "noodle" if it contains noodle keywords (ก๋วยเตี๋ยว, บะหมี่, เส้น, ramen, udon, soba, pho, 麺, 면, pasta, etc.)
@@ -150,7 +157,7 @@ Extract ALL items visible on the menu. Prices as numbers only (no symbols). Use 
                          textures: {
                            type: "array",
                            items: { type: "string" },
-                           description: "Key textures in user's language (1-3 items). Use culturally specific texture vocabulary.",
+                           description: "Sensory tags: texture + aroma + mouthfeel (2-4 items). E.g. เผ็ดชา, กลิ่นเครื่องเทศ, กรอบนอกนุ่มใน. Use native culinary vocabulary.",
                          },
                         type: {
                           type: "string",
