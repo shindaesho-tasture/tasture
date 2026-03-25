@@ -53,14 +53,14 @@ const ProgressRing = ({ progress, rated, total }: { progress: number; rated: num
 };
 
 /* ─── Section Divider ─── */
-const SectionHeader = ({ icon, label, count }: { icon: string; label: string; count: number }) => (
+const SectionHeader = ({ icon, label, count, itemsLabel }: { icon: string; label: string; count: number; itemsLabel: string }) => (
   <div className="flex items-center gap-3 pt-2">
     <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-sm">
       {icon}
     </div>
     <div className="flex-1">
       <span className="text-[11px] font-medium text-foreground tracking-wide">{label}</span>
-      <span className="text-[9px] text-muted-foreground ml-2">{count} รายการ</span>
+      <span className="text-[9px] text-muted-foreground ml-2">{count} {itemsLabel}</span>
     </div>
     <div className="h-px flex-1 bg-border/50" />
   </div>
