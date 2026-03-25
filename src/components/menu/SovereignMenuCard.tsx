@@ -71,7 +71,7 @@ const SovereignMenuCard = ({
   if (totalReviews >= 20 && popularityRank && popularityRank <= 3) {
     enrichedTags.push({
       icon: "🔥",
-      label: popularityRank === 1 ? "ยอดนิยม" : `อันดับ ${popularityRank}`,
+      label: popularityRank === 1 ? t("common.popular") : `#${popularityRank}`,
       score: 2,
       count: totalReviews,
       type: "popularity",
