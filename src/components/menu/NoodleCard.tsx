@@ -144,7 +144,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
 
       {/* Rating */}
       <div className="flex items-center justify-between pt-1">
-        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">ให้คะแนน</span>
+        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.rate")}</span>
         <MenuRatingButtons rating={item.rating} onRate={(v) => onChange({ ...item, rating: v })} />
       </div>
     </motion.div>
