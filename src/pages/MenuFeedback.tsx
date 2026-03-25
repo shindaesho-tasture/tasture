@@ -281,10 +281,10 @@ const MenuFeedback = () => {
             </motion.button>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
-                {storeName || "ฟีดแบคเมนู"}
+                {storeName || t("feedback.title")}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
-                menu feedback
+                {t("feedback.subtitle")}
               </p>
             </div>
             {items.length > 0 && (
