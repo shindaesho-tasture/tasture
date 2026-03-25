@@ -192,8 +192,7 @@ const MenuFeedback = () => {
         if (error) throw error;
       }
 
-      setSaveSuccess(true);
-      toast({ title: "✅ บันทึกสำเร็จ", description: `ให้คะแนน ${ratedCount} เมนู` });
+      toast({ title: `✅ ${t("feedback.saved")}`, description: t("feedback.savedDesc", { count: ratedCount }) });
 
       // Get the most recent review id for linking to a post
       if (upsertRows.length > 0) {
