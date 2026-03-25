@@ -60,6 +60,7 @@ const DishDetailSheet = ({
   totalReviews,
 }: DishDetailSheetProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
