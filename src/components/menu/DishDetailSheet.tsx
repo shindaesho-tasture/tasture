@@ -467,11 +467,11 @@ const DishDetailSheet = ({
                 <div className="px-5 py-3">
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-surface border border-border/30">
                     <span className="text-lg">
-                      {consistency === "เสน่ห์คงเดิม" ? "✨" : "🎲"}
+                    {consistency === t("detail.consistencyGood") ? "✨" : "🎲"}
                     </span>
                     <div>
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                        ความคงที่
+                        {t("detail.consistency")}
                       </span>
                       <p className="text-sm font-medium text-foreground">{consistency}</p>
                     </div>
