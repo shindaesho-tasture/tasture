@@ -5,6 +5,7 @@ import { ChevronLeft, Check, Loader2, Sparkles, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-context";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import MenuFeedbackCard from "@/components/menu/MenuFeedbackCard";
