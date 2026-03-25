@@ -509,7 +509,7 @@ const DishDetailSheet = ({
                           )}
                         </div>
                         <span className="text-[11px] font-semibold text-white truncate flex-1">
-                          {userPhotos[activePhotoIdx]?.display_name || "ผู้ใช้"}
+                          {userPhotos[activePhotoIdx]?.display_name || t("detail.user")}
                         </span>
                         {(userPhotos[activePhotoIdx]?.likeCount ?? 0) > 0 && (
                           <span className="text-[10px] text-white/80 flex items-center gap-0.5">
