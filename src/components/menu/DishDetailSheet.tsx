@@ -361,7 +361,7 @@ const DishDetailSheet = ({
               {sensoryAxes.length >= 3 && (
                 <div className="px-5 py-3">
                   <h3 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">
-                    ⚖️ ระดับความสมดุล
+                    ⚖️ {t("detail.balance")}
                   </h3>
                   <BalanceSpiderChart axes={sensoryAxes} values={sensoryValues} />
                 </div>
