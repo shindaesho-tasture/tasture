@@ -442,7 +442,7 @@ const MenuFeedback = () => {
                         className="flex items-center gap-2"
                       >
                         <Check size={18} strokeWidth={2.5} />
-                        <span>สำเร็จ!</span>
+                        <span>{t("feedback.saved")}!</span>
                       </motion.div>
                     ) : (
                       <motion.div
@@ -454,9 +454,9 @@ const MenuFeedback = () => {
                       >
                         <Check size={18} strokeWidth={2} />
                         <span>
-                          บันทึกฟีดแบค
+                          {t("feedback.submit")}
                           {changedCount > 0 && (
-                            <span className="ml-1 opacity-60">({changedCount} เปลี่ยน)</span>
+                            <span className="ml-1 opacity-60">({t("feedback.changes", { count: changedCount })})</span>
                           )}
                         </span>
                       </motion.div>
