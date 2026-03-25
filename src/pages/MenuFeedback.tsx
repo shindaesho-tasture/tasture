@@ -344,8 +344,8 @@ const MenuFeedback = () => {
                 className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
               >
                 <span className="text-3xl">🔄</span>
-                <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
-                <span className="text-[9px] text-muted-foreground">รีวิวเมนูใหม่</span>
+                <span className="text-sm font-semibold text-foreground">{t("gate.different")}</span>
+                <span className="text-[9px] text-muted-foreground">{t("gate.differentDesc")}</span>
               </motion.button>
             </div>
           </motion.div>
