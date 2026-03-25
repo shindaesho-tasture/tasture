@@ -234,8 +234,7 @@ const MenuFeedback = () => {
       toast({ title: `✅ ${t("feedback.saved")}`, description: t("gate.confirmedSame", { count: reRows.length }) });
       setTimeout(() => { setSaveSuccess(false); navigate(-1); }, 1500);
     } catch (err: any) {
-      console.error("Re-save menu reviews error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("feedback.saveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
