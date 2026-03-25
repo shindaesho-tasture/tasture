@@ -82,7 +82,7 @@ const SovereignMenuCard = ({
   if (avgSatisfaction && avgSatisfaction >= 4) {
     enrichedTags.push({
       icon: "⭐",
-      label: avgSatisfaction >= 4.5 ? "แนะนำสุด" : "แนะนำ",
+      label: avgSatisfaction >= 4.5 ? t("common.highlyRecommended") : t("common.recommended"),
       score: 2,
       count: totalReviews,
       type: "recommendation",
