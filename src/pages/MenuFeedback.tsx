@@ -5,6 +5,7 @@ import { ChevronLeft, Check, Loader2, Sparkles, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-context";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import MenuFeedbackCard from "@/components/menu/MenuFeedbackCard";
@@ -52,20 +53,21 @@ const ProgressRing = ({ progress, rated, total }: { progress: number; rated: num
 };
 
 /* ─── Section Divider ─── */
-const SectionHeader = ({ icon, label, count }: { icon: string; label: string; count: number }) => (
+const SectionHeader = ({ icon, label, count, itemsLabel }: { icon: string; label: string; count: number; itemsLabel: string }) => (
   <div className="flex items-center gap-3 pt-2">
     <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-sm">
       {icon}
     </div>
     <div className="flex-1">
       <span className="text-[11px] font-medium text-foreground tracking-wide">{label}</span>
-      <span className="text-[9px] text-muted-foreground ml-2">{count} รายการ</span>
+      <span className="text-[9px] text-muted-foreground ml-2">{count} {itemsLabel}</span>
     </div>
     <div className="h-px flex-1 bg-border/50" />
   </div>
 );
 
 const MenuFeedback = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
   const { user, loading: authLoading } = useAuth();
@@ -190,8 +192,7 @@ const MenuFeedback = () => {
         if (error) throw error;
       }
 
-      setSaveSuccess(true);
-      toast({ title: "✅ บันทึกสำเร็จ", description: `ให้คะแนน ${ratedCount} เมนู` });
+      toast({ title: `✅ ${t("feedback.saved")}`, description: t("feedback.savedDesc", { count: ratedCount }) });
 
       // Get the most recent review id for linking to a post
       if (upsertRows.length > 0) {
@@ -211,8 +212,7 @@ const MenuFeedback = () => {
       setTimeout(() => setSaveSuccess(false), 2000);
       fetchData();
     } catch (err: any) {
-      console.error("Save menu reviews error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("feedback.saveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -231,12 +231,10 @@ const MenuFeedback = () => {
           .upsert(reRows, { onConflict: "menu_item_id,user_id" });
         if (error) throw error;
       }
-      setSaveSuccess(true);
-      toast({ title: "✅ บันทึกสำเร็จ", description: `ยืนยันคะแนนเดิม ${reRows.length} เมนู` });
+      toast({ title: `✅ ${t("feedback.saved")}`, description: t("gate.confirmedSame", { count: reRows.length }) });
       setTimeout(() => { setSaveSuccess(false); navigate(-1); }, 1500);
     } catch (err: any) {
-      console.error("Re-save menu reviews error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("feedback.saveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -251,7 +249,7 @@ const MenuFeedback = () => {
     if (sectionItems.length === 0) return null;
     return (
       <div className="space-y-2.5">
-        <SectionHeader icon={icon} label={label} count={sectionItems.length} />
+        <SectionHeader icon={icon} label={label} count={sectionItems.length} itemsLabel={t("feedback.items")} />
         {sectionItems.map((item) => {
           const ci = cardIndex++;
           return (
@@ -283,10 +281,10 @@ const MenuFeedback = () => {
             </motion.button>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
-                {storeName || "ฟีดแบคเมนู"}
+                {storeName || t("feedback.title")}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
-                menu feedback
+                {t("feedback.subtitle")}
               </p>
             </div>
             {items.length > 0 && (
@@ -305,15 +303,15 @@ const MenuFeedback = () => {
             <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
               <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
               <div>
-                <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิวเมนูร้านนี้แล้ว</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติเมนูเปลี่ยนไปหรือเปล่า?</p>
+                <p className="text-[11px] font-medium text-foreground">{t("gate.previousReview")}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{t("gate.changed")}</p>
               </div>
             </div>
 
             {/* Previous scores summary */}
             <div className="rounded-2xl border border-border/50 bg-surface-elevated/50 overflow-hidden">
               <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/30">
-                <p className="text-[10px] font-medium text-muted-foreground tracking-wide">คะแนนเดิมที่เคยให้</p>
+                <p className="text-[10px] font-medium text-muted-foreground tracking-wide">{t("gate.previousScores")}</p>
               </div>
               <div className="divide-y divide-border/20 max-h-52 overflow-y-auto">
                 {items.filter((item) => item.my_score !== null).map((item) => (
@@ -337,8 +335,8 @@ const MenuFeedback = () => {
                 className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
               >
                 <span className="text-3xl">👍</span>
-                <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
-                <span className="text-[9px] text-muted-foreground">บันทึกคะแนนเดิมอีกครั้ง</span>
+                <span className="text-sm font-semibold text-foreground">{t("gate.same")}</span>
+                <span className="text-[9px] text-muted-foreground">{t("gate.sameDesc")}</span>
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.95 }}
@@ -346,8 +344,8 @@ const MenuFeedback = () => {
                 className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
               >
                 <span className="text-3xl">🔄</span>
-                <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
-                <span className="text-[9px] text-muted-foreground">รีวิวเมนูใหม่</span>
+                <span className="text-sm font-semibold text-foreground">{t("gate.different")}</span>
+                <span className="text-[9px] text-muted-foreground">{t("gate.differentDesc")}</span>
               </motion.button>
             </div>
           </motion.div>
@@ -365,10 +363,10 @@ const MenuFeedback = () => {
               <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
               <div>
                 <p className="text-[11px] font-medium text-foreground leading-relaxed">
-                  กดเลือก <span className="text-score-ruby">😔</span> <span className="text-score-slate">😐</span> <span className="text-score-emerald">🤩</span> เพื่อให้คะแนนแต่ละเมนู
+                  {t("feedback.rateGuide")}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  ค่าเฉลี่ยจากทุกคนจะแสดงที่วงกลมด้านขวา
+                  {t("feedback.avgNote")}
                 </p>
               </div>
             </div>
@@ -384,8 +382,7 @@ const MenuFeedback = () => {
               className="w-12 h-12 rounded-full border-[3px] border-border border-t-score-emerald"
             />
             <div className="text-center">
-              <p className="text-xs font-medium text-foreground">กำลังโหลดเมนู</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">loading menu items...</p>
+              <p className="text-xs font-medium text-foreground">{t("feedback.loading")}</p>
             </div>
           </div>
         ) : items.length === 0 ? (
@@ -398,9 +395,9 @@ const MenuFeedback = () => {
               <span className="text-4xl">🍽️</span>
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground">ยังไม่มีเมนูในร้านนี้</p>
+              <p className="text-sm font-medium text-foreground">{t("feedback.noMenu")}</p>
               <p className="text-[11px] text-muted-foreground mt-1">
-                เมนูจะปรากฏหลังจากสแกนป้ายเมนู
+                {t("feedback.noMenuDesc")}
               </p>
             </div>
           </motion.div>
@@ -408,9 +405,9 @@ const MenuFeedback = () => {
           null
         ) : (
           <div className="px-4 pt-3 space-y-5">
-            {renderSection("🍜", "ก๋วยเตี๋ยว", noodles)}
-            {renderSection("💰", "ราคาคู่", dualPrice)}
-            {renderSection("🍽️", "เมนูทั่วไป", standard)}
+            {renderSection("🍜", t("section.noodle"), noodles)}
+            {renderSection("💰", t("section.dualPrice"), dualPrice)}
+            {renderSection("🍽️", t("section.standard"), standard)}
           </div>
         )}
 
@@ -445,7 +442,7 @@ const MenuFeedback = () => {
                         className="flex items-center gap-2"
                       >
                         <Check size={18} strokeWidth={2.5} />
-                        <span>สำเร็จ!</span>
+                        <span>{t("feedback.saved")}!</span>
                       </motion.div>
                     ) : (
                       <motion.div
@@ -457,9 +454,9 @@ const MenuFeedback = () => {
                       >
                         <Check size={18} strokeWidth={2} />
                         <span>
-                          บันทึกฟีดแบค
+                          {t("feedback.submit")}
                           {changedCount > 0 && (
-                            <span className="ml-1 opacity-60">({changedCount} เปลี่ยน)</span>
+                            <span className="ml-1 opacity-60">({t("feedback.changes", { count: changedCount })})</span>
                           )}
                         </span>
                       </motion.div>
@@ -491,9 +488,9 @@ const MenuFeedback = () => {
               >
                 <div className="text-center space-y-2">
                   <div className="text-4xl">📸</div>
-                  <h3 className="text-base font-bold text-foreground">แชร์รูปอาหารพร้อมรีวิว?</h3>
+                  <h3 className="text-base font-bold text-foreground">{t("post.sharePrompt")}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    ถ่ายรูปอาหารที่คุณเพิ่งรีวิวแล้วโพสให้เพื่อนเห็น พร้อมแนบคะแนนรีวิวอัตโนมัติ
+                    {t("post.shareDesc")}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2.5">
@@ -506,14 +503,14 @@ const MenuFeedback = () => {
                     className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-foreground text-background text-sm font-semibold"
                   >
                     <Camera size={16} />
-                    โพสรูปพร้อมรีวิว
+                    {t("post.share")}
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setShowPostPrompt(false)}
                     className="py-3 rounded-2xl text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
                   >
-                    ข้ามไปก่อน
+                    {t("post.skip")}
                   </motion.button>
                 </div>
               </motion.div>

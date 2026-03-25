@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import type { MenuItem } from "@/lib/menu-types";
 import MenuRatingButtons from "./MenuRatingButtons";
 import SensoryPills from "./SensoryPills";
+import { useLanguage } from "@/lib/language-context";
 
 interface NoodleCardProps {
   item: MenuItem;
@@ -10,6 +11,7 @@ interface NoodleCardProps {
 }
 
 const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
+  const { t } = useLanguage();
   const [editName, setEditName] = useState(item.name);
   const [editPrice, setEditPrice] = useState(String(item.price));
 
@@ -67,7 +69,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
 
       {/* Noodle Type Chips */}
       <div>
-        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">เส้น</span>
+        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.noodleType")}</span>
         <div className="flex flex-wrap gap-1.5 mt-1">
           {defaultNoodleTypes.map((type) => (
             <motion.button
@@ -88,7 +90,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
 
       {/* Style Chips */}
       <div>
-        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">สไตล์</span>
+        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.style")}</span>
         <div className="flex flex-wrap gap-1.5 mt-1">
           {defaultStyles.map((style) => (
             <motion.button
@@ -110,7 +112,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
       {/* Toppings */}
       {item.toppings && item.toppings.length > 0 && (
         <div>
-          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">ท็อปปิ้ง</span>
+          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.topping")}</span>
           <div className="flex flex-wrap gap-1.5 mt-1">
             {item.toppings.map((topping) => (
               <motion.button
@@ -142,7 +144,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
 
       {/* Rating */}
       <div className="flex items-center justify-between pt-1">
-        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">ให้คะแนน</span>
+        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.rate")}</span>
         <MenuRatingButtons rating={item.rating} onRate={(v) => onChange({ ...item, rating: v })} />
       </div>
     </motion.div>

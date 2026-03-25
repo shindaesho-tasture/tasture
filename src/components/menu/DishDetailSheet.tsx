@@ -5,6 +5,7 @@ import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/language-context";
 import BalanceSpiderChart from "./BalanceSpiderChart";
 import type { SensoryAxis } from "@/lib/sensory-types";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ const DishDetailSheet = ({
   totalReviews,
 }: DishDetailSheetProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
@@ -283,7 +285,7 @@ const DishDetailSheet = ({
     const scores = dnaTags.map((t) => t.selected_score);
     const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
     const variance = scores.reduce((s, v) => s + (v - avg) ** 2, 0) / scores.length;
-    return variance < 1.5 ? "เสน่ห์คงเดิม" : "รสชาติมีความแปรปรวน";
+    return variance < 1.5 ? t("detail.consistencyGood") : t("detail.consistencyBad");
   };
 
   const consistency = getConsistency();
@@ -335,7 +337,7 @@ const DishDetailSheet = ({
                 {/* Emerald seal */}
                 {emerald && (
                   <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-score-emerald text-white text-[11px] font-bold shadow-lg">
-                    💎 มรกตรับรอง
+                    💎 {t("detail.emeraldSeal")}
                   </div>
                 )}
               </div>
@@ -346,11 +348,11 @@ const DishDetailSheet = ({
                   <span className="text-base font-semibold text-score-emerald">฿{price}</span>
                   {priceSpecial != null && (
                     <span className="text-sm font-light text-muted-foreground">
-                      พิเศษ ฿{priceSpecial}
+                      {t("feedback.special")} ฿{priceSpecial}
                     </span>
                   )}
                   <span className="text-[10px] text-muted-foreground ml-auto">
-                    {totalReviews} รีวิว
+                    {totalReviews} {t("detail.reviews")}
                   </span>
                 </div>
               </div>
@@ -359,7 +361,7 @@ const DishDetailSheet = ({
               {sensoryAxes.length >= 3 && (
                 <div className="px-5 py-3">
                   <h3 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">
-                    ⚖️ ระดับความสมดุล
+                    ⚖️ {t("detail.balance")}
                   </h3>
                   <BalanceSpiderChart axes={sensoryAxes} values={sensoryValues} />
                 </div>
@@ -369,7 +371,7 @@ const DishDetailSheet = ({
               {dnaTags.length > 0 && (
                 <div className="px-5 py-3">
                   <h3 className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wider">
-                    🏷️ เทคเจอร์ยอดนิยม
+                    🏷️ {t("detail.popularTextures")}
                   </h3>
                   <div className="space-y-2">
                     {[...dnaTags]
@@ -398,7 +400,7 @@ const DishDetailSheet = ({
                               <div className="flex items-center gap-1.5 mt-1.5">
                                 <Loader2 size={10} className="animate-spin text-muted-foreground" />
                                 <span className="text-[10px] text-muted-foreground">
-                                  กำลังเขียนคำบรรยาย...
+                                  {t("detail.loadingDesc")}
                                 </span>
                               </div>
                             ) : descriptions[tag.component_name] ? (
@@ -418,7 +420,7 @@ const DishDetailSheet = ({
                 <div className="px-5 py-3">
                   <h3 className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
                     <User size={12} className="text-muted-foreground" />
-                    ความรู้สึกของฉัน
+                    {t("detail.mySentiment")}
                   </h3>
                   <div className="space-y-2">
                     {myDnaTags.map((tag) => {
@@ -465,11 +467,11 @@ const DishDetailSheet = ({
                 <div className="px-5 py-3">
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-surface border border-border/30">
                     <span className="text-lg">
-                      {consistency === "เสน่ห์คงเดิม" ? "✨" : "🎲"}
+                    {consistency === t("detail.consistencyGood") ? "✨" : "🎲"}
                     </span>
                     <div>
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                        ความคงที่
+                        {t("detail.consistency")}
                       </span>
                       <p className="text-sm font-medium text-foreground">{consistency}</p>
                     </div>
@@ -481,7 +483,7 @@ const DishDetailSheet = ({
               {userPhotos.length > 0 && (
                 <div className="px-5 pt-3 pb-2">
                   <h3 className="text-xs font-semibold text-foreground mb-2.5 uppercase tracking-wider">
-                    📸 รูปจากผู้ใช้ ({userPhotos.length})
+                    📸 {t("detail.userPhotos")} ({userPhotos.length})
                   </h3>
                   <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-secondary">
                     <AnimatePresence mode="wait">
@@ -507,7 +509,7 @@ const DishDetailSheet = ({
                           )}
                         </div>
                         <span className="text-[11px] font-semibold text-white truncate flex-1">
-                          {userPhotos[activePhotoIdx]?.display_name || "ผู้ใช้"}
+                          {userPhotos[activePhotoIdx]?.display_name || t("detail.user")}
                         </span>
                         {(userPhotos[activePhotoIdx]?.likeCount ?? 0) > 0 && (
                           <span className="text-[10px] text-white/80 flex items-center gap-0.5">

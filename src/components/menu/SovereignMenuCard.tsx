@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { Flame, TrendingUp, Star } from "lucide-react";
@@ -62,6 +63,7 @@ const SovereignMenuCard = ({
   avgSatisfaction,
   userPhotos,
 }: SovereignMenuCardProps) => {
+  const { t } = useLanguage();
   // Build enriched tags: score tags first, then auto-generated meta tags
   const enrichedTags: IntensityTag[] = [...tags];
 
@@ -69,7 +71,7 @@ const SovereignMenuCard = ({
   if (totalReviews >= 20 && popularityRank && popularityRank <= 3) {
     enrichedTags.push({
       icon: "🔥",
-      label: popularityRank === 1 ? "ยอดนิยม" : `อันดับ ${popularityRank}`,
+      label: popularityRank === 1 ? t("common.popular") : `#${popularityRank}`,
       score: 2,
       count: totalReviews,
       type: "popularity",
@@ -80,7 +82,7 @@ const SovereignMenuCard = ({
   if (avgSatisfaction && avgSatisfaction >= 4) {
     enrichedTags.push({
       icon: "⭐",
-      label: avgSatisfaction >= 4.5 ? "แนะนำสุด" : "แนะนำ",
+      label: avgSatisfaction >= 4.5 ? t("common.highlyRecommended") : t("common.recommended"),
       score: 2,
       count: totalReviews,
       type: "recommendation",
@@ -92,7 +94,7 @@ const SovereignMenuCard = ({
     const discount = Math.round(((price - priceSpecial) / price) * 100);
     enrichedTags.push({
       icon: "💰",
-      label: `ลด ${discount}%`,
+      label: `${t("common.discount")} ${discount}%`,
       score: 1,
       count: 100,
       type: "price",
@@ -122,7 +124,7 @@ const SovereignMenuCard = ({
           {/* Review count badge */}
           {totalReviews > 0 && (
             <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-lg bg-foreground/70 backdrop-blur-sm">
-              <span className="text-[8px] font-semibold text-background">{formatCount(totalReviews)} รีวิว</span>
+              <span className="text-[8px] font-semibold text-background">{formatCount(totalReviews)} {t("card.reviewCount")}</span>
             </div>
           )}
         </div>
@@ -237,7 +239,7 @@ const SovereignMenuCard = ({
                 +{userPhotos.length - 4}
               </span>
             )}
-            <span className="text-[9px] text-muted-foreground ml-auto">จากผู้ใช้</span>
+            <span className="text-[9px] text-muted-foreground ml-auto">{t("card.fromUsers")}</span>
           </div>
         </div>
       )}
