@@ -90,7 +90,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
 
       {/* Style Chips */}
       <div>
-        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">สไตล์</span>
+        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.style")}</span>
         <div className="flex flex-wrap gap-1.5 mt-1">
           {defaultStyles.map((style) => (
             <motion.button
