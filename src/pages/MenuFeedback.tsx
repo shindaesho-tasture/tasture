@@ -303,8 +303,8 @@ const MenuFeedback = () => {
             <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
               <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
               <div>
-                <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิวเมนูร้านนี้แล้ว</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติเมนูเปลี่ยนไปหรือเปล่า?</p>
+                <p className="text-[11px] font-medium text-foreground">{t("gate.previousReview")}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{t("gate.changed")}</p>
               </div>
             </div>
 
