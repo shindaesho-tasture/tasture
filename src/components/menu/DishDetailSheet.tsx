@@ -285,7 +285,7 @@ const DishDetailSheet = ({
     const scores = dnaTags.map((t) => t.selected_score);
     const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
     const variance = scores.reduce((s, v) => s + (v - avg) ** 2, 0) / scores.length;
-    return variance < 1.5 ? "เสน่ห์คงเดิม" : "รสชาติมีความแปรปรวน";
+    return variance < 1.5 ? t("detail.consistencyGood") : t("detail.consistencyBad");
   };
 
   const consistency = getConsistency();
