@@ -420,7 +420,7 @@ const DishDetailSheet = ({
                 <div className="px-5 py-3">
                   <h3 className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
                     <User size={12} className="text-muted-foreground" />
-                    ความรู้สึกของฉัน
+                    {t("detail.mySentiment")}
                   </h3>
                   <div className="space-y-2">
                     {myDnaTags.map((tag) => {
