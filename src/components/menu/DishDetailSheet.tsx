@@ -400,7 +400,7 @@ const DishDetailSheet = ({
                               <div className="flex items-center gap-1.5 mt-1.5">
                                 <Loader2 size={10} className="animate-spin text-muted-foreground" />
                                 <span className="text-[10px] text-muted-foreground">
-                                  กำลังเขียนคำบรรยาย...
+                                  {t("detail.loadingDesc")}
                                 </span>
                               </div>
                             ) : descriptions[tag.component_name] ? (
