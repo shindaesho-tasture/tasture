@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
 import type { SensoryAxis } from "@/lib/sensory-types";
+import { useLanguage } from "@/lib/language-context";
 import SensorySliderCard from "./SensorySliderCard";
 import BalanceSpiderChart from "./BalanceSpiderChart";
 
@@ -61,7 +62,7 @@ const tagScoreConfig: Record<number, { bg: string; text: string }> = {
 };
 
 /** Mini circular gauge for average score */
-const ScoreGauge = ({ score, count, tier }: { score: number; count: number; tier: ScoreTier }) => {
+const ScoreGauge = ({ score, count, tier, personsLabel }: { score: number; count: number; tier: ScoreTier; personsLabel: string }) => {
   const pct = ((score + 2) / 4) * 100;
   const r = 18;
   const circ = 2 * Math.PI * r;
@@ -87,7 +88,7 @@ const ScoreGauge = ({ score, count, tier }: { score: number; count: number; tier
         </span>
       </div>
       <span className="text-[7px] font-light text-muted-foreground mt-0.5 tabular-nums">
-        {count} คน
+        {count} {personsLabel}
       </span>
     </div>
   );
@@ -95,6 +96,7 @@ const ScoreGauge = ({ score, count, tier }: { score: number; count: number; tier
 
 const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCardProps) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const hasAvg = item.avg_score !== null;
   const avgTier = hasAvg ? getScoreTier(item.avg_score!) : null;
   const config = typeConfig[item.type] || typeConfig.standard;
@@ -136,12 +138,9 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
   const handleTasteSatisfaction = async (choice: "perfect" | "ok" | "bad") => {
     setTasteSatisfaction(choice);
     if (choice === "perfect") {
-      // Auto-set all sensory to level 3 (perfect) and don't show sliders
       setSensoryExpanded(false);
-      // Auto-rate as +2 (perfect taste)
       onRate(2);
     } else {
-      // Show sensory feedback for adjustment
       await loadSensoryData();
       setSensoryExpanded(true);
     }
@@ -182,16 +181,11 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
     setSensoryValues((prev) => ({ ...prev, [axisName]: level }));
   };
 
-  // Compute average sensory score mapped to -2 to +2 scale for the overall rating
   const computeSensoryScore = (): number | null => {
     if (sensoryAxes.length === 0) return null;
     const vals = Object.values(sensoryValues);
     if (vals.length === 0) return null;
-    // Level 3 = 0 (perfect), Level 1 = -2, Level 5 = +2
-    const avg = vals.reduce((sum, v) => sum + (v - 3), 0) / vals.length;
-    // Distance from balance: 0 = perfect, more distance = worse
     const balanceScore = vals.reduce((sum, v) => sum + Math.abs(v - 3), 0) / vals.length;
-    // Convert: 0 distance = +2 (perfect), 2 distance = -2 (terrible)
     return Math.round((2 - balanceScore * 2) * 10) / 10;
   };
 
@@ -234,7 +228,7 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                     ฿{item.price_special}
                   </span>
                   <span className="text-[8px] font-medium text-score-emerald uppercase tracking-wider">
-                    พิเศษ
+                    {t("feedback.special")}
                   </span>
                 </>
               )}
@@ -243,12 +237,12 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
 
           {/* Score Gauge */}
           {hasAvg && avgTier && (
-            <ScoreGauge score={item.avg_score!} count={item.review_count} tier={avgTier} />
+            <ScoreGauge score={item.avg_score!} count={item.review_count} tier={avgTier} personsLabel={t("feedback.persons")} />
           )}
           {!hasAvg && (
             <div className="flex flex-col items-center opacity-40">
               <div className="w-12 h-12 rounded-full border-2 border-dashed border-border flex items-center justify-center">
-                <span className="text-[9px] font-light text-muted-foreground">ยังไม่มี</span>
+                <span className="text-[9px] font-light text-muted-foreground">{t("feedback.noData")}</span>
               </div>
             </div>
           )}
@@ -282,12 +276,12 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
 
         {/* ─── Taste Satisfaction Gate ─── */}
         <div className="space-y-3">
-          <p className="text-[11px] font-medium text-muted-foreground">ความพอใจรสชาติ</p>
+          <p className="text-[11px] font-medium text-muted-foreground">{t("feedback.tasteSatisfaction")}</p>
           <div className="flex gap-2">
             {([
-              { key: "perfect" as const, label: "รสสมบูรณ์แบบ", emoji: "🤩", activeBg: "bg-score-emerald", activeText: "text-primary-foreground" },
-              { key: "ok" as const, label: "ธรรมดาพอกินได้", emoji: "😐", activeBg: "bg-score-slate", activeText: "text-primary-foreground" },
-              { key: "bad" as const, label: "ไม่ถูกปาก", emoji: "😔", activeBg: "bg-score-ruby", activeText: "text-primary-foreground" },
+              { key: "perfect" as const, labelKey: "feedback.perfect", emoji: "🤩", activeBg: "bg-score-emerald", activeText: "text-primary-foreground" },
+              { key: "ok" as const, labelKey: "feedback.ok", emoji: "😐", activeBg: "bg-score-slate", activeText: "text-primary-foreground" },
+              { key: "bad" as const, labelKey: "feedback.bad", emoji: "😔", activeBg: "bg-score-ruby", activeText: "text-primary-foreground" },
             ]).map((opt) => {
               const isActive = tasteSatisfaction === opt.key;
               return (
@@ -303,13 +297,13 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                   )}
                 >
                   <span className="text-lg">{opt.emoji}</span>
-                  <span className="text-[9px] font-semibold leading-tight">{opt.label}</span>
+                  <span className="text-[9px] font-semibold leading-tight">{t(opt.labelKey)}</span>
                 </motion.button>
               );
             })}
           </div>
 
-          {/* Sensory + DNA buttons (show after non-perfect selection) */}
+          {/* Sensory + DNA buttons */}
           {tasteSatisfaction && tasteSatisfaction !== "perfect" && (
             <div className="flex items-center justify-between">
               <motion.button
@@ -320,7 +314,7 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                 className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-score-emerald/8 text-score-emerald hover:bg-score-emerald/15 transition-colors"
               >
                 <span className="text-sm">🎯</span>
-                <span className="text-[11px] font-semibold">Sensory Feedback</span>
+                <span className="text-[11px] font-semibold">{t("feedback.sensory")}</span>
                 {sensoryExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </motion.button>
 
@@ -354,11 +348,10 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                       transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                       className="w-8 h-8 rounded-full border-[2px] border-border border-t-score-emerald"
                     />
-                    <p className="text-[10px] text-muted-foreground">AI กำลังวิเคราะห์แกนรสชาติ...</p>
+                    <p className="text-[10px] text-muted-foreground">{t("feedback.analyzing")}</p>
                   </div>
                 ) : sensoryAxes.length > 0 ? (
                   <div className="space-y-3 pt-2">
-                    {/* Spider Chart */}
                     {sensoryAxes.length >= 3 && (
                       <div className="bg-secondary/30 rounded-2xl p-4">
                         <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-[0.15em] mb-2 text-center">
@@ -368,7 +361,6 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                       </div>
                     )}
 
-                    {/* Sliders */}
                     <div className="space-y-2.5">
                       {sensoryAxes.map((axis, i) => (
                         <SensorySliderCard
@@ -381,14 +373,13 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                       ))}
                     </div>
 
-                    {/* Auto-computed score display */}
                     {sensoryComputedScore !== null && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="flex items-center justify-between p-3 rounded-2xl bg-score-emerald/5 border border-score-emerald/10"
                       >
-                        <span className="text-[11px] font-medium text-foreground">คะแนนสมดุลรวม</span>
+                        <span className="text-[11px] font-medium text-foreground">{t("feedback.balanceScore")}</span>
                         <span className={cn(
                           "text-sm font-bold tabular-nums",
                           sensoryComputedScore >= 1 ? "text-score-emerald" :
@@ -401,7 +392,7 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                     )}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-muted-foreground text-center py-4">ไม่สามารถวิเคราะห์ได้</p>
+                  <p className="text-[11px] text-muted-foreground text-center py-4">{t("feedback.cannotAnalyze")}</p>
                 )}
               </motion.div>
             )}
