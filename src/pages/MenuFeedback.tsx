@@ -363,10 +363,10 @@ const MenuFeedback = () => {
               <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
               <div>
                 <p className="text-[11px] font-medium text-foreground leading-relaxed">
-                  กดเลือก <span className="text-score-ruby">😔</span> <span className="text-score-slate">😐</span> <span className="text-score-emerald">🤩</span> เพื่อให้คะแนนแต่ละเมนู
+                  {t("feedback.rateGuide")}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  ค่าเฉลี่ยจากทุกคนจะแสดงที่วงกลมด้านขวา
+                  {t("feedback.avgNote")}
                 </p>
               </div>
             </div>
@@ -382,8 +382,7 @@ const MenuFeedback = () => {
               className="w-12 h-12 rounded-full border-[3px] border-border border-t-score-emerald"
             />
             <div className="text-center">
-              <p className="text-xs font-medium text-foreground">กำลังโหลดเมนู</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">loading menu items...</p>
+              <p className="text-xs font-medium text-foreground">{t("feedback.loading")}</p>
             </div>
           </div>
         ) : items.length === 0 ? (
@@ -396,9 +395,9 @@ const MenuFeedback = () => {
               <span className="text-4xl">🍽️</span>
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground">ยังไม่มีเมนูในร้านนี้</p>
+              <p className="text-sm font-medium text-foreground">{t("feedback.noMenu")}</p>
               <p className="text-[11px] text-muted-foreground mt-1">
-                เมนูจะปรากฏหลังจากสแกนป้ายเมนู
+                {t("feedback.noMenuDesc")}
               </p>
             </div>
           </motion.div>
@@ -406,9 +405,9 @@ const MenuFeedback = () => {
           null
         ) : (
           <div className="px-4 pt-3 space-y-5">
-            {renderSection("🍜", "ก๋วยเตี๋ยว", noodles)}
-            {renderSection("💰", "ราคาคู่", dualPrice)}
-            {renderSection("🍽️", "เมนูทั่วไป", standard)}
+            {renderSection("🍜", t("section.noodle"), noodles)}
+            {renderSection("💰", t("section.dualPrice"), dualPrice)}
+            {renderSection("🍽️", t("section.standard"), standard)}
           </div>
         )}
 
