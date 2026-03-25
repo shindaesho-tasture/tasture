@@ -483,7 +483,7 @@ const DishDetailSheet = ({
               {userPhotos.length > 0 && (
                 <div className="px-5 pt-3 pb-2">
                   <h3 className="text-xs font-semibold text-foreground mb-2.5 uppercase tracking-wider">
-                    📸 รูปจากผู้ใช้ ({userPhotos.length})
+                    📸 {t("detail.userPhotos")} ({userPhotos.length})
                   </h3>
                   <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-secondary">
                     <AnimatePresence mode="wait">
