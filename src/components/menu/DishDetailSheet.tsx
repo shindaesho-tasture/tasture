@@ -371,7 +371,7 @@ const DishDetailSheet = ({
               {dnaTags.length > 0 && (
                 <div className="px-5 py-3">
                   <h3 className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wider">
-                    🏷️ เทคเจอร์ยอดนิยม
+                    🏷️ {t("detail.popularTextures")}
                   </h3>
                   <div className="space-y-2">
                     {[...dnaTags]
