@@ -69,7 +69,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
 
       {/* Noodle Type Chips */}
       <div>
-        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">เส้น</span>
+        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.noodleType")}</span>
         <div className="flex flex-wrap gap-1.5 mt-1">
           {defaultNoodleTypes.map((type) => (
             <motion.button
