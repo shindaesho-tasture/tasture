@@ -1,18 +1,20 @@
 import { motion } from "framer-motion";
 import { Home, Compass, PlusCircle, ClipboardList, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useLanguage } from "@/lib/language-context";
 
 const navItems = [
-  { id: "home", label: "Home", icon: Home, path: "/" },
-  { id: "discover", label: "Discover", icon: Compass, path: "/discover" },
-  { id: "post", label: "โพส", icon: PlusCircle, path: "/post", isCenter: true },
-  { id: "orders", label: "รายการ", icon: ClipboardList, path: "/orders" },
-  { id: "profile", label: "Profile", icon: User, path: "/profile" },
+  { id: "home", labelKey: "nav.home", icon: Home, path: "/" },
+  { id: "discover", labelKey: "nav.discover", icon: Compass, path: "/discover" },
+  { id: "post", labelKey: "nav.post", icon: PlusCircle, path: "/post", isCenter: true },
+  { id: "orders", labelKey: "nav.orders", icon: ClipboardList, path: "/orders" },
+  { id: "profile", labelKey: "nav.profile", icon: User, path: "/profile" },
 ];
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const activeId = navItems.find((item) => location.pathname === item.path)?.id ?? "discover";
 
@@ -29,10 +31,10 @@ const BottomNav = () => {
                 onClick={() => navigate(item.path)}
                 whileTap={{ scale: 0.9 }}
                 className={`flex flex-col items-center gap-1 py-1 min-w-[56px] ${
-                  (item as any).isCenter ? "-mt-3" : ""
+                  item.isCenter ? "-mt-3" : ""
                 }`}
               >
-                {(item as any).isCenter ? (
+                {item.isCenter ? (
                   <div className="w-12 h-12 rounded-full bg-score-emerald flex items-center justify-center shadow-[0_2px_16px_hsl(163_78%_20%/0.4)]">
                     <Icon size={24} strokeWidth={2} className="text-white" />
                   </div>
@@ -50,7 +52,7 @@ const BottomNav = () => {
                         isActive ? "text-foreground" : "text-muted-foreground"
                       }`}
                     >
-                      {item.label}
+                      {t(item.labelKey)}
                     </span>
                   </>
                 )}
