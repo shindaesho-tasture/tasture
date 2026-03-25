@@ -124,7 +124,7 @@ const SovereignMenuCard = ({
           {/* Review count badge */}
           {totalReviews > 0 && (
             <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-lg bg-foreground/70 backdrop-blur-sm">
-              <span className="text-[8px] font-semibold text-background">{formatCount(totalReviews)} รีวิว</span>
+              <span className="text-[8px] font-semibold text-background">{formatCount(totalReviews)} {t("card.reviewCount")}</span>
             </div>
           )}
         </div>
