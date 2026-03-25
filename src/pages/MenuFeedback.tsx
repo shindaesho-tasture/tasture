@@ -67,6 +67,7 @@ const SectionHeader = ({ icon, label, count, itemsLabel }: { icon: string; label
 );
 
 const MenuFeedback = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
   const { user, loading: authLoading } = useAuth();
