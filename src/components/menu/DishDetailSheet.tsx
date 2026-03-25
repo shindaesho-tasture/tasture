@@ -348,11 +348,11 @@ const DishDetailSheet = ({
                   <span className="text-base font-semibold text-score-emerald">฿{price}</span>
                   {priceSpecial != null && (
                     <span className="text-sm font-light text-muted-foreground">
-                     พิเศษ ฿{priceSpecial}
+                      {t("feedback.special")} ฿{priceSpecial}
                     </span>
                   )}
                   <span className="text-[10px] text-muted-foreground ml-auto">
-                    {totalReviews} รีวิว
+                    {totalReviews} {t("detail.reviews")}
                   </span>
                 </div>
               </div>
