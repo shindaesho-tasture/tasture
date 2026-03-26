@@ -630,8 +630,8 @@ const StoreOrder = () => {
                   {/* Noodle Styles */}
                   {optionsItem.noodle_styles && optionsItem.noodle_styles.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🍲 เลือกแบบ
+                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🍲 {t("order.selectStyle", language)}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.noodle_styles.map((ns) => (
