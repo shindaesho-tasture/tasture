@@ -659,8 +659,8 @@ const StoreRegistration = () => {
                     <Camera size={24} strokeWidth={1.5} className="text-muted-foreground" />
                   </div>
                   <div className="text-center">
-                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">ถ่ายรูปเมนู</span>
-                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">เปิดกล้อง</span>
+                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">{t("reg.takePhoto", language)}</span>
+                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">{t("reg.openCamera", language)}</span>
                   </div>
                 </motion.button>
                 <motion.button
