@@ -557,8 +557,8 @@ const Profile = () => {
                 <div className="w-16 h-16 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center mb-4">
                   <Bookmark size={28} strokeWidth={1.5} className="text-muted-foreground/50" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-1">บันทึกร้าน</h3>
-                <p className="text-sm text-muted-foreground text-center">กดปุ่มบันทึกในฟีดเพื่อเก็บร้านที่ชอบ</p>
+                <h3 className="text-xl font-bold text-foreground mb-1">{t("profile.savedStores", language)}</h3>
+                <p className="text-sm text-muted-foreground text-center">{t("profile.savedStoresDesc", language)}</p>
               </div>
             )}
           </div>
