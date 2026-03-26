@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/use-categories";
 import { useStore } from "@/lib/store-context";
 import { useAuth } from "@/hooks/use-auth";
+import type { MenuItem } from "@/lib/menu-types";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import { GOOGLE_MAPS_API_KEY, MAPS_LIBRARIES, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
