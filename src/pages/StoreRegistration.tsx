@@ -745,7 +745,7 @@ const StoreRegistration = () => {
 
           {/* Category Selector */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">เลือกหมวดหมู่</label>
+            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">{t("reg.selectCategory", language)}</label>
             <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
               {categories.map((cat) => {
                 const isActive = selectedCategory === cat.id;
