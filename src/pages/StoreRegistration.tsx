@@ -724,7 +724,7 @@ const StoreRegistration = () => {
                     </span>
                   </div>
                 ) : (
-                  <span className="text-xs font-light text-muted-foreground">กำลังโหลดภาพ...</span>
+                  <span className="text-xs font-light text-muted-foreground">{t("reg.loadingImage", language)}</span>
                 )}
               </div>
             )}
