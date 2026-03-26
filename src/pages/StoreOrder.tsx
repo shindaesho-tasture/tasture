@@ -655,8 +655,8 @@ const StoreOrder = () => {
                   {/* Toppings */}
                   {optionsItem.toppings && optionsItem.toppings.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🥩 เลือกท็อปปิ้ง (เลือกได้หลายอย่าง)
+                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🥩 {t("order.selectToppings", language)}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.toppings.map((t) => {
