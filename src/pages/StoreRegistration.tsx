@@ -454,7 +454,7 @@ const StoreRegistration = () => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="ระบุชื่อร้านอาหาร..."
+              placeholder={t("reg.storeNamePlaceholder", language)}
               lang="th"
               autoComplete="off"
               className={`w-full px-5 py-4 rounded-2xl bg-surface-elevated shadow-luxury text-base font-light text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-2 transition-shadow border-0 ${duplicateWarning ? 'ring-2 ring-score-amber/50 focus:ring-score-amber/50' : 'focus:ring-score-emerald/30'}`}
