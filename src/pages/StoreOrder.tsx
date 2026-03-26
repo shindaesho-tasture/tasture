@@ -584,7 +584,7 @@ const StoreOrder = () => {
                               : "bg-surface-elevated text-foreground border-border/50"
                           }`}
                         >
-                          <span className="block font-bold">ธรรมดา</span>
+                          <span className="block font-bold">{t("order.regular", language)}</span>
                           <span className="block text-[10px] mt-0.5 opacity-80">฿{optionsItem.price}</span>
                         </motion.button>
                         <motion.button
