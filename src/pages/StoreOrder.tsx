@@ -469,7 +469,7 @@ const StoreOrder = () => {
               ) : storePosts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                   <span className="text-4xl">📸</span>
-                  <p className="text-sm text-muted-foreground">ยังไม่มีโพสจากลูกค้า</p>
+                  <p className="text-sm text-muted-foreground">{t("order.noPosts", language)}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
