@@ -689,7 +689,7 @@ const StoreOrder = () => {
                     onClick={handleAddWithOptions}
                     className="w-full py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury"
                   >
-                    เพิ่มลงออเดอร์
+                    {t("order.addToOrder", language)}
                   </motion.button>
                 </div>
               </motion.div>
