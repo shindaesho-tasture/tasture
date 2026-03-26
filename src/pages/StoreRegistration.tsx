@@ -584,7 +584,7 @@ const StoreRegistration = () => {
                 {pinned ? (
                   <>
                     <Check size={16} strokeWidth={2} />
-                    ปักหมุดแล้ว
+                    {t("reg.pinned", language)}
                     {pinLocation && (
                       <span className="text-[10px] font-light ml-1 opacity-60">
                         {pinLocation.lat.toFixed(4)}, {pinLocation.lng.toFixed(4)}
