@@ -594,7 +594,7 @@ const StoreRegistration = () => {
                 ) : (
                   <>
                     <MapPin size={16} strokeWidth={1.5} />
-                    ปักหมุดตำแหน่งปัจจุบัน
+                    {t("reg.pinCurrent", language)}
                   </>
                 )}
               </motion.button>
