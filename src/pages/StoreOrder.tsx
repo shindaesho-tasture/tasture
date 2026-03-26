@@ -384,7 +384,7 @@ const StoreOrder = () => {
                 </div>
               ) : menuItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <p className="text-sm text-muted-foreground">ยังไม่มีเมนูในร้านนี้</p>
+                  <p className="text-sm text-muted-foreground">{t("order.noMenu", language)}</p>
                 </div>
               ) : (
                 <AnimatePresence>
