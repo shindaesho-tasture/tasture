@@ -410,9 +410,9 @@ const StoreRegistration = () => {
       <AlertDialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>พบร้านชื่อเดียวกัน</AlertDialogTitle>
+            <AlertDialogTitle>{t("reg.duplicateTitle", language)}</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณมีร้าน "<span className="font-semibold text-foreground">{name.trim()}</span>" อยู่แล้ว ต้องการรวมเมนูเข้ากับร้านเดิม หรือสร้างร้านใหม่?
+              {t("reg.duplicateDesc", language, { name: name.trim() })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
@@ -420,15 +420,15 @@ const StoreRegistration = () => {
               onClick={() => handleDuplicateChoice("merge")}
               className="bg-score-emerald hover:bg-score-emerald/90 text-primary-foreground"
             >
-              รวมเมนูเข้าร้านเดิม
+              {t("reg.mergeMenu", language)}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => handleDuplicateChoice("new")}
               className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
             >
-              สร้างร้านใหม่แยก
+              {t("reg.createNew", language)}
             </AlertDialogAction>
-            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel", language)}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
