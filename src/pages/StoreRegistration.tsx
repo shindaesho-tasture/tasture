@@ -689,7 +689,7 @@ const StoreRegistration = () => {
                   <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center">
                     <Camera size={16} strokeWidth={1.5} className="text-muted-foreground" />
                   </div>
-                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">ถ่ายเพิ่ม</span>
+                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">{t("reg.takeMore", language)}</span>
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
