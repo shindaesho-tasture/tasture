@@ -128,7 +128,7 @@ const StoreRegistration = () => {
           .eq("user_id", user.id)
           .ilike("name", name.trim());
         if (data && data.length > 0) {
-          setDuplicateWarning(`คุณมีร้าน "${data[0].name}" อยู่แล้ว`);
+          setDuplicateWarning(t("reg.duplicateWarning", language, { name: data[0].name }));
         } else {
           setDuplicateWarning(null);
         }
