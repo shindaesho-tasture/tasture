@@ -720,7 +720,7 @@ const StoreRegistration = () => {
                       />
                     </div>
                     <span className="text-xs font-light text-muted-foreground">
-                      สแกนรูปที่ {scanDone + 1 > scanTotal ? scanTotal : scanDone + 1}/{scanTotal}
+                      {t("reg.scanProgress", language, { done: scanDone + 1 > scanTotal ? scanTotal : scanDone + 1, total: scanTotal })}
                     </span>
                   </div>
                 ) : (
