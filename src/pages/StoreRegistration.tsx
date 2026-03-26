@@ -342,8 +342,8 @@ const StoreRegistration = () => {
         const skippedCount = menuItems.length - (newItems?.length ?? menuItems.length);
         if (isExisting && skippedCount > 0) {
           toast({
-            title: "รวมเมนูสำเร็จ",
-            description: `เพิ่ม ${newItems?.length ?? 0} เมนูใหม่ (ข้าม ${skippedCount} เมนูซ้ำ)`,
+            title: t("reg.mergeSuccess", language),
+            description: t("reg.mergeSuccessDesc", language, { added: newItems?.length ?? 0, skipped: skippedCount }),
           });
         }
       }
