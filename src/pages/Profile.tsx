@@ -428,7 +428,7 @@ const Profile = () => {
           {/* Language Selector */}
           <div className="flex items-center gap-2 mb-3">
             <Globe size={14} className="text-muted-foreground" />
-            <span className="text-[11px] text-muted-foreground">ภาษา:</span>
+            <span className="text-[11px] text-muted-foreground">{t("common.language", language)}:</span>
             <div className="flex gap-1.5">
               {LANGUAGES.map((lang) => (
                 <button
