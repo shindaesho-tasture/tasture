@@ -9,7 +9,8 @@ import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { useLanguage, LANGUAGES } from "@/lib/language-context";
+import { useLanguage, LANGUAGES, type AppLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 /* ── Types ── */
 interface UserPost {
@@ -71,13 +72,13 @@ const ACHIEVEMENTS: Achievement[] = [
 ];
 
 /* ── Taste DNA Spider Chart ── */
-const TasteDNAChart = ({ dna }: { dna: TasteDNA }) => {
+const TasteDNAChart = ({ dna, language }: { dna: TasteDNA; language: AppLanguage }) => {
   const axes = [
-    { name: "เค็ม", key: "salty" as keyof TasteDNA },
-    { name: "หวาน", key: "sweet" as keyof TasteDNA },
-    { name: "เปรี้ยว", key: "sour" as keyof TasteDNA },
-    { name: "เผ็ด", key: "spicy" as keyof TasteDNA },
-    { name: "อูมามิ", key: "umami" as keyof TasteDNA },
+    { name: t("taste.salty", language), key: "salty" as keyof TasteDNA },
+    { name: t("taste.sweet", language), key: "sweet" as keyof TasteDNA },
+    { name: t("taste.sour", language), key: "sour" as keyof TasteDNA },
+    { name: t("taste.spicy", language), key: "spicy" as keyof TasteDNA },
+    { name: t("taste.umami", language), key: "umami" as keyof TasteDNA },
   ];
   const cx = 100, cy = 100, maxR = 70, n = axes.length;
   const step = (2 * Math.PI) / n;
@@ -337,9 +338,9 @@ const Profile = () => {
               <Crown size={28} strokeWidth={1.5} className="text-score-emerald" />
             </div>
             <h1 className="text-xl font-medium text-foreground">Sovereign Profile</h1>
-            <p className="text-sm text-muted-foreground text-center">เข้าสู่ระบบเพื่อดูโปรไฟล์ของคุณ</p>
+            <p className="text-sm text-muted-foreground text-center">{t("profile.loginPrompt", language)}</p>
             <button onClick={() => navigate("/auth")} className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-medium mt-2">
-              <LogIn size={16} /> เข้าสู่ระบบ
+              <LogIn size={16} /> {t("common.login", language)}
             </button>
           </div>
           <BottomNav />
@@ -358,7 +359,7 @@ const Profile = () => {
           <div className="flex items-center justify-between py-3">
             <h1 className="text-lg font-bold text-foreground">{displayName}</h1>
             <button onClick={signOut} className="text-xs text-muted-foreground px-3 py-1.5 rounded-lg border border-border">
-              ออกจากระบบ
+              {t("common.logout", language)}
             </button>
           </div>
 
@@ -385,9 +386,9 @@ const Profile = () => {
 
             <div className="flex-1 flex justify-around">
               {[
-                { value: postCount, label: "โพสต์", link: null },
-                { value: followerCount, label: "ผู้ติดตาม", link: "/follows?tab=followers" },
-                { value: followingCount, label: "ติดตาม", link: "/follows?tab=following" },
+                { value: postCount, label: t("profile.posts", language), link: null },
+                { value: followerCount, label: t("profile.followers", language), link: "/follows?tab=followers" },
+                { value: followingCount, label: t("profile.following", language), link: "/follows?tab=following" },
               ].map(({ value, label, link }) => (
                 <button key={label} onClick={() => link && navigate(link)} className="flex flex-col items-center">
                   <span className="text-lg font-bold text-foreground">{value}</span>
@@ -427,7 +428,7 @@ const Profile = () => {
           {/* Language Selector */}
           <div className="flex items-center gap-2 mb-3">
             <Globe size={14} className="text-muted-foreground" />
-            <span className="text-[11px] text-muted-foreground">ภาษา:</span>
+            <span className="text-[11px] text-muted-foreground">{t("common.language", language)}:</span>
             <div className="flex gap-1.5">
               {LANGUAGES.map((lang) => (
                 <button
@@ -522,8 +523,8 @@ const Profile = () => {
                 <div className="w-16 h-16 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center mb-4">
                   <Camera size={28} strokeWidth={1.5} className="text-muted-foreground/50" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-1">แชร์รูปอาหาร</h3>
-                <p className="text-sm text-muted-foreground text-center">เมื่อคุณโพสรูป จะแสดงในโปรไฟล์ของคุณ</p>
+                <h3 className="text-xl font-bold text-foreground mb-1">{t("profile.sharePhotos", language)}</h3>
+                <p className="text-sm text-muted-foreground text-center">{t("profile.sharePhotosDesc", language)}</p>
               </div>
             )}
           </div>
@@ -545,7 +546,7 @@ const Profile = () => {
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium text-foreground block truncate">{s.storeName}</span>
                       <span className="text-[10px] text-muted-foreground">
-                        บันทึกเมื่อ {new Date(s.savedAt).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
+                        {t("profile.savedAt", language)} {new Date(s.savedAt).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
                       </span>
                     </div>
                   </motion.button>
@@ -556,8 +557,8 @@ const Profile = () => {
                 <div className="w-16 h-16 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center mb-4">
                   <Bookmark size={28} strokeWidth={1.5} className="text-muted-foreground/50" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-1">บันทึกร้าน</h3>
-                <p className="text-sm text-muted-foreground text-center">กดปุ่มบันทึกในฟีดเพื่อเก็บร้านที่ชอบ</p>
+                <h3 className="text-xl font-bold text-foreground mb-1">{t("profile.savedStores", language)}</h3>
+                <p className="text-sm text-muted-foreground text-center">{t("profile.savedStoresDesc", language)}</p>
               </div>
             )}
           </div>
@@ -573,12 +574,12 @@ const Profile = () => {
               </h2>
               <div className="bg-card rounded-2xl shadow-luxury p-4">
                 {hasTasteDNA ? (
-                  <TasteDNAChart dna={tasteDNA} />
+                  <TasteDNAChart dna={tasteDNA} language={language} />
                 ) : (
                   <div className="flex flex-col items-center py-8 text-center">
                     <span className="text-2xl mb-2">🧬</span>
-                    <p className="text-xs text-muted-foreground">ยังไม่มีข้อมูล Taste DNA</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">รีวิวเมนูเพิ่มเพื่อสร้างลายนิ้วมือรสชาติ</p>
+                    <p className="text-xs text-muted-foreground">{t("profile.noTasteDNA", language)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{t("profile.noTasteDNADesc", language)}</p>
                   </div>
                 )}
               </div>
@@ -593,8 +594,8 @@ const Profile = () => {
               <div className="grid grid-cols-4 gap-2.5">
                 {[
                   { icon: Gem, label: "Emeralds", value: emeraldCount },
-                  { icon: Store, label: "ร้าน", value: storeCount },
-                  { icon: ChefHat, label: "รีวิว", value: totalReviews },
+                  { icon: Store, label: t("profile.stores", language), value: storeCount },
+                  { icon: ChefHat, label: t("profile.reviews", language), value: totalReviews },
                   { icon: Trophy, label: "Badges", value: unlockedBadges.length },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} className="flex flex-col items-center py-3 rounded-2xl bg-card shadow-luxury">

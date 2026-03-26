@@ -19,6 +19,7 @@ import { useStore } from "@/lib/store-context";
 import { useAuth } from "@/hooks/use-auth";
 import type { MenuItem } from "@/lib/menu-types";
 import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import { GOOGLE_MAPS_API_KEY, MAPS_LIBRARIES, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
@@ -127,7 +128,7 @@ const StoreRegistration = () => {
           .eq("user_id", user.id)
           .ilike("name", name.trim());
         if (data && data.length > 0) {
-          setDuplicateWarning(`คุณมีร้าน "${data[0].name}" อยู่แล้ว`);
+          setDuplicateWarning(t("reg.duplicateWarning", language, { name: data[0].name }));
         } else {
           setDuplicateWarning(null);
         }
@@ -200,10 +201,10 @@ const StoreRegistration = () => {
 
       // Merge with existing items instead of replacing
       setMenuItems((prev) => [...prev, ...items]);
-      toast({ title: `สแกนสำเร็จ`, description: `พบ ${items.length} รายการ` });
+      toast({ title: t("reg.scanSuccess", language), description: t("reg.foundItems", language, { count: items.length }) });
     } catch (err: any) {
       console.error("Scan error:", err);
-      toast({ title: "สแกนไม่สำเร็จ", description: err.message || "กรุณาลองใหม่อีกครั้ง", variant: "destructive" });
+      toast({ title: t("reg.scanFailed", language), description: err.message || t("reg.tryAgain", language), variant: "destructive" });
     } finally {
       setScanning(false);
     }
@@ -259,7 +260,7 @@ const StoreRegistration = () => {
 
   const saveToDatabase = async (forceMode: "merge" | "new") => {
     if (!user) {
-      toast({ title: "กรุณาเข้าสู่ระบบ", description: "ต้องเข้าสู่ระบบก่อนบันทึกร้าน", variant: "destructive" });
+      toast({ title: t("reg.pleaseLogin", language), description: t("reg.loginToSave", language), variant: "destructive" });
       navigate("/auth");
       return false;
     }
@@ -341,20 +342,20 @@ const StoreRegistration = () => {
         const skippedCount = menuItems.length - (newItems?.length ?? menuItems.length);
         if (isExisting && skippedCount > 0) {
           toast({
-            title: "รวมเมนูสำเร็จ",
-            description: `เพิ่ม ${newItems?.length ?? 0} เมนูใหม่ (ข้าม ${skippedCount} เมนูซ้ำ)`,
+            title: t("reg.mergeSuccess", language),
+            description: t("reg.mergeSuccessDesc", language, { added: newItems?.length ?? 0, skipped: skippedCount }),
           });
         }
       }
 
       const successMsg = isExisting
-        ? `รวมเข้ากับร้าน "${normalizedName}" ที่มีอยู่แล้ว`
-        : `ร้าน "${normalizedName}" ถูกบันทึกแล้ว`;
-      toast({ title: "บันทึกสำเร็จ", description: successMsg });
+        ? t("reg.savedExisting", language, { name: normalizedName })
+        : t("reg.savedNew", language, { name: normalizedName });
+      toast({ title: t("reg.saveSuccess", language), description: successMsg });
       return true;
     } catch (err: any) {
       console.error("Save error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("reg.saveFailed", language), description: err.message, variant: "destructive" });
       return false;
     } finally {
       setSaving(false);
@@ -385,7 +386,7 @@ const StoreRegistration = () => {
     // No duplicate — save as new
     const saved = await saveToDatabase("new");
     if (saved) {
-      toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
+      toast({ title: t("reg.addSuccess", language), description: t("reg.addSuccessDesc", language) });
       setShowConfetti(true);
       setTimeout(() => navigate("/discover"), 1800);
     }
@@ -395,7 +396,7 @@ const StoreRegistration = () => {
     setDuplicateDialogOpen(false);
     const saved = await saveToDatabase(mode);
     if (saved) {
-      toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
+      toast({ title: t("reg.addSuccess", language), description: t("reg.addSuccessDesc", language) });
       setShowConfetti(true);
       setTimeout(() => navigate("/discover"), 1800);
     }
@@ -409,9 +410,9 @@ const StoreRegistration = () => {
       <AlertDialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>พบร้านชื่อเดียวกัน</AlertDialogTitle>
+            <AlertDialogTitle>{t("reg.duplicateTitle", language)}</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณมีร้าน "<span className="font-semibold text-foreground">{name.trim()}</span>" อยู่แล้ว ต้องการรวมเมนูเข้ากับร้านเดิม หรือสร้างร้านใหม่?
+              {t("reg.duplicateDesc", language, { name: name.trim() })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
@@ -419,15 +420,15 @@ const StoreRegistration = () => {
               onClick={() => handleDuplicateChoice("merge")}
               className="bg-score-emerald hover:bg-score-emerald/90 text-primary-foreground"
             >
-              รวมเมนูเข้าร้านเดิม
+              {t("reg.mergeMenu", language)}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => handleDuplicateChoice("new")}
               className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
             >
-              สร้างร้านใหม่แยก
+              {t("reg.createNew", language)}
             </AlertDialogAction>
-            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel", language)}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -439,8 +440,8 @@ const StoreRegistration = () => {
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-medium tracking-tight text-foreground">ลงทะเบียนร้านอาหาร</h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Store Registration</p>
+              <h1 className="text-lg font-medium tracking-tight text-foreground">{t("reg.title", language)}</h1>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{t("reg.subtitle", language)}</p>
             </div>
           </div>
         </div>
@@ -448,12 +449,12 @@ const StoreRegistration = () => {
         <div className="px-5 pt-5 space-y-6">
           {/* Input 1: Restaurant Name */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">ชื่อร้านอาหาร</label>
+            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">{t("reg.storeName", language)}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="ระบุชื่อร้านอาหาร..."
+              placeholder={t("reg.storeNamePlaceholder", language)}
               lang="th"
               autoComplete="off"
               className={`w-full px-5 py-4 rounded-2xl bg-surface-elevated shadow-luxury text-base font-light text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-2 transition-shadow border-0 ${duplicateWarning ? 'ring-2 ring-score-amber/50 focus:ring-score-amber/50' : 'focus:ring-score-emerald/30'}`}
@@ -466,7 +467,7 @@ const StoreRegistration = () => {
                   exit={{ opacity: 0, y: -4 }}
                   className="mt-2 text-xs text-score-amber flex items-center gap-1.5"
                 >
-                  ⚠️ {duplicateWarning} — กดบันทึกเพื่อเลือกรวมหรือสร้างใหม่
+                  ⚠️ {duplicateWarning} — {t("reg.duplicateHint", language)}
                 </motion.p>
               )}
             </AnimatePresence>
@@ -474,7 +475,7 @@ const StoreRegistration = () => {
 
           {/* Input 2: Map with Pin + Search */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">ปักหมุดตำแหน่ง</label>
+            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">{t("reg.pinLocation", language)}</label>
 
             {/* Place Search */}
             <div className="relative mb-2">
@@ -484,7 +485,7 @@ const StoreRegistration = () => {
                   type="text"
                   value={placeQuery}
                   onChange={(e) => setPlaceQuery(e.target.value)}
-                  placeholder="ค้นหาชื่อร้านหรือสถานที่..."
+                  placeholder={t("reg.searchPlace", language)}
                   lang="th"
                   autoComplete="off"
                   className="flex-1 bg-transparent text-sm font-light text-foreground placeholder:text-muted-foreground/60 outline-none"
@@ -567,7 +568,7 @@ const StoreRegistration = () => {
                     <div className="flex flex-col items-center gap-1.5">
                       <MapPin size={28} className="text-score-emerald drop-shadow-lg animate-bounce" />
                       <span className="text-[10px] font-medium text-foreground bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full shadow">
-                        แตะแผนที่เพื่อปักหมุด
+                        {t("reg.tapToPin", language)}
                       </span>
                     </div>
                   </div>
@@ -583,7 +584,7 @@ const StoreRegistration = () => {
                 {pinned ? (
                   <>
                     <Check size={16} strokeWidth={2} />
-                    ปักหมุดแล้ว
+                    {t("reg.pinned", language)}
                     {pinLocation && (
                       <span className="text-[10px] font-light ml-1 opacity-60">
                         {pinLocation.lat.toFixed(4)}, {pinLocation.lng.toFixed(4)}
@@ -593,7 +594,7 @@ const StoreRegistration = () => {
                 ) : (
                   <>
                     <MapPin size={16} strokeWidth={1.5} />
-                    ปักหมุดตำแหน่งปัจจุบัน
+                    {t("reg.pinCurrent", language)}
                   </>
                 )}
               </motion.button>
@@ -602,7 +603,7 @@ const StoreRegistration = () => {
 
           {/* Input 3: Menu Photo + Smart Digitizer */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">📷 Smart Menu Digitizer</label>
+            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">{t("reg.smartDigitizer", language)}</label>
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
             <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleMultiFileChange} className="hidden" />
 
@@ -625,7 +626,7 @@ const StoreRegistration = () => {
                         <X size={12} className="text-background" />
                       </button>
                       <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-score-emerald/90">
-                        <span className="text-[8px] font-medium text-primary-foreground">รูปที่ {idx + 1}</span>
+                        <span className="text-[8px] font-medium text-primary-foreground">{t("reg.photoNum", language, { num: idx + 1 })}</span>
                       </div>
                     </motion.div>
                   ))}
@@ -634,14 +635,14 @@ const StoreRegistration = () => {
                 {scanning && (
                   <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-elevated">
                     <Loader2 size={14} className="text-score-emerald animate-spin" />
-                    <span className="text-xs text-muted-foreground">กำลังสแกนเมนู...</span>
+                    <span className="text-xs text-muted-foreground">{t("reg.scanning", language)}</span>
                   </div>
                 )}
 
                 {!scanning && menuItems.length > 0 && (
                   <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-score-emerald/10">
                     <Check size={14} className="text-score-emerald" />
-                    <span className="text-[11px] font-medium text-score-emerald">{menuItems.length} รายการจาก {menuPhotos.length} รูป</span>
+                    <span className="text-[11px] font-medium text-score-emerald">{t("reg.itemsFromPhotos", language, { items: menuItems.length, photos: menuPhotos.length })}</span>
                   </div>
                 )}
               </div>
@@ -658,8 +659,8 @@ const StoreRegistration = () => {
                     <Camera size={24} strokeWidth={1.5} className="text-muted-foreground" />
                   </div>
                   <div className="text-center">
-                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">ถ่ายรูปเมนู</span>
-                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">เปิดกล้อง</span>
+                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">{t("reg.takePhoto", language)}</span>
+                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">{t("reg.openCamera", language)}</span>
                   </div>
                 </motion.button>
                 <motion.button
@@ -671,8 +672,8 @@ const StoreRegistration = () => {
                     <ImagePlus size={24} strokeWidth={1.5} className="text-muted-foreground" />
                   </div>
                   <div className="text-center">
-                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">เลือกจากเครื่อง</span>
-                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">อัลบั้มรูป</span>
+                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">{t("reg.pickFromDevice", language)}</span>
+                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">{t("reg.photoAlbum", language)}</span>
                   </div>
                 </motion.button>
               </div>
@@ -688,7 +689,7 @@ const StoreRegistration = () => {
                   <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center">
                     <Camera size={16} strokeWidth={1.5} className="text-muted-foreground" />
                   </div>
-                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">ถ่ายเพิ่ม</span>
+                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">{t("reg.takeMore", language)}</span>
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
@@ -698,7 +699,7 @@ const StoreRegistration = () => {
                   <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center">
                     <ImagePlus size={16} strokeWidth={1.5} className="text-muted-foreground" />
                   </div>
-                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">เลือกรูป</span>
+                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">{t("reg.pickMore", language)}</span>
                 </motion.button>
               </div>
             )}
@@ -719,11 +720,11 @@ const StoreRegistration = () => {
                       />
                     </div>
                     <span className="text-xs font-light text-muted-foreground">
-                      สแกนรูปที่ {scanDone + 1 > scanTotal ? scanTotal : scanDone + 1}/{scanTotal}
+                      {t("reg.scanProgress", language, { done: scanDone + 1 > scanTotal ? scanTotal : scanDone + 1, total: scanTotal })}
                     </span>
                   </div>
                 ) : (
-                  <span className="text-xs font-light text-muted-foreground">กำลังโหลดภาพ...</span>
+                  <span className="text-xs font-light text-muted-foreground">{t("reg.loadingImage", language)}</span>
                 )}
               </div>
             )}
@@ -744,7 +745,7 @@ const StoreRegistration = () => {
 
           {/* Category Selector */}
           <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}>
-            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">เลือกหมวดหมู่</label>
+            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">{t("reg.selectCategory", language)}</label>
             <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
               {categories.map((cat) => {
                 const isActive = selectedCategory === cat.id;
@@ -783,7 +784,7 @@ const StoreRegistration = () => {
             {saving ? (
               <Loader2 size={18} className="animate-spin" />
             ) : null}
-            <span className="uppercase tracking-wider">{saving ? "กำลังบันทึก..." : "บันทึกร้าน"}</span>
+            <span className="uppercase tracking-wider">{saving ? t("reg.saving", language) : t("reg.saveStore", language)}</span>
           </motion.button>
         </div>
 

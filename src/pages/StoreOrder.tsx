@@ -11,6 +11,8 @@ import DishDetailSheet from "@/components/menu/DishDetailSheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 interface MenuItemRow {
   id: string;
@@ -44,6 +46,7 @@ interface StorePost {
 }
 
 const StoreOrder = () => {
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
   const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice } = useOrder();
@@ -341,7 +344,7 @@ const StoreOrder = () => {
             </button>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-medium tracking-tight text-foreground truncate">
-                {storeName || "ร้านอาหาร"}
+                {storeName || t("order.restaurant", language)}
               </h1>
             </div>
           </div>
@@ -362,13 +365,13 @@ const StoreOrder = () => {
               value="menu"
               className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
             >
-              🍽️ เมนู
+              🍽️ {t("order.menu", language)}
             </TabsTrigger>
             <TabsTrigger
               value="posts"
               className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
             >
-              📸 โพสจากลูกค้า
+              📸 {t("order.customerPosts", language)}
             </TabsTrigger>
           </TabsList>
 
@@ -377,11 +380,11 @@ const StoreOrder = () => {
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
                   <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-                  <span className="text-xs text-muted-foreground">กำลังโหลดเมนู...</span>
+                  <span className="text-xs text-muted-foreground">{t("order.loadingMenu", language)}</span>
                 </div>
               ) : menuItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <p className="text-sm text-muted-foreground">ยังไม่มีเมนูในร้านนี้</p>
+                  <p className="text-sm text-muted-foreground">{t("order.noMenu", language)}</p>
                 </div>
               ) : (
                 <AnimatePresence>
@@ -461,12 +464,12 @@ const StoreOrder = () => {
               {postsLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
                   <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-                  <span className="text-xs text-muted-foreground">กำลังโหลดโพส...</span>
+                  <span className="text-xs text-muted-foreground">{t("order.loadingPosts", language)}</span>
                 </div>
               ) : storePosts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                   <span className="text-4xl">📸</span>
-                  <p className="text-sm text-muted-foreground">ยังไม่มีโพสจากลูกค้า</p>
+                  <p className="text-sm text-muted-foreground">{t("order.noPosts", language)}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -481,7 +484,7 @@ const StoreOrder = () => {
                       <div className="aspect-[4/3] overflow-hidden">
                         <img
                           src={post.image_url}
-                          alt={post.caption || "โพสจากลูกค้า"}
+                          alt={post.caption || t("order.customerPost", language)}
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
@@ -498,7 +501,7 @@ const StoreOrder = () => {
                             )}
                           </div>
                           <span className="text-xs font-medium text-foreground truncate">
-                            {post.profile?.display_name || "ผู้ใช้"}
+                            {post.profile?.display_name || t("order.user", language)}
                           </span>
                           <span className="text-[10px] text-muted-foreground ml-auto flex-shrink-0">
                             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: th })}
@@ -568,8 +571,8 @@ const StoreOrder = () => {
                   {/* Size Selection (ธรรมดา / พิเศษ) */}
                   {optionsItem.price_special != null && (
                     <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        💰 เลือกขนาด
+                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        💰 {t("order.selectSize", language)}
                       </p>
                       <div className="flex gap-2">
                         <motion.button
@@ -581,7 +584,7 @@ const StoreOrder = () => {
                               : "bg-surface-elevated text-foreground border-border/50"
                           }`}
                         >
-                          <span className="block font-bold">ธรรมดา</span>
+                          <span className="block font-bold">{t("order.regular", language)}</span>
                           <span className="block text-[10px] mt-0.5 opacity-80">฿{optionsItem.price}</span>
                         </motion.button>
                         <motion.button
@@ -593,7 +596,7 @@ const StoreOrder = () => {
                               : "bg-surface-elevated text-foreground border-border/50"
                           }`}
                         >
-                          <span className="block font-bold">พิเศษ</span>
+                          <span className="block font-bold">{t("order.special", language)}</span>
                           <span className="block text-[10px] mt-0.5 opacity-80">฿{optionsItem.price_special}</span>
                         </motion.button>
                       </div>
@@ -602,8 +605,8 @@ const StoreOrder = () => {
                   {/* Noodle Types */}
                   {optionsItem.noodle_types && optionsItem.noodle_types.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🍜 เลือกเส้น
+                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🍜 {t("order.selectNoodle", language)}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.noodle_types.map((nt) => (
@@ -627,8 +630,8 @@ const StoreOrder = () => {
                   {/* Noodle Styles */}
                   {optionsItem.noodle_styles && optionsItem.noodle_styles.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🍲 เลือกแบบ
+                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🍲 {t("order.selectStyle", language)}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.noodle_styles.map((ns) => (
@@ -652,8 +655,8 @@ const StoreOrder = () => {
                   {/* Toppings */}
                   {optionsItem.toppings && optionsItem.toppings.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🥩 เลือกท็อปปิ้ง (เลือกได้หลายอย่าง)
+                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🥩 {t("order.selectToppings", language)}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.toppings.map((t) => {
@@ -686,7 +689,7 @@ const StoreOrder = () => {
                     onClick={handleAddWithOptions}
                     className="w-full py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury"
                   >
-                    เพิ่มลงออเดอร์
+                    {t("order.addToOrder", language)}
                   </motion.button>
                 </div>
               </motion.div>
@@ -709,12 +712,12 @@ const StoreOrder = () => {
                 onClick={() => navigate("/order-summary")}
                 className="w-full flex items-center justify-between px-5 py-4 rounded-2xl bg-score-emerald text-primary-foreground shadow-luxury"
               >
-                <div className="flex items-center gap-3">
-                  <ShoppingBag size={20} strokeWidth={2} />
-                  <span className="text-sm font-bold">ดูออเดอร์</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs opacity-80">{totalItems} รายการ</span>
+                 <div className="flex items-center gap-3">
+                   <ShoppingBag size={20} strokeWidth={2} />
+                   <span className="text-sm font-bold">{t("order.viewOrder", language)}</span>
+                 </div>
+                 <div className="flex items-center gap-2">
+                   <span className="text-xs opacity-80">{t("order.items", language, { count: totalItems })}</span>
                   <span className="text-sm font-bold">฿{totalPrice.toLocaleString()}</span>
                 </div>
               </motion.button>
