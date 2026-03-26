@@ -484,7 +484,7 @@ const StoreOrder = () => {
                       <div className="aspect-[4/3] overflow-hidden">
                         <img
                           src={post.image_url}
-                          alt={post.caption || "โพสจากลูกค้า"}
+                          alt={post.caption || t("order.customerPost", language)}
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
