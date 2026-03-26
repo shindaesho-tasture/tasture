@@ -501,7 +501,7 @@ const StoreOrder = () => {
                             )}
                           </div>
                           <span className="text-xs font-medium text-foreground truncate">
-                            {post.profile?.display_name || "ผู้ใช้"}
+                            {post.profile?.display_name || t("order.user", language)}
                           </span>
                           <span className="text-[10px] text-muted-foreground ml-auto flex-shrink-0">
                             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: th })}
