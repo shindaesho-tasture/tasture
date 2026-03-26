@@ -571,8 +571,8 @@ const StoreOrder = () => {
                   {/* Size Selection (ธรรมดา / พิเศษ) */}
                   {optionsItem.price_special != null && (
                     <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        💰 เลือกขนาด
+                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        💰 {t("order.selectSize", language)}
                       </p>
                       <div className="flex gap-2">
                         <motion.button
