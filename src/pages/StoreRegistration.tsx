@@ -349,9 +349,9 @@ const StoreRegistration = () => {
       }
 
       const successMsg = isExisting
-        ? `รวมเข้ากับร้าน "${normalizedName}" ที่มีอยู่แล้ว`
-        : `ร้าน "${normalizedName}" ถูกบันทึกแล้ว`;
-      toast({ title: "บันทึกสำเร็จ", description: successMsg });
+        ? t("reg.savedExisting", language, { name: normalizedName })
+        : t("reg.savedNew", language, { name: normalizedName });
+      toast({ title: t("reg.saveSuccess", language), description: successMsg });
       return true;
     } catch (err: any) {
       console.error("Save error:", err);
