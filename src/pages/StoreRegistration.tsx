@@ -440,8 +440,8 @@ const StoreRegistration = () => {
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-medium tracking-tight text-foreground">ลงทะเบียนร้านอาหาร</h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Store Registration</p>
+              <h1 className="text-lg font-medium tracking-tight text-foreground">{t("reg.title", language)}</h1>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{t("reg.subtitle", language)}</p>
             </div>
           </div>
         </div>
