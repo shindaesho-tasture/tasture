@@ -9,7 +9,7 @@ import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { useLanguage, LANGUAGES } from "@/lib/language-context";
+import { useLanguage, LANGUAGES, type AppLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 
 /* ── Types ── */
