@@ -355,7 +355,7 @@ const StoreRegistration = () => {
       return true;
     } catch (err: any) {
       console.error("Save error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("reg.saveFailed", language), description: err.message, variant: "destructive" });
       return false;
     } finally {
       setSaving(false);
