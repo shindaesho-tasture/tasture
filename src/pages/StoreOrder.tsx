@@ -712,12 +712,12 @@ const StoreOrder = () => {
                 onClick={() => navigate("/order-summary")}
                 className="w-full flex items-center justify-between px-5 py-4 rounded-2xl bg-score-emerald text-primary-foreground shadow-luxury"
               >
-                <div className="flex items-center gap-3">
-                  <ShoppingBag size={20} strokeWidth={2} />
-                  <span className="text-sm font-bold">ดูออเดอร์</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs opacity-80">{totalItems} รายการ</span>
+                 <div className="flex items-center gap-3">
+                   <ShoppingBag size={20} strokeWidth={2} />
+                   <span className="text-sm font-bold">{t("order.viewOrder", language)}</span>
+                 </div>
+                 <div className="flex items-center gap-2">
+                   <span className="text-xs opacity-80">{t("order.items", language, { count: totalItems })}</span>
                   <span className="text-sm font-bold">฿{totalPrice.toLocaleString()}</span>
                 </div>
               </motion.button>
