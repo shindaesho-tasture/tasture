@@ -386,7 +386,7 @@ const StoreRegistration = () => {
     // No duplicate — save as new
     const saved = await saveToDatabase("new");
     if (saved) {
-      toast({ title: "เพิ่มร้านสำเร็จ! 🎉", description: "ร้านของคุณลงระบบเรียบร้อยแล้ว" });
+      toast({ title: t("reg.addSuccess", language), description: t("reg.addSuccessDesc", language) });
       setShowConfetti(true);
       setTimeout(() => navigate("/discover"), 1800);
     }
