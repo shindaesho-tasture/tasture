@@ -594,8 +594,8 @@ const Profile = () => {
               <div className="grid grid-cols-4 gap-2.5">
                 {[
                   { icon: Gem, label: "Emeralds", value: emeraldCount },
-                  { icon: Store, label: "ร้าน", value: storeCount },
-                  { icon: ChefHat, label: "รีวิว", value: totalReviews },
+                  { icon: Store, label: t("profile.stores", language), value: storeCount },
+                  { icon: ChefHat, label: t("profile.reviews", language), value: totalReviews },
                   { icon: Trophy, label: "Badges", value: unlockedBadges.length },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} className="flex flex-col items-center py-3 rounded-2xl bg-card shadow-luxury">
