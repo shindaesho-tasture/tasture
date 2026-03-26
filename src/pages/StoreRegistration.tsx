@@ -467,7 +467,7 @@ const StoreRegistration = () => {
                   exit={{ opacity: 0, y: -4 }}
                   className="mt-2 text-xs text-score-amber flex items-center gap-1.5"
                 >
-                  ⚠️ {duplicateWarning} — กดบันทึกเพื่อเลือกรวมหรือสร้างใหม่
+                  ⚠️ {duplicateWarning} — {t("reg.duplicateHint", language)}
                 </motion.p>
               )}
             </AnimatePresence>
