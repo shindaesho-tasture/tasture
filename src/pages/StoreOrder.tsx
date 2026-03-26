@@ -596,7 +596,7 @@ const StoreOrder = () => {
                               : "bg-surface-elevated text-foreground border-border/50"
                           }`}
                         >
-                          <span className="block font-bold">พิเศษ</span>
+                          <span className="block font-bold">{t("order.special", language)}</span>
                           <span className="block text-[10px] mt-0.5 opacity-80">฿{optionsItem.price_special}</span>
                         </motion.button>
                       </div>
