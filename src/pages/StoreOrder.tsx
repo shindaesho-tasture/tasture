@@ -380,7 +380,7 @@ const StoreOrder = () => {
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
                   <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-                  <span className="text-xs text-muted-foreground">กำลังโหลดเมนู...</span>
+                  <span className="text-xs text-muted-foreground">{t("order.loadingMenu", language)}</span>
                 </div>
               ) : menuItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
