@@ -340,7 +340,7 @@ const Profile = () => {
             <h1 className="text-xl font-medium text-foreground">Sovereign Profile</h1>
             <p className="text-sm text-muted-foreground text-center">{t("profile.loginPrompt", language)}</p>
             <button onClick={() => navigate("/auth")} className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-medium mt-2">
-              <LogIn size={16} /> เข้าสู่ระบบ
+              <LogIn size={16} /> {t("common.login", language)}
             </button>
           </div>
           <BottomNav />
