@@ -371,7 +371,7 @@ const StoreOrder = () => {
               value="posts"
               className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
             >
-              📸 โพสจากลูกค้า
+              📸 {t("order.customerPosts", language)}
             </TabsTrigger>
           </TabsList>
 
