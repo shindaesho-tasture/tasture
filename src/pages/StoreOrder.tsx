@@ -605,8 +605,8 @@ const StoreOrder = () => {
                   {/* Noodle Types */}
                   {optionsItem.noodle_types && optionsItem.noodle_types.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🍜 เลือกเส้น
+                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🍜 {t("order.selectNoodle", language)}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.noodle_types.map((nt) => (
