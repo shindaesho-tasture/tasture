@@ -635,7 +635,7 @@ const StoreRegistration = () => {
                 {scanning && (
                   <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-elevated">
                     <Loader2 size={14} className="text-score-emerald animate-spin" />
-                    <span className="text-xs text-muted-foreground">กำลังสแกนเมนู...</span>
+                    <span className="text-xs text-muted-foreground">{t("reg.scanning", language)}</span>
                   </div>
                 )}
 
