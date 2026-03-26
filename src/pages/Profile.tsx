@@ -523,8 +523,8 @@ const Profile = () => {
                 <div className="w-16 h-16 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center mb-4">
                   <Camera size={28} strokeWidth={1.5} className="text-muted-foreground/50" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-1">แชร์รูปอาหาร</h3>
-                <p className="text-sm text-muted-foreground text-center">เมื่อคุณโพสรูป จะแสดงในโปรไฟล์ของคุณ</p>
+                <h3 className="text-xl font-bold text-foreground mb-1">{t("profile.sharePhotos", language)}</h3>
+                <p className="text-sm text-muted-foreground text-center">{t("profile.sharePhotosDesc", language)}</p>
               </div>
             )}
           </div>
