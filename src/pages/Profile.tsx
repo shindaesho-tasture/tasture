@@ -386,9 +386,9 @@ const Profile = () => {
 
             <div className="flex-1 flex justify-around">
               {[
-                { value: postCount, label: "โพสต์", link: null },
-                { value: followerCount, label: "ผู้ติดตาม", link: "/follows?tab=followers" },
-                { value: followingCount, label: "ติดตาม", link: "/follows?tab=following" },
+                { value: postCount, label: t("profile.posts", language), link: null },
+                { value: followerCount, label: t("profile.followers", language), link: "/follows?tab=followers" },
+                { value: followingCount, label: t("profile.following", language), link: "/follows?tab=following" },
               ].map(({ value, label, link }) => (
                 <button key={label} onClick={() => link && navigate(link)} className="flex flex-col items-center">
                   <span className="text-lg font-bold text-foreground">{value}</span>
