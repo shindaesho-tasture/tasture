@@ -359,7 +359,7 @@ const Profile = () => {
           <div className="flex items-center justify-between py-3">
             <h1 className="text-lg font-bold text-foreground">{displayName}</h1>
             <button onClick={signOut} className="text-xs text-muted-foreground px-3 py-1.5 rounded-lg border border-border">
-              ออกจากระบบ
+              {t("common.logout", language)}
             </button>
           </div>
 
