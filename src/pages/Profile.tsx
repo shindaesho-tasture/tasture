@@ -578,8 +578,8 @@ const Profile = () => {
                 ) : (
                   <div className="flex flex-col items-center py-8 text-center">
                     <span className="text-2xl mb-2">🧬</span>
-                    <p className="text-xs text-muted-foreground">ยังไม่มีข้อมูล Taste DNA</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">รีวิวเมนูเพิ่มเพื่อสร้างลายนิ้วมือรสชาติ</p>
+                    <p className="text-xs text-muted-foreground">{t("profile.noTasteDNA", language)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{t("profile.noTasteDNADesc", language)}</p>
                   </div>
                 )}
               </div>
