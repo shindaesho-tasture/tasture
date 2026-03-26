@@ -485,7 +485,7 @@ const StoreRegistration = () => {
                   type="text"
                   value={placeQuery}
                   onChange={(e) => setPlaceQuery(e.target.value)}
-                  placeholder="ค้นหาชื่อร้านหรือสถานที่..."
+                  placeholder={t("reg.searchPlace", language)}
                   lang="th"
                   autoComplete="off"
                   className="flex-1 bg-transparent text-sm font-light text-foreground placeholder:text-muted-foreground/60 outline-none"
