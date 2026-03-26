@@ -260,7 +260,7 @@ const StoreRegistration = () => {
 
   const saveToDatabase = async (forceMode: "merge" | "new") => {
     if (!user) {
-      toast({ title: "กรุณาเข้าสู่ระบบ", description: "ต้องเข้าสู่ระบบก่อนบันทึกร้าน", variant: "destructive" });
+      toast({ title: t("reg.pleaseLogin", language), description: t("reg.loginToSave", language), variant: "destructive" });
       navigate("/auth");
       return false;
     }
