@@ -4,11 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, ChevronLeft } from "lucide-react";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { language } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +24,7 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast({ title: "เข้าสู่ระบบสำเร็จ" });
+        toast({ title: t("auth.loginSuccess", language) });
         navigate("/register");
       } else {
         const { data, error } = await supabase.auth.signUp({
@@ -31,14 +34,14 @@ const Auth = () => {
         });
         if (error) throw error;
         if (data.session) {
-          toast({ title: "สมัครสมาชิกสำเร็จ" });
+          toast({ title: t("auth.signupSuccess", language) });
           navigate("/register");
         } else {
-          toast({ title: "สมัครสมาชิกสำเร็จ", description: "กรุณายืนยันอีเมลของคุณ" });
+          toast({ title: t("auth.signupSuccess", language), description: t("auth.confirmEmail", language) });
         }
       }
     } catch (err: any) {
-      toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: "destructive" });
+      toast({ title: t("auth.error", language), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -53,7 +56,7 @@ const Auth = () => {
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
             </button>
             <h1 className="text-lg font-medium tracking-tight text-foreground">
-              {isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
+              {isLogin ? t("auth.login", language) : t("auth.signup", language)}
             </h1>
           </div>
         </div>
@@ -72,7 +75,7 @@ const Auth = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="อีเมล"
+                  placeholder={t("auth.email", language)}
                   required
                   className="w-full pl-11 pr-5 py-4 rounded-2xl bg-surface-elevated shadow-luxury text-base font-light text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-score-emerald/30 transition-shadow border-0"
                 />
@@ -83,7 +86,7 @@ const Auth = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="รหัสผ่าน"
+                  placeholder={t("auth.password", language)}
                   required
                   minLength={6}
                   className="w-full pl-11 pr-5 py-4 rounded-2xl bg-surface-elevated shadow-luxury text-base font-light text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-score-emerald/30 transition-shadow border-0"
@@ -98,7 +101,7 @@ const Auth = () => {
               className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-medium shadow-luxury disabled:opacity-50"
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : null}
-              {isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
+              {isLogin ? t("auth.login", language) : t("auth.signup", language)}
             </motion.button>
 
             <button
@@ -106,7 +109,7 @@ const Auth = () => {
               onClick={() => setIsLogin(!isLogin)}
               className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
             >
-              {isLogin ? "ยังไม่มีบัญชี? สมัครสมาชิก" : "มีบัญชีแล้ว? เข้าสู่ระบบ"}
+              {isLogin ? t("auth.noAccount", language) : t("auth.hasAccount", language)}
             </button>
           </motion.form>
         </div>

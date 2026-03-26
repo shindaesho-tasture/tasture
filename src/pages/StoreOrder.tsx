@@ -11,6 +11,8 @@ import DishDetailSheet from "@/components/menu/DishDetailSheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 interface MenuItemRow {
   id: string;
