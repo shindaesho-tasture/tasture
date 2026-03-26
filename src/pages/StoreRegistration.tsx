@@ -642,7 +642,7 @@ const StoreRegistration = () => {
                 {!scanning && menuItems.length > 0 && (
                   <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-score-emerald/10">
                     <Check size={14} className="text-score-emerald" />
-                    <span className="text-[11px] font-medium text-score-emerald">{menuItems.length} รายการจาก {menuPhotos.length} รูป</span>
+                    <span className="text-[11px] font-medium text-score-emerald">{t("reg.itemsFromPhotos", language, { items: menuItems.length, photos: menuPhotos.length })}</span>
                   </div>
                 )}
               </div>
