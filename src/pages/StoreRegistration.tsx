@@ -672,8 +672,8 @@ const StoreRegistration = () => {
                     <ImagePlus size={24} strokeWidth={1.5} className="text-muted-foreground" />
                   </div>
                   <div className="text-center">
-                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">เลือกจากเครื่อง</span>
-                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">อัลบั้มรูป</span>
+                    <span className="text-xs font-medium text-foreground tracking-wide block uppercase">{t("reg.pickFromDevice", language)}</span>
+                    <span className="text-[10px] font-light text-muted-foreground mt-0.5 block">{t("reg.photoAlbum", language)}</span>
                   </div>
                 </motion.button>
               </div>
