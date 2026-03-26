@@ -626,7 +626,7 @@ const StoreRegistration = () => {
                         <X size={12} className="text-background" />
                       </button>
                       <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-score-emerald/90">
-                        <span className="text-[8px] font-medium text-primary-foreground">รูปที่ {idx + 1}</span>
+                        <span className="text-[8px] font-medium text-primary-foreground">{t("reg.photoNum", language, { num: idx + 1 })}</span>
                       </div>
                     </motion.div>
                   ))}
