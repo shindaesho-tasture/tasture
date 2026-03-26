@@ -74,11 +74,11 @@ const ACHIEVEMENTS: Achievement[] = [
 /* ── Taste DNA Spider Chart ── */
 const TasteDNAChart = ({ dna }: { dna: TasteDNA }) => {
   const axes = [
-    { name: "เค็ม", key: "salty" as keyof TasteDNA },
-    { name: "หวาน", key: "sweet" as keyof TasteDNA },
-    { name: "เปรี้ยว", key: "sour" as keyof TasteDNA },
-    { name: "เผ็ด", key: "spicy" as keyof TasteDNA },
-    { name: "อูมามิ", key: "umami" as keyof TasteDNA },
+    { name: t("taste.salty", language), key: "salty" as keyof TasteDNA },
+    { name: t("taste.sweet", language), key: "sweet" as keyof TasteDNA },
+    { name: t("taste.sour", language), key: "sour" as keyof TasteDNA },
+    { name: t("taste.spicy", language), key: "spicy" as keyof TasteDNA },
+    { name: t("taste.umami", language), key: "umami" as keyof TasteDNA },
   ];
   const cx = 100, cy = 100, maxR = 70, n = axes.length;
   const step = (2 * Math.PI) / n;
