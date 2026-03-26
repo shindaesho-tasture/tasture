@@ -568,7 +568,7 @@ const StoreRegistration = () => {
                     <div className="flex flex-col items-center gap-1.5">
                       <MapPin size={28} className="text-score-emerald drop-shadow-lg animate-bounce" />
                       <span className="text-[10px] font-medium text-foreground bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full shadow">
-                        แตะแผนที่เพื่อปักหมุด
+                        {t("reg.tapToPin", language)}
                       </span>
                     </div>
                   </div>
