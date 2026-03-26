@@ -72,7 +72,7 @@ const ACHIEVEMENTS: Achievement[] = [
 ];
 
 /* ── Taste DNA Spider Chart ── */
-const TasteDNAChart = ({ dna, language }: { dna: TasteDNA; language: string }) => {
+const TasteDNAChart = ({ dna, language }: { dna: TasteDNA; language: AppLanguage }) => {
   const axes = [
     { name: t("taste.salty", language), key: "salty" as keyof TasteDNA },
     { name: t("taste.sweet", language), key: "sweet" as keyof TasteDNA },
