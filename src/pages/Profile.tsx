@@ -574,7 +574,7 @@ const Profile = () => {
               </h2>
               <div className="bg-card rounded-2xl shadow-luxury p-4">
                 {hasTasteDNA ? (
-                  <TasteDNAChart dna={tasteDNA} />
+                  <TasteDNAChart dna={tasteDNA} language={language} />
                 ) : (
                   <div className="flex flex-col items-center py-8 text-center">
                     <span className="text-2xl mb-2">🧬</span>
