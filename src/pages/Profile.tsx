@@ -546,7 +546,7 @@ const Profile = () => {
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium text-foreground block truncate">{s.storeName}</span>
                       <span className="text-[10px] text-muted-foreground">
-                        บันทึกเมื่อ {new Date(s.savedAt).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
+                        {t("profile.savedAt", language)} {new Date(s.savedAt).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
                       </span>
                     </div>
                   </motion.button>
