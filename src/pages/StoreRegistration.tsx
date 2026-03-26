@@ -201,10 +201,10 @@ const StoreRegistration = () => {
 
       // Merge with existing items instead of replacing
       setMenuItems((prev) => [...prev, ...items]);
-      toast({ title: `สแกนสำเร็จ`, description: `พบ ${items.length} รายการ` });
+      toast({ title: t("reg.scanSuccess", language), description: t("reg.foundItems", language, { count: items.length }) });
     } catch (err: any) {
       console.error("Scan error:", err);
-      toast({ title: "สแกนไม่สำเร็จ", description: err.message || "กรุณาลองใหม่อีกครั้ง", variant: "destructive" });
+      toast({ title: t("reg.scanFailed", language), description: err.message || t("reg.tryAgain", language), variant: "destructive" });
     } finally {
       setScanning(false);
     }
