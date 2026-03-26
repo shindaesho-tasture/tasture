@@ -699,7 +699,7 @@ const StoreRegistration = () => {
                   <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center">
                     <ImagePlus size={16} strokeWidth={1.5} className="text-muted-foreground" />
                   </div>
-                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">เลือกรูป</span>
+                  <span className="text-xs font-medium text-foreground tracking-wide uppercase">{t("reg.pickMore", language)}</span>
                 </motion.button>
               </div>
             )}
