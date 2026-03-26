@@ -344,7 +344,7 @@ const StoreOrder = () => {
             </button>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-medium tracking-tight text-foreground truncate">
-                {storeName || "ร้านอาหาร"}
+                {storeName || t("order.restaurant", language)}
               </h1>
             </div>
           </div>
