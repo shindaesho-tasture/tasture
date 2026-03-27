@@ -85,7 +85,7 @@ const StoreOrder = () => {
     setLoading(true);
     try {
       const [storeRes, menuRes] = await Promise.all([
-        supabase.from("stores").select("name").eq("id", storeId!).single(),
+        supabase.from("stores").select("name, lat, lng").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
           .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url")
