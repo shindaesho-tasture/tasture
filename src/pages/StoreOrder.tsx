@@ -13,6 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import LiveQueueCard from "@/components/queue/LiveQueueCard";
 
 interface MenuItemRow {
   id: string;
