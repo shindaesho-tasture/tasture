@@ -474,6 +474,10 @@ const StoreOrder = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="queue" className="mt-0">
+            {storeId && <LiveQueueCard storeId={storeId} storeLat={storeLat} storeLng={storeLng} />}
+          </TabsContent>
+
           <TabsContent value="posts" className="mt-0">
             <div className="px-4 pt-4">
               {postsLoading ? (
