@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
@@ -13,6 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import LiveQueueCard from "@/components/queue/LiveQueueCard";
 
 interface MenuItemRow {
   id: string;
@@ -52,6 +53,8 @@ const StoreOrder = () => {
   const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice } = useOrder();
   const [menuItems, setMenuItems] = useState<MenuItemRow[]>([]);
   const [storeName, setStoreName] = useState("");
+  const [storeLat, setStoreLat] = useState<number | null>(null);
+  const [storeLng, setStoreLng] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [dnaByItem, setDnaByItem] = useState<Map<string, DnaTag[]>>(new Map());
   const [menuReviewCounts, setMenuReviewCounts] = useState<Map<string, number>>(new Map());
@@ -93,6 +96,12 @@ const StoreOrder = () => {
       if (storeRes.data) {
         setStoreName(storeRes.data.name);
         setOrderStore(storeId!, storeRes.data.name);
+        // Fetch lat/lng separately to avoid type issues
+        const { data: locData } = await (supabase as any).from("stores").select("lat, lng").eq("id", storeId!).single();
+        if (locData) {
+          setStoreLat(locData.lat ?? null);
+          setStoreLng(locData.lng ?? null);
+        }
       }
       const menuData = menuRes.data || [];
       setMenuItems(menuData);
@@ -368,6 +377,12 @@ const StoreOrder = () => {
               🍽️ {t("order.menu", language)}
             </TabsTrigger>
             <TabsTrigger
+              value="queue"
+              className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
+            >
+              🎫 {t("queue.title", language)}
+            </TabsTrigger>
+            <TabsTrigger
               value="posts"
               className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
             >
@@ -457,6 +472,10 @@ const StoreOrder = () => {
                 </AnimatePresence>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="queue" className="mt-0">
+            {storeId && <LiveQueueCard storeId={storeId} storeLat={storeLat} storeLng={storeLng} />}
           </TabsContent>
 
           <TabsContent value="posts" className="mt-0">
