@@ -52,7 +52,7 @@ const LiveQueueCard = ({ storeId, storeLat, storeLng }: LiveQueueCardProps) => {
     const today = new Date().toISOString().slice(0, 10);
 
     const fetchQueues = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("queues")
         .select("id, queue_number, status, user_id, party_size")
         .eq("store_id", storeId)
@@ -64,7 +64,7 @@ const LiveQueueCard = ({ storeId, storeLat, storeLng }: LiveQueueCardProps) => {
           const mine = data.find(
             (q: any) => q.user_id === userId && (q.status === "waiting" || q.status === "called")
           );
-          if (mine) setMyTicket(mine as any);
+          if (mine) setMyTicket(mine);
         }
       }
     };
@@ -91,18 +91,15 @@ const LiveQueueCard = ({ storeId, storeLat, storeLng }: LiveQueueCardProps) => {
           }
 
           if (payload.eventType === "UPDATE") {
-            // If status changed from waiting
             if (oldRow?.status === "waiting" && row.status !== "waiting") {
               setWaitingCount((c) => Math.max(0, c - 1));
             }
-            // Update my ticket
             if (row.user_id === userId) {
               if (row.status === "completed" || row.status === "cancelled") {
                 setMyTicket(null);
               } else {
                 setMyTicket(row);
               }
-              // Haptic + toast when called
               if (row.status === "called" && oldRow?.status === "waiting") {
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
                 toast({
@@ -128,11 +125,11 @@ const LiveQueueCard = ({ storeId, storeLat, storeLng }: LiveQueueCardProps) => {
 
     try {
       // Get next queue number
-      const { data: nextNum } = await supabase.rpc("next_queue_number", {
+      const { data: nextNum } = await (supabase as any).rpc("next_queue_number", {
         p_store_id: storeId,
       });
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("queues")
         .insert({
           store_id: storeId,
@@ -146,7 +143,7 @@ const LiveQueueCard = ({ storeId, storeLat, storeLng }: LiveQueueCardProps) => {
 
       if (error) throw error;
       if (data) {
-        setMyTicket(data as any);
+        setMyTicket(data);
         setShowTicket(true);
         toast({
           title: t("queue.bookedTitle", language),
@@ -164,9 +161,9 @@ const LiveQueueCard = ({ storeId, storeLat, storeLng }: LiveQueueCardProps) => {
     if (!myTicket) return;
     if (navigator.vibrate) navigator.vibrate(8);
 
-    await supabase
+    await (supabase as any)
       .from("queues")
-      .update({ status: "cancelled" as any })
+      .update({ status: "cancelled" })
       .eq("id", myTicket.id);
 
     setMyTicket(null);
