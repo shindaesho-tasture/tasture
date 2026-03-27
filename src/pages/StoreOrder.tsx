@@ -95,9 +95,13 @@ const StoreOrder = () => {
 
       if (storeRes.data) {
         setStoreName(storeRes.data.name);
-        setStoreLat((storeRes.data as any).lat ?? null);
-        setStoreLng((storeRes.data as any).lng ?? null);
         setOrderStore(storeId!, storeRes.data.name);
+        // Fetch lat/lng separately to avoid type issues
+        const { data: locData } = await (supabase as any).from("stores").select("lat, lng").eq("id", storeId!).single();
+        if (locData) {
+          setStoreLat(locData.lat ?? null);
+          setStoreLng(locData.lng ?? null);
+        }
       }
       const menuData = menuRes.data || [];
       setMenuItems(menuData);
