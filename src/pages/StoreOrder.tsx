@@ -95,6 +95,8 @@ const StoreOrder = () => {
 
       if (storeRes.data) {
         setStoreName(storeRes.data.name);
+        setStoreLat((storeRes.data as any).lat ?? null);
+        setStoreLng((storeRes.data as any).lng ?? null);
         setOrderStore(storeId!, storeRes.data.name);
       }
       const menuData = menuRes.data || [];
