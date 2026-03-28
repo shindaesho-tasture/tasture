@@ -610,7 +610,7 @@ const Profile = () => {
             {/* Achievements */}
             <section>
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <span className="text-base">🏆</span> Achievements
+                <span className="text-base">🏆</span> {t("profile.achievements", language)}
                 <span className="text-[10px] text-muted-foreground font-normal">
                   {unlockedBadges.length}/{ACHIEVEMENTS.length}
                 </span>
