@@ -453,7 +453,7 @@ const Profile = () => {
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4"
             style={{ background: "linear-gradient(135deg, hsl(43,74%,49%), hsl(43,74%,65%))", boxShadow: "0 2px 12px hsla(43,74%,49%,0.3)" }}>
             <Crown size={11} className="text-white" />
-            <span className="text-[10px] font-semibold text-white tracking-wide">Founding Sovereign · ×20</span>
+            <span className="text-[10px] font-semibold text-white tracking-wide">{t("profile.foundingSovereign", language)}</span>
           </motion.div>
         </div>
 
