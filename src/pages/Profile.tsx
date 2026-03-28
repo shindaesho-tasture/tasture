@@ -42,8 +42,8 @@ interface TasteDNA {
 interface Achievement {
   id: string;
   icon: string;
-  titleTh: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
   check: (ctx: AchievementCtx) => boolean;
   tier: "emerald" | "gold" | "ruby";
 }
@@ -57,18 +57,18 @@ interface AchievementCtx {
 }
 
 const ACHIEVEMENTS: Achievement[] = [
-  { id: "first-emerald", icon: "💎", titleTh: "เพชรดวงแรก", description: "ให้คะแนน +2 ครั้งแรก", check: (c) => c.emeraldCount >= 1, tier: "emerald" },
-  { id: "emerald-5", icon: "💎", titleTh: "นักสะสมเพชร", description: "สะสม Emerald 5 ดวง", check: (c) => c.emeraldCount >= 5, tier: "emerald" },
-  { id: "emerald-20", icon: "👑", titleTh: "มงกุฎเพชร", description: "สะสม Emerald 20 ดวง", check: (c) => c.emeraldCount >= 20, tier: "gold" },
-  { id: "store-1", icon: "🏪", titleTh: "ก้าวแรก", description: "รีวิวร้านแรก", check: (c) => c.storeCount >= 1, tier: "emerald" },
-  { id: "store-10", icon: "🗺️", titleTh: "นักสำรวจ", description: "เยือน 10 ร้าน", check: (c) => c.storeCount >= 10, tier: "gold" },
-  { id: "store-30", icon: "🌍", titleTh: "ผู้พิชิตโลกรส", description: "เยือน 30 ร้าน", check: (c) => c.storeCount >= 30, tier: "ruby" },
-  { id: "reviews-10", icon: "📝", titleTh: "นักวิจารณ์", description: "รีวิว 10 เมนู", check: (c) => c.totalReviews >= 10, tier: "emerald" },
-  { id: "reviews-50", icon: "🔥", titleTh: "จอมวิจารณ์", description: "รีวิว 50 เมนู", check: (c) => c.totalReviews >= 50, tier: "gold" },
-  { id: "spice-lord", icon: "🌶️", titleTh: "ราชาความเผ็ด", description: "Taste DNA เผ็ดสูงสุด", check: (c) => c.tasteDNA.spicy >= 4, tier: "ruby" },
-  { id: "sweet-tooth", icon: "🍯", titleTh: "คนรักหวาน", description: "Taste DNA หวานสูงสุด", check: (c) => c.tasteDNA.sweet >= 4, tier: "gold" },
-  { id: "umami-sage", icon: "🍄", titleTh: "ปราชญ์อูมามิ", description: "Taste DNA อูมามิสูงสุด", check: (c) => c.tasteDNA.umami >= 4, tier: "emerald" },
-  { id: "dna-explorer", icon: "🧬", titleTh: "นักวิเคราะห์ DNA", description: "ส่ง Dish DNA 5 ครั้ง", check: (c) => c.dnaEntryCount >= 5, tier: "emerald" },
+  { id: "first-emerald", icon: "💎", titleKey: "achievement.firstEmerald", descKey: "achievement.firstEmeraldDesc", check: (c) => c.emeraldCount >= 1, tier: "emerald" },
+  { id: "emerald-5", icon: "💎", titleKey: "achievement.emeraldCollector", descKey: "achievement.emeraldCollectorDesc", check: (c) => c.emeraldCount >= 5, tier: "emerald" },
+  { id: "emerald-20", icon: "👑", titleKey: "achievement.emeraldCrown", descKey: "achievement.emeraldCrownDesc", check: (c) => c.emeraldCount >= 20, tier: "gold" },
+  { id: "store-1", icon: "🏪", titleKey: "achievement.firstStep", descKey: "achievement.firstStepDesc", check: (c) => c.storeCount >= 1, tier: "emerald" },
+  { id: "store-10", icon: "🗺️", titleKey: "achievement.explorer", descKey: "achievement.explorerDesc", check: (c) => c.storeCount >= 10, tier: "gold" },
+  { id: "store-30", icon: "🌍", titleKey: "achievement.worldConqueror", descKey: "achievement.worldConquerorDesc", check: (c) => c.storeCount >= 30, tier: "ruby" },
+  { id: "reviews-10", icon: "📝", titleKey: "achievement.critic", descKey: "achievement.criticDesc", check: (c) => c.totalReviews >= 10, tier: "emerald" },
+  { id: "reviews-50", icon: "🔥", titleKey: "achievement.superCritic", descKey: "achievement.superCriticDesc", check: (c) => c.totalReviews >= 50, tier: "gold" },
+  { id: "spice-lord", icon: "🌶️", titleKey: "achievement.spiceLord", descKey: "achievement.spiceLordDesc", check: (c) => c.tasteDNA.spicy >= 4, tier: "ruby" },
+  { id: "sweet-tooth", icon: "🍯", titleKey: "achievement.sweetTooth", descKey: "achievement.sweetToothDesc", check: (c) => c.tasteDNA.sweet >= 4, tier: "gold" },
+  { id: "umami-sage", icon: "🍄", titleKey: "achievement.umamiSage", descKey: "achievement.umamiSageDesc", check: (c) => c.tasteDNA.umami >= 4, tier: "emerald" },
+  { id: "dna-explorer", icon: "🧬", titleKey: "achievement.dnaExplorer", descKey: "achievement.dnaExplorerDesc", check: (c) => c.dnaEntryCount >= 5, tier: "emerald" },
 ];
 
 /* ── Taste DNA Spider Chart ── */
@@ -453,7 +453,7 @@ const Profile = () => {
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4"
             style={{ background: "linear-gradient(135deg, hsl(43,74%,49%), hsl(43,74%,65%))", boxShadow: "0 2px 12px hsla(43,74%,49%,0.3)" }}>
             <Crown size={11} className="text-white" />
-            <span className="text-[10px] font-semibold text-white tracking-wide">Founding Sovereign · ×20</span>
+            <span className="text-[10px] font-semibold text-white tracking-wide">{t("profile.foundingSovereign", language)}</span>
           </motion.div>
         </div>
 
@@ -570,7 +570,7 @@ const Profile = () => {
             {/* Taste DNA */}
             <section>
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <span className="text-base">🧬</span> Taste DNA
+                <span className="text-base">🧬</span> {t("profile.tasteDNA", language)}
               </h2>
               <div className="bg-card rounded-2xl shadow-luxury p-4">
                 {hasTasteDNA ? (
@@ -588,15 +588,15 @@ const Profile = () => {
             {/* Emerald Vault mini */}
             <section>
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Gem size={14} className="text-score-emerald" /> Emerald Vault
+                <Gem size={14} className="text-score-emerald" /> {t("profile.emeraldVault", language)}
                 <span className="text-[10px] text-muted-foreground font-normal">({emeraldCount})</span>
               </h2>
               <div className="grid grid-cols-4 gap-2.5">
                 {[
-                  { icon: Gem, label: "Emeralds", value: emeraldCount },
+                  { icon: Gem, label: t("profile.emeralds", language), value: emeraldCount },
                   { icon: Store, label: t("profile.stores", language), value: storeCount },
                   { icon: ChefHat, label: t("profile.reviews", language), value: totalReviews },
-                  { icon: Trophy, label: "Badges", value: unlockedBadges.length },
+                  { icon: Trophy, label: t("profile.badges", language), value: unlockedBadges.length },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} className="flex flex-col items-center py-3 rounded-2xl bg-card shadow-luxury">
                     <Icon size={14} strokeWidth={1.5} className="text-score-emerald mb-1" />
@@ -610,7 +610,7 @@ const Profile = () => {
             {/* Achievements */}
             <section>
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <span className="text-base">🏆</span> Achievements
+                <span className="text-base">🏆</span> {t("profile.achievements", language)}
                 <span className="text-[10px] text-muted-foreground font-normal">
                   {unlockedBadges.length}/{ACHIEVEMENTS.length}
                 </span>
@@ -631,8 +631,8 @@ const Profile = () => {
                         onClick={() => setSelectedBadge(badge)}
                         className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc} active:scale-95 transition-transform`}>
                         <span className="text-xl mb-1">{badge.icon}</span>
-                        <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{badge.titleTh}</span>
-                        <span className="text-[8px] text-muted-foreground mt-0.5 text-center px-1">{badge.description}</span>
+                        <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{t(badge.titleKey, language)}</span>
+                        <span className="text-[8px] text-muted-foreground mt-0.5 text-center px-1">{t(badge.descKey, language)}</span>
                       </motion.button>
                     );
                   })}
@@ -645,7 +645,7 @@ const Profile = () => {
                     <button key={badge.id} onClick={() => setSelectedBadge(badge)}
                       className="flex flex-col items-center py-3 rounded-2xl bg-muted/50 opacity-40 active:scale-95 transition-transform">
                       <span className="text-xl mb-1 grayscale">🔒</span>
-                      <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{badge.titleTh}</span>
+                      <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{t(badge.titleKey, language)}</span>
                     </button>
                   ))}
                 </div>

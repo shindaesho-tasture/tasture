@@ -3,6 +3,8 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import Confetti from "@/components/Confetti";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 interface TasteDNA {
   salty: number;
@@ -23,8 +25,8 @@ interface AchievementCtx {
 interface Achievement {
   id: string;
   icon: string;
-  titleTh: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
   check: (ctx: AchievementCtx) => boolean;
   tier: "emerald" | "gold" | "ruby";
 }
@@ -38,21 +40,21 @@ interface Props {
 
 /* Progress helpers — return { current, target, pct } */
 const getProgress = (badge: Achievement, ctx: AchievementCtx) => {
-  const map: Record<string, { current: number; target: number; unit: string }> = {
-    "first-emerald": { current: ctx.emeraldCount, target: 1, unit: "Emerald" },
-    "emerald-5": { current: ctx.emeraldCount, target: 5, unit: "Emerald" },
-    "emerald-20": { current: ctx.emeraldCount, target: 20, unit: "Emerald" },
-    "store-1": { current: ctx.storeCount, target: 1, unit: "ร้าน" },
-    "store-10": { current: ctx.storeCount, target: 10, unit: "ร้าน" },
-    "store-30": { current: ctx.storeCount, target: 30, unit: "ร้าน" },
-    "reviews-10": { current: ctx.totalReviews, target: 10, unit: "รีวิว" },
-    "reviews-50": { current: ctx.totalReviews, target: 50, unit: "รีวิว" },
-    "spice-lord": { current: Math.round(ctx.tasteDNA.spicy * 10) / 10, target: 4, unit: "คะแนนเผ็ด" },
-    "sweet-tooth": { current: Math.round(ctx.tasteDNA.sweet * 10) / 10, target: 4, unit: "คะแนนหวาน" },
-    "umami-sage": { current: Math.round(ctx.tasteDNA.umami * 10) / 10, target: 4, unit: "คะแนนอูมามิ" },
-    "dna-explorer": { current: ctx.dnaEntryCount, target: 5, unit: "Dish DNA" },
+  const map: Record<string, { current: number; target: number; unitKey: string }> = {
+    "first-emerald": { current: ctx.emeraldCount, target: 1, unitKey: "Emerald" },
+    "emerald-5": { current: ctx.emeraldCount, target: 5, unitKey: "Emerald" },
+    "emerald-20": { current: ctx.emeraldCount, target: 20, unitKey: "Emerald" },
+    "store-1": { current: ctx.storeCount, target: 1, unitKey: "profile.stores" },
+    "store-10": { current: ctx.storeCount, target: 10, unitKey: "profile.stores" },
+    "store-30": { current: ctx.storeCount, target: 30, unitKey: "profile.stores" },
+    "reviews-10": { current: ctx.totalReviews, target: 10, unitKey: "profile.reviews" },
+    "reviews-50": { current: ctx.totalReviews, target: 50, unitKey: "profile.reviews" },
+    "spice-lord": { current: Math.round(ctx.tasteDNA.spicy * 10) / 10, target: 4, unitKey: "taste.spicy" },
+    "sweet-tooth": { current: Math.round(ctx.tasteDNA.sweet * 10) / 10, target: 4, unitKey: "taste.sweet" },
+    "umami-sage": { current: Math.round(ctx.tasteDNA.umami * 10) / 10, target: 4, unitKey: "taste.umami" },
+    "dna-explorer": { current: ctx.dnaEntryCount, target: 5, unitKey: "Dish DNA" },
   };
-  const m = map[badge.id] || { current: 0, target: 1, unit: "" };
+  const m = map[badge.id] || { current: 0, target: 1, unitKey: "" };
   const pct = Math.min(m.current / m.target, 1);
   return { ...m, pct };
 };
@@ -64,14 +66,15 @@ const tierColors = {
 };
 
 const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
+  const { language } = useLanguage();
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     if (open && badge && badge.check(ctx)) {
       setShowConfetti(true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
-      const t = setTimeout(() => setShowConfetti(false), 1200);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setShowConfetti(false), 1200);
+      return () => clearTimeout(timer);
     }
     setShowConfetti(false);
   }, [open, badge, ctx]);
@@ -79,8 +82,58 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
   if (!badge) return null;
 
   const unlocked = badge.check(ctx);
-  const { current, target, pct, unit } = getProgress(badge, ctx);
+  const { current, target, pct, unitKey } = getProgress(badge, ctx);
   const tc = tierColors[badge.tier];
+  const unit = unitKey.includes(".") ? t(unitKey, language) : unitKey;
+
+  const unlockText = {
+    th: "✅ ปลดล็อกแล้ว!",
+    en: "✅ Unlocked!",
+    ja: "✅ アンロック済み！",
+    zh: "✅ 已解锁！",
+    ko: "✅ 달성 완료!",
+  }[language];
+
+  const lockedText = {
+    th: "🔒 ยังไม่ปลดล็อก",
+    en: "🔒 Locked",
+    ja: "🔒 未アンロック",
+    zh: "🔒 未解锁",
+    ko: "🔒 미달성",
+  }[language];
+
+  const progressLabel = {
+    th: "ความคืบหน้า",
+    en: "Progress",
+    ja: "進捗",
+    zh: "进度",
+    ko: "진행률",
+  }[language];
+
+  const congratsText = {
+    th: "🎉 ยินดีด้วย! คุณทำสำเร็จแล้ว",
+    en: "🎉 Congratulations! You did it!",
+    ja: "🎉 おめでとうございます！達成しました！",
+    zh: "🎉 恭喜！您已完成！",
+    ko: "🎉 축하합니다! 달성했습니다!",
+  }[language];
+
+  const remaining = Math.max(0, Math.ceil((target - current) * 10) / 10);
+  const remainingText = {
+    th: `เหลืออีก ${remaining} ${unit} จะปลดล็อก`,
+    en: `${remaining} ${unit} more to unlock`,
+    ja: `アンロックまであと ${remaining} ${unit}`,
+    zh: `还差 ${remaining} ${unit} 解锁`,
+    ko: `달성까지 ${remaining} ${unit} 남음`,
+  }[language];
+
+  const tierLabel = {
+    th: "ระดับ:",
+    en: "Tier:",
+    ja: "ティア:",
+    zh: "等级：",
+    ko: "등급:",
+  }[language];
 
   return (
     <AnimatePresence>
@@ -134,10 +187,10 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
 
               {/* Title & description */}
               <h2 className={cn("text-xl font-bold text-center mb-1", unlocked ? tc.text : "text-muted-foreground")}>
-                {badge.titleTh}
+                {t(badge.titleKey, language)}
               </h2>
               <p className="text-sm text-muted-foreground text-center mb-5">
-                {badge.description}
+                {t(badge.descKey, language)}
               </p>
 
               {/* Status badge */}
@@ -146,14 +199,14 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
                   "text-xs font-semibold px-3 py-1 rounded-full",
                   unlocked ? cn(tc.bg, tc.text) : "bg-muted text-muted-foreground"
                 )}>
-                  {unlocked ? "✅ ปลดล็อกแล้ว!" : "🔒 ยังไม่ปลดล็อก"}
+                  {unlocked ? unlockText : lockedText}
                 </span>
               </div>
 
               {/* Progress section */}
               <div className={cn("p-4 rounded-2xl border", tc.bg, tc.border)}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-foreground">ความคืบหน้า</span>
+                  <span className="text-xs font-semibold text-foreground">{progressLabel}</span>
                   <span className={cn("text-xs font-bold", unlocked ? tc.text : "text-muted-foreground")}>
                     {current >= target ? target : current}/{target} {unit}
                   </span>
@@ -170,16 +223,13 @@ const AchievementDetailSheet = ({ open, onClose, badge, ctx }: Props) => {
                 </div>
 
                 <p className="text-[11px] text-muted-foreground mt-2 text-center">
-                  {unlocked
-                    ? "🎉 ยินดีด้วย! คุณทำสำเร็จแล้ว"
-                    : `เหลืออีก ${Math.max(0, Math.ceil((target - current) * 10) / 10)} ${unit} จะปลดล็อก`
-                  }
+                  {unlocked ? congratsText : remainingText}
                 </p>
               </div>
 
               {/* Tier info */}
               <div className="flex items-center justify-center gap-2 mt-4">
-                <span className="text-xs text-muted-foreground">ระดับ:</span>
+                <span className="text-xs text-muted-foreground">{tierLabel}</span>
                 <span className={cn("text-xs font-bold capitalize", tc.text)}>
                   {badge.tier === "emerald" ? "💎 Emerald" : badge.tier === "gold" ? "🥇 Gold" : "💠 Ruby"}
                 </span>

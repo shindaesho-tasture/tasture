@@ -10,6 +10,8 @@ import PostDetailSheet from "@/components/PostDetailSheet";
 import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import FeedRadarChart from "@/components/FeedRadarChart";
 import CompareRadarChart from "@/components/CompareRadarChart";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 /* ── Types ── */
 interface UserPost {
@@ -32,29 +34,30 @@ interface AchievementCtx {
 }
 
 interface Achievement {
-  id: string; icon: string; titleTh: string; description: string;
+  id: string; icon: string; titleKey: string; descKey: string;
   check: (ctx: AchievementCtx) => boolean; tier: "emerald" | "gold" | "ruby";
 }
 
 const ACHIEVEMENTS: Achievement[] = [
-  { id: "first-emerald", icon: "💎", titleTh: "เพชรดวงแรก", description: "ให้คะแนน +2 ครั้งแรก", check: (c) => c.emeraldCount >= 1, tier: "emerald" },
-  { id: "emerald-5", icon: "💎", titleTh: "นักสะสมเพชร", description: "สะสม Emerald 5 ดวง", check: (c) => c.emeraldCount >= 5, tier: "emerald" },
-  { id: "emerald-20", icon: "👑", titleTh: "มงกุฎเพชร", description: "สะสม Emerald 20 ดวง", check: (c) => c.emeraldCount >= 20, tier: "gold" },
-  { id: "store-1", icon: "🏪", titleTh: "ก้าวแรก", description: "รีวิวร้านแรก", check: (c) => c.storeCount >= 1, tier: "emerald" },
-  { id: "store-10", icon: "🗺️", titleTh: "นักสำรวจ", description: "เยือน 10 ร้าน", check: (c) => c.storeCount >= 10, tier: "gold" },
-  { id: "store-30", icon: "🌍", titleTh: "ผู้พิชิตโลกรส", description: "เยือน 30 ร้าน", check: (c) => c.storeCount >= 30, tier: "ruby" },
-  { id: "reviews-10", icon: "📝", titleTh: "นักวิจารณ์", description: "รีวิว 10 เมนู", check: (c) => c.totalReviews >= 10, tier: "emerald" },
-  { id: "reviews-50", icon: "🔥", titleTh: "จอมวิจารณ์", description: "รีวิว 50 เมนู", check: (c) => c.totalReviews >= 50, tier: "gold" },
-  { id: "spice-lord", icon: "🌶️", titleTh: "ราชาความเผ็ด", description: "Taste DNA เผ็ดสูงสุด", check: (c) => c.tasteDNA.spicy >= 4, tier: "ruby" },
-  { id: "sweet-tooth", icon: "🍯", titleTh: "คนรักหวาน", description: "Taste DNA หวานสูงสุด", check: (c) => c.tasteDNA.sweet >= 4, tier: "gold" },
-  { id: "umami-sage", icon: "🍄", titleTh: "ปราชญ์อูมามิ", description: "Taste DNA อูมามิสูงสุด", check: (c) => c.tasteDNA.umami >= 4, tier: "emerald" },
-  { id: "dna-explorer", icon: "🧬", titleTh: "นักวิเคราะห์ DNA", description: "ส่ง Dish DNA 5 ครั้ง", check: (c) => c.dnaEntryCount >= 5, tier: "emerald" },
+  { id: "first-emerald", icon: "💎", titleKey: "achievement.firstEmerald", descKey: "achievement.firstEmeraldDesc", check: (c) => c.emeraldCount >= 1, tier: "emerald" },
+  { id: "emerald-5", icon: "💎", titleKey: "achievement.emeraldCollector", descKey: "achievement.emeraldCollectorDesc", check: (c) => c.emeraldCount >= 5, tier: "emerald" },
+  { id: "emerald-20", icon: "👑", titleKey: "achievement.emeraldCrown", descKey: "achievement.emeraldCrownDesc", check: (c) => c.emeraldCount >= 20, tier: "gold" },
+  { id: "store-1", icon: "🏪", titleKey: "achievement.firstStep", descKey: "achievement.firstStepDesc", check: (c) => c.storeCount >= 1, tier: "emerald" },
+  { id: "store-10", icon: "🗺️", titleKey: "achievement.explorer", descKey: "achievement.explorerDesc", check: (c) => c.storeCount >= 10, tier: "gold" },
+  { id: "store-30", icon: "🌍", titleKey: "achievement.worldConqueror", descKey: "achievement.worldConquerorDesc", check: (c) => c.storeCount >= 30, tier: "ruby" },
+  { id: "reviews-10", icon: "📝", titleKey: "achievement.critic", descKey: "achievement.criticDesc", check: (c) => c.totalReviews >= 10, tier: "emerald" },
+  { id: "reviews-50", icon: "🔥", titleKey: "achievement.superCritic", descKey: "achievement.superCriticDesc", check: (c) => c.totalReviews >= 50, tier: "gold" },
+  { id: "spice-lord", icon: "🌶️", titleKey: "achievement.spiceLord", descKey: "achievement.spiceLordDesc", check: (c) => c.tasteDNA.spicy >= 4, tier: "ruby" },
+  { id: "sweet-tooth", icon: "🍯", titleKey: "achievement.sweetTooth", descKey: "achievement.sweetToothDesc", check: (c) => c.tasteDNA.sweet >= 4, tier: "gold" },
+  { id: "umami-sage", icon: "🍄", titleKey: "achievement.umamiSage", descKey: "achievement.umamiSageDesc", check: (c) => c.tasteDNA.umami >= 4, tier: "emerald" },
+  { id: "dna-explorer", icon: "🧬", titleKey: "achievement.dnaExplorer", descKey: "achievement.dnaExplorerDesc", check: (c) => c.dnaEntryCount >= 5, tier: "emerald" },
 ];
 
 const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user: me } = useAuth();
+  const { language } = useLanguage();
   const isMe = me?.id === userId;
 
   const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
@@ -454,7 +457,7 @@ const UserProfile = () => {
                       onClick={() => setSelectedBadge(badge)}
                       className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc} active:scale-95 transition-transform`}>
                       <span className="text-xl mb-1">{badge.icon}</span>
-                      <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{badge.titleTh}</span>
+                      <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{t(badge.titleKey, language)}</span>
                     </motion.button>
                   );
                 })}
@@ -467,7 +470,7 @@ const UserProfile = () => {
                   <button key={badge.id} onClick={() => setSelectedBadge(badge)}
                     className="flex flex-col items-center py-3 rounded-2xl bg-muted/50 opacity-40 active:scale-95 transition-transform">
                     <span className="text-xl mb-1 grayscale">🔒</span>
-                    <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{badge.titleTh}</span>
+                    <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{t(badge.titleKey, language)}</span>
                   </button>
                 ))}
               </div>
