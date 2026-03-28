@@ -588,7 +588,7 @@ const Profile = () => {
             {/* Emerald Vault mini */}
             <section>
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Gem size={14} className="text-score-emerald" /> Emerald Vault
+                <Gem size={14} className="text-score-emerald" /> {t("profile.emeraldVault", language)}
                 <span className="text-[10px] text-muted-foreground font-normal">({emeraldCount})</span>
               </h2>
               <div className="grid grid-cols-4 gap-2.5">
