@@ -42,8 +42,8 @@ interface TasteDNA {
 interface Achievement {
   id: string;
   icon: string;
-  titleTh: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
   check: (ctx: AchievementCtx) => boolean;
   tier: "emerald" | "gold" | "ruby";
 }
