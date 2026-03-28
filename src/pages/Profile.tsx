@@ -570,7 +570,7 @@ const Profile = () => {
             {/* Taste DNA */}
             <section>
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <span className="text-base">🧬</span> Taste DNA
+                <span className="text-base">🧬</span> {t("profile.tasteDNA", language)}
               </h2>
               <div className="bg-card rounded-2xl shadow-luxury p-4">
                 {hasTasteDNA ? (
