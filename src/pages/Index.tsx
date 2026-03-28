@@ -105,39 +105,51 @@ const Index = () => {
     fetchStores();
   }, [user]);
 
-  // ─── Data Fetching (single round of parallel queries) ───
+  // ─── Data Fetching (optimized 2-step parallel) ───
   const fetchStores = async () => {
     setLoading(true);
     try {
-      const { data: allStores } = await supabase
-        .from("stores")
-        .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
-        .order("created_at", { ascending: false })
-        .limit(50);
+      // Step 1: Fetch stores + menus in parallel
+      const [storesRes, menuResStep1] = await Promise.all([
+        supabase.from("stores")
+          .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
+          .order("created_at", { ascending: false })
+          .limit(50),
+        supabase.from("menu_items").select("id, store_id, image_url"),
+      ]);
 
+      const allStores = storesRes.data;
       if (!allStores || allStores.length === 0) { setRawStores([]); setLoading(false); return; }
 
+      const storeIdSet = new Set(allStores.map((s) => s.id));
+      // Filter menus client-side to avoid needing storeIds for the .in() filter
+      const storeMenus = (menuResStep1.data || []).filter((m: any) => storeIdSet.has(m.store_id));
+      const menuIds = storeMenus.map((m: any) => m.id);
       const storeIds = allStores.map((s) => s.id);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // All queries in ONE parallel batch — no sequential rounds
-      const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes, allDnaRes, allMenuRevRes] = await Promise.all([
+      // Step 2: All remaining queries in ONE parallel batch
+      const queries: Promise<any>[] = [
         supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
-        supabase.from("menu_items").select("id, store_id, image_url").in("store_id", storeIds),
         supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
-        // Fetch ALL dna & menu_reviews filtered by store_id instead of menu_item_id (avoids 2nd round)
-        supabase.from("dish_dna").select("menu_item_id, component_name, selected_score")
-          .in("menu_item_id", (await supabase.from("menu_items").select("id").in("store_id", storeIds)).data?.map(m => m.id) || []),
-        supabase.from("menu_reviews").select("menu_item_id")
-          .in("menu_item_id", (await supabase.from("menu_items").select("id").in("store_id", storeIds)).data?.map(m => m.id) || []),
-      ]);
+      ];
+      if (menuIds.length > 0) {
+        queries.push(
+          supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds),
+          supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds),
+        );
+      } else {
+        queries.push(Promise.resolve({ data: [] }), Promise.resolve({ data: [] }));
+      }
+
+      const [reviewsRes, recentReviewsRes, recentDnaRes, userDnaRes, allDnaRes, allMenuRevRes] = await Promise.all(queries);
 
       const menuToStore = new Map<string, string>();
       const menuCountMap = new Map<string, number>();
       const storeImageMap = new Map<string, string>();
-      (menuRes.data || []).forEach((m: any) => {
+      storeMenus.forEach((m: any) => {
         menuToStore.set(m.id, m.store_id);
         menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
         if (m.image_url && !storeImageMap.has(m.store_id)) {
@@ -146,21 +158,21 @@ const Index = () => {
       });
 
       const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
-      (reviewsRes.data || []).forEach((r) => {
+      (reviewsRes.data || []).forEach((r: any) => {
         if (!metricMap.has(r.store_id)) metricMap.set(r.store_id, new Map());
         const sm = metricMap.get(r.store_id)!;
         if (!sm.has(r.metric_id)) sm.set(r.metric_id, { total: 0, count: 0 });
-        const m = sm.get(r.metric_id)!;
-        m.total += r.score;
-        m.count++;
+        const entry = sm.get(r.metric_id)!;
+        entry.total += r.score;
+        entry.count++;
       });
 
       const recentActivityMap = new Map<string, number>();
-      (recentReviewsRes.data || []).forEach((r) => {
+      (recentReviewsRes.data || []).forEach((r: any) => {
         const sid = menuToStore.get(r.menu_item_id);
         if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
       });
-      (recentDnaRes.data || []).forEach((d) => {
+      (recentDnaRes.data || []).forEach((d: any) => {
         const sid = menuToStore.get(d.menu_item_id);
         if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
       });
