@@ -57,6 +57,7 @@ const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user: me } = useAuth();
+  const { language } = useLanguage();
   const isMe = me?.id === userId;
 
   const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
