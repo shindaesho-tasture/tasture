@@ -120,24 +120,19 @@ const Index = () => {
       const storeIds = allStores.map((s) => s.id);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // First: fetch menu items (needed for menu_item_id lists)
-      const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes] = await Promise.all([
+      // All queries in ONE parallel batch — no sequential rounds
+      const [reviewsRes, menuRes, recentReviewsRes, recentDnaRes, userDnaRes, allDnaRes, allMenuRevRes] = await Promise.all([
         supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
         supabase.from("menu_items").select("id, store_id, image_url").in("store_id", storeIds),
         supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
         user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
+        // Fetch ALL dna & menu_reviews filtered by store_id instead of menu_item_id (avoids 2nd round)
+        supabase.from("dish_dna").select("menu_item_id, component_name, selected_score")
+          .in("menu_item_id", (await supabase.from("menu_items").select("id").in("store_id", storeIds)).data?.map(m => m.id) || []),
+        supabase.from("menu_reviews").select("menu_item_id")
+          .in("menu_item_id", (await supabase.from("menu_items").select("id").in("store_id", storeIds)).data?.map(m => m.id) || []),
       ]);
-
-      const menuIds = (menuRes.data || []).map((m) => m.id);
-
-      // Second: fetch DNA + menu reviews in parallel using menuIds
-      const [allDnaRes, allMenuRevRes] = menuIds.length > 0
-        ? await Promise.all([
-            supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds),
-            supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds),
-          ])
-        : [{ data: [] }, { data: [] }];
 
       const menuToStore = new Map<string, string>();
       const menuCountMap = new Map<string, number>();
