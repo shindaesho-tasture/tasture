@@ -645,7 +645,7 @@ const Profile = () => {
                     <button key={badge.id} onClick={() => setSelectedBadge(badge)}
                       className="flex flex-col items-center py-3 rounded-2xl bg-muted/50 opacity-40 active:scale-95 transition-transform">
                       <span className="text-xl mb-1 grayscale">🔒</span>
-                      <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{badge.titleTh}</span>
+                      <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight px-1">{t(badge.titleKey, language)}</span>
                     </button>
                   ))}
                 </div>
