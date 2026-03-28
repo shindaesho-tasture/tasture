@@ -10,6 +10,8 @@ import PostDetailSheet from "@/components/PostDetailSheet";
 import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import FeedRadarChart from "@/components/FeedRadarChart";
 import CompareRadarChart from "@/components/CompareRadarChart";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 /* ── Types ── */
 interface UserPost {
