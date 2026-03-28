@@ -129,22 +129,20 @@ const Index = () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
       // Step 2: All remaining queries in ONE parallel batch
-      const queries: Promise<any>[] = [
-        supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds),
-        supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
-        supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo),
-        user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id) : Promise.resolve({ data: [] }),
-      ];
-      if (menuIds.length > 0) {
-        queries.push(
-          supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds),
-          supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds),
-        );
-      } else {
-        queries.push(Promise.resolve({ data: [] }), Promise.resolve({ data: [] }));
-      }
+      const reviewsP = supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds).then(r => r);
+      const recentReviewsP = supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo).then(r => r);
+      const recentDnaP = supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo).then(r => r);
+      const userDnaP = user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id).then(r => r) : Promise.resolve({ data: [] as any[] });
+      const allDnaP = menuIds.length > 0
+        ? supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds).then(r => r)
+        : Promise.resolve({ data: [] as any[] });
+      const allMenuRevP = menuIds.length > 0
+        ? supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds).then(r => r)
+        : Promise.resolve({ data: [] as any[] });
 
-      const [reviewsRes, recentReviewsRes, recentDnaRes, userDnaRes, allDnaRes, allMenuRevRes] = await Promise.all(queries);
+      const [reviewsRes, recentReviewsRes, recentDnaRes, userDnaRes, allDnaRes, allMenuRevRes] = await Promise.all([
+        reviewsP, recentReviewsP, recentDnaP, userDnaP, allDnaP, allMenuRevP,
+      ]);
 
       const menuToStore = new Map<string, string>();
       const menuCountMap = new Map<string, number>();
