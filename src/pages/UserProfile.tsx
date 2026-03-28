@@ -457,7 +457,7 @@ const UserProfile = () => {
                       onClick={() => setSelectedBadge(badge)}
                       className={`flex flex-col items-center py-3 rounded-2xl bg-card ${tc} active:scale-95 transition-transform`}>
                       <span className="text-xl mb-1">{badge.icon}</span>
-                      <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{badge.titleKey}</span>
+                      <span className="text-[9px] font-semibold text-foreground text-center leading-tight px-1">{t(badge.titleKey, language)}</span>
                     </motion.button>
                   );
                 })}
