@@ -878,7 +878,7 @@ interface PostCardProps {
   initialSaved: boolean;
 }
 
-const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
+const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initialLiked, initialCommentCount, initialFollowing, initialSaved }: PostCardProps) => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
