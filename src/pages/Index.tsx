@@ -105,43 +105,62 @@ const Index = () => {
     fetchStores();
   }, [user]);
 
+  // ─── Helper: chunk array for .in() queries (Supabase URL limit) ───
+  const chunkedIn = async <T,>(
+    table: string,
+    column: string,
+    ids: string[],
+    select: string,
+    extra?: (q: any) => any,
+  ): Promise<T[]> => {
+    if (ids.length === 0) return [];
+    const CHUNK = 200; // safe chunk size for URL length
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+    const results = await Promise.all(
+      chunks.map((chunk) => {
+        let q = supabase.from(table).select(select).in(column, chunk).limit(1000);
+        if (extra) q = extra(q);
+        return q.then((r: any) => r);
+      }),
+    );
+    return results.flatMap((r: any) => r.data || []);
+  };
+
   // ─── Data Fetching (optimized 2-step parallel) ───
   const fetchStores = async () => {
     setLoading(true);
     try {
-      // Step 1: Fetch stores + menus in parallel
+      // Step 1: Fetch stores + menu IDs in parallel
       const [storesRes, menuResStep1] = await Promise.all([
         supabase.from("stores")
           .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
           .order("created_at", { ascending: false })
-          .limit(50),
-        supabase.from("menu_items").select("id, store_id, image_url"),
+          .limit(100),
+        supabase.from("menu_items").select("id, store_id, image_url").limit(2000),
       ]);
 
       const allStores = storesRes.data;
       if (!allStores || allStores.length === 0) { setRawStores([]); setLoading(false); return; }
 
       const storeIdSet = new Set(allStores.map((s) => s.id));
-      // Filter menus client-side to avoid needing storeIds for the .in() filter
       const storeMenus = (menuResStep1.data || []).filter((m: any) => storeIdSet.has(m.store_id));
       const menuIds = storeMenus.map((m: any) => m.id);
       const storeIds = allStores.map((s) => s.id);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Step 2: All remaining queries in ONE parallel batch
-      const reviewsP = supabase.from("reviews").select("store_id, metric_id, score").in("store_id", storeIds).then(r => r);
-      const recentReviewsP = supabase.from("menu_reviews").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo).then(r => r);
-      const recentDnaP = supabase.from("dish_dna").select("menu_item_id, created_at").gte("created_at", sevenDaysAgo).then(r => r);
-      const userDnaP = user ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id).then(r => r) : Promise.resolve({ data: [] as any[] });
-      const allDnaP = menuIds.length > 0
-        ? supabase.from("dish_dna").select("menu_item_id, component_name, selected_score").in("menu_item_id", menuIds).then(r => r)
-        : Promise.resolve({ data: [] as any[] });
-      const allMenuRevP = menuIds.length > 0
-        ? supabase.from("menu_reviews").select("menu_item_id").in("menu_item_id", menuIds).then(r => r)
-        : Promise.resolve({ data: [] as any[] });
-
-      const [reviewsRes, recentReviewsRes, recentDnaRes, userDnaRes, allDnaRes, allMenuRevRes] = await Promise.all([
-        reviewsP, recentReviewsP, recentDnaP, userDnaP, allDnaP, allMenuRevP,
+      // Step 2: All remaining queries in ONE parallel batch (chunked for large arrays)
+      const [reviewsData, recentReviewsData, recentDnaData, userDnaData, allDnaData, allMenuRevData] = await Promise.all([
+        chunkedIn<any>("reviews", "store_id", storeIds, "store_id, metric_id, score"),
+        chunkedIn<any>("menu_reviews", "menu_item_id", menuIds, "menu_item_id, created_at",
+          (q: any) => q.gte("created_at", sevenDaysAgo)),
+        chunkedIn<any>("dish_dna", "menu_item_id", menuIds, "menu_item_id, created_at",
+          (q: any) => q.gte("created_at", sevenDaysAgo)),
+        user
+          ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id).limit(1000).then((r: any) => r.data || [])
+          : Promise.resolve([] as any[]),
+        chunkedIn<any>("dish_dna", "menu_item_id", menuIds, "menu_item_id, component_name, selected_score"),
+        chunkedIn<any>("menu_reviews", "menu_item_id", menuIds, "menu_item_id"),
       ]);
 
       const menuToStore = new Map<string, string>();
