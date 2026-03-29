@@ -560,6 +560,59 @@ const HomeFeed = () => {
       setHasMore(visiblePosts.length > limit);
       pageSize.current = limit;
 
+      // === BATCH fetch all per-post social data in parallel ===
+      const allRefIds = finalPosts.map((p) =>
+        p.type === "photo_post" ? p.id.replace("photo-", "") : `${p.userId}-${p.menuItemId}`
+      );
+      const allPostUserIds = [...new Set(finalPosts.map((p) => p.userId))];
+      const allStoreIdsForSave = [...new Set(finalPosts.map((p) => p.storeId).filter(Boolean))];
+
+      const batchPromises: Promise<any>[] = [
+        // 0: like counts per refId
+        supabase.from("post_likes").select("ref_id").in("ref_id", allRefIds),
+        // 1: comment counts per refId
+        supabase.from("feed_comments").select("ref_id").in("ref_id", allRefIds),
+      ];
+      if (user) {
+        // 2: user's own likes
+        batchPromises.push(
+          supabase.from("post_likes").select("ref_id").eq("user_id", user.id).in("ref_id", allRefIds)
+        );
+        // 3: user's follows
+        batchPromises.push(
+          supabase.from("follows").select("following_id").eq("follower_id", user.id).in("following_id", allPostUserIds)
+        );
+        // 4: user's saved stores
+        batchPromises.push(
+          allStoreIdsForSave.length > 0
+            ? supabase.from("saved_stores").select("store_id").eq("user_id", user.id).in("store_id", allStoreIdsForSave)
+            : Promise.resolve({ data: [] })
+        );
+      }
+
+      const batchResults = await Promise.all(batchPromises);
+
+      // Build lookup maps
+      const likeCountMap = new Map<string, number>();
+      (batchResults[0].data || []).forEach((r: any) => {
+        likeCountMap.set(r.ref_id, (likeCountMap.get(r.ref_id) || 0) + 1);
+      });
+      const commentCountMap = new Map<string, number>();
+      (batchResults[1].data || []).forEach((r: any) => {
+        commentCountMap.set(r.ref_id, (commentCountMap.get(r.ref_id) || 0) + 1);
+      });
+
+      const userLikedSet = new Set<string>();
+      const userFollowingSet = new Set<string>();
+      const userSavedSet = new Set<string>();
+      if (user) {
+        (batchResults[2]?.data || []).forEach((r: any) => userLikedSet.add(r.ref_id));
+        (batchResults[3]?.data || []).forEach((r: any) => userFollowingSet.add(r.following_id));
+        (batchResults[4]?.data || []).forEach((r: any) => userSavedSet.add(r.store_id));
+      }
+
+      setBatchSocial({ likeCountMap, commentCountMap, userLikedSet, userFollowingSet, userSavedSet });
+
       // Track new posts from realtime
       if (isRealtime) {
         const freshIds = new Set<string>();
