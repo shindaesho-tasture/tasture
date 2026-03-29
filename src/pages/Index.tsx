@@ -105,19 +105,26 @@ const Index = () => {
     fetchStores();
   }, [user]);
 
-  // ─── Helper: chunk array for .in() queries (Supabase URL limit) ───
-  const chunkedIn = async <T,>(
-    table: string,
-    column: string,
-    ids: string[],
-    select: string,
-    extra?: (q: any) => any,
-  ): Promise<T[]> => {
-    if (ids.length === 0) return [];
-    const CHUNK = 200; // safe chunk size for URL length
-    const chunks: string[][] = [];
-    for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
-    const results = await Promise.all(
+    const chunkedIn = async (
+      table: string,
+      column: string,
+      ids: string[],
+      selectStr: string,
+      extra?: (q: any) => any,
+    ): Promise<any[]> => {
+      if (ids.length === 0) return [];
+      const CHUNK = 200;
+      const chunks: string[][] = [];
+      for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+      const results = await Promise.all(
+        chunks.map((chunk) => {
+          let q = (supabase.from(table) as any).select(selectStr).in(column, chunk).limit(1000);
+          if (extra) q = extra(q);
+          return q;
+        }),
+      );
+      return results.flatMap((r: any) => r.data || []);
+    };
       chunks.map((chunk) => {
         let q = supabase.from(table).select(select).in(column, chunk).limit(1000);
         if (extra) q = extra(q);
