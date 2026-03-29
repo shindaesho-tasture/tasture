@@ -964,29 +964,8 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
     setFollowLoading(false);
   };
 
-  // Check follow state
-  useEffect(() => {
-    if (!user || user.id === post.userId) return;
-    supabase
-      .from("follows")
-      .select("id")
-      .eq("follower_id", user.id)
-      .eq("following_id", post.userId)
-      .maybeSingle()
-      .then(({ data }) => setIsFollowing(!!data));
-  }, [user, post.userId]);
+  // Follow and saved states are now provided via batch props — no per-card queries needed
 
-  // Check saved store state
-  useEffect(() => {
-    if (!user || !post.storeId) return;
-    supabase
-      .from("saved_stores")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("store_id", post.storeId)
-      .maybeSingle()
-      .then(({ data }) => setSaved(!!data));
-  }, [user, post.storeId]);
 
   const toggleSaveStore = async () => {
     if (!user || !post.storeId) return;
