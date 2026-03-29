@@ -569,23 +569,23 @@ const HomeFeed = () => {
 
       const batchPromises: Promise<any>[] = [
         // 0: like counts per refId
-        supabase.from("post_likes").select("ref_id").in("ref_id", allRefIds),
+        supabase.from("post_likes").select("ref_id").in("ref_id", allRefIds).then(r => r),
         // 1: comment counts per refId
-        supabase.from("feed_comments").select("ref_id").in("ref_id", allRefIds),
+        supabase.from("feed_comments").select("ref_id").in("ref_id", allRefIds).then(r => r),
       ];
       if (user) {
         // 2: user's own likes
         batchPromises.push(
-          supabase.from("post_likes").select("ref_id").eq("user_id", user.id).in("ref_id", allRefIds)
+          supabase.from("post_likes").select("ref_id").eq("user_id", user.id).in("ref_id", allRefIds).then(r => r)
         );
         // 3: user's follows
         batchPromises.push(
-          supabase.from("follows").select("following_id").eq("follower_id", user.id).in("following_id", allPostUserIds)
+          supabase.from("follows").select("following_id").eq("follower_id", user.id).in("following_id", allPostUserIds).then(r => r)
         );
         // 4: user's saved stores
         batchPromises.push(
           allStoreIdsForSave.length > 0
-            ? supabase.from("saved_stores").select("store_id").eq("user_id", user.id).in("store_id", allStoreIdsForSave)
+            ? supabase.from("saved_stores").select("store_id").eq("user_id", user.id).in("store_id", allStoreIdsForSave).then(r => r)
             : Promise.resolve({ data: [] })
         );
       }
