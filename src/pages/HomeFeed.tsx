@@ -822,7 +822,13 @@ const HomeFeed = () => {
             ) : (
               <AnimatePresence>
                 {filteredPosts.map((post, i) => (
-                  <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
+                  <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)}
+                    initialLikeCount={batchSocial.likeCountMap.get(post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`) || 0}
+                    initialLiked={batchSocial.userLikedSet.has(post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`)}
+                    initialCommentCount={batchSocial.commentCountMap.get(post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`) || 0}
+                    initialFollowing={batchSocial.userFollowingSet.has(post.userId)}
+                    initialSaved={batchSocial.userSavedSet.has(post.storeId)}
+                  />
                 ))}
               </AnimatePresence>
             )}
