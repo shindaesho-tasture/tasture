@@ -865,6 +865,11 @@ interface PostCardProps {
   navigate: ReturnType<typeof useNavigate>;
   user: any;
   isNew?: boolean;
+  initialLikeCount: number;
+  initialLiked: boolean;
+  initialCommentCount: number;
+  initialFollowing: boolean;
+  initialSaved: boolean;
 }
 
 const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
