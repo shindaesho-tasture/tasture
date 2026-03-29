@@ -879,20 +879,20 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initialLiked, initialCommentCount, initialFollowing, initialSaved }: PostCardProps) => {
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [liked, setLiked] = useState(initialLiked);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [commentCount, setCommentCount] = useState(0);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [commentCount, setCommentCount] = useState(initialCommentCount);
+  const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [followLoading, setFollowLoading] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [particles, setParticles] = useState<{ id: number; x: number; y: number; emoji: string; scale: number }[]>([]);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(initialSaved);
   const [deleted, setDeleted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
