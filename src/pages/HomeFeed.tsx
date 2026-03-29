@@ -89,6 +89,13 @@ const HomeFeed = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+  const [batchSocial, setBatchSocial] = useState<{
+    likeCountMap: Map<string, number>;
+    commentCountMap: Map<string, number>;
+    userLikedSet: Set<string>;
+    userFollowingSet: Set<string>;
+    userSavedSet: Set<string>;
+  }>({ likeCountMap: new Map(), commentCountMap: new Map(), userLikedSet: new Set(), userFollowingSet: new Set(), userSavedSet: new Set() });
   const pageSize = useRef(30);
   const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
