@@ -89,6 +89,13 @@ const HomeFeed = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+  const [batchSocial, setBatchSocial] = useState<{
+    likeCountMap: Map<string, number>;
+    commentCountMap: Map<string, number>;
+    userLikedSet: Set<string>;
+    userFollowingSet: Set<string>;
+    userSavedSet: Set<string>;
+  }>({ likeCountMap: new Map(), commentCountMap: new Map(), userLikedSet: new Set(), userFollowingSet: new Set(), userSavedSet: new Set() });
   const pageSize = useRef(30);
   const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -560,6 +567,54 @@ const HomeFeed = () => {
       setHasMore(visiblePosts.length > limit);
       pageSize.current = limit;
 
+      // === BATCH fetch all per-post social data in parallel ===
+      const allRefIds = finalPosts.map((p) =>
+        p.type === "photo_post" ? p.id.replace("photo-", "") : `${p.userId}-${p.menuItemId}`
+      );
+      const allPostUserIds = [...new Set(finalPosts.map((p) => p.userId))];
+      const allStoreIdsForSave = [...new Set(finalPosts.map((p) => p.storeId).filter(Boolean))];
+
+      const batchPromises: Promise<any>[] = [
+        Promise.resolve(supabase.from("post_likes").select("ref_id").in("ref_id", allRefIds)),
+        Promise.resolve(supabase.from("feed_comments").select("ref_id").in("ref_id", allRefIds)),
+      ];
+      if (user) {
+        batchPromises.push(
+          Promise.resolve(supabase.from("post_likes").select("ref_id").eq("user_id", user.id).in("ref_id", allRefIds))
+        );
+        batchPromises.push(
+          Promise.resolve(supabase.from("follows").select("following_id").eq("follower_id", user.id).in("following_id", allPostUserIds))
+        );
+        batchPromises.push(
+          allStoreIdsForSave.length > 0
+            ? Promise.resolve(supabase.from("saved_stores").select("store_id").eq("user_id", user.id).in("store_id", allStoreIdsForSave))
+            : Promise.resolve({ data: [] })
+        );
+      }
+
+      const batchResults = await Promise.all(batchPromises);
+
+      // Build lookup maps
+      const likeCountMap = new Map<string, number>();
+      (batchResults[0].data || []).forEach((r: any) => {
+        likeCountMap.set(r.ref_id, (likeCountMap.get(r.ref_id) || 0) + 1);
+      });
+      const commentCountMap = new Map<string, number>();
+      (batchResults[1].data || []).forEach((r: any) => {
+        commentCountMap.set(r.ref_id, (commentCountMap.get(r.ref_id) || 0) + 1);
+      });
+
+      const userLikedSet = new Set<string>();
+      const userFollowingSet = new Set<string>();
+      const userSavedSet = new Set<string>();
+      if (user) {
+        (batchResults[2]?.data || []).forEach((r: any) => userLikedSet.add(r.ref_id));
+        (batchResults[3]?.data || []).forEach((r: any) => userFollowingSet.add(r.following_id));
+        (batchResults[4]?.data || []).forEach((r: any) => userSavedSet.add(r.store_id));
+      }
+
+      setBatchSocial({ likeCountMap, commentCountMap, userLikedSet, userFollowingSet, userSavedSet });
+
       // Track new posts from realtime
       if (isRealtime) {
         const freshIds = new Set<string>();
@@ -767,7 +822,13 @@ const HomeFeed = () => {
             ) : (
               <AnimatePresence>
                 {filteredPosts.map((post, i) => (
-                  <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)} />
+                  <PostCard key={post.id} post={post} index={i} navigate={navigate} user={user} isNew={newPostIds.has(post.id)}
+                    initialLikeCount={batchSocial.likeCountMap.get(post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`) || 0}
+                    initialLiked={batchSocial.userLikedSet.has(post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`)}
+                    initialCommentCount={batchSocial.commentCountMap.get(post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`) || 0}
+                    initialFollowing={batchSocial.userFollowingSet.has(post.userId)}
+                    initialSaved={batchSocial.userSavedSet.has(post.storeId)}
+                  />
                 ))}
               </AnimatePresence>
             )}
@@ -810,23 +871,28 @@ interface PostCardProps {
   navigate: ReturnType<typeof useNavigate>;
   user: any;
   isNew?: boolean;
+  initialLikeCount: number;
+  initialLiked: boolean;
+  initialCommentCount: number;
+  initialFollowing: boolean;
+  initialSaved: boolean;
 }
 
-const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initialLiked, initialCommentCount, initialFollowing, initialSaved }: PostCardProps) => {
+  const [liked, setLiked] = useState(initialLiked);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [commentCount, setCommentCount] = useState(0);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [commentCount, setCommentCount] = useState(initialCommentCount);
+  const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [followLoading, setFollowLoading] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [particles, setParticles] = useState<{ id: number; x: number; y: number; emoji: string; scale: number }[]>([]);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(initialSaved);
   const [deleted, setDeleted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -838,37 +904,7 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
   const refType = "post";
   const refId = post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`;
 
-  // Fetch like state + count on mount
-  useEffect(() => {
-    const fetchLikes = async () => {
-      const { count } = await supabase
-        .from("post_likes")
-        .select("id", { count: "exact", head: true })
-        .eq("ref_id", refId);
-      setLikeCount(count || 0);
-
-      if (user) {
-        const { data } = await supabase
-          .from("post_likes")
-          .select("id")
-          .eq("ref_id", refId)
-          .eq("user_id", user.id)
-          .maybeSingle();
-        setLiked(!!data);
-      }
-    };
-    fetchLikes();
-  }, [refId, user]);
-
-  // Fetch comment count on mount
-  useEffect(() => {
-    supabase
-      .from("feed_comments")
-      .select("id", { count: "exact", head: true })
-      .eq("ref_type", refType)
-      .eq("ref_id", refId)
-      .then(({ count }) => setCommentCount(count || 0));
-  }, [refType, refId]);
+  // Like/comment counts are now provided via batch props — no per-card queries needed
 
   const burstParticles = () => {
     const emojis = ["❤️", "🧡", "💛", "💖", "✨", "💫", "🌟", "💕"];
@@ -928,29 +964,8 @@ const PostCard = ({ post, index, navigate, user, isNew }: PostCardProps) => {
     setFollowLoading(false);
   };
 
-  // Check follow state
-  useEffect(() => {
-    if (!user || user.id === post.userId) return;
-    supabase
-      .from("follows")
-      .select("id")
-      .eq("follower_id", user.id)
-      .eq("following_id", post.userId)
-      .maybeSingle()
-      .then(({ data }) => setIsFollowing(!!data));
-  }, [user, post.userId]);
+  // Follow and saved states are now provided via batch props — no per-card queries needed
 
-  // Check saved store state
-  useEffect(() => {
-    if (!user || !post.storeId) return;
-    supabase
-      .from("saved_stores")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("store_id", post.storeId)
-      .maybeSingle()
-      .then(({ data }) => setSaved(!!data));
-  }, [user, post.storeId]);
 
   const toggleSaveStore = async () => {
     if (!user || !post.storeId) return;
