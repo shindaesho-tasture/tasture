@@ -150,16 +150,16 @@ const Index = () => {
 
       // Step 2: All remaining queries in ONE parallel batch (chunked for large arrays)
       const [reviewsData, recentReviewsData, recentDnaData, userDnaData, allDnaData, allMenuRevData] = await Promise.all([
-        chunkedIn<any>("reviews", "store_id", storeIds, "store_id, metric_id, score"),
-        chunkedIn<any>("menu_reviews", "menu_item_id", menuIds, "menu_item_id, created_at",
+        chunkedIn("reviews", "store_id", storeIds, "store_id, metric_id, score"),
+        chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id, created_at",
           (q: any) => q.gte("created_at", sevenDaysAgo)),
-        chunkedIn<any>("dish_dna", "menu_item_id", menuIds, "menu_item_id, created_at",
+        chunkedIn("dish_dna", "menu_item_id", menuIds, "menu_item_id, created_at",
           (q: any) => q.gte("created_at", sevenDaysAgo)),
         user
           ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id).limit(1000).then((r: any) => r.data || [])
           : Promise.resolve([] as any[]),
-        chunkedIn<any>("dish_dna", "menu_item_id", menuIds, "menu_item_id, component_name, selected_score"),
-        chunkedIn<any>("menu_reviews", "menu_item_id", menuIds, "menu_item_id"),
+        chunkedIn("dish_dna", "menu_item_id", menuIds, "menu_item_id, component_name, selected_score"),
+        chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id"),
       ]);
 
       const menuToStore = new Map<string, string>();
@@ -174,7 +174,7 @@ const Index = () => {
       });
 
       const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
-      (reviewsRes.data || []).forEach((r: any) => {
+      reviewsData.forEach((r: any) => {
         if (!metricMap.has(r.store_id)) metricMap.set(r.store_id, new Map());
         const sm = metricMap.get(r.store_id)!;
         if (!sm.has(r.metric_id)) sm.set(r.metric_id, { total: 0, count: 0 });
@@ -184,23 +184,23 @@ const Index = () => {
       });
 
       const recentActivityMap = new Map<string, number>();
-      (recentReviewsRes.data || []).forEach((r: any) => {
+      recentReviewsData.forEach((r: any) => {
         const sid = menuToStore.get(r.menu_item_id);
         if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
       });
-      (recentDnaRes.data || []).forEach((d: any) => {
+      recentDnaData.forEach((d: any) => {
         const sid = menuToStore.get(d.menu_item_id);
         if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
       });
 
       const userPrefs = new Map<string, number>();
-      (userDnaRes.data || []).forEach((d: any) => {
+      userDnaData.forEach((d: any) => {
         if (d.selected_score !== 0) userPrefs.set(d.component_name, (userPrefs.get(d.component_name) || 0) + d.selected_score);
       });
 
       const dnaCountMap = new Map<string, number>();
       const storeDnaMap = new Map<string, Map<string, { total: number; count: number }>>();
-      (allDnaRes.data || []).forEach((d: any) => {
+      allDnaData.forEach((d: any) => {
         const sid = menuToStore.get(d.menu_item_id);
         if (!sid) return;
         dnaCountMap.set(sid, (dnaCountMap.get(sid) || 0) + 1);
@@ -213,7 +213,7 @@ const Index = () => {
       });
 
       const menuRevCountMap = new Map<string, number>();
-      (allMenuRevRes.data || []).forEach((r: any) => {
+      allMenuRevData.forEach((r: any) => {
         const sid = menuToStore.get(r.menu_item_id);
         if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
