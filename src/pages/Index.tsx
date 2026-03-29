@@ -125,14 +125,6 @@ const Index = () => {
       );
       return results.flatMap((r: any) => r.data || []);
     };
-      chunks.map((chunk) => {
-        let q = supabase.from(table).select(select).in(column, chunk).limit(1000);
-        if (extra) q = extra(q);
-        return q.then((r: any) => r);
-      }),
-    );
-    return results.flatMap((r: any) => r.data || []);
-  };
 
   // ─── Data Fetching (optimized 2-step parallel) ───
   const fetchStores = async () => {
