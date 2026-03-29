@@ -904,37 +904,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
   const refType = "post";
   const refId = post.type === "photo_post" ? post.id.replace("photo-", "") : `${post.userId}-${post.menuItemId}`;
 
-  // Fetch like state + count on mount
-  useEffect(() => {
-    const fetchLikes = async () => {
-      const { count } = await supabase
-        .from("post_likes")
-        .select("id", { count: "exact", head: true })
-        .eq("ref_id", refId);
-      setLikeCount(count || 0);
-
-      if (user) {
-        const { data } = await supabase
-          .from("post_likes")
-          .select("id")
-          .eq("ref_id", refId)
-          .eq("user_id", user.id)
-          .maybeSingle();
-        setLiked(!!data);
-      }
-    };
-    fetchLikes();
-  }, [refId, user]);
-
-  // Fetch comment count on mount
-  useEffect(() => {
-    supabase
-      .from("feed_comments")
-      .select("id", { count: "exact", head: true })
-      .eq("ref_type", refType)
-      .eq("ref_id", refId)
-      .then(({ count }) => setCommentCount(count || 0));
-  }, [refType, refId]);
+  // Like/comment counts are now provided via batch props — no per-card queries needed
 
   const burstParticles = () => {
     const emojis = ["❤️", "🧡", "💛", "💖", "✨", "💫", "🌟", "💕"];
