@@ -79,8 +79,6 @@ const Index = () => {
   const { user } = useAuth();
   const { position } = useGeolocation();
   const { categories: dynamicCategories } = useCategories();
-  // stores derived via useMemo below
-  const [loading, setLoading] = useState(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
   const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
@@ -88,49 +86,31 @@ const Index = () => {
 
   const activePosition = customPos || position;
 
-  // Raw store data (fetched once, independent of position)
-  const [rawStores, setRawStores] = useState<any[] | null>(null);
-  const [rawData, setRawData] = useState<{
-    menuToStore: Map<string, string>;
-    menuCountMap: Map<string, number>;
-    storeImageMap: Map<string, string>;
-    metricMap: Map<string, Map<string, { total: number; count: number }>>;
-    recentActivityMap: Map<string, number>;
-    dnaCountMap: Map<string, number>;
-    storeDnaMap: Map<string, Map<string, { total: number; count: number }>>;
-    menuRevCountMap: Map<string, number>;
-    userPrefs: Map<string, number>;
-  } | null>(null);
+  const chunkedIn = async (
+    table: string,
+    column: string,
+    ids: string[],
+    selectStr: string,
+    extra?: (q: any) => any,
+  ): Promise<any[]> => {
+    if (ids.length === 0) return [];
+    const CHUNK = 200;
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+    const results = await Promise.all(
+      chunks.map((chunk) => {
+        let q = (supabase.from(table as any) as any).select(selectStr).in(column, chunk).limit(1000);
+        if (extra) q = extra(q);
+        return q;
+      }),
+    );
+    return results.flatMap((r: any) => r.data || []);
+  };
 
-  useEffect(() => {
-    fetchStores();
-  }, [user]);
-
-    const chunkedIn = async (
-      table: string,
-      column: string,
-      ids: string[],
-      selectStr: string,
-      extra?: (q: any) => any,
-    ): Promise<any[]> => {
-      if (ids.length === 0) return [];
-      const CHUNK = 200;
-      const chunks: string[][] = [];
-      for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
-      const results = await Promise.all(
-        chunks.map((chunk) => {
-          let q = (supabase.from(table as any) as any).select(selectStr).in(column, chunk).limit(1000);
-          if (extra) q = extra(q);
-          return q;
-        }),
-      );
-      return results.flatMap((r: any) => r.data || []);
-    };
-
-  // ─── Data Fetching (optimized 2-step parallel) ───
-  const fetchStores = async () => {
-    setLoading(true);
-    try {
+  // ─── React Query cached data fetching ───
+  const { data: queryData, isLoading: loading } = useQuery({
+    queryKey: ["discover-stores", user?.id ?? "anon"],
+    queryFn: async () => {
       // Step 1: Fetch stores + menu IDs in parallel
       const [storesRes, menuResStep1] = await Promise.all([
         supabase.from("stores")
@@ -141,7 +121,7 @@ const Index = () => {
       ]);
 
       const allStores = storesRes.data;
-      if (!allStores || allStores.length === 0) { setRawStores([]); setLoading(false); return; }
+      if (!allStores || allStores.length === 0) return { rawStores: [] as any[], rawData: null };
 
       const storeIdSet = new Set(allStores.map((s) => s.id));
       const storeMenus = (menuResStep1.data || []).filter((m: any) => storeIdSet.has(m.store_id));
@@ -149,7 +129,7 @@ const Index = () => {
       const storeIds = allStores.map((s) => s.id);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Step 2: All remaining queries in ONE parallel batch (chunked for large arrays)
+      // Step 2: All remaining queries in ONE parallel batch
       const [reviewsData, recentReviewsData, recentDnaData, userDnaData, allDnaData, allMenuRevData] = await Promise.all([
         chunkedIn("reviews", "store_id", storeIds, "store_id, metric_id, score"),
         chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id, created_at",
@@ -219,14 +199,18 @@ const Index = () => {
         if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
 
-      setRawStores(allStores);
-      setRawData({ menuToStore, menuCountMap, storeImageMap, metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs });
-    } catch (err) {
-      console.error("Fetch stores error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        rawStores: allStores,
+        rawData: { menuToStore, menuCountMap, storeImageMap, metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs },
+      };
+    },
+    staleTime: 5 * 60 * 1000, // cache 5 minutes
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const rawStores = queryData?.rawStores ?? null;
+  const rawData = queryData?.rawData ?? null;
 
   // ─── Derive store cards from raw data + position (no refetch on GPS change) ───
   const stores = useMemo(() => {
