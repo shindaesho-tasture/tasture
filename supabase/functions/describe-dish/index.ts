@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,15 +23,52 @@ serve(async (req) => {
   }
 
   try {
-    const { dish_name, tags } = await req.json();
+    const { dish_name, tags, menu_item_id } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const inputTags = tags as Array<{ ingredient: string; icon: string; tag: string; score: number }>;
+    const componentNames = inputTags.map((t) => t.ingredient);
+
+    // 1. Check existing cached descriptions by component_name (any menu item)
+    const { data: cached } = await supabase
+      .from("dish_descriptions")
+      .select("component_name, description")
+      .in("component_name", componentNames);
+
+    const cachedMap: Record<string, string> = {};
+    (cached || []).forEach((c: any) => {
+      if (!cachedMap[c.component_name]) cachedMap[c.component_name] = c.description;
+    });
+
+    const uncoveredTags = inputTags.filter((t) => !cachedMap[t.ingredient]);
+
+    // 2. If all cached, return immediately & copy cache for this menu_item
+    if (uncoveredTags.length === 0) {
+      // Fire-and-forget: ensure this menu_item has its own cache rows
+      if (menu_item_id) {
+        const rows = componentNames.map((c) => ({
+          menu_item_id,
+          component_name: c,
+          description: cachedMap[c],
+        }));
+        await supabase.from("dish_descriptions")
+          .upsert(rows, { onConflict: "menu_item_id,component_name" });
+      }
+      return new Response(
+        JSON.stringify({ descriptions: componentNames.map((c) => ({ ingredient: c, description: cachedMap[c] })) }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
+    // 3. Call AI only for uncovered components
     const userPrompt = `จาน: ${dish_name}
 วัตถุดิบและแท็ก:
-${(tags as Array<{ ingredient: string; icon: string; tag: string; score: number }>)
+${uncoveredTags
   .map((t) => `- ${t.icon} ${t.ingredient} (${t.tag}, score: ${t.score > 0 ? "+" : ""}${t.score})`)
   .join("\n")}
 
@@ -83,34 +121,54 @@ ${(tags as Array<{ ingredient: string; icon: string; tag: string; score: number 
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited, try again later" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Payment required" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errText = await response.text();
       console.error("AI error:", response.status, errText);
       return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const result = await response.json();
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+
+    const aiDescs: Array<{ ingredient: string; description: string }> = [];
     if (toolCall?.function?.arguments) {
       const parsed = JSON.parse(toolCall.function.arguments);
-      return new Response(JSON.stringify(parsed), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (parsed.descriptions) aiDescs.push(...parsed.descriptions);
     }
 
-    return new Response(JSON.stringify({ descriptions: [] }), {
+    // Merge cached + AI results
+    aiDescs.forEach((d) => { cachedMap[d.ingredient] = d.description; });
+
+    const allDescriptions = componentNames.map((c) => ({
+      ingredient: c,
+      description: cachedMap[c] || "",
+    }));
+
+    // 4. Save ALL descriptions to DB (cached + new) for this menu_item
+    if (menu_item_id) {
+      const rows = allDescriptions
+        .filter((d) => d.description)
+        .map((d) => ({
+          menu_item_id,
+          component_name: d.ingredient,
+          description: d.description,
+        }));
+      if (rows.length > 0) {
+        await supabase.from("dish_descriptions")
+          .upsert(rows, { onConflict: "menu_item_id,component_name" });
+      }
+    }
+
+    return new Response(JSON.stringify({ descriptions: allDescriptions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
