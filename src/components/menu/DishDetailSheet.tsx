@@ -163,7 +163,7 @@ const DishDetailSheet = ({
   const fetchDescriptions = async () => {
     setLoadingDesc(true);
     try {
-      // 1. Check cache for this specific menu item
+      // Quick client-side cache check first
       const { data: cached } = await supabase
         .from("dish_descriptions")
         .select("component_name, description")
@@ -172,7 +172,6 @@ const DishDetailSheet = ({
       if (cached && cached.length > 0) {
         const descMap: Record<string, string> = {};
         cached.forEach((c) => (descMap[c.component_name] = c.description));
-
         const uncovered = dnaTags.filter((t) => !descMap[t.component_name]);
         if (uncovered.length === 0) {
           setDescriptions(descMap);
@@ -181,38 +180,7 @@ const DishDetailSheet = ({
         }
       }
 
-      // 2. Check if other menu items with same dish name already have descriptions
-      const componentNames = dnaTags.map((t) => t.component_name);
-      const { data: sharedDescs } = await supabase
-        .from("dish_descriptions")
-        .select("component_name, description, menu_item_id")
-        .in("component_name", componentNames)
-        .neq("menu_item_id", menuItemId);
-
-      if (sharedDescs && sharedDescs.length > 0) {
-        const sharedMap: Record<string, string> = {};
-        sharedDescs.forEach((d) => {
-          if (!sharedMap[d.component_name]) sharedMap[d.component_name] = d.description;
-        });
-
-        const stillUncovered = componentNames.filter((c) => !sharedMap[c]);
-        if (stillUncovered.length === 0) {
-          setDescriptions(sharedMap);
-          // Cache for this menu item too (fire and forget)
-          const rows = componentNames.map((c) => ({
-            menu_item_id: menuItemId,
-            component_name: c,
-            description: sharedMap[c],
-          }));
-          supabase.from("dish_descriptions")
-            .upsert(rows, { onConflict: "menu_item_id,component_name" })
-            .then(({ error: e }) => { if (e) console.error("Cache copy error:", e); });
-          setLoadingDesc(false);
-          return;
-        }
-      }
-
-      // 3. Call AI only for truly missing descriptions
+      // Edge function handles cross-item cache lookup + AI fallback + DB save
       const tagsPayload = dnaTags.map((t) => ({
         ingredient: t.component_name,
         icon: t.component_icon,
@@ -221,26 +189,14 @@ const DishDetailSheet = ({
       }));
 
       const { data, error } = await supabase.functions.invoke("describe-dish", {
-        body: { dish_name: dishName, tags: tagsPayload },
+        body: { dish_name: dishName, tags: tagsPayload, menu_item_id: menuItemId },
       });
 
       if (!error && data?.descriptions) {
         const descMap: Record<string, string> = {};
-        const descs = data.descriptions as Array<{ ingredient: string; description: string }>;
-        descs.forEach((d) => (descMap[d.ingredient] = d.description));
+        (data.descriptions as Array<{ ingredient: string; description: string }>)
+          .forEach((d) => (descMap[d.ingredient] = d.description));
         setDescriptions(descMap);
-
-        const rows = descs.map((d) => ({
-          menu_item_id: menuItemId,
-          component_name: d.ingredient,
-          description: d.description,
-        }));
-        supabase
-          .from("dish_descriptions")
-          .upsert(rows, { onConflict: "menu_item_id,component_name" })
-          .then(({ error: upsertErr }) => {
-            if (upsertErr) console.error("Cache upsert error:", upsertErr);
-          });
       }
     } catch (e) {
       console.error("describe-dish error:", e);
