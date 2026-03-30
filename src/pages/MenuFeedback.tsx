@@ -92,21 +92,26 @@ const MenuFeedback = () => {
     if (!storeId) return;
     setLoading(true);
     try {
-      const { data: store } = await supabase
-        .from("stores").select("name").eq("id", storeId).single();
-      if (store) setStoreName(store.name);
+      // Parallel fetch: store name + menu items
+      const [storeRes, menuRes] = await Promise.all([
+        supabase.from("stores").select("name").eq("id", storeId).single(),
+        supabase
+          .from("menu_items")
+          .select("id, name, type, price, price_special, noodle_types, noodle_styles, toppings")
+          .eq("store_id", storeId),
+      ]);
+      if (storeRes.data) setStoreName(storeRes.data.name);
+      if (menuRes.error) throw menuRes.error;
+      const menuItems = menuRes.data || [];
 
-      const { data: menuItems, error: menuErr } = await supabase
-        .from("menu_items")
-        .select("id, name, type, price, price_special, noodle_types, noodle_styles, toppings")
-        .eq("store_id", storeId);
-      if (menuErr) throw menuErr;
-
-      const itemIds = (menuItems || []).map((i) => i.id);
-      const { data: allReviews } = await supabase
-        .from("menu_reviews")
-        .select("menu_item_id, user_id, score")
-        .in("menu_item_id", itemIds);
+      const itemIds = menuItems.map((i) => i.id);
+      // Only fetch reviews if there are items
+      const { data: allReviews } = itemIds.length > 0
+        ? await supabase
+            .from("menu_reviews")
+            .select("menu_item_id, user_id, score")
+            .in("menu_item_id", itemIds)
+        : { data: [] as { menu_item_id: string; user_id: string; score: number }[] };
 
       const avgMap = new Map<string, { total: number; count: number }>();
       const myMap = new Map<string, number>();
