@@ -118,7 +118,7 @@ const Index = () => {
       for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
       const results = await Promise.all(
         chunks.map((chunk) => {
-          let q = (supabase.from(table) as any).select(selectStr).in(column, chunk).limit(1000);
+          let q = (supabase.from(table as any) as any).select(selectStr).in(column, chunk).limit(1000);
           if (extra) q = extra(q);
           return q;
         }),
