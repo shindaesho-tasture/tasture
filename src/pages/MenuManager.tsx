@@ -501,11 +501,11 @@ const MenuManager = () => {
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={handleSubmit}
-                    disabled={saveMutation.isPending}
+                    disabled={isSaving}
                     className="w-full py-3 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-semibold shadow-luxury flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Save size={16} />
-                    {saveMutation.isPending ? "..." : editingId ? t("common.save") : t("menuMgr.addItem")}
+                    {isSaving ? "..." : editingId ? t("common.save") : t("menuMgr.addItem")}
                   </motion.button>
                 </div>
               </motion.div>
