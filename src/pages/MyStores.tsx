@@ -291,6 +291,13 @@ const MyStores = () => {
                         <Camera size={14} strokeWidth={1.5} />
                         📷
                       </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/menu-manager/${store.id}`)}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary/10 text-primary text-[11px] font-medium uppercase tracking-wider hover:bg-primary/20 transition-colors"
+                      >
+                        <Settings size={14} strokeWidth={1.5} />
+                      </motion.button>
                     </div>
                     {popInfo.label && (
                       <span className="absolute bottom-2 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">

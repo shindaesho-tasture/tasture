@@ -59,6 +59,7 @@ const AnimatedRoutes = () => {
         <Route path="/dish-dna/:menuItemId" element={<DishDnaFeedback />} />
         <Route path="/post-review" element={<PostOrderReview />} />
         <Route path="/menu-images/:storeId" element={<MenuImageManager />} />
+        <Route path="/menu-manager/:storeId" element={<MenuManager />} />
         <Route path="/follows" element={<FollowList />} />
         <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="*" element={<NotFound />} />
