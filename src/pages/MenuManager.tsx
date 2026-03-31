@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/language-context";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
+import TagInput from "@/components/menu/TagInput";
 
 type MenuItemRow = {
   id: string;
