@@ -896,6 +896,15 @@ interface PostCardProps {
 const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initialLiked, initialCommentCount, initialFollowing, initialSaved }: PostCardProps) => {
   const { t } = useLanguage();
   const timeAgo = useMemo(() => makeTimeAgo(t), [t]);
+
+  // Translate DNA tags
+  const cardTagTexts = useMemo(() => {
+    const set = new Set<string>();
+    post.dnaComponents?.forEach((c) => set.add(c.tag));
+    post.slides?.forEach((s) => s.dnaComponents?.forEach((c) => set.add(c.tag)));
+    return Array.from(set);
+  }, [post]);
+  const { translateTag } = useTagTranslations(cardTagTexts);
   const [liked, setLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [showComments, setShowComments] = useState(false);
