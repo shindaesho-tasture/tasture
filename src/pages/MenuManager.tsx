@@ -193,6 +193,21 @@ const MenuManager = () => {
     []
   );
 
+  const moveItem = useCallback((itemId: string, direction: "up" | "down") => {
+    setOrderedItems((prev) => {
+      const idx = prev.findIndex((i) => i.id === itemId);
+      if (idx < 0) return prev;
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[targetIdx]] = [next[targetIdx], next[idx]];
+      Promise.all(next.map((item, i) =>
+        supabase.from("menu_items").update({ sort_order: i } as any).eq("id", item.id)
+      ));
+      return next;
+    });
+  }, []);
+
   const startEdit = (item: MenuItemRow) => {
     setEditingId(item.id);
     setShowAdd(true);
