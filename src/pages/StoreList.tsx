@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { categories } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import KaraokeName from "@/components/KaraokeName";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
@@ -22,6 +24,7 @@ interface StoreItem {
 
 const StoreList = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [stores, setStores] = useState<StoreItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,9 +128,9 @@ const StoreList = () => {
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-medium tracking-tight text-foreground">ร้านของฉัน</h1>
+              <h1 className="text-lg font-medium tracking-tight text-foreground">{t("myStores.title", language)}</h1>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                Order from my stores
+                {t("myStores.orderSubtitle", language)}
               </p>
             </div>
             <motion.button
@@ -144,7 +147,7 @@ const StoreList = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-              <span className="text-xs text-muted-foreground">กำลังโหลด...</span>
+              <span className="text-xs text-muted-foreground">{t("common.loading", language)}</span>
             </div>
           ) : stores.length === 0 ? (
             <motion.div
@@ -156,8 +159,8 @@ const StoreList = () => {
                 <Store size={28} strokeWidth={1.5} className="text-muted-foreground" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-foreground">ยังไม่มีร้านอาหาร</p>
-                <p className="text-xs text-muted-foreground mt-1">เพิ่มร้านแรกของคุณเลย!</p>
+                 <p className="text-sm font-medium text-foreground">{t("myStores.noStores", language)}</p>
+                 <p className="text-xs text-muted-foreground mt-1">{t("myStores.addFirst", language)}</p>
               </div>
               <motion.button
                 whileTap={{ scale: 0.97 }}
@@ -165,7 +168,7 @@ const StoreList = () => {
                 className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-medium shadow-luxury"
               >
                 <Plus size={16} />
-                เพิ่มร้านอาหาร
+                {t("myStores.addStore", language)}
               </motion.button>
             </motion.div>
           ) : (
@@ -194,7 +197,7 @@ const StoreList = () => {
                           {getCategoryLabel(store.category_id)}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-1">
-                          {store.menuCount} เมนู · {store.totalReviews} รีวิว
+                          {t("myStores.menuCount", language, { count: store.menuCount })} · {t("myStores.reviewCount", language, { count: store.totalReviews })}
                         </p>
                       </div>
                       <ChevronRight size={18} strokeWidth={1.5} className="text-muted-foreground flex-shrink-0" />

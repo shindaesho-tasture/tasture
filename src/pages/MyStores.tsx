@@ -5,6 +5,8 @@ import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera, S
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
@@ -31,6 +33,7 @@ const tierBgMap: Record<ScoreTier, string> = {
 
 const MyStores = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [stores, setStores] = useState<StoreWithReviews[]>([]);
   const [loading, setLoading] = useState(true);
@@ -166,8 +169,8 @@ const MyStores = () => {
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-medium tracking-tight text-foreground">ร้านของฉัน</h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">My Stores</p>
+              <h1 className="text-lg font-medium tracking-tight text-foreground">{t("myStores.title", language)}</h1>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{t("myStores.subtitle", language)}</p>
             </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -183,7 +186,7 @@ const MyStores = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-              <span className="text-xs text-muted-foreground">กำลังโหลด...</span>
+              <span className="text-xs text-muted-foreground">{t("common.loading", language)}</span>
             </div>
           ) : stores.length === 0 ? (
             <motion.div
@@ -195,8 +198,8 @@ const MyStores = () => {
                 <Store size={28} strokeWidth={1.5} className="text-muted-foreground" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-foreground">ยังไม่มีร้านอาหาร</p>
-                <p className="text-xs text-muted-foreground mt-1">เพิ่มร้านแรกของคุณเลย!</p>
+                <p className="text-sm font-medium text-foreground">{t("myStores.noStores", language)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("myStores.addFirst", language)}</p>
               </div>
               <motion.button
                 whileTap={{ scale: 0.97 }}
@@ -204,7 +207,7 @@ const MyStores = () => {
                 className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-medium shadow-luxury"
               >
                 <Plus size={16} />
-                เพิ่มร้านอาหาร
+                {t("myStores.addStore", language)}
               </motion.button>
             </motion.div>
           ) : (
@@ -257,7 +260,7 @@ const MyStores = () => {
                       )}
 
                       {topTags.length === 0 && (
-                        <p className="text-[11px] text-muted-foreground mt-3">ยังไม่มีฟีดแบค</p>
+                        <p className="text-[11px] text-muted-foreground mt-3">{t("myStores.noFeedback", language)}</p>
                       )}
                     </div>
 
@@ -273,7 +276,7 @@ const MyStores = () => {
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-muted transition-colors"
                       >
                         <MessageSquarePlus size={14} strokeWidth={1.5} />
-                        ฟีดแบคร้าน
+                        {t("myStores.storeFeedback", language)}
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.97 }}
@@ -281,7 +284,7 @@ const MyStores = () => {
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-score-emerald/15 text-score-emerald text-[11px] font-medium uppercase tracking-wider hover:bg-score-emerald/25 transition-colors"
                       >
                         <UtensilsCrossed size={14} strokeWidth={1.5} />
-                        ฟีดแบคเมนู
+                        {t("myStores.menuFeedback", language)}
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.97 }}

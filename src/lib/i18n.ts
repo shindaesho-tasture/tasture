@@ -559,6 +559,19 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "feed.noCommentsFirst": { th: "ยังไม่มีคอมเมนต์ — เป็นคนแรก!", en: "No comments yet — be the first!", ja: "まだコメントがありません — 最初の一人に！", zh: "暂无评论 — 来做第一个！", ko: "아직 댓글이 없습니다 — 첫 번째가 되세요!" },
   "feed.writeCommentPlaceholder": { th: "เขียนคอมเมนต์…", en: "Write a comment…", ja: "コメントを書く…", zh: "写评论…", ko: "댓글 작성…" },
   "feed.loginToComment": { th: "เข้าสู่ระบบเพื่อคอมเมนต์", en: "Log in to comment", ja: "コメントするにはログイン", zh: "登录后评论", ko: "댓글을 달려면 로그인하세요" },
+
+  // ─── MyStores / StoreList ───
+  "myStores.title": { th: "ร้านของฉัน", en: "My Stores", ja: "マイ店舗", zh: "我的餐厅", ko: "내 식당" },
+  "myStores.subtitle": { th: "My Stores", en: "My Stores", ja: "My Stores", zh: "My Stores", ko: "My Stores" },
+  "myStores.orderSubtitle": { th: "Order from my stores", en: "Order from my stores", ja: "Order from my stores", zh: "Order from my stores", ko: "Order from my stores" },
+  "myStores.noStores": { th: "ยังไม่มีร้านอาหาร", en: "No restaurants yet", ja: "まだ店舗がありません", zh: "暂无餐厅", ko: "아직 식당이 없습니다" },
+  "myStores.addFirst": { th: "เพิ่มร้านแรกของคุณเลย!", en: "Add your first restaurant!", ja: "最初の店舗を追加しよう！", zh: "添加您的第一家餐厅！", ko: "첫 식당을 추가하세요!" },
+  "myStores.addStore": { th: "เพิ่มร้านอาหาร", en: "Add Restaurant", ja: "店舗を追加", zh: "添加餐厅", ko: "식당 추가" },
+  "myStores.menuCount": { th: "{count} เมนู", en: "{count} items", ja: "{count}品", zh: "{count}道菜", ko: "{count}개 메뉴" },
+  "myStores.reviewCount": { th: "{count} รีวิว", en: "{count} reviews", ja: "{count}件レビュー", zh: "{count}条评价", ko: "{count}개 리뷰" },
+  "myStores.noFeedback": { th: "ยังไม่มีฟีดแบค", en: "No feedback yet", ja: "まだフィードバックがありません", zh: "暂无反馈", ko: "아직 피드백이 없습니다" },
+  "myStores.storeFeedback": { th: "ฟีดแบคร้าน", en: "Store Feedback", ja: "店舗フィードバック", zh: "店铺反馈", ko: "매장 피드백" },
+  "myStores.menuFeedback": { th: "ฟีดแบคเมนู", en: "Menu Feedback", ja: "メニューフィードバック", zh: "菜单反馈", ko: "메뉴 피드백" },
 };
 
 /**
