@@ -198,7 +198,7 @@ const OrderHistory = () => {
       <PageTransition>
         <div className="min-h-screen bg-background pb-24">
           <header className="px-6 pt-6 pb-4">
-            <h1 className="text-xl font-semibold text-foreground">รายการ</h1>
+             <h1 className="text-xl font-semibold text-foreground">{t("history.title")}</h1>
           </header>
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4 px-6">
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
