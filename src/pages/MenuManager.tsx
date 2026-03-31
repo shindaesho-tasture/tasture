@@ -31,7 +31,10 @@ type MenuItemRow = {
   image_url: string | null;
   noodle_type_prices: Record<string, number> | null;
   noodle_style_prices: Record<string, number> | null;
+  menu_category: string | null;
 };
+
+const MENU_CATEGORIES = ["แนะนำ", "ต้ม", "ผัด", "กับข้าว", "ราดข้าว", "ทอด", "ยำ", "อื่นๆ"];
 
 const emptyForm = {
   name: "",
@@ -46,6 +49,7 @@ const emptyForm = {
   textures: [] as string[],
   noodle_type_prices: {} as Record<string, number>,
   noodle_style_prices: {} as Record<string, number>,
+  menu_category: "" as string,
 };
 
 const MenuManager = () => {
@@ -88,7 +92,7 @@ const MenuManager = () => {
         supabase.from("stores").select("name, user_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url, noodle_type_prices, noodle_style_prices")
+          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url, noodle_type_prices, noodle_style_prices, menu_category")
           .eq("store_id", storeId!)
           .order("sort_order", { ascending: true })
           .order("created_at", { ascending: true }),
@@ -192,6 +196,7 @@ const MenuManager = () => {
       textures: item.textures || [],
       noodle_type_prices: (item.noodle_type_prices as Record<string, number>) || {},
       noodle_style_prices: (item.noodle_style_prices as Record<string, number>) || {},
+      menu_category: item.menu_category || "",
     });
   };
 
@@ -211,6 +216,7 @@ const MenuManager = () => {
       textures: form.textures,
       noodle_type_prices: form.noodle_type_prices,
       noodle_style_prices: form.noodle_style_prices,
+      menu_category: form.menu_category || null,
     };
 
     setIsSaving(true);
@@ -356,8 +362,11 @@ const MenuManager = () => {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{typeLabel[item.type] || item.type}</span>
+                        {item.menu_category && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-score-emerald/15 text-score-emerald font-medium">{item.menu_category}</span>
+                        )}
                         <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
                       </div>
                       {item.original_name && (
@@ -464,6 +473,25 @@ const MenuManager = () => {
                         />
                       </div>
                     )}
+                  </div>
+
+                  {/* Menu Category */}
+                  <div>
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">หมวดหมู่</label>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {MENU_CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, menu_category: f.menu_category === cat ? "" : cat }))}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all ${
+                            form.menu_category === cat ? "bg-score-emerald text-primary-foreground shadow-sm" : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Description */}
