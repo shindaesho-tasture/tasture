@@ -894,7 +894,13 @@ const AdminDashboard = () => {
                 </motion.div>
               )}
 
-              {/* ─── Dish Descriptions Tab ─── */}
+              {/* ─── Name Translations Tab ─── */}
+              {activeTab === "name_trans" && (
+                <motion.div key="name_trans" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <AdminNameTranslationEditor />
+                </motion.div>
+              )}
+
               {activeTab === "dish_desc" && (
                 <motion.div key="dish_desc" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                   <AdminDishDescriptionEditor />
