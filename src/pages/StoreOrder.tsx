@@ -441,6 +441,27 @@ const StoreOrder = () => {
           </TabsList>
 
           <TabsContent value="menu" className="mt-0">
+            {/* Category filter chips */}
+            {(() => {
+              const cats = Array.from(new Set(menuItems.map((m) => m.menu_category).filter(Boolean))) as string[];
+              if (cats.length === 0) return null;
+              const allCats = ["ทั้งหมด", ...cats];
+              return (
+                <div className="px-4 pt-3 pb-1 flex gap-2 overflow-x-auto no-scrollbar">
+                  {allCats.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCat(cat)}
+                      className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                        activeCat === cat ? "bg-score-emerald text-primary-foreground shadow-sm" : "bg-secondary text-foreground"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
             <div className="px-4 pt-4 space-y-2">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -453,7 +474,9 @@ const StoreOrder = () => {
                 </div>
               ) : (
                 <AnimatePresence>
-                  {menuItems.map((item, i) => {
+                  {menuItems
+                    .filter((item) => activeCat === "ทั้งหมด" || item.menu_category === activeCat)
+                    .map((item, i) => {
                     const qty = getItemQuantity(item.id);
                     const tags = (dnaByItem.get(item.id) || [])
                       .sort((a, b) => b.count - a.count)
