@@ -1511,7 +1511,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
             "text-[11px] font-medium",
             showComments ? "text-score-emerald" : "text-muted-foreground"
           )}>
-            {commentCount > 0 ? commentCount : "คอมเมนต์"}
+            {commentCount > 0 ? commentCount : t("feed.comment")}
           </span>
         </motion.button>
 
