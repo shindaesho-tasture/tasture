@@ -207,7 +207,7 @@ const MyStores = () => {
                 className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-medium shadow-luxury"
               >
                 <Plus size={16} />
-                เพิ่มร้านอาหาร
+                {t("myStores.addStore", language)}
               </motion.button>
             </motion.div>
           ) : (
