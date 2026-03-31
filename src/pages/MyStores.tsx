@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera, Settings } from "lucide-react";
+import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera, Settings, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
