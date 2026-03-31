@@ -175,7 +175,7 @@ const FollowList = () => {
             <div className="flex flex-col items-center py-16 gap-3">
               <Users size={32} className="text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground">
-                {tab === "followers" ? "ยังไม่มีผู้ติดตาม" : "ยังไม่ได้ติดตามใคร"}
+                {tab === "followers" ? t("followList.noFollowers", language) : t("followList.noFollowing", language)}
               </p>
             </div>
           ) : (
