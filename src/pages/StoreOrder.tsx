@@ -63,6 +63,7 @@ const StoreOrder = () => {
   const [menuReviewCounts, setMenuReviewCounts] = useState<Map<string, number>>(new Map());
   const [dnaCounts, setDnaCounts] = useState<Map<string, number>>(new Map());
   const [topPhotoByItem, setTopPhotoByItem] = useState<Map<string, string[]>>(new Map());
+  const [translationMap, setTranslationMap] = useState<Map<string, { name: string; description?: string }>>(new Map());
 
   // Store posts state
   const [storePosts, setStorePosts] = useState<StorePost[]>([]);

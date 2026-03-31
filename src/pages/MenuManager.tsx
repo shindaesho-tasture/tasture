@@ -710,6 +710,17 @@ const MenuManager = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Translation Sheet */}
+        {translateItem && (
+          <MenuTranslationSheet
+            open={!!translateItem}
+            onClose={() => setTranslateItem(null)}
+            menuItemId={translateItem.id}
+            menuItemName={translateItem.name}
+            menuItemDescription={translateItem.description}
+          />
+        )}
       </div>
     </PageTransition>
   );
