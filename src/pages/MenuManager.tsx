@@ -608,16 +608,16 @@ const MenuManager = () => {
                 </div>
 
                 {/* Sticky submit button */}
-                <div className="shrink-0 p-5 pt-3 border-t border-border/30 bg-background rounded-b-none">
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleSubmit}
+                <div className="shrink-0 p-5 pt-3 border-t border-border/30 bg-background">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleSubmit(); }}
                     disabled={isSaving}
-                    className="w-full py-3 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-semibold shadow-luxury flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full py-3 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-semibold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.97] transition-transform"
                   >
                     <Save size={16} />
                     {isSaving ? "..." : editingId ? t("common.save") : t("menuMgr.addItem")}
-                  </motion.button>
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
