@@ -264,7 +264,7 @@ const OrderHistory = () => {
                         {visit.storeName}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {formatDate(visit.lastVisit)} · {reviewedCount}/{visit.items.length} รีวิวแล้ว
+                        {formatDate(visit.lastVisit)} · {t("history.reviewed", { done: reviewedCount, total: visit.items.length })}
                       </p>
                     </div>
                     <ChevronRight size={16} className="text-muted-foreground shrink-0" />
