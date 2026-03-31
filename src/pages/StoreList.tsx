@@ -24,6 +24,7 @@ interface StoreItem {
 
 const StoreList = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [stores, setStores] = useState<StoreItem[]>([]);
   const [loading, setLoading] = useState(true);
