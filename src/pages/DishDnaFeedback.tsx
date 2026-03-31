@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/language-context";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
 import { toast } from "@/hooks/use-toast";
+import { preTranslateDnaTags } from "@/lib/pre-translate";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import DishDnaCard from "@/components/menu/DishDnaCard";
