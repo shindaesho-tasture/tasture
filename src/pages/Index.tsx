@@ -10,6 +10,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { categories as defaultCategories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import { cn } from "@/lib/utils";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import LocationPickerSheet from "@/components/LocationPickerSheet";
