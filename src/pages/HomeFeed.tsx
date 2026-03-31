@@ -818,7 +818,7 @@ const HomeFeed = () => {
                     onClick={() => navigate("/discover")}
                     className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
                   >
-                    ค้นหาคนเพื่อติดตาม
+                    {t("feed.findPeople")}
                   </motion.button>
                 )}
               </motion.div>
