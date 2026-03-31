@@ -43,6 +43,7 @@ const DishDnaFeedback = () => {
   const { menuItemId } = useParams<{ menuItemId: string }>();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
 
   const [dishName, setDishName] = useState("");
   const [components, setComponents] = useState<DishComponent[]>([]);
