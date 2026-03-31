@@ -692,7 +692,9 @@ const StoreOrder = () => {
                               className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
                                 selected
                                   ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
-                                  : "bg-surface-elevated text-foreground border-border/50"
+                                  : disabled
+                                    ? "bg-secondary/50 text-muted-foreground border-border/30 opacity-50 cursor-not-allowed"
+                                    : "bg-surface-elevated text-foreground border-border/50"
                               }`}
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
