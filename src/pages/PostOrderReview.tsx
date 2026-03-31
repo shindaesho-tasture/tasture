@@ -711,14 +711,14 @@ const PostOrderReview = () => {
                     className="flex flex-col items-center py-8 gap-3"
                   >
                     <span className="text-5xl">✅</span>
-                    <p className="text-sm font-semibold text-foreground">ใช้รีวิว DNA เดิม</p>
-                    <p className="text-[10px] text-muted-foreground">กด "ถัดไป" เพื่อไปขั้นตอนถัดไป</p>
+                    <p className="text-sm font-semibold text-foreground">{t("por.usePrevDna")}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("por.pressNextStep")}</p>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setDnaReviewChoice((prev) => ({ ...prev, [step.menuItemId!]: null }))}
                       className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
                     >
-                      เปลี่ยนใจ
+                      {t("por.changeMyMind")}
                     </motion.button>
                   </motion.div>
                 ) : (
