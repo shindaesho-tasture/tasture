@@ -56,3 +56,17 @@ export function preTranslateStoreData(data: {
   data.menuNames?.forEach((n) => tags.add(n));
   preTranslateTags(Array.from(tags));
 }
+
+/**
+ * Pre-translate sensory axis names and labels.
+ */
+export function preTranslateSensoryAxes(
+  axes: { name: string; labels: string[] }[]
+) {
+  const tags = new Set<string>();
+  axes.forEach((a) => {
+    tags.add(a.name);
+    a.labels.forEach((l) => tags.add(l));
+  });
+  preTranslateTags(Array.from(tags));
+}
