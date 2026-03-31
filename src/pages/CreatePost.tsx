@@ -435,8 +435,8 @@ const CreatePost = () => {
                     <div className="w-10 h-1 rounded-full bg-border" />
                   </div>
                   <div className="px-4 py-3 border-b border-border/20">
-                    <h3 className="text-sm font-bold text-foreground">เลือกรีวิวสำหรับรูปที่ {reviewPickerTarget + 1}</h3>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">รีวิวล่าสุดของคุณ</p>
+                    <h3 className="text-sm font-bold text-foreground">{t("createPost.selectReviewFor", { num: reviewPickerTarget + 1 })}</h3>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{t("createPost.yourReviews")}</p>
                   </div>
                   <div className="max-h-[50vh] overflow-y-auto">
                     {loadingReviews ? (
