@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ScoreButton from "./ScoreButton";
 import { scoreTiers, type CategoryMetric } from "@/lib/categories";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface MetricRaterProps {
   metric: CategoryMetric;
@@ -26,12 +27,35 @@ const MetricRater = ({
   const gateOpen = gateState?.[metric.id] ?? false;
   const gateAnswered = gateState?.[metric.id] !== undefined;
 
+  // Collect all translatable texts
+  const allTexts = useMemo(() => {
+    const texts: string[] = [metric.label, ...metric.options];
+    if (metric.smartGate) {
+      texts.push(metric.smartGate.question);
+      if (metric.smartGate.yesLabel) texts.push(metric.smartGate.yesLabel);
+      if (metric.smartGate.noLabel) texts.push(metric.smartGate.noLabel);
+      metric.smartGate.subMetrics.forEach((sub) => {
+        texts.push(sub.label, ...sub.options);
+      });
+    }
+    return texts;
+  }, [metric]);
+
+  const { translateTag } = useTagTranslations(allTexts);
+
   // Contextual label based on score
   const getContextLabel = (score: number | null) => {
     if (score === null) return null;
-    if (score === 2) return metric.options[0];
-    if (score === -2) return metric.options[2];
-    if (score === 0) return metric.options[1];
+    if (score === 2) return translateTag(metric.options[0]);
+    if (score === -2) return translateTag(metric.options[2]);
+    if (score === 0) return translateTag(metric.options[1]);
+    return null;
+  };
+
+  const getSubContextLabelTranslated = (sub: CategoryMetric, score: number): string | null => {
+    if (score === 2) return translateTag(sub.options[0]);
+    if (score === -2) return translateTag(sub.options[2]);
+    if (score === 0) return translateTag(sub.options[1]);
     return null;
   };
 
@@ -46,7 +70,7 @@ const MetricRater = ({
           <div className="flex items-center gap-2">
             <span className="text-xl">{metric.icon}</span>
             <span className="text-sm font-semibold text-foreground">
-              {metric.smartGate!.question}
+              {translateTag(metric.smartGate!.question)}
             </span>
           </div>
           <div className="flex gap-2">
@@ -59,7 +83,7 @@ const MetricRater = ({
                   : "bg-secondary text-muted-foreground hover:bg-secondary/80"
               }`}
             >
-              {metric.smartGate!.yesLabel || "มี"}
+              {translateTag(metric.smartGate!.yesLabel || "มี")}
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.93 }}
@@ -70,7 +94,7 @@ const MetricRater = ({
                   : "bg-secondary text-muted-foreground hover:bg-secondary/80"
               }`}
             >
-              {metric.smartGate!.noLabel || "ไม่มี"}
+              {translateTag(metric.smartGate!.noLabel || "ไม่มี")}
             </motion.button>
           </div>
         </div>
@@ -89,10 +113,10 @@ const MetricRater = ({
               <div className="pl-4 border-l-2 border-score-emerald/20 space-y-2 pt-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{sub.icon}</span>
-                  <span className="text-xs font-semibold text-foreground">{sub.label}</span>
+                  <span className="text-xs font-semibold text-foreground">{translateTag(sub.label)}</span>
                   {subValues?.[sub.id] !== undefined && subValues?.[sub.id] !== null && (
                     <span className="text-[10px] text-muted-foreground ml-auto">
-                      {getSubContextLabel(sub, subValues[sub.id]!)}
+                      {getSubContextLabelTranslated(sub, subValues[sub.id]!)}
                     </span>
                   )}
                 </div>
@@ -121,7 +145,7 @@ const MetricRater = ({
     >
       <div className="flex items-center gap-2">
         <span className="text-xl">{metric.icon}</span>
-        <span className="text-sm font-semibold text-foreground">{metric.label}</span>
+        <span className="text-sm font-semibold text-foreground">{translateTag(metric.label)}</span>
         {value !== null && (
           <span className="text-[10px] text-muted-foreground ml-auto">
             {getContextLabel(value)}
@@ -141,12 +165,5 @@ const MetricRater = ({
     </motion.div>
   );
 };
-
-function getSubContextLabel(metric: CategoryMetric, score: number): string | null {
-  if (score === 2) return metric.options[0];
-  if (score === -2) return metric.options[2];
-  if (score === 0) return metric.options[1];
-  return null;
-}
 
 export default MetricRater;
