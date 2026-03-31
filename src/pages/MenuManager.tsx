@@ -409,7 +409,7 @@ const MenuManager = () => {
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
                 className="w-full max-w-lg bg-background rounded-t-3xl max-h-[85vh] flex flex-col"
               >
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between p-5 pb-2">
                   <h2 className="text-base font-semibold text-foreground">
                     {editingId ? t("common.edit") : t("menuMgr.addItem")}
                   </h2>
@@ -418,7 +418,7 @@ const MenuManager = () => {
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex-1 overflow-y-auto px-5 space-y-3">
                   {/* Type */}
                   <div>
                     <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t("menuMgr.type")}</label>
