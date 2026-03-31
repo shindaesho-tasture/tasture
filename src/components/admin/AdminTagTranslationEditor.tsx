@@ -27,6 +27,8 @@ const LANG_LABELS: Record<string, string> = {
   th: "ไทย",
 };
 
+const LANGS = ["en", "ja", "zh", "ko"] as const;
+
 const AdminTagTranslationEditor = () => {
   const [translations, setTranslations] = useState<TagTranslation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +41,8 @@ const AdminTagTranslationEditor = () => {
   const [newLang, setNewLang] = useState("en");
   const [newTranslated, setNewTranslated] = useState("");
   const [adding, setAdding] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
+  const [allSourceTags, setAllSourceTags] = useState<string[]>([]);
 
   const load = async () => {
     setLoading(true);
