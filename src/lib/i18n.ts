@@ -129,10 +129,6 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "tab.following": { th: "กำลังติดตาม", en: "Following", ja: "フォロー中", zh: "关注中", ko: "팔로잉" },
   "tab.foryou": { th: "สำหรับคุณ", en: "For You", ja: "あなたへ", zh: "推荐", ko: "추천" },
 
-  // ─── Profile Stats ───
-  "profile.posts": { th: "โพส", en: "Posts", ja: "投稿", zh: "帖子", ko: "게시물" },
-  "profile.followers": { th: "ผู้ติดตาม", en: "Followers", ja: "フォロワー", zh: "粉丝", ko: "팔로워" },
-  "profile.following": { th: "กำลังติดตาม", en: "Following", ja: "フォロー中", zh: "关注中", ko: "팔로잉" },
 
   // ─── Auth ───
   "auth.login": { th: "เข้าสู่ระบบ", en: "Log In", ja: "ログイン", zh: "登录", ko: "로그인" },
