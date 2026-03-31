@@ -48,6 +48,7 @@ const MenuManager = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [orderedItems, setOrderedItems] = useState<MenuItemRow[]>([]);
 
   // Fetch store name + menu items
   const { data, isLoading } = useQuery({
@@ -57,11 +58,14 @@ const MenuManager = () => {
         supabase.from("stores").select("name, user_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures")
+          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order")
           .eq("store_id", storeId!)
+          .order("sort_order", { ascending: true })
           .order("created_at", { ascending: true }),
       ]);
-      return { store: storeRes.data, items: (menuRes.data || []) as MenuItemRow[] };
+      const items = (menuRes.data || []) as (MenuItemRow & { sort_order: number })[];
+      setOrderedItems(items);
+      return { store: storeRes.data, items };
     },
     enabled: !!storeId && !authLoading,
   });
