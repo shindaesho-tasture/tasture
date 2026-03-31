@@ -727,11 +727,11 @@ const PostOrderReview = () => {
                     <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                       <Dna size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                       <div>
-                        <p className="text-[11px] font-medium text-foreground">เลือกแท็กที่ตรงกับความรู้สึก</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
-                          <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
-                          <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
+                         <p className="text-[11px] font-medium text-foreground">{t("por.selectTag")}</p>
+                         <p className="text-[10px] text-muted-foreground mt-0.5">
+                           <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> {t("por.excellent")} ·
+                           <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> {t("por.normal")} ·
+                           <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> {t("por.disappointing")}
                         </p>
                       </div>
                     </div>
