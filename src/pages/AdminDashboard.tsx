@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ShieldCheck, Search, CheckCircle2, XCircle, Users, Store,
   MessageSquare, Dna, BarChart3, TrendingUp, Eye, EyeOff, Trash2, UserCog,
-  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags, UtensilsCrossed, Camera, Languages, FileText,
+  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags, UtensilsCrossed, Camera, Languages, FileText, Type,
 } from "lucide-react";
 import DishTemplateEditor from "@/components/admin/DishTemplateEditor";
 import AdminStoreEditor from "@/components/admin/AdminStoreEditor";
@@ -12,6 +12,7 @@ import AdminCategoryEditor from "@/components/admin/AdminCategoryEditor";
 import AdminMenuCategoryEditor from "@/components/admin/AdminMenuCategoryEditor";
 import AdminTagTranslationEditor from "@/components/admin/AdminTagTranslationEditor";
 import AdminDishDescriptionEditor from "@/components/admin/AdminDishDescriptionEditor";
+import AdminNameTranslationEditor from "@/components/admin/AdminNameTranslationEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 /* ─── Types ─── */
-type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories" | "menu_cats" | "tag_trans" | "dish_desc";
+type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories" | "menu_cats" | "tag_trans" | "name_trans" | "dish_desc";
 
 interface AdminStore {
   id: string; name: string; category_id: string | null; verified: boolean;
@@ -73,6 +74,7 @@ const tabs: { id: AdminTab; label: string; icon: typeof BarChart3 }[] = [
   { id: "categories", label: "กลุ่มร้าน", icon: Tags },
   { id: "menu_cats", label: "หมวดเมนู", icon: UtensilsCrossed },
   { id: "tag_trans", label: "แปลแท็ก", icon: Languages },
+  { id: "name_trans", label: "แปลชื่อ", icon: Type },
   { id: "dish_desc", label: "คำอธิบาย", icon: FileText },
 ];
 
@@ -892,7 +894,13 @@ const AdminDashboard = () => {
                 </motion.div>
               )}
 
-              {/* ─── Dish Descriptions Tab ─── */}
+              {/* ─── Name Translations Tab ─── */}
+              {activeTab === "name_trans" && (
+                <motion.div key="name_trans" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <AdminNameTranslationEditor />
+                </motion.div>
+              )}
+
               {activeTab === "dish_desc" && (
                 <motion.div key="dish_desc" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                   <AdminDishDescriptionEditor />
