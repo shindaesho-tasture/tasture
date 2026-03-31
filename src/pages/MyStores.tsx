@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera } from "lucide-react";
+import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -290,6 +290,13 @@ const MyStores = () => {
                       >
                         <Camera size={14} strokeWidth={1.5} />
                         📷
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/menu-manager/${store.id}`)}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary/10 text-primary text-[11px] font-medium uppercase tracking-wider hover:bg-primary/20 transition-colors"
+                      >
+                        <Settings size={14} strokeWidth={1.5} />
                       </motion.button>
                     </div>
                     {popInfo.label && (
