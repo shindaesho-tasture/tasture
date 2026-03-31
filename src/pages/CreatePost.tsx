@@ -535,7 +535,7 @@ const CreatePost = () => {
                     {loadingStores ? (
                       <div className="flex justify-center py-4"><div className="w-5 h-5 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" /></div>
                     ) : filteredStores.length === 0 ? (
-                      <p className="text-center text-xs text-muted-foreground py-4">ไม่พบร้าน</p>
+                      <p className="text-center text-xs text-muted-foreground py-4">{t("createPost.noStoreFound")}</p>
                     ) : filteredStores.map((store) => (
                       <motion.button key={store.id} whileTap={{ scale: 0.98 }}
                         onClick={() => { setSelectedStore(store); setShowStorePicker(false); setStoreSearch(""); }}
