@@ -225,12 +225,24 @@ const AdminNameTranslationEditor = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Store size={16} className="text-score-emerald" />
         <h2 className="text-sm font-semibold text-foreground">จัดการคำแปลชื่อร้าน / ชื่อเมนู</h2>
         <span className="text-[10px] text-muted-foreground">
           {items.filter((i) => i.type === "store").length} ร้าน · {items.filter((i) => i.type === "menu").length} เมนู
         </span>
+        <button
+          onClick={batchTranslateAll}
+          disabled={!!batchProgress || missingCount === 0}
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-score-emerald text-primary-foreground text-[11px] font-semibold disabled:opacity-50 transition-all hover:opacity-90"
+        >
+          <Zap size={12} />
+          {batchProgress
+            ? `กำลังแปล ${batchProgress.current}/${batchProgress.total}...`
+            : missingCount > 0
+              ? `Batch แปลทั้งหมด (${missingCount} ขาด)`
+              : "แปลครบแล้ว ✓"}
+        </button>
       </div>
 
       {/* Search + Type Filter */}
