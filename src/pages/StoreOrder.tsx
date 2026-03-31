@@ -512,11 +512,15 @@ const StoreOrder = () => {
                         type: "texture" as const,
                       }));
                     const totalRevs = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
+                    const tr = translationMap.get(item.id);
+                    const displayName = tr?.name || item.name;
+                    const originalName = tr ? item.name : undefined;
 
                     return (
                       <div key={item.id} className="relative">
                         <SovereignMenuCard
-                          name={item.name}
+                          name={displayName}
+                          originalName={originalName}
                           price={item.price}
                           priceSpecial={item.price_special}
                           imageUrl={topPhotoByItem.get(item.id)?.[0] || item.image_url || undefined}

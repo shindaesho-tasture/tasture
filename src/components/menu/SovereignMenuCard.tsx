@@ -35,6 +35,7 @@ export interface IntensityTag {
 
 interface SovereignMenuCardProps {
   name: string;
+  originalName?: string;
   price: number;
   priceSpecial?: number | null;
   imageUrl?: string;
@@ -44,7 +45,7 @@ interface SovereignMenuCardProps {
   index?: number;
   popularityRank?: number;
   avgSatisfaction?: number;
-  userPhotos?: string[]; // top user-posted photo URLs (sorted by likes)
+  userPhotos?: string[];
 }
 
 /** Format compact review count */
