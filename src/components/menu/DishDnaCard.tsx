@@ -44,10 +44,7 @@ const colorMap = {
   },
 };
 
-const tagTierMap: Record<string, "emerald" | "slate" | "ruby"> = {};
 
-const DishDnaCard = ({ component, selection, onSelect, index, communityScores, translateTag: tt }: DishDnaCardProps) => {
-  const tr = tt || ((t: string) => t);
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const allTags = [
