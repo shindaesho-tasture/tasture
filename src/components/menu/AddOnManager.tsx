@@ -116,7 +116,7 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
       {Object.entries(grouped).map(([cat, items]) => (
         <div key={cat} className="space-y-1">
           <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">
-            {categoryEmoji[cat] || "📦"} {cat}
+            {categoryEmoji[cat] || "📦"} {translateTag(cat)}
           </span>
           {items.map((a) => (
             <motion.div
