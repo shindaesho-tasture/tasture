@@ -127,8 +127,8 @@ const CreatePost = () => {
         const menu = menuMap.get(r.menu_item_id);
         return {
           id: r.id, menu_item_id: r.menu_item_id,
-          menu_item_name: menu?.name || "เมนู",
-          store_name: menu?.store_id ? (storeMap.get(menu.store_id) || "ร้านค้า") : "ร้านค้า",
+          menu_item_name: menu?.name || t("feed.menu"),
+          store_name: menu?.store_id ? (storeMap.get(menu.store_id) || t("feed.store")) : t("feed.store"),
           store_id: menu?.store_id || "", score: r.score, created_at: r.created_at,
         };
       }));
