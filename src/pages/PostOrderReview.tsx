@@ -1037,10 +1037,10 @@ const PostOrderReview = () => {
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-semibold text-foreground">
-                          {shareToFeed ? "แชร์ลงฟีด" : "ไม่แชร์ลงฟีด"}
+                          {shareToFeed ? t("por.shareToFeed") : t("por.noShare")}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          {shareToFeed ? "รีวิวจะแสดงในฟีดให้ทุกคนเห็น" : "บันทึกไว้ส่วนตัว ไม่แสดงในฟีด"}
+                          {shareToFeed ? t("por.shareDesc") : t("por.noShareDesc")}
                         </p>
                       </div>
                     </div>
