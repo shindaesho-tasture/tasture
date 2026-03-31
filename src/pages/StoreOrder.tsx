@@ -511,7 +511,7 @@ const StoreOrder = () => {
                           activeCat === rawCat ? "bg-score-emerald text-primary-foreground shadow-sm" : "bg-secondary text-foreground"
                         }`}
                       >
-                        {isAll ? t("order.all", language) : translateTag(cat)}
+                        {isAll ? allLabel : translateTag(cat)}
                         <span className={`text-[10px] ${activeCat === cat ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                           {count}
                         </span>
