@@ -627,7 +627,7 @@ const Index = () => {
             {/* Match Section */}
             {matchStores.length > 0 && (
               <HorizontalSection
-                title="แมตช์กับคุณ"
+                title={t("discover.matchYou", language)}
                 emoji="💎"
                 stores={matchStores}
               />
