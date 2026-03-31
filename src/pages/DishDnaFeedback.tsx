@@ -54,7 +54,17 @@ const DishDnaFeedback = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [existingDna, setExistingDna] = useState<Record<string, DishDnaSelection>>({});
 
-  useEffect(() => {
+  // Collect all translatable texts (component names + tags)
+  const allTagTexts = useMemo(() => {
+    const texts: string[] = [];
+    components.forEach((c) => {
+      texts.push(c.name, c.tags.emerald, c.tags.neutral, c.tags.ruby);
+    });
+    return texts;
+  }, [components]);
+
+  const { translateTag } = useTagTranslations(allTagTexts);
+
     if (!menuItemId || authLoading) return;
     loadData();
   }, [menuItemId, user, authLoading]);
