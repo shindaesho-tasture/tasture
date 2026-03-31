@@ -26,6 +26,7 @@ interface MenuItemRow {
   toppings: string[] | null;
   image_url: string | null;
   noodle_type_prices: Record<string, number> | null;
+  noodle_style_prices: Record<string, number> | null;
 }
 
 interface DnaTag {
@@ -91,7 +92,7 @@ const StoreOrder = () => {
         supabase.from("stores").select("name").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices")
+          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices")
           .eq("store_id", storeId!)
           .order("name"),
       ]);
@@ -107,7 +108,7 @@ const StoreOrder = () => {
         }
       }
       const menuData = menuRes.data || [];
-      setMenuItems(menuData.map((m: any) => ({ ...m, noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {} })));
+      setMenuItems(menuData.map((m: any) => ({ ...m, noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {}, noodle_style_prices: (m.noodle_style_prices as Record<string, number>) || {} })));
 
       // Fetch add-ons for all menu items
       if (menuData.length > 0) {
@@ -319,10 +320,13 @@ const StoreOrder = () => {
     const noodleExtra = selectedNoodleType && optionsItem.noodle_type_prices
       ? (optionsItem.noodle_type_prices[selectedNoodleType] || 0)
       : 0;
+    const styleExtra = selectedNoodleStyle && optionsItem.noodle_style_prices
+      ? (optionsItem.noodle_style_prices[selectedNoodleStyle] || 0)
+      : 0;
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
-      price: basePrice + addOnTotal + noodleExtra,
+      price: basePrice + addOnTotal + noodleExtra + styleExtra,
       quantity: 1,
       type: optionsItem.type,
       selectedOptions: {
@@ -699,7 +703,9 @@ const StoreOrder = () => {
                         🍲 {t("order.selectStyle", language)}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {optionsItem.noodle_styles.map((ns) => (
+                        {optionsItem.noodle_styles.map((ns) => {
+                          const extraPrice = optionsItem.noodle_style_prices?.[ns] || 0;
+                          return (
                           <motion.button
                             key={ns}
                             whileTap={{ scale: 0.93 }}
@@ -711,8 +717,10 @@ const StoreOrder = () => {
                             }`}
                           >
                             {ns}
+                            {extraPrice > 0 && <span className="ml-1 opacity-80">(+฿{extraPrice})</span>}
                           </motion.button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -797,8 +805,9 @@ const StoreOrder = () => {
                     {t("order.addToOrder", language)}
                     {(() => {
                       const noodleExtra = selectedNoodleType && optionsItem?.noodle_type_prices?.[selectedNoodleType] || 0;
+                      const styleExtra = selectedNoodleStyle && optionsItem?.noodle_style_prices?.[selectedNoodleStyle] || 0;
                       const addOnExtra = selectedAddOns.reduce((s, a) => s + a.price, 0);
-                      const total = noodleExtra + addOnExtra;
+                      const total = noodleExtra + styleExtra + addOnExtra;
                       return total > 0 ? <span className="ml-1 opacity-80">(+฿{total})</span> : null;
                     })()}
                   </motion.button>

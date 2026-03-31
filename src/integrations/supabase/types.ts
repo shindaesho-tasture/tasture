@@ -196,6 +196,7 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          noodle_style_prices: Json
           noodle_styles: string[] | null
           noodle_type_prices: Json
           noodle_types: string[] | null
@@ -215,6 +216,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          noodle_style_prices?: Json
           noodle_styles?: string[] | null
           noodle_type_prices?: Json
           noodle_types?: string[] | null
@@ -234,6 +236,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          noodle_style_prices?: Json
           noodle_styles?: string[] | null
           noodle_type_prices?: Json
           noodle_types?: string[] | null
