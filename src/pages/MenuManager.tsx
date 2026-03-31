@@ -640,7 +640,7 @@ const MenuManager = () => {
           }}
         />
 
-        <BottomNav />
+        {!showAdd && <BottomNav />}
       </div>
     </PageTransition>
   );
