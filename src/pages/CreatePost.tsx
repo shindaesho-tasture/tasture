@@ -276,7 +276,7 @@ const CreatePost = () => {
               )}
             >
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <Send size={14} />}
-              {uploading ? "กำลังโพส..." : "โพส"}
+              {uploading ? t("createPost.posting") : t("createPost.postBtn")}
             </motion.button>
           </div>
         </div>
