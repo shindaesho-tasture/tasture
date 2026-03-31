@@ -621,8 +621,8 @@ const PostOrderReview = () => {
                         <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                           <Store size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                           <div>
-                            <p className="text-[11px] font-medium text-foreground">{category.labelTh}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">ให้คะแนนประสบการณ์ร้านอาหาร</p>
+                             <p className="text-[11px] font-medium text-foreground">{category.labelTh}</p>
+                             <p className="text-[10px] text-muted-foreground mt-0.5">{t("por.rateStore")}</p>
                           </div>
                         </div>
                         {category.metrics.map((metric, i) => (
