@@ -22,10 +22,14 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
     onChange({ ...item, [field]: item[field] === value ? undefined : value });
   };
 
+  const MAX_TOPPINGS = 3;
   const handleTopping = (topping: string) => {
     const current = item.selected_toppings || [];
-    const next = current.includes(topping) ? current.filter((t) => t !== topping) : [...current, topping];
-    onChange({ ...item, selected_toppings: next });
+    if (current.includes(topping)) {
+      onChange({ ...item, selected_toppings: current.filter((t) => t !== topping) });
+    } else if (current.length < MAX_TOPPINGS) {
+      onChange({ ...item, selected_toppings: [...current, topping] });
+    }
   };
 
   return (
