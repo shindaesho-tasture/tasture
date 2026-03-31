@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Dna, ChevronDown, ChevronUp } from "lucide-react";
@@ -7,6 +7,7 @@ import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
 import type { SensoryAxis } from "@/lib/sensory-types";
 import { useLanguage } from "@/lib/language-context";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 import SensorySliderCard from "./SensorySliderCard";
 import BalanceSpiderChart from "./BalanceSpiderChart";
 
