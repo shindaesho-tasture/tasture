@@ -220,16 +220,30 @@ const AdminTagTranslationEditor = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Globe size={16} className="text-score-emerald" />
         <h2 className="text-sm font-semibold text-foreground">จัดการคำแปลแท็ก</h2>
-        <span className="text-[10px] text-muted-foreground">{translations.length} รายการ</span>
-        <button
-          onClick={() => setShowAdd((v) => !v)}
-          className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-xl bg-score-emerald text-white text-[11px] font-semibold"
-        >
-          <Plus size={13} /> เพิ่มคำแปล
-        </button>
+        <span className="text-[10px] text-muted-foreground">{translations.length} รายการ · {allSourceTags.length} แท็กต้นทาง</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <button
+            onClick={batchTranslateAll}
+            disabled={!!batchProgress || missingCount === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-score-emerald text-primary-foreground text-[11px] font-semibold disabled:opacity-50 transition-all hover:opacity-90"
+          >
+            <Zap size={12} />
+            {batchProgress
+              ? `กำลังแปล ${batchProgress.current}/${batchProgress.total}...`
+              : missingCount > 0
+                ? `Batch แปล (${missingCount} ขาด)`
+                : "แปลครบแล้ว ✓"}
+          </button>
+          <button
+            onClick={() => setShowAdd((v) => !v)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-secondary text-foreground text-[11px] font-semibold"
+          >
+            <Plus size={13} /> เพิ่มคำแปล
+          </button>
+        </div>
       </div>
 
       {/* Add new form */}
