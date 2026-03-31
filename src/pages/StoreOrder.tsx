@@ -26,6 +26,7 @@ interface MenuItemRow {
   toppings: string[] | null;
   image_url: string | null;
   noodle_type_prices: Record<string, number> | null;
+  noodle_style_prices: Record<string, number> | null;
 }
 
 interface DnaTag {
