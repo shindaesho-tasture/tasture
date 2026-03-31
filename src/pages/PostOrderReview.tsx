@@ -894,9 +894,9 @@ const PostOrderReview = () => {
                             </div>
                           </div>
                           {sensoryLoading[step.menuItemId] ? (
-                            <AnalyzingSpinner label="AI กำลังวิเคราะห์แกนรสชาติ..." />
+                            <AnalyzingSpinner label={t("por.analyzingSensory")} />
                           ) : (sensoryAxes[step.menuItemId] || []).length === 0 ? (
-                            <EmptyState label="ไม่สามารถวิเคราะห์ได้" />
+                            <EmptyState label={t("por.cannotAnalyze")} />
                           ) : (
                             <>
                               {(sensoryAxes[step.menuItemId] || []).map((axis, i) => (
