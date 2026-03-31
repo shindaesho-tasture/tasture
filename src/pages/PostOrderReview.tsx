@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrder } from "@/lib/order-context";
+import { useLanguage } from "@/lib/language-context";
 import { categories, scoreTiers, getScoreTier, type Category } from "@/lib/categories";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,7 @@ const PostOrderReview = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { items, storeId, storeName, clearOrder } = useOrder();
+  const { t } = useLanguage();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -88,16 +90,17 @@ const PostOrderReview = () => {
 
   // Build steps
   const steps = useMemo<Step[]>(() => {
-    const s: Step[] = [{ type: "store-review", label: "รีวิวร้าน", icon: "🏪" }];
+    const s: Step[] = [{ type: "store-review", label: t("por.storeReview"), icon: "🏪" }];
     items.forEach((item) => {
       s.push({ type: "dish-dna", label: item.name, icon: "🧬", menuItemId: item.menuItemId, menuItemName: item.name });
     });
     items.forEach((item) => {
       s.push({ type: "sensory", label: item.name, icon: "🎯", menuItemId: item.menuItemId, menuItemName: item.name });
     });
-    s.push({ type: "results", label: "สรุปผล", icon: "🏆" });
+    s.push({ type: "results", label: t("por.summary"), icon: "🏆" });
     return s;
-  }, [items]);
+  }, [items, t]);
+  
 
   const step = steps[currentStep];
   const totalSteps = steps.length;
@@ -430,10 +433,10 @@ const PostOrderReview = () => {
         }
       }
 
-      toast({ title: "✅ บันทึกรีวิวทั้งหมดสำเร็จ" });
+      toast({ title: t("por.saveSuccess") });
     } catch (err: any) {
       console.error("Save error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("por.saveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -490,7 +493,7 @@ const PostOrderReview = () => {
             </motion.button>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
-                {step?.icon} {step?.type === "store-review" ? "รีวิวร้าน" : step?.type === "dish-dna" ? `DNA: ${step.menuItemName}` : step?.type === "sensory" ? `รสชาติ: ${step.menuItemName}` : "สรุปผลรีวิว"}
+                {step?.icon} {step?.type === "store-review" ? t("por.headerStoreReview") : step?.type === "dish-dna" ? t("por.headerDna", { name: step.menuItemName || "" }) : step?.type === "sensory" ? t("por.headerSensory", { name: step.menuItemName || "" }) : t("por.headerResults")}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
                 {storeName} · {currentStep + 1}/{totalSteps}
@@ -536,8 +539,8 @@ const PostOrderReview = () => {
                     <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                       <Store size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                       <div>
-                        <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิวร้านนี้แล้ว</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">ประสบการณ์ร้านเปลี่ยนไปหรือเปล่า?</p>
+                         <p className="text-[11px] font-medium text-foreground">{t("por.prevStoreReview")}</p>
+                         <p className="text-[10px] text-muted-foreground mt-0.5">{t("por.storeChanged")}</p>
                       </div>
                     </div>
 
@@ -545,7 +548,7 @@ const PostOrderReview = () => {
                     {previousReviewRows.length > 0 && category && (
                       <div className="rounded-2xl border border-border/50 bg-surface-elevated/50 overflow-hidden">
                         <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/30">
-                          <p className="text-[10px] font-medium text-muted-foreground tracking-wide">คะแนนเดิมที่เคยให้</p>
+                         <p className="text-[10px] font-medium text-muted-foreground tracking-wide">{t("por.prevScores")}</p>
                         </div>
                         <div className="divide-y divide-border/20 max-h-52 overflow-y-auto">
                           {previousReviewRows.map((row) => {
@@ -577,8 +580,8 @@ const PostOrderReview = () => {
                         className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
                       >
                         <span className="text-3xl">👍</span>
-                        <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
-                        <span className="text-[9px] text-muted-foreground">ข้ามไปรีวิวเมนูเลย</span>
+                         <span className="text-sm font-semibold text-foreground">{t("por.same")}</span>
+                         <span className="text-[9px] text-muted-foreground">{t("por.skipToMenu")}</span>
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
@@ -588,8 +591,8 @@ const PostOrderReview = () => {
                         className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
                       >
                         <span className="text-3xl">🔄</span>
-                        <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
-                        <span className="text-[9px] text-muted-foreground">รีวิวร้านใหม่</span>
+                         <span className="text-sm font-semibold text-foreground">{t("por.changed")}</span>
+                         <span className="text-[9px] text-muted-foreground">{t("por.reviewStoreAgain")}</span>
                       </motion.button>
                     </div>
                   </motion.div>
@@ -603,23 +606,23 @@ const PostOrderReview = () => {
                         className="flex flex-col items-center py-8 gap-3"
                       >
                         <span className="text-5xl">✅</span>
-                        <p className="text-sm font-semibold text-foreground">ใช้รีวิวร้านเดิม</p>
-                        <p className="text-[10px] text-muted-foreground">กด "ถัดไป" เพื่อรีวิวเมนู</p>
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setStoreReviewChoice(null)}
-                          className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
-                        >
-                          เปลี่ยนใจ
-                        </motion.button>
+                         <p className="text-sm font-semibold text-foreground">{t("por.usePrevStore")}</p>
+                         <p className="text-[10px] text-muted-foreground">{t("por.pressNext")}</p>
+                         <motion.button
+                           whileTap={{ scale: 0.95 }}
+                           onClick={() => setStoreReviewChoice(null)}
+                           className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
+                         >
+                           {t("por.changeMyMind")}
+                         </motion.button>
                       </motion.div>
                     ) : (
                       <>
                         <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                           <Store size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                           <div>
-                            <p className="text-[11px] font-medium text-foreground">{category.labelTh}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">ให้คะแนนประสบการณ์ร้านอาหาร</p>
+                             <p className="text-[11px] font-medium text-foreground">{category.labelTh}</p>
+                             <p className="text-[10px] text-muted-foreground mt-0.5">{t("por.rateStore")}</p>
                           </div>
                         </div>
                         {category.metrics.map((metric, i) => (
@@ -655,15 +658,15 @@ const PostOrderReview = () => {
                     <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                       <Dna size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                       <div>
-                        <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิว DNA เมนูนี้แล้ว</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติส่วนประกอบเปลี่ยนไปหรือเปล่า?</p>
+                        <p className="text-[11px] font-medium text-foreground">{t("por.prevDna")}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{t("por.dnaChanged")}</p>
                       </div>
                     </div>
 
                     {/* Previous DNA summary */}
                     <div className="rounded-2xl border border-border/50 bg-surface-elevated/50 overflow-hidden">
                       <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/30">
-                        <p className="text-[10px] font-medium text-muted-foreground tracking-wide">รีวิวเดิมที่เคยให้</p>
+                        <p className="text-[10px] font-medium text-muted-foreground tracking-wide">{t("por.prevDnaScores")}</p>
                       </div>
                       <div className="divide-y divide-border/20 max-h-52 overflow-y-auto">
                         {(previousDnaRows[step.menuItemId] || []).map((row, i) => (
@@ -687,8 +690,8 @@ const PostOrderReview = () => {
                         className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
                       >
                         <span className="text-3xl">👍</span>
-                        <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
-                        <span className="text-[9px] text-muted-foreground">ข้ามไปขั้นตอนถัดไป</span>
+                        <span className="text-sm font-semibold text-foreground">{t("por.same")}</span>
+                        <span className="text-[9px] text-muted-foreground">{t("por.skipToNext")}</span>
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
@@ -696,8 +699,8 @@ const PostOrderReview = () => {
                         className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
                       >
                         <span className="text-3xl">🔄</span>
-                        <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
-                        <span className="text-[9px] text-muted-foreground">รีวิว DNA ใหม่</span>
+                        <span className="text-sm font-semibold text-foreground">{t("por.changed")}</span>
+                        <span className="text-[9px] text-muted-foreground">{t("por.reviewDnaAgain")}</span>
                       </motion.button>
                     </div>
                   </motion.div>
@@ -708,14 +711,14 @@ const PostOrderReview = () => {
                     className="flex flex-col items-center py-8 gap-3"
                   >
                     <span className="text-5xl">✅</span>
-                    <p className="text-sm font-semibold text-foreground">ใช้รีวิว DNA เดิม</p>
-                    <p className="text-[10px] text-muted-foreground">กด "ถัดไป" เพื่อไปขั้นตอนถัดไป</p>
+                    <p className="text-sm font-semibold text-foreground">{t("por.usePrevDna")}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("por.pressNextStep")}</p>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setDnaReviewChoice((prev) => ({ ...prev, [step.menuItemId!]: null }))}
                       className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
                     >
-                      เปลี่ยนใจ
+                      {t("por.changeMyMind")}
                     </motion.button>
                   </motion.div>
                 ) : (
@@ -724,18 +727,18 @@ const PostOrderReview = () => {
                     <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                       <Dna size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                       <div>
-                        <p className="text-[11px] font-medium text-foreground">เลือกแท็กที่ตรงกับความรู้สึก</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
-                          <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
-                          <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
+                         <p className="text-[11px] font-medium text-foreground">{t("por.selectTag")}</p>
+                         <p className="text-[10px] text-muted-foreground mt-0.5">
+                           <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> {t("por.excellent")} ·
+                           <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> {t("por.normal")} ·
+                           <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> {t("por.disappointing")}
                         </p>
                       </div>
                     </div>
-                    {dnaLoading[step.menuItemId] ? (
-                      <AnalyzingSpinner label="กำลังวิเคราะห์ส่วนประกอบ..." />
-                    ) : (dnaComponents[step.menuItemId] || []).length === 0 ? (
-                      <EmptyState label="ไม่สามารถวิเคราะห์ได้" />
+                     {dnaLoading[step.menuItemId] ? (
+                       <AnalyzingSpinner label={t("por.analyzingComponents")} />
+                     ) : (dnaComponents[step.menuItemId] || []).length === 0 ? (
+                       <EmptyState label={t("por.cannotAnalyze")} />
                     ) : (
                       (dnaComponents[step.menuItemId] || []).map((comp, i) => (
                         <DishDnaCard
@@ -765,22 +768,22 @@ const PostOrderReview = () => {
                     <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                       <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                       <div>
-                        <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิวรสชาติเมนูนี้แล้ว</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติเปลี่ยนไปหรือเปล่า?</p>
+                        <p className="text-[11px] font-medium text-foreground">{t("por.prevSensory")}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{t("por.tasteChanged")}</p>
                       </div>
                     </div>
 
                     {/* Previous sensory score summary */}
                     <div className="rounded-2xl border border-border/50 bg-surface-elevated/50 overflow-hidden">
                       <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/30">
-                        <p className="text-[10px] font-medium text-muted-foreground tracking-wide">คะแนนรสชาติเดิม</p>
-                      </div>
-                      <div className="flex items-center justify-center gap-3 px-4 py-4">
-                        <span className="text-2xl">
-                          {previousSensoryScore[step.menuItemId] === 2 ? "🤩" : previousSensoryScore[step.menuItemId] === 0 ? "😐" : "😔"}
-                        </span>
-                        <span className="text-[11px] font-medium text-foreground">
-                          {previousSensoryScore[step.menuItemId] === 2 ? "รสสมบูรณ์แบบ" : previousSensoryScore[step.menuItemId] === 0 ? "ธรรมดาพอกินได้" : "ไม่ถูกปาก"}
+                         <p className="text-[10px] font-medium text-muted-foreground tracking-wide">{t("por.prevTasteScore")}</p>
+                       </div>
+                       <div className="flex items-center justify-center gap-3 px-4 py-4">
+                         <span className="text-2xl">
+                           {previousSensoryScore[step.menuItemId] === 2 ? "🤩" : previousSensoryScore[step.menuItemId] === 0 ? "😐" : "😔"}
+                         </span>
+                         <span className="text-[11px] font-medium text-foreground">
+                           {previousSensoryScore[step.menuItemId] === 2 ? t("por.perfectTaste") : previousSensoryScore[step.menuItemId] === 0 ? t("por.okTaste") : t("por.badTaste")}
                         </span>
                       </div>
                     </div>
@@ -792,8 +795,8 @@ const PostOrderReview = () => {
                         className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
                       >
                         <span className="text-3xl">👍</span>
-                        <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
-                        <span className="text-[9px] text-muted-foreground">ข้ามไปขั้นตอนถัดไป</span>
+                        <span className="text-sm font-semibold text-foreground">{t("por.same")}</span>
+                        <span className="text-[9px] text-muted-foreground">{t("por.skipToNext")}</span>
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
@@ -801,8 +804,8 @@ const PostOrderReview = () => {
                         className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-amber/10 border-2 border-score-amber/30 hover:border-score-amber/60 transition-all"
                       >
                         <span className="text-3xl">🔄</span>
-                        <span className="text-sm font-semibold text-foreground">เปลี่ยนไป</span>
-                        <span className="text-[9px] text-muted-foreground">รีวิวรสชาติใหม่</span>
+                        <span className="text-sm font-semibold text-foreground">{t("por.changed")}</span>
+                        <span className="text-[9px] text-muted-foreground">{t("por.reviewTasteAgain")}</span>
                       </motion.button>
                     </div>
                   </motion.div>
@@ -813,14 +816,14 @@ const PostOrderReview = () => {
                     className="flex flex-col items-center py-8 gap-3"
                   >
                     <span className="text-5xl">✅</span>
-                    <p className="text-sm font-semibold text-foreground">ใช้รีวิวรสชาติเดิม</p>
-                    <p className="text-[10px] text-muted-foreground">กด "ถัดไป" เพื่อไปขั้นตอนถัดไป</p>
+                    <p className="text-sm font-semibold text-foreground">{t("por.usePrevTaste")}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("por.pressNextStep")}</p>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSensoryReviewChoice((prev) => ({ ...prev, [step.menuItemId!]: null }))}
                       className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
                     >
-                      เปลี่ยนใจ
+                      {t("por.changeMyMind")}
                     </motion.button>
                   </motion.div>
                 ) : (
@@ -828,12 +831,12 @@ const PostOrderReview = () => {
                   <>
                     {/* ─── Taste Satisfaction Gate ─── */}
                     <div className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury p-4 space-y-3">
-                      <p className="text-[11px] font-semibold text-foreground">ความพอใจรสชาติโดยรวม</p>
+                      <p className="text-[11px] font-semibold text-foreground">{t("por.tasteSatisfaction")}</p>
                       <div className="flex gap-2">
                         {([
-                          { key: "perfect" as const, label: "รสสมบูรณ์แบบ", emoji: "🤩", activeBg: "bg-score-emerald", activeText: "text-primary-foreground" },
-                          { key: "ok" as const, label: "ธรรมดาพอกินได้", emoji: "😐", activeBg: "bg-score-slate", activeText: "text-primary-foreground" },
-                          { key: "bad" as const, label: "ไม่ถูกปาก", emoji: "😔", activeBg: "bg-score-ruby", activeText: "text-primary-foreground" },
+                          { key: "perfect" as const, label: t("por.perfectTaste"), emoji: "🤩", activeBg: "bg-score-emerald", activeText: "text-primary-foreground" },
+                          { key: "ok" as const, label: t("por.okTaste"), emoji: "😐", activeBg: "bg-score-slate", activeText: "text-primary-foreground" },
+                          { key: "bad" as const, label: t("por.badTaste"), emoji: "😔", activeBg: "bg-score-ruby", activeText: "text-primary-foreground" },
                         ]).map((opt) => {
                           const isActive = tasteSatisfaction[step.menuItemId!] === opt.key;
                           return (
@@ -868,7 +871,7 @@ const PostOrderReview = () => {
                           animate={{ opacity: 1 }}
                           className="text-[10px] text-score-emerald font-medium text-center"
                         >
-                          ✅ ตั้งค่ารสชาติทั้งหมดเป็นสมดุลพอดีแล้ว
+                          {t("por.perfectSet")}
                         </motion.p>
                       )}
                     </div>
@@ -886,14 +889,14 @@ const PostOrderReview = () => {
                           <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                             <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                             <div>
-                              <p className="text-[11px] font-medium text-foreground">ปรับระดับรสชาติ</p>
-                              <p className="text-[10px] text-muted-foreground mt-0.5">Level 3 = สมดุลพอดี (เขียวมรกต)</p>
+                              <p className="text-[11px] font-medium text-foreground">{t("por.adjustTaste")}</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">{t("por.level3Balance")}</p>
                             </div>
                           </div>
                           {sensoryLoading[step.menuItemId] ? (
-                            <AnalyzingSpinner label="AI กำลังวิเคราะห์แกนรสชาติ..." />
+                            <AnalyzingSpinner label={t("por.analyzingSensory")} />
                           ) : (sensoryAxes[step.menuItemId] || []).length === 0 ? (
-                            <EmptyState label="ไม่สามารถวิเคราะห์ได้" />
+                            <EmptyState label={t("por.cannotAnalyze")} />
                           ) : (
                             <>
                               {(sensoryAxes[step.menuItemId] || []).map((axis, i) => (
@@ -954,7 +957,7 @@ const PostOrderReview = () => {
                     </span>
                   </div>
                   <div className="text-center">
-                    <h2 className="text-lg font-bold text-foreground">คะแนนรวม</h2>
+                    <h2 className="text-lg font-bold text-foreground">{t("por.overallScore")}</h2>
                     <p className="text-xs text-muted-foreground mt-0.5">{storeName}</p>
                   </div>
                 </motion.div>
@@ -963,9 +966,9 @@ const PostOrderReview = () => {
                 {results.storeScore !== null && (
                   <ScoreSection
                     icon="🏪"
-                    title="ประสบการณ์ร้าน"
+                    title={t("por.storeExperience")}
                     score={results.storeScore}
-                    subtitle={`${results.storeMetricCount} ตัวชี้วัด`}
+                    subtitle={t("por.metrics", { count: results.storeMetricCount })}
                   />
                 )}
 
@@ -995,7 +998,7 @@ const PostOrderReview = () => {
                       )}
                       {dish.sensoryScore !== null && (
                         <div className="p-3 rounded-xl bg-secondary/50 text-center">
-                          <p className="text-[9px] text-muted-foreground uppercase tracking-wider">รสชาติ</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("por.taste")}</p>
                           <p className={cn(
                             "text-lg font-bold mt-1 tabular-nums",
                             dish.sensoryScore >= 1 ? "text-score-emerald" :
@@ -1034,10 +1037,10 @@ const PostOrderReview = () => {
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-semibold text-foreground">
-                          {shareToFeed ? "แชร์ลงฟีด" : "ไม่แชร์ลงฟีด"}
+                          {shareToFeed ? t("por.shareToFeed") : t("por.noShare")}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          {shareToFeed ? "รีวิวจะแสดงในฟีดให้ทุกคนเห็น" : "บันทึกไว้ส่วนตัว ไม่แสดงในฟีด"}
+                          {shareToFeed ? t("por.shareDesc") : t("por.noShareDesc")}
                         </p>
                       </div>
                     </div>
@@ -1067,7 +1070,7 @@ const PostOrderReview = () => {
                 onClick={handleFinish}
                 className="flex-1 py-3.5 rounded-2xl bg-foreground text-background text-sm font-bold"
               >
-                กลับหน้าหลัก
+                {t("por.goHome")}
               </motion.button>
             ) : (
               <>
@@ -1077,7 +1080,7 @@ const PostOrderReview = () => {
                     onClick={goBack}
                     className="px-5 py-3.5 rounded-2xl bg-secondary text-foreground text-sm font-medium"
                   >
-                    ย้อนกลับ
+                    {t("por.goBack")}
                   </motion.button>
                 )}
                 <motion.button
@@ -1089,7 +1092,7 @@ const PostOrderReview = () => {
                     <Loader2 size={18} className="animate-spin" />
                   ) : (
                     <>
-                      <span>{currentStep === totalSteps - 2 ? "ดูผลสรุป" : "ถัดไป"}</span>
+                      <span>{currentStep === totalSteps - 2 ? t("por.viewResults") : t("por.next")}</span>
                       <ChevronRight size={16} strokeWidth={2.5} />
                     </>
                   )}
