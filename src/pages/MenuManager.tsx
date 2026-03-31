@@ -192,6 +192,7 @@ const MenuManager = () => {
   };
 
   const handleSubmit = async () => {
+    console.log("[MenuManager] handleSubmit called, form:", form.name, "isOwner:", isOwner, "editingId:", editingId);
     if (!form.name.trim()) return toast.error("Name required");
     const payload: Record<string, unknown> = {
       name: form.name.trim(),
