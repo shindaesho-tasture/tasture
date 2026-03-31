@@ -1557,7 +1557,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           >
             <Trash2 size={16} />
             <span className="text-[11px] font-medium">
-              {confirmDelete ? "กดอีกครั้ง" : "ลบ"}
+              {confirmDelete ? t("feed.tapAgain") : t("common.delete")}
             </span>
           </motion.button>
         )}
