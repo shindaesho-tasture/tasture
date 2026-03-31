@@ -740,9 +740,46 @@ const StoreOrder = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Add-ons grouped by category */}
+                  {(() => {
+                    const addOns = itemAddOns.get(optionsItem.id);
+                    if (!addOns || addOns.length === 0) return null;
+                    const grouped = addOns.reduce<Record<string, typeof addOns>>((acc, a) => {
+                      (acc[a.category] = acc[a.category] || []).push(a);
+                      return acc;
+                    }, {});
+                    const catEmoji: Record<string, string> = { "เนื้อสัตว์": "🥩", "ผัก": "🥬", "ซอส": "🫙", "อื่นๆ": "➕" };
+                    return Object.entries(grouped).map(([cat, items]) => (
+                      <div key={cat}>
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                          {catEmoji[cat] || "📦"} {cat} <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {items.map((a) => {
+                            const selected = selectedAddOns.some((sa) => sa.name === a.name);
+                            return (
+                              <motion.button
+                                key={a.id}
+                                whileTap={{ scale: 0.93 }}
+                                onClick={() => toggleAddOn({ name: a.name, price: a.price })}
+                                className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                                  selected
+                                    ? "bg-score-amber text-primary-foreground border-score-amber shadow-sm"
+                                    : "bg-surface-elevated text-foreground border-border/50"
+                                }`}
+                              >
+                                {selected && <Check size={12} strokeWidth={2.5} />}
+                                {a.name} <span className="opacity-70">+฿{a.price}</span>
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
-                {/* Confirm */}
                 <div className="px-5 pb-8 pt-2">
                   <motion.button
                     whileTap={{ scale: 0.97 }}
