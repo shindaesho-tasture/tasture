@@ -197,7 +197,7 @@ const StoreList = () => {
                           {getCategoryLabel(store.category_id)}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-1">
-                          {store.menuCount} เมนู · {store.totalReviews} รีวิว
+                          {t("myStores.menuCount", language, { count: store.menuCount })} · {t("myStores.reviewCount", language, { count: store.totalReviews })}
                         </p>
                       </div>
                       <ChevronRight size={18} strokeWidth={1.5} className="text-muted-foreground flex-shrink-0" />
