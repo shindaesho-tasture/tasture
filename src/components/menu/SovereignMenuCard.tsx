@@ -35,6 +35,7 @@ export interface IntensityTag {
 
 interface SovereignMenuCardProps {
   name: string;
+  originalName?: string;
   price: number;
   priceSpecial?: number | null;
   imageUrl?: string;
@@ -44,7 +45,7 @@ interface SovereignMenuCardProps {
   index?: number;
   popularityRank?: number;
   avgSatisfaction?: number;
-  userPhotos?: string[]; // top user-posted photo URLs (sorted by likes)
+  userPhotos?: string[];
 }
 
 /** Format compact review count */
@@ -52,6 +53,7 @@ const formatCount = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${
 
 const SovereignMenuCard = ({
   name,
+  originalName,
   price,
   priceSpecial,
   imageUrl,
@@ -133,6 +135,9 @@ const SovereignMenuCard = ({
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div>
             <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">{name}</h3>
+            {originalName && (
+              <p className="text-[10px] text-muted-foreground truncate mt-0.5">{originalName}</p>
+            )}
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-sm font-semibold text-score-emerald">฿{price}</span>
               {priceSpecial != null && (

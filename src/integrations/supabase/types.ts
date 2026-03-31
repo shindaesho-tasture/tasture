@@ -301,6 +301,41 @@ export type Database = {
           },
         ]
       }
+      menu_translations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          language: string
+          menu_item_id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          language: string
+          menu_item_id: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          language?: string
+          menu_item_id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_translations_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string | null

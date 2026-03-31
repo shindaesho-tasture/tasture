@@ -63,6 +63,7 @@ const StoreOrder = () => {
   const [menuReviewCounts, setMenuReviewCounts] = useState<Map<string, number>>(new Map());
   const [dnaCounts, setDnaCounts] = useState<Map<string, number>>(new Map());
   const [topPhotoByItem, setTopPhotoByItem] = useState<Map<string, string[]>>(new Map());
+  const [translationMap, setTranslationMap] = useState<Map<string, { name: string; description?: string }>>(new Map());
 
   // Store posts state
   const [storePosts, setStorePosts] = useState<StorePost[]>([]);
@@ -85,7 +86,7 @@ const StoreOrder = () => {
   useEffect(() => {
     if (!storeId) return;
     fetchData();
-  }, [storeId]);
+  }, [storeId, language]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -240,6 +241,29 @@ const StoreOrder = () => {
       setLoading(false);
     }
   };
+
+  // Fetch translations when language changes (or after menu loads)
+  useEffect(() => {
+    if (language === "th" || menuItems.length === 0) {
+      setTranslationMap(new Map());
+      return;
+    }
+    const fetchTranslations = async () => {
+      try {
+        const { data: transData } = await supabase
+          .from("menu_translations")
+          .select("menu_item_id, name, description")
+          .eq("language", language)
+          .in("menu_item_id", menuItems.map((m) => m.id));
+        const tMap = new Map<string, { name: string; description?: string }>();
+        (transData || []).forEach((row: any) => {
+          tMap.set(row.menu_item_id, { name: row.name, description: row.description || undefined });
+        });
+        setTranslationMap(tMap);
+      } catch {}
+    };
+    fetchTranslations();
+  }, [language, menuItems]);
 
   const fetchStorePosts = async () => {
     if (!storeId) return;
@@ -488,11 +512,15 @@ const StoreOrder = () => {
                         type: "texture" as const,
                       }));
                     const totalRevs = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
+                    const tr = translationMap.get(item.id);
+                    const displayName = tr?.name || item.name;
+                    const originalName = tr ? item.name : undefined;
 
                     return (
                       <div key={item.id} className="relative">
                         <SovereignMenuCard
-                          name={item.name}
+                          name={displayName}
+                          originalName={originalName}
                           price={item.price}
                           priceSpecial={item.price_special}
                           imageUrl={topPhotoByItem.get(item.id)?.[0] || item.image_url || undefined}

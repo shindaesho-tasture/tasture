@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2, Search } from "lucide-react";
+import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2, Search, Globe } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,7 @@ import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import TagInput from "@/components/menu/TagInput";
 import AddOnManager from "@/components/menu/AddOnManager";
+import MenuTranslationSheet from "@/components/menu/MenuTranslationSheet";
 
 type MenuItemRow = {
   id: string;
@@ -69,6 +70,7 @@ const MenuManager = () => {
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [translateItem, setTranslateItem] = useState<{ id: string; name: string; description?: string | null } | null>(null);
   const inlineFileRef = useRef<HTMLInputElement>(null);
   const inlineTargetId = useRef<string | null>(null);
 
@@ -399,12 +401,15 @@ const MenuManager = () => {
                     <span className="text-sm font-semibold text-foreground shrink-0">฿{item.price}</span>
                     {isOwner && (
                       <div className="flex gap-1 shrink-0">
+                        <button onClick={() => setTranslateItem({ id: item.id, name: item.name, description: item.description })} className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
+                          <Globe size={14} className="text-primary" />
+                        </button>
                         <button onClick={() => startEdit(item)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                           <Pencil size={14} className="text-muted-foreground" />
                         </button>
-<button onClick={() => setDeleteConfirm(item.id)} className="p-1.5 rounded-lg hover:bg-score-ruby/10 transition-colors">
-                            <Trash2 size={14} className="text-score-ruby/70" />
-                          </button>
+                        <button onClick={() => setDeleteConfirm(item.id)} className="p-1.5 rounded-lg hover:bg-score-ruby/10 transition-colors">
+                          <Trash2 size={14} className="text-score-ruby/70" />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -705,6 +710,17 @@ const MenuManager = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Translation Sheet */}
+        {translateItem && (
+          <MenuTranslationSheet
+            open={!!translateItem}
+            onClose={() => setTranslateItem(null)}
+            menuItemId={translateItem.id}
+            menuItemName={translateItem.name}
+            menuItemDescription={translateItem.description}
+          />
+        )}
       </div>
     </PageTransition>
   );
