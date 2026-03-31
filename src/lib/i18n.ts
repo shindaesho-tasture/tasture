@@ -465,6 +465,16 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "map.title": { th: "แผนที่โลก", en: "World Map", ja: "ワールドマップ", zh: "世界地图", ko: "세계 지도" },
   "map.subtitle": { th: "ร้านอาหารที่คุณรีวิว", en: "Restaurants you've reviewed", ja: "レビューしたお店", zh: "您评价过的餐厅", ko: "리뷰한 식당" },
   "map.loading": { th: "กำลังโหลดแผนที่...", en: "Loading map...", ja: "地図を読み込み中...", zh: "正在加载地图...", ko: "지도 로딩 중..." },
+
+  // ─── Feed Interaction ───
+  "feed.like": { th: "ถูกใจ", en: "Like", ja: "いいね", zh: "喜欢", ko: "좋아요" },
+  "feed.comment": { th: "คอมเมนต์", en: "Comment", ja: "コメント", zh: "评论", ko: "댓글" },
+  "feed.saved": { th: "บันทึกแล้ว", en: "Saved", ja: "保存済み", zh: "已收藏", ko: "저장됨" },
+  "feed.save": { th: "บันทึก", en: "Save", ja: "保存", zh: "收藏", ko: "저장" },
+  "feed.tapAgain": { th: "กดอีกครั้ง", en: "Tap again", ja: "もう一度タップ", zh: "再次点击", ko: "다시 누르기" },
+  "feed.noComments": { th: "ยังไม่มีคอมเมนต์ — เป็นคนแรก!", en: "No comments yet — be the first!", ja: "まだコメントがありません — 最初の一人に！", zh: "暂无评论 — 来做第一个！", ko: "아직 댓글이 없습니다 — 첫 번째가 되세요!" },
+  "feed.writeComment": { th: "เขียนคอมเมนต์…", en: "Write a comment…", ja: "コメントを書く…", zh: "写评论…", ko: "댓글 작성…" },
+  "feed.loginToComment": { th: "เข้าสู่ระบบเพื่อคอมเมนต์", en: "Log in to comment", ja: "コメントするにはログイン", zh: "登录后评论", ko: "댓글을 달려면 로그인하세요" },
 };
 
 /**

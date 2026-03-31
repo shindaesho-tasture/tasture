@@ -844,7 +844,7 @@ const HomeFeed = () => {
               </div>
             )}
             {!hasMore && filteredPosts.length > 0 && (
-              <p className="text-center text-[11px] text-muted-foreground/50 py-4">ไม่มีโพสเพิ่มเติม</p>
+              <p className="text-center text-[11px] text-muted-foreground/50 py-4">{t("feed.noMorePosts")}</p>
             )}
           </div>
             </motion.div>
