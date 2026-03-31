@@ -1230,6 +1230,9 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                     className="font-semibold text-score-emerald hover:underline"
                   >
                     {post.storeName}
+                    {translateTag(post.storeName) !== post.storeName && (
+                      <span className="font-normal text-muted-foreground ml-1 text-[10px]">({translateTag(post.storeName)})</span>
+                    )}
                   </button>
                 </>
               )}
