@@ -204,15 +204,15 @@ const OrderHistory = () => {
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
               <LogIn size={28} strokeWidth={1.5} className="text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              เข้าสู่ระบบเพื่อดูประวัติการไปร้านอาหาร
-            </p>
-            <button
-              onClick={() => navigate("/auth")}
-              className="mt-2 px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-medium"
-            >
-              เข้าสู่ระบบ
-            </button>
+             <p className="text-sm text-muted-foreground text-center">
+               {t("history.loginPrompt")}
+             </p>
+             <button
+               onClick={() => navigate("/auth")}
+               className="mt-2 px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-medium"
+             >
+               {t("common.login")}
+             </button>
           </div>
           <BottomNav />
         </div>
