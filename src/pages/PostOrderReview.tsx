@@ -90,6 +90,32 @@ const PostOrderReview = () => {
   const [saving, setSaving] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(true);
 
+  // Collect all translatable texts from DNA components + sensory axes
+  const allTranslatableTexts = useMemo(() => {
+    const texts: string[] = [];
+    // DNA component names + tags
+    Object.values(dnaComponents).forEach((comps) => {
+      comps.forEach((c) => {
+        texts.push(c.name, c.tags.emerald, c.tags.neutral, c.tags.ruby);
+      });
+    });
+    // Previous DNA rows
+    Object.values(previousDnaRows).forEach((rows) => {
+      rows.forEach((r) => {
+        texts.push(r.component_name, r.selected_tag);
+      });
+    });
+    // Sensory axis names + labels
+    Object.values(sensoryAxes).forEach((axes) => {
+      axes.forEach((a) => {
+        texts.push(a.name, ...a.labels);
+      });
+    });
+    return texts;
+  }, [dnaComponents, previousDnaRows, sensoryAxes]);
+
+  const { translateTag } = useTagTranslations(allTranslatableTexts);
+
   // Build steps
   const steps = useMemo<Step[]>(() => {
     const s: Step[] = [{ type: "store-review", label: t("por.storeReview"), icon: "🏪" }];
