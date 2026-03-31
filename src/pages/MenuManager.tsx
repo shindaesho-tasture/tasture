@@ -82,7 +82,7 @@ const MenuManager = () => {
         supabase.from("stores").select("name, user_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url")
+          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url, noodle_type_prices")
           .eq("store_id", storeId!)
           .order("sort_order", { ascending: true })
           .order("created_at", { ascending: true }),
