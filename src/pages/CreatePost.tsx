@@ -504,7 +504,7 @@ const CreatePost = () => {
             >
               <MapPin size={16} className={selectedStore ? "text-score-emerald" : "text-muted-foreground"} />
               <span className={cn("flex-1 text-left text-sm", selectedStore ? "font-semibold text-foreground" : "text-muted-foreground")}>
-                {selectedStore ? selectedStore.name : "แท็กร้านอาหาร (ไม่บังคับ)"}
+                {selectedStore ? selectedStore.name : t("createPost.tagStore")}
               </span>
               {selectedStore ? (
                 <motion.div whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setSelectedStore(null); }}
