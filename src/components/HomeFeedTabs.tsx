@@ -19,10 +19,11 @@ const tabDefs: { id: FeedTab; i18nKey: string; icon: typeof Compass; emoji: stri
 ];
 
 const HomeFeedTabs = ({ active, onChange }: HomeFeedTabsProps) => {
+  const { language } = useLanguage();
   return (
     <div className="px-4 pb-3">
       <div className="flex gap-2">
-        {tabs.map((tab) => {
+        {tabDefs.map((tab) => {
           const isActive = active === tab.id;
           return (
             <motion.button
@@ -50,7 +51,7 @@ const HomeFeedTabs = ({ active, onChange }: HomeFeedTabsProps) => {
                   isActive ? "text-primary-foreground" : "text-muted-foreground"
                 )}
               >
-                {tab.label}
+                {t(tab.i18nKey, language)}
               </span>
             </motion.button>
           );
