@@ -313,10 +313,12 @@ const StoreOrder = () => {
     if (!optionsItem) return;
     if (navigator.vibrate) navigator.vibrate(8);
     const useSpecial = selectedSize === "พิเศษ" && optionsItem.price_special != null;
+    const basePrice = useSpecial ? optionsItem.price_special! : optionsItem.price;
+    const addOnTotal = selectedAddOns.reduce((s, a) => s + a.price, 0);
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
-      price: useSpecial ? optionsItem.price_special! : optionsItem.price,
+      price: basePrice + addOnTotal,
       quantity: 1,
       type: optionsItem.type,
       selectedOptions: {
@@ -324,9 +326,19 @@ const StoreOrder = () => {
         noodleType: selectedNoodleType || undefined,
         noodleStyle: selectedNoodleStyle || undefined,
         toppings: selectedToppings.length > 0 ? selectedToppings : undefined,
+        addOns: selectedAddOns.length > 0 ? selectedAddOns.map(a => a.name) : undefined,
       },
     });
     setOptionsItem(null);
+  };
+
+  const toggleAddOn = (addon: { name: string; price: number }) => {
+    setSelectedAddOns((prev) => {
+      const exists = prev.find((a) => a.name === addon.name);
+      if (exists) return prev.filter((a) => a.name !== addon.name);
+      if (prev.length >= MAX_TOPPINGS) return prev;
+      return [...prev, addon];
+    });
   };
 
   const handleAddSimple = (item: MenuItemRow) => {
