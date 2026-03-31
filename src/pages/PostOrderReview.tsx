@@ -21,6 +21,7 @@ import { categories, scoreTiers, getScoreTier, type Category } from "@/lib/categ
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { preTranslateDnaTags, preTranslateTags } from "@/lib/pre-translate";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 import PageTransition from "@/components/PageTransition";
 import MetricRater from "@/components/MetricRater";
 import DishDnaCard from "@/components/menu/DishDnaCard";
