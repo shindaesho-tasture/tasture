@@ -88,6 +88,85 @@ const roleColors: Record<string, string> = {
 
 const haptic = () => navigator.vibrate?.(8);
 
+/* ─── Batch Feedback Tags Button ─── */
+const BatchFeedbackTagsButton = () => {
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState("");
+
+  const handleBatch = async () => {
+    setRunning(true);
+    haptic();
+    try {
+      // Collect all translatable texts from categories metrics
+      const allTags = new Set<string>();
+      categories.forEach((cat) => {
+        allTags.add(cat.labelTh);
+        allTags.add(cat.description);
+        const collectMetric = (m: any) => {
+          allTags.add(m.label);
+          m.options.forEach((o: string) => allTags.add(o));
+          if (m.smartGate) {
+            allTags.add(m.smartGate.question);
+            if (m.smartGate.yesLabel) allTags.add(m.smartGate.yesLabel);
+            if (m.smartGate.noLabel) allTags.add(m.smartGate.noLabel);
+            m.smartGate.subMetrics?.forEach(collectMetric);
+          }
+        };
+        cat.metrics.forEach(collectMetric);
+      });
+      // Add score tier labels
+      ["ดีเลิศ", "ดีกว่าทั่วไป", "มาตรฐาน", "ค่อนข้างติดขัด", "วิกฤต"].forEach((l) => allTags.add(l));
+
+      const tagsArray = [...allTags].filter(Boolean);
+      const languages = ["en", "ja", "zh", "ko"];
+      const batchSize = 30;
+
+      let done = 0;
+      for (let i = 0; i < tagsArray.length; i += batchSize) {
+        const batch = tagsArray.slice(i, i + batchSize);
+        setProgress(`${Math.min(i + batchSize, tagsArray.length)}/${tagsArray.length}`);
+        await supabase.functions.invoke("translate-tags", {
+          body: { tags: batch, target_languages: languages },
+        });
+        done += batch.length;
+      }
+      toast({ title: `✅ แปลแท็กฟีดแบคครบ ${tagsArray.length} รายการ` });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "❌ เกิดข้อผิดพลาด", description: String(e) });
+    } finally {
+      setRunning(false);
+      setProgress("");
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Batch แปลแท็กฟีดแบค</h3>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            แปลชื่อเมตริก, ตัวเลือกคะแนน, คำถาม SmartGate ทั้งหมดเป็น 4 ภาษา
+          </p>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleBatch}
+          disabled={running}
+          className={cn(
+            "px-4 py-2 rounded-xl text-xs font-semibold transition-all",
+            running
+              ? "bg-muted text-muted-foreground"
+              : "bg-score-emerald/15 text-score-emerald border border-score-emerald/30 hover:bg-score-emerald/25"
+          )}
+        >
+          {running ? `กำลังแปล ${progress}...` : "🌐 แปลทั้งหมด"}
+        </motion.button>
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
