@@ -603,7 +603,7 @@ const Index = () => {
         ) : categoryFiltered.length === 0 ? (
           <div className="flex flex-col items-center py-16 gap-3">
             <span className="text-4xl">🍽️</span>
-            <p className="text-sm text-muted-foreground">ยังไม่มีร้านอาหาร</p>
+            <p className="text-sm text-muted-foreground">{t("common.noStores", language)}</p>
           </div>
         ) : (
           <>
