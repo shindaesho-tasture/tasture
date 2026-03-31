@@ -159,8 +159,8 @@ const StoreList = () => {
                 <Store size={28} strokeWidth={1.5} className="text-muted-foreground" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-foreground">ยังไม่มีร้านอาหาร</p>
-                <p className="text-xs text-muted-foreground mt-1">เพิ่มร้านแรกของคุณเลย!</p>
+                 <p className="text-sm font-medium text-foreground">{t("myStores.noStores", language)}</p>
+                 <p className="text-xs text-muted-foreground mt-1">{t("myStores.addFirst", language)}</p>
               </div>
               <motion.button
                 whileTap={{ scale: 0.97 }}
