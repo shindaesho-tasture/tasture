@@ -349,10 +349,10 @@ const DishDetailSheet = ({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-foreground">
-                                {tag.component_name}
+                                {translateTag(tag.component_name)}
                               </span>
                               <span className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold leading-none bg-secondary text-foreground/80">
-                                {tag.selected_tag}
+                                {translateTag(tag.selected_tag)}
                                 {tag.count > 1 && (
                                   <span className="ml-1 opacity-60">×{tag.count}</span>
                                 )}
