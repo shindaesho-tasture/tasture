@@ -97,7 +97,7 @@ const SensorySliderCard = ({ axis, value, onChange, index, translateTag: tt }: S
                   "text-[8px] leading-tight font-medium block",
                   isActive ? lc.text : "text-muted-foreground/60"
                 )}>
-                  {label}
+                  {tr(label)}
                 </span>
               </motion.button>
             );
