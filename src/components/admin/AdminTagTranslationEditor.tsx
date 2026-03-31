@@ -34,6 +34,11 @@ const AdminTagTranslationEditor = () => {
   const [langFilter, setLangFilter] = useState<string>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [newTagText, setNewTagText] = useState("");
+  const [newLang, setNewLang] = useState("en");
+  const [newTranslated, setNewTranslated] = useState("");
+  const [adding, setAdding] = useState(false);
 
   const load = async () => {
     setLoading(true);
