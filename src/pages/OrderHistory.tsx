@@ -224,10 +224,10 @@ const OrderHistory = () => {
     <PageTransition>
       <div className="min-h-screen bg-background pb-24">
         <header className="px-6 pt-6 pb-2">
-          <h1 className="text-xl font-semibold text-foreground">รายการ</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            ประวัติร้านอาหารและเมนูที่คุณเคยออเดอร์
-          </p>
+           <h1 className="text-xl font-semibold text-foreground">{t("history.title")}</h1>
+           <p className="text-xs text-muted-foreground mt-1">
+             {t("history.subtitle")}
+           </p>
         </header>
 
         {visits.length === 0 ? (
