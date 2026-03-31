@@ -1459,7 +1459,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                     tierColors[tier]
                   )}
                 >
-                  {comp.icon} {comp.tag}
+                  {comp.icon} {translateTag(comp.tag)}
                 </span>
               );
             })}
