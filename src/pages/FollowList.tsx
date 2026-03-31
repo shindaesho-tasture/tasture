@@ -205,7 +205,7 @@ const FollowList = () => {
                   {/* Name */}
                   <div className="flex-1 min-w-0" onClick={() => navigate(`/user/${u.id}`)} role="button">
                     <p className="text-sm font-semibold text-foreground truncate cursor-pointer">
-                      {u.display_name || "ผู้ใช้"}
+                      {u.display_name || t("feed.user", language)}
                     </p>
                   </div>
 
