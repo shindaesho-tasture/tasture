@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/language-context";
 import BalanceSpiderChart from "./BalanceSpiderChart";
 import type { SensoryAxis } from "@/lib/sensory-types";
 import { cn } from "@/lib/utils";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface DnaTag {
   component_icon: string;
