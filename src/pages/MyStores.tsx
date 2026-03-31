@@ -276,7 +276,7 @@ const MyStores = () => {
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-muted transition-colors"
                       >
                         <MessageSquarePlus size={14} strokeWidth={1.5} />
-                        ฟีดแบคร้าน
+                        {t("myStores.storeFeedback", language)}
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.97 }}
