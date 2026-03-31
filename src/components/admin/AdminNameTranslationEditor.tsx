@@ -37,13 +37,22 @@ const AdminNameTranslationEditor = () => {
   const [allMenuIds, setAllMenuIds] = useState<string[]>([]);
   const load = async () => {
     setLoading(true);
-    const [{ data: stores }, { data: menuItems }] = await Promise.all([
+    const [{ data: stores }, { data: menuItems }, { data: menuTransData }] = await Promise.all([
       supabase.from("stores").select("id, name").order("name"),
       supabase.from("menu_items").select("id, name, store_id").order("name"),
+      supabase.from("menu_translations").select("menu_item_id, language"),
     ]);
 
+    const menuIds = (menuItems || []).map((m) => m.id);
+    setAllMenuIds(menuIds);
+
+    // Count menu_translations coverage
+    const menuTransSet = new Set((menuTransData || []).map((t: any) => `${t.menu_item_id}::${t.language}`));
+    const totalNeeded = menuIds.length * LANGS.length;
+    const totalHave = menuIds.reduce((acc, id) => acc + LANGS.filter((l) => menuTransSet.has(`${id}::${l}`)).length, 0);
+    setMenuTransCount(totalNeeded - totalHave);
+
     // Get store names for menu items
-    const storeIds = [...new Set((menuItems || []).map((m) => m.store_id))];
     const storeNameMap = new Map<string, string>();
     (stores || []).forEach((s) => storeNameMap.set(s.id, s.name));
 
@@ -58,10 +67,9 @@ const AdminNameTranslationEditor = () => {
     ];
     setItems(nameItems);
 
-    // Fetch all translations for these names
+    // Fetch all tag_translations for these names
     const allNames = [...new Set(nameItems.map((n) => n.name))];
     if (allNames.length > 0) {
-      // Fetch in batches of 100
       const allTrans: TagTranslation[] = [];
       for (let i = 0; i < allNames.length; i += 100) {
         const batch = allNames.slice(i, i + 100);
