@@ -8,7 +8,8 @@ interface DishDnaCardProps {
   selection: DishDnaSelection | null;
   onSelect: (score: -2 | 0 | 2, tag: string) => void;
   index: number;
-  communityScores?: Record<string, { avgScore: number; count: number }>; // tag -> community data
+  communityScores?: Record<string, { avgScore: number; count: number }>;
+  translateTag?: (tag: string) => string;
 }
 
 const ratingOptions = [
@@ -40,7 +41,8 @@ const colorMap = {
 
 const tagTierMap: Record<string, "emerald" | "slate" | "ruby"> = {};
 
-const DishDnaCard = ({ component, selection, onSelect, index, communityScores }: DishDnaCardProps) => {
+const DishDnaCard = ({ component, selection, onSelect, index, communityScores, translateTag: tt }: DishDnaCardProps) => {
+  const tr = tt || ((t: string) => t);
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const allTags = [
@@ -88,7 +90,7 @@ const DishDnaCard = ({ component, selection, onSelect, index, communityScores }:
         </div>
         <div className="flex-1 min-w-0">
           <span className="text-[15px] font-semibold text-foreground tracking-tight leading-relaxed">
-            {component.name}
+            {tr(component.name)}
           </span>
           {/* Community indicator */}
           {communityScores && Object.keys(communityScores).length > 0 && (
@@ -145,7 +147,7 @@ const DishDnaCard = ({ component, selection, onSelect, index, communityScores }:
                       : "bg-secondary/50 border-border/40 text-foreground/60 hover:bg-secondary"
                 )}
               >
-                <span className="whitespace-nowrap">{tag}</span>
+                <span className="whitespace-nowrap">{tr(tag)}</span>
                 {/* Community micro-bar */}
                 {cs && cs.count >= 3 && !selected && (
                   <span className={cn("text-[8px] px-1 py-0.5 rounded-md font-bold ml-0.5", c.bgLight, c.text)}>

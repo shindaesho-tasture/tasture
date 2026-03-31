@@ -5,6 +5,7 @@ import { ChevronLeft, Check, Loader2, Sparkles, Dna } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/language-context";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
@@ -52,6 +53,17 @@ const DishDnaFeedback = () => {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [existingDna, setExistingDna] = useState<Record<string, DishDnaSelection>>({});
+
+  // Collect all translatable texts (component names + tags)
+  const allTagTexts = useMemo(() => {
+    const texts: string[] = [];
+    components.forEach((c) => {
+      texts.push(c.name, c.tags.emerald, c.tags.neutral, c.tags.ruby);
+    });
+    return texts;
+  }, [components]);
+
+  const { translateTag } = useTagTranslations(allTagTexts);
 
   useEffect(() => {
     if (!menuItemId || authLoading) return;
@@ -292,6 +304,7 @@ const DishDnaFeedback = () => {
                   selection={selections[comp.name] || null}
                   onSelect={(score, tag) => handleSelect(comp.name, comp.icon, score, tag)}
                   index={i}
+                  translateTag={translateTag}
                 />
               ))}
             </div>
