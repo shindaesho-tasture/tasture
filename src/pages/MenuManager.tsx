@@ -68,6 +68,7 @@ const MenuManager = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const inlineFileRef = useRef<HTMLInputElement>(null);
   const inlineTargetId = useRef<string | null>(null);
 
