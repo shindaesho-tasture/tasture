@@ -295,8 +295,8 @@ const OrderHistory = () => {
                             }}
                             className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
                           >
-                            <Star size={12} />
-                            ให้คะแนน
+                             <Star size={12} />
+                             {t("history.rate")}
                           </button>
                         )}
                       </div>

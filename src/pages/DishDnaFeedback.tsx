@@ -329,8 +329,8 @@ const DishDnaFeedback = () => {
                       <motion.div key="default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
                         <Dna size={18} strokeWidth={2} />
                         <span>
-                          บันทึก Dish DNA
-                          {changedCount > 0 && <span className="ml-1 opacity-60">({changedCount} เปลี่ยน)</span>}
+                          {t("dna.saveBtn")}
+                          {changedCount > 0 && <span className="ml-1 opacity-60">({t("dna.changed", { count: changedCount })})</span>}
                         </span>
                       </motion.div>
                     )}
