@@ -220,16 +220,28 @@ const AdminDishDescriptionEditor = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <FileText size={16} className="text-score-emerald" />
         <h2 className="text-sm font-semibold text-foreground">จัดการคำอธิบายเมนู</h2>
         <span className="text-[10px] text-muted-foreground">{items.length} รายการ</span>
-        <button
-          onClick={() => setShowAdd((v) => !v)}
-          className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-xl bg-score-emerald text-white text-[11px] font-semibold"
-        >
-          <Plus size={13} /> เพิ่มคำอธิบาย
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={regenerateAll}
+            disabled={regenerating}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 text-white text-[11px] font-semibold disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={regenerating ? "animate-spin" : ""} />
+            {regenerating
+              ? `กำลังสร้าง... ${regenProgress.done}/${regenProgress.total}`
+              : "สร้างใหม่ทั้งหมด"}
+          </button>
+          <button
+            onClick={() => setShowAdd((v) => !v)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-score-emerald text-white text-[11px] font-semibold"
+          >
+            <Plus size={13} /> เพิ่มคำอธิบาย
+          </button>
+        </div>
       </div>
 
       {/* Add new form */}
