@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Store, Plus } from "lucide-react";
@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
+import KaraokeName from "@/components/KaraokeName";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
