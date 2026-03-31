@@ -55,6 +55,7 @@ const DishDetailSheet = ({
   onClose,
   menuItemId,
   dishName,
+  originalDishName,
   price,
   priceSpecial,
   imageUrl,
