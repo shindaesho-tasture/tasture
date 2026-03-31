@@ -7,9 +7,11 @@ interface BalanceSpiderChartProps {
   founderWeight?: boolean;
   size?: number;
   showBarChart?: boolean; // show additional horizontal bar breakdown
+  translateTag?: (tag: string) => string;
 }
 
-const BalanceSpiderChart = ({ axes, values, founderWeight, size = 240, showBarChart = true }: BalanceSpiderChartProps) => {
+const BalanceSpiderChart = ({ axes, values, founderWeight, size = 240, showBarChart = true, translateTag: tt }: BalanceSpiderChartProps) => {
+  const tr = tt || ((t: string) => t);
   const cx = size / 2;
   const cy = size / 2;
   const maxR = size * 0.375;
@@ -132,7 +134,7 @@ const BalanceSpiderChart = ({ axes, values, founderWeight, size = 240, showBarCh
             <g key={i}>
               <text x={labelPt.x} y={labelPt.y - 5} textAnchor="middle" dominantBaseline="middle"
                 fill={labelColor} fontSize="8.5" fontWeight="600" fontFamily="Kanit, sans-serif">
-                {axis.icon} {axis.name}
+                {axis.icon} {tr(axis.name)}
               </text>
               <text x={labelPt.x} y={labelPt.y + 6} textAnchor="middle" dominantBaseline="middle"
                 fill="hsl(0,0%,60%)" fontSize="7" fontWeight="400" fontFamily="Kanit, sans-serif">
@@ -190,7 +192,7 @@ const BalanceSpiderChart = ({ axes, values, founderWeight, size = 240, showBarCh
                 : "bg-score-amber";
             return (
               <div key={axis.name} className="flex items-center gap-2">
-                <span className="text-[9px] w-16 truncate text-muted-foreground text-right">{axis.icon} {axis.name}</span>
+                <span className="text-[9px] w-16 truncate text-muted-foreground text-right">{axis.icon} {tr(axis.name)}</span>
                 <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}

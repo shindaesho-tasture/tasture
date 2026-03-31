@@ -20,7 +20,8 @@ import { useLanguage } from "@/lib/language-context";
 import { categories, scoreTiers, getScoreTier, type Category } from "@/lib/categories";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { preTranslateDnaTags, preTranslateTags } from "@/lib/pre-translate";
+import { preTranslateDnaTags, preTranslateTags, preTranslateSensoryAxes } from "@/lib/pre-translate";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 import PageTransition from "@/components/PageTransition";
 import MetricRater from "@/components/MetricRater";
 import DishDnaCard from "@/components/menu/DishDnaCard";
@@ -88,6 +89,32 @@ const PostOrderReview = () => {
 
   const [saving, setSaving] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(true);
+
+  // Collect all translatable texts from DNA components + sensory axes
+  const allTranslatableTexts = useMemo(() => {
+    const texts: string[] = [];
+    // DNA component names + tags
+    Object.values(dnaComponents).forEach((comps) => {
+      comps.forEach((c) => {
+        texts.push(c.name, c.tags.emerald, c.tags.neutral, c.tags.ruby);
+      });
+    });
+    // Previous DNA rows
+    Object.values(previousDnaRows).forEach((rows) => {
+      rows.forEach((r) => {
+        texts.push(r.component_name, r.selected_tag);
+      });
+    });
+    // Sensory axis names + labels
+    Object.values(sensoryAxes).forEach((axes) => {
+      axes.forEach((a) => {
+        texts.push(a.name, ...a.labels);
+      });
+    });
+    return texts;
+  }, [dnaComponents, previousDnaRows, sensoryAxes]);
+
+  const { translateTag } = useTagTranslations(allTranslatableTexts);
 
   // Build steps
   const steps = useMemo<Step[]>(() => {
@@ -221,6 +248,8 @@ const PostOrderReview = () => {
           const defaults: Record<string, number> = {};
           data.axes.forEach((a: SensoryAxis) => { defaults[a.name] = 3; });
           setSensoryValues((prev) => ({ ...prev, [id]: defaults }));
+          // Pre-translate sensory axis names + labels
+          preTranslateSensoryAxes(data.axes);
         }
       } catch (err) {
         console.error("Sensory load error:", err);
@@ -691,11 +720,11 @@ const PostOrderReview = () => {
                         {(previousDnaRows[step.menuItemId] || []).map((row, i) => (
                           <div key={i} className="flex items-center justify-between px-4 py-2.5">
                             <span className="text-[11px] text-foreground truncate flex-1 mr-3">
-                              {row.component_icon} {row.component_name}
+                              {row.component_icon} {translateTag(row.component_name)}
                             </span>
                             <span className="text-[10px] shrink-0">
                               {row.selected_score === 2 ? "🤩" : row.selected_score === 0 ? "😐" : "😔"}{" "}
-                              <span className="text-muted-foreground">{row.selected_tag}</span>
+                              <span className="text-muted-foreground">{translateTag(row.selected_tag)}</span>
                             </span>
                           </div>
                         ))}
@@ -766,6 +795,7 @@ const PostOrderReview = () => {
                           selection={(dnaSelections[step.menuItemId!] || {})[comp.name] || null}
                           onSelect={(score, tag) => handleDnaSelect(step.menuItemId!, comp.name, comp.icon, score, tag)}
                           index={i}
+                          translateTag={translateTag}
                         />
                       ))
                     )}
@@ -925,6 +955,7 @@ const PostOrderReview = () => {
                                   value={(sensoryValues[step.menuItemId!] || {})[axis.name] ?? 3}
                                   onChange={(level) => handleSensoryChange(step.menuItemId!, axis.name, level)}
                                   index={i}
+                                  translateTag={translateTag}
                                 />
                               ))}
                               {(sensoryAxes[step.menuItemId] || []).length >= 3 && (
@@ -935,6 +966,7 @@ const PostOrderReview = () => {
                                   <BalanceSpiderChart
                                     axes={sensoryAxes[step.menuItemId] || []}
                                     values={sensoryValues[step.menuItemId] || {}}
+                                    translateTag={translateTag}
                                   />
                                 </div>
                               )}

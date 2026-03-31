@@ -7,6 +7,7 @@ interface SensorySliderCardProps {
   value: number; // 1-5
   onChange: (level: number) => void;
   index: number;
+  translateTag?: (tag: string) => string;
 }
 
 const levelColors: Record<number, { bg: string; text: string; ring: string; dot: string }> = {
@@ -17,7 +18,8 @@ const levelColors: Record<number, { bg: string; text: string; ring: string; dot:
   5: { bg: "bg-score-ruby/10", text: "text-score-ruby", ring: "ring-score-ruby/30", dot: "bg-score-ruby" },
 };
 
-const SensorySliderCard = ({ axis, value, onChange, index }: SensorySliderCardProps) => {
+const SensorySliderCard = ({ axis, value, onChange, index, translateTag: tt }: SensorySliderCardProps) => {
+  const tr = tt || ((t: string) => t);
   const colors = levelColors[value];
 
   return (
@@ -30,14 +32,14 @@ const SensorySliderCard = ({ axis, value, onChange, index }: SensorySliderCardPr
       {/* Header */}
       <div className="flex items-center gap-3">
         <span className="text-lg">{axis.icon}</span>
-        <span className="text-[15px] font-semibold text-foreground tracking-tight">{axis.name}</span>
+        <span className="text-[15px] font-semibold text-foreground tracking-tight">{tr(axis.name)}</span>
         <motion.span
           key={value}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className={cn("ml-auto text-[11px] font-medium px-2.5 py-1 rounded-xl", colors.bg, colors.text)}
         >
-          {axis.labels[value - 1]}
+          {tr(axis.labels[value - 1])}
         </motion.span>
       </div>
 
@@ -95,7 +97,7 @@ const SensorySliderCard = ({ axis, value, onChange, index }: SensorySliderCardPr
                   "text-[8px] leading-tight font-medium block",
                   isActive ? lc.text : "text-muted-foreground/60"
                 )}>
-                  {label}
+                  {tr(label)}
                 </span>
               </motion.button>
             );
