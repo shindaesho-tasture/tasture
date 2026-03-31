@@ -1,0 +1,1 @@
+DELETE FROM public.tag_translations WHERE language != 'th';
