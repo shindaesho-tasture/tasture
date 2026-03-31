@@ -7,6 +7,7 @@ interface SensorySliderCardProps {
   value: number; // 1-5
   onChange: (level: number) => void;
   index: number;
+  translateTag?: (tag: string) => string;
 }
 
 const levelColors: Record<number, { bg: string; text: string; ring: string; dot: string }> = {
