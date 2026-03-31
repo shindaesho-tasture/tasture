@@ -392,8 +392,8 @@ const CreatePost = () => {
               className="rounded-2xl border-2 border-dashed border-border/50 bg-card aspect-square flex flex-col items-center justify-center gap-6"
             >
               <div className="text-4xl">📸</div>
-              <p className="text-sm text-muted-foreground font-medium">แชร์รูปอาหารของคุณ</p>
-              <p className="text-[10px] text-muted-foreground/60">เลือกได้สูงสุด 10 รูป</p>
+              <p className="text-sm text-muted-foreground font-medium">{t("createPost.shareYourFood")}</p>
+              <p className="text-[10px] text-muted-foreground/60">{t("createPost.maxPhotos")}</p>
               <div className="flex gap-3">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
