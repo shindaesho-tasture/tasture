@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Pencil, Check, X, Trash2, FileText, Plus, Globe } from "lucide-react";
+import { Search, Pencil, Check, X, Trash2, FileText, Plus, Globe, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -12,8 +12,17 @@ interface DishDesc {
   language: string;
 }
 
+interface DishDnaRow {
+  menu_item_id: string;
+  component_name: string;
+  component_icon: string;
+  selected_tag: string;
+  selected_score: number;
+}
+
 const LANG_FLAGS: Record<string, string> = { th: "🇹🇭", en: "🇺🇸", ja: "🇯🇵", zh: "🇨🇳", ko: "🇰🇷" };
 const LANG_LABELS: Record<string, string> = { th: "ไทย", en: "English", ja: "日本語", zh: "中文", ko: "한국어" };
+const ALL_LANGS = ["th", "en", "ja", "zh", "ko"];
 
 const AdminDishDescriptionEditor = () => {
   const [items, setItems] = useState<DishDesc[]>([]);
