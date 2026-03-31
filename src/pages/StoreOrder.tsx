@@ -320,6 +320,9 @@ const StoreOrder = () => {
     const noodleExtra = selectedNoodleType && optionsItem.noodle_type_prices
       ? (optionsItem.noodle_type_prices[selectedNoodleType] || 0)
       : 0;
+    const styleExtra = selectedNoodleStyle && optionsItem.noodle_style_prices
+      ? (optionsItem.noodle_style_prices[selectedNoodleStyle] || 0)
+      : 0;
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
