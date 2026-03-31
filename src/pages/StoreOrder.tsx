@@ -677,9 +677,9 @@ const StoreOrder = () => {
                   {/* Toppings */}
                   {optionsItem.toppings && optionsItem.toppings.length > 0 && (
                     <div>
-                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🥩 {t("order.selectToppings", language)}
-                      </p>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span>
+                       </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.toppings.map((t) => {
                           const selected = selectedToppings.includes(t);
