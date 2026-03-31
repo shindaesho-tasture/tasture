@@ -155,6 +155,66 @@ const AdminNameTranslationEditor = () => {
     }
   };
 
+  // Count how many names are missing translations
+  const missingCount = useMemo(() => {
+    let count = 0;
+    items.forEach((item) => {
+      const langMap = transMap.get(item.name);
+      LANGS.forEach((lang) => {
+        if (!langMap?.get(lang)) count++;
+      });
+    });
+    return count;
+  }, [items, transMap]);
+
+  const batchTranslateAll = useCallback(async () => {
+    // Collect all unique names missing at least one language
+    const allNames = [...new Set(items.map((i) => i.name))];
+    const namesToTranslate = allNames.filter((name) => {
+      const langMap = transMap.get(name);
+      return LANGS.some((lang) => !langMap?.get(lang));
+    });
+
+    if (namesToTranslate.length === 0) {
+      toast.info("ทุกชื่อมีคำแปลครบแล้ว ✓");
+      return;
+    }
+
+    const BATCH_SIZE = 20;
+    const totalBatches = Math.ceil(namesToTranslate.length / BATCH_SIZE);
+    setBatchProgress({ current: 0, total: namesToTranslate.length });
+    let successCount = 0;
+
+    try {
+      for (let i = 0; i < totalBatches; i++) {
+        const batch = namesToTranslate.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+        setBatchProgress({ current: i * BATCH_SIZE, total: namesToTranslate.length });
+
+        const { data, error } = await supabase.functions.invoke("translate-tags", {
+          body: { tags: batch, target_languages: [...LANGS] },
+        });
+        if (error) {
+          console.error(`Batch ${i + 1} error:`, error);
+          continue;
+        }
+        successCount += batch.length;
+
+        // Small delay between batches to avoid rate limits
+        if (i < totalBatches - 1) {
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
+
+      setBatchProgress(null);
+      toast.success(`แปลสำเร็จ ${successCount} ชื่อ ✓`);
+      // Reload all translations
+      await load();
+    } catch (e: any) {
+      setBatchProgress(null);
+      toast.error(e.message || "Batch translate ล้มเหลว");
+    }
+  }, [items, transMap]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
