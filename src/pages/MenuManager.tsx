@@ -186,7 +186,7 @@ const MenuManager = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.name.trim()) return toast.error("Name required");
     const splitArr = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
     const payload: Record<string, unknown> = {
@@ -201,7 +201,33 @@ const MenuManager = () => {
       toppings: splitArr(form.toppings),
       textures: splitArr(form.textures),
     };
-    saveMutation.mutate({ id: editingId || undefined, data: payload });
+
+    try {
+      let itemId = editingId;
+      if (itemId) {
+        const { error } = await supabase.from("menu_items").update(payload).eq("id", itemId);
+        if (error) throw error;
+      } else {
+        const { data: inserted, error } = await supabase
+          .from("menu_items")
+          .insert([{ ...payload, store_id: storeId! } as any])
+          .select("id")
+          .single();
+        if (error) throw error;
+        itemId = inserted.id;
+      }
+
+      // Upload image if selected
+      if (imageFile && itemId) {
+        await uploadImage(imageFile, itemId);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["menu-manager", storeId] });
+      toast.success(t("common.save") + " ✓");
+      resetForm();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
   };
 
   const typeLabel: Record<string, string> = {
