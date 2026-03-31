@@ -60,19 +60,19 @@ Deno.serve(async (req) => {
     const langContexts: Record<string, { name: string; culture: string }> = {
       en: {
         name: "English",
-        culture: "Use familiar Western culinary terms. Compare to textures/aromas Americans and Europeans know (e.g. 'Crispy like tempura batter', 'Bouncy like mochi'). Use everyday food analogies."
+        culture: "Translate with FEELING — use vivid, mouth-watering English words that make people crave the food. Think food blog language: 'Shatteringly crispy', 'Silky smooth', 'Melt-in-your-mouth tender'. Use sensory words that trigger imagination, not dictionary translations."
       },
       ja: {
         name: "Japanese (日本語)",
-        culture: "Use native Japanese food texture words (食感). Japanese has rich texture vocabulary — use it! e.g. もちもち, サクサク, シャキシャキ, ねっとり. Reference familiar Japanese dishes for context."
+        culture: "日本語の擬音語・擬態語を活かして、食感が口の中で「感じられる」ような訳にしてください。例：サクッ、もっちり、とろ〜り、ジュワッ、ふわっ。読んだ瞬間に「食べたい！」と思わせる表現で。"
       },
       zh: {
         name: "Chinese Simplified (中文)",
-        culture: "Use Chinese culinary texture terms (口感). Chinese cuisine shares many concepts with Thai — use familiar Chinese food analogies. e.g. 酥脆, Q弹, 爽滑, 香辣. Reference Chinese dishes when helpful."
+        culture: "用让人「看了就流口水」的中文美食词汇来翻译。要有画面感和口感感受，例如：酥到掉渣、Q弹爽滑、入口即化、鲜香四溢、外酥里嫩。让读者一看就知道是什么感觉。"
       },
       ko: {
         name: "Korean (한국어)",
-        culture: "Use Korean food texture words (식감). Korean has expressive onomatopoeia for textures — use them! e.g. 바삭바삭, 쫄깃쫄깃, 매콤한. Reference Korean food experiences for familiarity."
+        culture: "한국어의 풍부한 의성어·의태어를 활용해서 먹고 싶어지는 표현으로 번역하세요. 예: 바삭바삭, 쫄깃쫄깃, 촉촉한, 얼큰한, 고소한. 읽는 순간 '이거 먹어보고 싶다!'라는 느낌이 들도록."
       },
     };
 
@@ -80,19 +80,22 @@ Deno.serve(async (req) => {
 
     for (const [lang, langTags] of byLang) {
       const prompt = langTags.map((t, i) => `${i + 1}. ${t}`).join("\n");
-      const ctx = langContexts[lang] || { name: lang, culture: "Use natural food terminology familiar to native speakers." };
+      const ctx = langContexts[lang] || { name: lang, culture: "Use vivid, emotionally evocative food terms that make native speakers instantly feel the taste and texture." };
 
-      const systemPrompt = `You are a Thai food sensory expert who deeply understands both Thai cuisine and ${ctx.name}-speaking food culture.
+      const systemPrompt = `You are a passionate food storyteller who makes people CRAVE food through words alone.
 
-Your task: Translate these Thai food sensory tags (texture, aroma, mouthfeel) into ${ctx.name} in a way that NATIVE SPEAKERS immediately understand through their OWN food culture.
+Your task: Translate these Thai food tags (texture, aroma, mouthfeel, menu attributes) into ${ctx.name}.
 
-Cultural context: ${ctx.culture}
+🎯 Goal: Every translated word should make the reader FEEL the sensation in their mouth. NOT a dictionary translation — a sensory experience in words.
+
+${ctx.culture}
 
 Rules:
 - Keep translations SHORT: 1-4 words max
-- Use culturally native food terms, NOT literal translations
-- The reader should instantly "feel" the texture/aroma without knowing Thai food
-- Prefer onomatopoeia or sensory words natural to ${ctx.name} speakers
+- Prioritize EMOTION and SENSATION over accuracy
+- The reader should feel hungry just reading the tag
+- Use onomatopoeia, sensory words, and food-lover vocabulary
+- Make it sound delicious, not clinical
 
 Return ONLY a JSON array: [{"index": 1, "text": "translated tag"}]
 No markdown, no extra text.`;
