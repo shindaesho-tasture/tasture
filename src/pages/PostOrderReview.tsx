@@ -606,15 +606,15 @@ const PostOrderReview = () => {
                         className="flex flex-col items-center py-8 gap-3"
                       >
                         <span className="text-5xl">✅</span>
-                        <p className="text-sm font-semibold text-foreground">ใช้รีวิวร้านเดิม</p>
-                        <p className="text-[10px] text-muted-foreground">กด "ถัดไป" เพื่อรีวิวเมนู</p>
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setStoreReviewChoice(null)}
-                          className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
-                        >
-                          เปลี่ยนใจ
-                        </motion.button>
+                         <p className="text-sm font-semibold text-foreground">{t("por.usePrevStore")}</p>
+                         <p className="text-[10px] text-muted-foreground">{t("por.pressNext")}</p>
+                         <motion.button
+                           whileTap={{ scale: 0.95 }}
+                           onClick={() => setStoreReviewChoice(null)}
+                           className="mt-2 px-4 py-2 rounded-xl bg-secondary text-[11px] font-medium text-muted-foreground hover:bg-muted transition-colors"
+                         >
+                           {t("por.changeMyMind")}
+                         </motion.button>
                       </motion.div>
                     ) : (
                       <>
