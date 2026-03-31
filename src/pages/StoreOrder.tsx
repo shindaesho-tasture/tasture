@@ -322,7 +322,7 @@ const StoreOrder = () => {
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
-      price: basePrice + addOnTotal,
+      price: basePrice + addOnTotal + noodleExtra,
       quantity: 1,
       type: optionsItem.type,
       selectedOptions: {
