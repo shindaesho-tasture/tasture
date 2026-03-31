@@ -108,7 +108,7 @@ const StoreOrder = () => {
         }
       }
       const menuData = menuRes.data || [];
-      setMenuItems(menuData.map((m: any) => ({ ...m, noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {} })));
+      setMenuItems(menuData.map((m: any) => ({ ...m, noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {}, noodle_style_prices: (m.noodle_style_prices as Record<string, number>) || {} })));
 
       // Fetch add-ons for all menu items
       if (menuData.length > 0) {
