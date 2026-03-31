@@ -90,15 +90,16 @@ const PostOrderReview = () => {
 
   // Build steps
   const steps = useMemo<Step[]>(() => {
-    const s: Step[] = [{ type: "store-review", label: "รีวิวร้าน", icon: "🏪" }];
+    const s: Step[] = [{ type: "store-review", label: t("por.storeReview"), icon: "🏪" }];
     items.forEach((item) => {
       s.push({ type: "dish-dna", label: item.name, icon: "🧬", menuItemId: item.menuItemId, menuItemName: item.name });
     });
     items.forEach((item) => {
       s.push({ type: "sensory", label: item.name, icon: "🎯", menuItemId: item.menuItemId, menuItemName: item.name });
     });
-    s.push({ type: "results", label: "สรุปผล", icon: "🏆" });
+    s.push({ type: "results", label: t("por.summary"), icon: "🏆" });
     return s;
+  }, [items, t]);
   }, [items]);
 
   const step = steps[currentStep];
