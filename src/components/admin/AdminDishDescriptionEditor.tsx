@@ -122,20 +122,35 @@ const AdminDishDescriptionEditor = () => {
     toast.success("เพิ่มคำอธิบายแล้ว ✓");
   };
 
-  // Regenerate All
+  // Regenerate
   const [regenerating, setRegenerating] = useState(false);
   const [regenProgress, setRegenProgress] = useState({ done: 0, total: 0 });
+  const [showRegenPanel, setShowRegenPanel] = useState(false);
+  const [regenLangs, setRegenLangs] = useState<Set<string>>(new Set(ALL_LANGS));
+
+  const toggleRegenLang = (lang: string) => {
+    setRegenLangs((prev) => {
+      const next = new Set(prev);
+      next.has(lang) ? next.delete(lang) : next.add(lang);
+      return next;
+    });
+  };
 
   const regenerateAll = async () => {
-    if (!confirm("⚠️ ลบคำอธิบายทั้งหมดแล้วให้ AI สร้างใหม่ทุกภาษา?\nอาจใช้เวลาสักครู่")) return;
+    const selectedLangs = [...regenLangs];
+    if (selectedLangs.length === 0) { toast.error("กรุณาเลือกอย่างน้อย 1 ภาษา"); return; }
+    const langNames = selectedLangs.map((l) => `${LANG_FLAGS[l]} ${LANG_LABELS[l]}`).join(", ");
+    if (!confirm(`⚠️ ลบคำอธิบายภาษา ${langNames} แล้วให้ AI สร้างใหม่?\nอาจใช้เวลาสักครู่`)) return;
 
     setRegenerating(true);
+    setShowRegenPanel(false);
     setRegenProgress({ done: 0, total: 0 });
 
     try {
-      // 1. Delete all existing descriptions
-      const { error: delErr } = await supabase.from("dish_descriptions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      if (delErr) { toast.error("ลบไม่สำเร็จ: " + delErr.message); setRegenerating(false); return; }
+      // 1. Delete existing descriptions for selected languages only
+      for (const lang of selectedLangs) {
+        await supabase.from("dish_descriptions").delete().eq("language", lang);
+      }
 
       // 2. Get all dish_dna grouped by menu_item
       const { data: dnaRows } = await supabase
@@ -172,14 +187,13 @@ const AdminDishDescriptionEditor = () => {
           tag: r.selected_tag,
           score: r.selected_score,
         }));
-        for (const lang of ALL_LANGS) {
+        for (const lang of selectedLangs) {
           jobs.push({ menuItemId, dishName, tags, lang });
         }
       }
 
       setRegenProgress({ done: 0, total: jobs.length });
 
-      // 3. Call describe-dish for each job sequentially
       let doneCount = 0;
       for (const job of jobs) {
         try {
@@ -226,14 +240,14 @@ const AdminDishDescriptionEditor = () => {
         <span className="text-[10px] text-muted-foreground">{items.length} รายการ</span>
         <div className="ml-auto flex items-center gap-2">
           <button
-            onClick={regenerateAll}
+            onClick={() => setShowRegenPanel((v) => !v)}
             disabled={regenerating}
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 text-white text-[11px] font-semibold disabled:opacity-50"
           >
             <RefreshCw size={13} className={regenerating ? "animate-spin" : ""} />
             {regenerating
               ? `กำลังสร้าง... ${regenProgress.done}/${regenProgress.total}`
-              : "สร้างใหม่ทั้งหมด"}
+              : "สร้างใหม่"}
           </button>
           <button
             onClick={() => setShowAdd((v) => !v)}
@@ -243,6 +257,63 @@ const AdminDishDescriptionEditor = () => {
           </button>
         </div>
       </div>
+
+      {/* Regenerate language picker */}
+      <AnimatePresence>
+        {showRegenPanel && !regenerating && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-2xl bg-amber-500/5 border border-amber-500/20 p-4 space-y-3">
+              <p className="text-xs font-semibold text-foreground">เลือกภาษาที่ต้องการสร้างใหม่</p>
+              <div className="flex flex-wrap gap-2">
+                {ALL_LANGS.map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => toggleRegenLang(lang)}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all border ${
+                      regenLangs.has(lang)
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "bg-secondary text-muted-foreground border-border"
+                    }`}
+                  >
+                    {LANG_FLAGS[lang]} {LANG_LABELS[lang]}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setRegenLangs(new Set(ALL_LANGS))}
+                  className="text-[10px] text-muted-foreground hover:text-foreground underline"
+                >
+                  เลือกทั้งหมด
+                </button>
+                <button
+                  onClick={() => setRegenLangs(new Set())}
+                  className="text-[10px] text-muted-foreground hover:text-foreground underline"
+                >
+                  ล้างการเลือก
+                </button>
+                <div className="ml-auto flex gap-2">
+                  <button onClick={() => setShowRegenPanel(false)} className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:bg-secondary">
+                    ยกเลิก
+                  </button>
+                  <button
+                    onClick={regenerateAll}
+                    disabled={regenLangs.size === 0}
+                    className="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-semibold disabled:opacity-50"
+                  >
+                    สร้างใหม่ ({regenLangs.size} ภาษา)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Add new form */}
       <AnimatePresence>
