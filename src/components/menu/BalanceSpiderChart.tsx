@@ -134,7 +134,7 @@ const BalanceSpiderChart = ({ axes, values, founderWeight, size = 240, showBarCh
             <g key={i}>
               <text x={labelPt.x} y={labelPt.y - 5} textAnchor="middle" dominantBaseline="middle"
                 fill={labelColor} fontSize="8.5" fontWeight="600" fontFamily="Kanit, sans-serif">
-                {axis.icon} {axis.name}
+                {axis.icon} {tr(axis.name)}
               </text>
               <text x={labelPt.x} y={labelPt.y + 6} textAnchor="middle" dominantBaseline="middle"
                 fill="hsl(0,0%,60%)" fontSize="7" fontWeight="400" fontFamily="Kanit, sans-serif">
