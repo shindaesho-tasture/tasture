@@ -57,18 +57,42 @@ Deno.serve(async (req) => {
       if (!byLang.get(lang)!.includes(tag)) byLang.get(lang)!.push(tag);
     });
 
-    const langNames: Record<string, string> = {
-      en: "English", ja: "Japanese", zh: "Chinese (Simplified)", ko: "Korean",
+    const langContexts: Record<string, { name: string; culture: string }> = {
+      en: {
+        name: "English",
+        culture: "Use familiar Western culinary terms. Compare to textures/aromas Americans and Europeans know (e.g. 'Crispy like tempura batter', 'Bouncy like mochi'). Use everyday food analogies."
+      },
+      ja: {
+        name: "Japanese (日本語)",
+        culture: "Use native Japanese food texture words (食感). Japanese has rich texture vocabulary — use it! e.g. もちもち, サクサク, シャキシャキ, ねっとり. Reference familiar Japanese dishes for context."
+      },
+      zh: {
+        name: "Chinese Simplified (中文)",
+        culture: "Use Chinese culinary texture terms (口感). Chinese cuisine shares many concepts with Thai — use familiar Chinese food analogies. e.g. 酥脆, Q弹, 爽滑, 香辣. Reference Chinese dishes when helpful."
+      },
+      ko: {
+        name: "Korean (한국어)",
+        culture: "Use Korean food texture words (식감). Korean has expressive onomatopoeia for textures — use them! e.g. 바삭바삭, 쫄깃쫄깃, 매콤한. Reference Korean food experiences for familiarity."
+      },
     };
 
     const newTranslations: { tag_text: string; language: string; translated_text: string }[] = [];
 
     for (const [lang, langTags] of byLang) {
       const prompt = langTags.map((t, i) => `${i + 1}. ${t}`).join("\n");
+      const ctx = langContexts[lang] || { name: lang, culture: "Use natural food terminology familiar to native speakers." };
 
-      const systemPrompt = `You are a Thai food texture/sensory expert translator. Translate these Thai food sensory tags to ${langNames[lang] || lang}.
-These are texture, aroma, or mouthfeel descriptions of Thai dishes (e.g. กรอบ=Crispy, เหนียว=Chewy, หอมสมุนไพร=Herbal Aroma).
-Keep translations SHORT (1-3 words max), natural, and food-appropriate.
+      const systemPrompt = `You are a Thai food sensory expert who deeply understands both Thai cuisine and ${ctx.name}-speaking food culture.
+
+Your task: Translate these Thai food sensory tags (texture, aroma, mouthfeel) into ${ctx.name} in a way that NATIVE SPEAKERS immediately understand through their OWN food culture.
+
+Cultural context: ${ctx.culture}
+
+Rules:
+- Keep translations SHORT: 1-4 words max
+- Use culturally native food terms, NOT literal translations
+- The reader should instantly "feel" the texture/aroma without knowing Thai food
+- Prefer onomatopoeia or sensory words natural to ${ctx.name} speakers
 
 Return ONLY a JSON array: [{"index": 1, "text": "translated tag"}]
 No markdown, no extra text.`;
