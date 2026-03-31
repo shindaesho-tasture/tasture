@@ -882,6 +882,13 @@ const AdminDashboard = () => {
                   <AdminMenuCategoryEditor />
                 </motion.div>
               )}
+
+              {/* ─── Tag Translations Tab ─── */}
+              {activeTab === "tag_trans" && (
+                <motion.div key="tag_trans" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <AdminTagTranslationEditor />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         )}
