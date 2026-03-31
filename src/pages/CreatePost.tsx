@@ -30,15 +30,15 @@ interface PostImage {
 
 const scoreEmoji = (s: number) => (s === 2 ? "🤩" : s === 0 ? "😐" : "😔");
 
-const timeAgo = (iso: string) => {
+const makeTimeAgoCp = (t: (key: string, params?: Record<string, string | number>) => string) => (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "เมื่อสักครู่";
-  if (mins < 60) return `${mins} นาทีที่แล้ว`;
+  if (mins < 1) return t("feed.justNow");
+  if (mins < 60) return t("feed.minsAgo", { n: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} ชม.ที่แล้ว`;
+  if (hrs < 24) return t("feed.hrsAgo", { n: hrs });
   const days = Math.floor(hrs / 24);
-  return `${days} วันที่แล้ว`;
+  return t("feed.daysAgo", { n: days });
 };
 
 const CreatePost = () => {
