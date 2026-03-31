@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ShieldCheck, Search, CheckCircle2, XCircle, Users, Store,
   MessageSquare, Dna, BarChart3, TrendingUp, Eye, EyeOff, Trash2, UserCog,
-  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags, UtensilsCrossed,
+  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags, UtensilsCrossed, Camera,
 } from "lucide-react";
 import DishTemplateEditor from "@/components/admin/DishTemplateEditor";
 import AdminStoreEditor from "@/components/admin/AdminStoreEditor";
@@ -616,6 +616,13 @@ const AdminDashboard = () => {
                                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                               >
                                 <UtensilsCrossed size={12} /> เมนู
+                              </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => { haptic(); navigate(`/menu-images/${store.id}`); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-score-amber/10 text-score-amber hover:bg-score-amber/20 transition-colors"
+                              >
+                                <Camera size={12} /> รูปเมนู
                               </motion.button>
                               <motion.button
                                 whileTap={{ scale: 0.9 }}

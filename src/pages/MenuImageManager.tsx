@@ -5,6 +5,7 @@ import { ChevronLeft, Camera, Check, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
@@ -27,12 +28,25 @@ const MenuImageManager = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
 
+  // Check if current user is admin
+  const { data: adminRole } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles").select("role")
+        .eq("user_id", user!.id).eq("role", "admin").maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const isAdmin = !!adminRole;
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/auth"); return; }
     if (!storeId) return;
     fetchData();
-  }, [storeId, user, authLoading]);
+  }, [storeId, user, authLoading, isAdmin]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -44,7 +58,7 @@ const MenuImageManager = () => {
 
       if (storeRes.data) {
         setStoreName(storeRes.data.name);
-        if (storeRes.data.user_id !== user?.id) {
+        if (storeRes.data.user_id !== user?.id && !isAdmin) {
           toast({ title: "ไม่มีสิทธิ์เข้าถึง", variant: "destructive" });
           navigate("/discover");
           return;
