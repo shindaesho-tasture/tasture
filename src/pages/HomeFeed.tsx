@@ -1580,7 +1580,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                 </div>
               ) : comments.length === 0 ? (
                 <p className="text-[11px] text-muted-foreground text-center py-2">
-                  ยังไม่มีคอมเมนต์ — เป็นคนแรก!
+                  {t("feed.noCommentsFirst")}
                 </p>
               ) : (
                 <div className="space-y-2.5 max-h-60 overflow-y-auto">
