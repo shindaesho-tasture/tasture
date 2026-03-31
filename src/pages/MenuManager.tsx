@@ -111,6 +111,21 @@ const MenuManager = () => {
     setShowAdd(false);
   };
 
+  // Reorder handler — save new order to DB
+  const handleReorder = useCallback(
+    async (newOrder: MenuItemRow[]) => {
+      setOrderedItems(newOrder);
+      // Batch update sort_order
+      const updates = newOrder.map((item, idx) => ({ id: item.id, sort_order: idx }));
+      await Promise.all(
+        updates.map(({ id, sort_order }) =>
+          supabase.from("menu_items").update({ sort_order } as any).eq("id", id)
+        )
+      );
+    },
+    []
+  );
+
   const startEdit = (item: MenuItemRow) => {
     setEditingId(item.id);
     setShowAdd(true);
