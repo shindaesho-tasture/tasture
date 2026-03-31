@@ -400,7 +400,7 @@ const CreatePost = () => {
                   onClick={() => cameraInputRef.current?.click()}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-sm font-semibold"
                 >
-                  <Camera size={16} /> ถ่ายรูป
+                  <Camera size={16} /> {t("createPost.takePhoto")}
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
