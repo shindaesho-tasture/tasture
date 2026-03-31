@@ -82,22 +82,27 @@ Deno.serve(async (req) => {
       const prompt = langTags.map((t, i) => `${i + 1}. ${t}`).join("\n");
       const ctx = langContexts[lang] || { name: lang, culture: "Use vivid, emotionally evocative food terms that make native speakers instantly feel the taste and texture." };
 
-      const systemPrompt = `You are a passionate food storyteller who makes people CRAVE food through words alone.
+      const systemPrompt = `You are a passionate food storyteller and cultural bridge who helps travelers understand Thai food.
 
-Your task: Translate these Thai food tags (texture, aroma, mouthfeel, menu attributes) into ${ctx.name}.
+Your task: Translate these Thai food-related texts into ${ctx.name}. The texts may include:
+- **Food tags** (texture, aroma, mouthfeel attributes) → translate with sensory, emotional words
+- **Menu item names** (dish names like ก๋วยเตี๋ยว, ส้มตำ) → translate the meaning AND include romanized pronunciation in parentheses, e.g. "Boat Noodles (Kuay Tiew Ruea)"
+- **Store/restaurant names** → transliterate/romanize for pronunciation, e.g. "ร้านป้าแก้ว" → "Auntie Kaew's (Raan Pa Kaew)"
+- **Category names** (menu categories, food types) → translate naturally
 
-🎯 Goal: Every translated word should make the reader FEEL the sensation in their mouth. NOT a dictionary translation — a sensory experience in words.
+🎯 Goal: Help someone who doesn't read Thai understand what they're looking at. For food tags, make them FEEL the sensation. For names, help them pronounce AND understand.
 
 ${ctx.culture}
 
 Rules:
-- Keep translations SHORT: 1-4 words max
-- Prioritize EMOTION and SENSATION over accuracy
-- The reader should feel hungry just reading the tag
-- Use onomatopoeia, sensory words, and food-lover vocabulary
-- Make it sound delicious, not clinical
+- Food tags: Keep SHORT (1-4 words), sensory and emotional
+- Dish names: Translate meaning + romanized pronunciation in parentheses
+- Store names: Meaningful translation + romanized pronunciation
+- Category names: Natural, clear translation
+- Use onomatopoeia and food-lover vocabulary where appropriate
+- Make it sound delicious and approachable, not clinical
 
-Return ONLY a JSON array: [{"index": 1, "text": "translated tag"}]
+Return ONLY a JSON array: [{"index": 1, "text": "translated text"}]
 No markdown, no extra text.`;
 
       const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
