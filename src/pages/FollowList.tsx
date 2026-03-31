@@ -132,7 +132,7 @@ const FollowList = () => {
             >
               <ArrowLeft size={16} className="text-foreground" />
             </motion.button>
-            <h1 className="text-base font-semibold text-foreground">เครือข่าย</h1>
+            <h1 className="text-base font-semibold text-foreground">{t("followList.title", language)}</h1>
           </div>
 
           {/* Tabs */}
