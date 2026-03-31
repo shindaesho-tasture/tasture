@@ -93,11 +93,12 @@ const StoreOrder = () => {
         tags.add(t.component_name);
       });
     });
-    // Also include noodle types, styles, toppings for translation
+    // Also include noodle types, styles, toppings, menu categories for translation
     menuItems.forEach((m) => {
       m.noodle_types?.forEach((nt) => tags.add(nt));
       m.noodle_styles?.forEach((ns) => tags.add(ns));
       m.toppings?.forEach((tp) => tags.add(tp));
+      if (m.menu_category) tags.add(m.menu_category);
     });
     return Array.from(tags);
   }, [dnaByItem, menuItems]);
