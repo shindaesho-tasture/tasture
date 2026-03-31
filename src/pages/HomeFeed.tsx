@@ -1532,7 +1532,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               "text-[11px] font-medium",
               saved ? "text-score-emerald" : "text-muted-foreground"
             )}>
-              {saved ? "บันทึกแล้ว" : "บันทึก"}
+              {saved ? t("feed.saved") : t("feed.save")}
             </span>
           </motion.button>
         )}
