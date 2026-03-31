@@ -70,6 +70,16 @@ const MenuManager = () => {
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // Dynamic menu categories from site_config
+  const { data: menuCategories } = useQuery({
+    queryKey: ["menu-categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_config").select("value").eq("key", "menu_categories").maybeSingle();
+      if (data?.value && Array.isArray(data.value)) return data.value as string[];
+      return DEFAULT_MENU_CATEGORIES;
+    },
+  });
+  const MENU_CATEGORIES = menuCategories || DEFAULT_MENU_CATEGORIES;
   const [translateItem, setTranslateItem] = useState<{ id: string; name: string; description?: string | null } | null>(null);
   const inlineFileRef = useRef<HTMLInputElement>(null);
   const inlineTargetId = useRef<string | null>(null);
