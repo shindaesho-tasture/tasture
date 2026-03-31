@@ -33,10 +33,10 @@ const emptyForm = {
   type: "standard" as string,
   price: 0,
   price_special: null as number | null,
-  noodle_types: "",
-  noodle_styles: "",
-  toppings: "",
-  textures: "",
+  noodle_types: [] as string[],
+  noodle_styles: [] as string[],
+  toppings: [] as string[],
+  textures: [] as string[],
 };
 
 const MenuManager = () => {
