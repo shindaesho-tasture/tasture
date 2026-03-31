@@ -77,6 +77,8 @@ const makeTimeAgo = (t: (key: string, params?: Record<string, string | number>) 
 const HomeFeed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const timeAgo = useMemo(() => makeTimeAgo(t), [t]);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
