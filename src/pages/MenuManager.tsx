@@ -448,14 +448,14 @@ const MenuManager = () => {
                   {/* Noodle-specific fields */}
                   {form.type === "noodle" && (
                     <>
-                      <Field label={t("menuMgr.noodleTypes")} value={form.noodle_types} onChange={(v) => setForm((f) => ({ ...f, noodle_types: v }))} placeholder="เส้นเล็ก, เส้นใหญ่, บะหมี่" />
-                      <Field label={t("menuMgr.noodleStyles")} value={form.noodle_styles} onChange={(v) => setForm((f) => ({ ...f, noodle_styles: v }))} placeholder="น้ำ, แห้ง, ต้มยำ" />
-                      <Field label={t("menuMgr.toppings")} value={form.toppings} onChange={(v) => setForm((f) => ({ ...f, toppings: v }))} placeholder="ลูกชิ้น, เนื้อ, หมู" />
+                      <TagInput label={t("menuMgr.noodleTypes")} tags={form.noodle_types} onChange={(v) => setForm((f) => ({ ...f, noodle_types: v }))} placeholder="พิมพ์ชนิดเส้น" suggestions={["เส้นเล็ก", "เส้นใหญ่", "บะหมี่", "เส้นหมี่", "วุ้นเส้น", "มาม่า"]} />
+                      <TagInput label={t("menuMgr.noodleStyles")} tags={form.noodle_styles} onChange={(v) => setForm((f) => ({ ...f, noodle_styles: v }))} placeholder="พิมพ์ชนิดน้ำ" suggestions={["น้ำใส", "น้ำตก", "ต้มยำ", "แห้ง", "เย็นตาโฟ", "น้ำข้น"]} />
+                      <TagInput label={t("menuMgr.toppings")} tags={form.toppings} onChange={(v) => setForm((f) => ({ ...f, toppings: v }))} placeholder="พิมพ์ท็อปปิ้ง" suggestions={["ลูกชิ้น", "เนื้อ", "หมู", "ไก่", "หมูกรอบ", "หมูสับ", "เครื่องใน"]} />
                     </>
                   )}
 
                   {/* Textures */}
-                  <Field label={t("menuMgr.textures")} value={form.textures} onChange={(v) => setForm((f) => ({ ...f, textures: v }))} placeholder="กรอบ, นุ่ม, เหนียว" />
+                  <TagInput label={t("menuMgr.textures")} tags={form.textures} onChange={(v) => setForm((f) => ({ ...f, textures: v }))} placeholder="พิมพ์เนื้อสัมผัส" suggestions={["กรอบ", "นุ่ม", "เหนียว", "ฉ่ำ", "เนียน", "แน่น"]} />
 
                   {/* Image upload */}
                   <div>
