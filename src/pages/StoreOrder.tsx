@@ -787,6 +787,9 @@ const StoreOrder = () => {
                     className="w-full py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury"
                   >
                     {t("order.addToOrder", language)}
+                    {selectedAddOns.length > 0 && (
+                      <span className="ml-1 opacity-80">(+฿{selectedAddOns.reduce((s, a) => s + a.price, 0)})</span>
+                    )}
                   </motion.button>
                 </div>
               </motion.div>
