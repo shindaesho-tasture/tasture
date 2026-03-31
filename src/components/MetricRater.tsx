@@ -30,6 +30,8 @@ const MetricRater = ({
   // Collect all translatable texts
   const allTexts = useMemo(() => {
     const texts: string[] = [metric.label, ...metric.options];
+    // Include score tier labels for translation
+    scoreTiers.forEach((t) => texts.push(t.label));
     if (metric.smartGate) {
       texts.push(metric.smartGate.question);
       if (metric.smartGate.yesLabel) texts.push(metric.smartGate.yesLabel);
