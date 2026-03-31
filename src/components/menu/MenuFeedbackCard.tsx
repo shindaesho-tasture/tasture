@@ -102,7 +102,9 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
   const avgTier = hasAvg ? getScoreTier(item.avg_score!) : null;
   const config = typeConfig[item.type] || typeConfig.standard;
   const [topTags, setTopTags] = useState<DnaTag[]>([]);
-  
+
+  const tagTexts = useMemo(() => topTags.map((t) => t.selected_tag), [topTags]);
+  const { translateTag } = useTagTranslations(tagTexts);
   // Taste satisfaction gate
   const [tasteSatisfaction, setTasteSatisfaction] = useState<"perfect" | "ok" | "bad" | null>(null);
 
