@@ -90,7 +90,7 @@ const DishDnaCard = ({ component, selection, onSelect, index, communityScores, t
         </div>
         <div className="flex-1 min-w-0">
           <span className="text-[15px] font-semibold text-foreground tracking-tight leading-relaxed">
-            {component.name}
+            {tr(component.name)}
           </span>
           {/* Community indicator */}
           {communityScores && Object.keys(communityScores).length > 0 && (
