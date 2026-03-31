@@ -208,6 +208,26 @@ const MenuManager = () => {
     });
   }, []);
 
+  const sortByCategory = useCallback(async () => {
+    const categoryOrder = MENU_CATEGORIES;
+    const sorted = [...orderedItems].sort((a, b) => {
+      const catA = a.menu_category || "";
+      const catB = b.menu_category || "";
+      let idxA = categoryOrder.indexOf(catA);
+      let idxB = categoryOrder.indexOf(catB);
+      if (idxA === -1) idxA = categoryOrder.length;
+      if (idxB === -1) idxB = categoryOrder.length;
+      return idxA - idxB;
+    });
+    setOrderedItems(sorted);
+    await Promise.all(
+      sorted.map((item, i) =>
+        supabase.from("menu_items").update({ sort_order: i } as any).eq("id", item.id)
+      )
+    );
+    toast.success("จัดลำดับตามหมวดหมู่แล้ว ✓");
+  }, [orderedItems, MENU_CATEGORIES]);
+
   const startEdit = (item: MenuItemRow) => {
     setEditingId(item.id);
     setShowAdd(true);
