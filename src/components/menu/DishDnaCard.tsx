@@ -147,7 +147,7 @@ const DishDnaCard = ({ component, selection, onSelect, index, communityScores, t
                       : "bg-secondary/50 border-border/40 text-foreground/60 hover:bg-secondary"
                 )}
               >
-                <span className="whitespace-nowrap">{tag}</span>
+                <span className="whitespace-nowrap">{tr(tag)}</span>
                 {/* Community micro-bar */}
                 {cs && cs.count >= 3 && !selected && (
                   <span className={cn("text-[8px] px-1 py-0.5 rounded-md font-bold ml-0.5", c.bgLight, c.text)}>
