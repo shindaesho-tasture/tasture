@@ -268,7 +268,7 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                   )}
                 >
                   <span>{tag.component_icon}</span>
-                  <span className="truncate max-w-[120px]">{tag.selected_tag}</span>
+                  <span className="truncate max-w-[120px]">{translateTag(tag.selected_tag)}</span>
                 </motion.span>
               );
             })}
