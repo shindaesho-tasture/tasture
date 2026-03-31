@@ -295,7 +295,8 @@ const StoreOrder = () => {
       (item.price_special != null) ||
       (item.noodle_types && item.noodle_types.length > 0) ||
       (item.noodle_styles && item.noodle_styles.length > 0) ||
-      (item.toppings && item.toppings.length > 0)
+      (item.toppings && item.toppings.length > 0) ||
+      (itemAddOns.get(item.id)?.length ?? 0) > 0
     );
   };
 
@@ -304,6 +305,7 @@ const StoreOrder = () => {
     setSelectedNoodleType(item.noodle_types?.[0] || "");
     setSelectedNoodleStyle(item.noodle_styles?.[0] || "");
     setSelectedToppings([]);
+    setSelectedAddOns([]);
     setSelectedSize("ธรรมดา");
   };
 
