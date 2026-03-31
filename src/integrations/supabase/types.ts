@@ -719,6 +719,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tag_translations: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          tag_text: string
+          translated_text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language: string
+          tag_text: string
+          translated_text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          tag_text?: string
+          translated_text?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
