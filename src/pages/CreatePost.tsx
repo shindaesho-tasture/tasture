@@ -407,7 +407,7 @@ const CreatePost = () => {
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-foreground text-sm font-semibold"
                 >
-                  <Image size={16} /> เลือกรูป
+                  <Image size={16} /> {t("createPost.selectPhoto")}
                 </motion.button>
               </div>
             </motion.div>
