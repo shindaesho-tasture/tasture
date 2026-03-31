@@ -100,8 +100,12 @@ const StoreOrder = () => {
       m.toppings?.forEach((tp) => tags.add(tp));
       if (m.menu_category) tags.add(m.menu_category);
     });
+    // Include add-on category names for translation
+    itemAddOns.forEach((addOns) => {
+      addOns.forEach((a) => tags.add(a.category));
+    });
     return Array.from(tags);
-  }, [dnaByItem, menuItems]);
+  }, [dnaByItem, menuItems, itemAddOns]);
 
   const { translateTag } = useTagTranslations(allTagTexts);
 
@@ -859,7 +863,7 @@ const StoreOrder = () => {
                     return Object.entries(grouped).map(([cat, items]) => (
                       <div key={cat}>
                         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                          {catEmoji[cat] || "📦"} {cat} <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>
+                          {catEmoji[cat] || "📦"} {translateTag(cat)} <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {items.map((a) => {

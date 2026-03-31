@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, X, Save } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/language-context";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface AddOn {
   id: string;
@@ -39,6 +40,14 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
       return (data || []) as AddOn[];
     },
   });
+
+  // Collect add-on categories for translation
+  const allCatTexts = useMemo(() => {
+    const cats = new Set<string>(DEFAULT_CATEGORIES);
+    addOns.forEach((a: AddOn) => cats.add(a.category));
+    return Array.from(cats);
+  }, [addOns]);
+  const { translateTag } = useTagTranslations(allCatTexts);
 
   const addMutation = useMutation({
     mutationFn: async () => {
@@ -107,7 +116,7 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
       {Object.entries(grouped).map(([cat, items]) => (
         <div key={cat} className="space-y-1">
           <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">
-            {categoryEmoji[cat] || "📦"} {cat}
+            {categoryEmoji[cat] || "📦"} {translateTag(cat)}
           </span>
           {items.map((a) => (
             <motion.div
@@ -166,7 +175,7 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
                           : "bg-secondary text-foreground"
                       }`}
                     >
-                      {categoryEmoji[c] || "📦"} {c}
+                      {categoryEmoji[c] || "📦"} {translateTag(c)}
                     </button>
                   ))}
                   <button
