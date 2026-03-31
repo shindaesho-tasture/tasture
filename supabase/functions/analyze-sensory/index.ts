@@ -30,6 +30,71 @@ RULES:
 4. Include an emoji icon for each axis.
 5. Return 4-6 axes depending on dish complexity.`;
 
+const MAX_RETRIES = 2;
+const AI_TIMEOUT_MS = 25_000;
+
+class StatusError extends Error {
+  status: number;
+  constructor(status: number, msg: string) { super(msg); this.status = status; }
+}
+
+async function callAIWithRetry(apiKey: string, body: Record<string, unknown>, retries = MAX_RETRIES) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify(body),
+      });
+
+      clearTimeout(timeout);
+
+      if (response.status === 429 || response.status === 402) {
+        throw new StatusError(response.status, response.status === 429 ? "Rate limit exceeded. Please try again later." : "Payment required.");
+      }
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`AI error (attempt ${attempt + 1}):`, response.status, text);
+        lastError = new Error(`AI ${response.status}`);
+        if (attempt < retries) { await new Promise((r) => setTimeout(r, 1000 * (attempt + 1))); continue; }
+        throw lastError;
+      }
+
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+
+      if (!toolCall?.function?.arguments) {
+        lastError = new Error("No tool call in response");
+        if (attempt < retries) { await new Promise((r) => setTimeout(r, 1000 * (attempt + 1))); continue; }
+        throw lastError;
+      }
+
+      return JSON.parse(toolCall.function.arguments);
+    } catch (e) {
+      if (e instanceof StatusError) throw e;
+      if ((e as Error).name === "AbortError") {
+        console.warn(`AI timeout (attempt ${attempt + 1})`);
+        lastError = new Error("AI request timed out");
+      } else {
+        lastError = e as Error;
+      }
+      if (attempt >= retries) throw lastError;
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  throw lastError || new Error("All retries exhausted");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -44,93 +109,63 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `วิเคราะห์แกนรสชาติและสัมผัสสำหรับ: "${dishName}"` },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "analyze_sensory_axes",
-              description: "Return relevant taste/texture axes with 5-level emotional labels for a Thai dish",
-              parameters: {
-                type: "object",
-                properties: {
-                  dish_name: { type: "string" },
-                  axes: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        name: { type: "string", description: "Axis name in Thai (e.g. เค็ม, เผ็ด, ความนุ่ม)" },
-                        icon: { type: "string", description: "Single emoji" },
-                        labels: {
-                          type: "array",
-                          description: "Exactly 5 emotional labels from level 1 (lacking) to level 5 (excessive)",
-                          items: { type: "string" },
-                          minItems: 5,
-                          maxItems: 5,
-                        },
+    const extracted = await callAIWithRetry(LOVABLE_API_KEY, {
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: `วิเคราะห์แกนรสชาติและสัมผัสสำหรับ: "${dishName}"` },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "analyze_sensory_axes",
+            description: "Return relevant taste/texture axes with 5-level emotional labels for a Thai dish",
+            parameters: {
+              type: "object",
+              properties: {
+                dish_name: { type: "string" },
+                axes: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string", description: "Axis name in Thai (e.g. เค็ม, เผ็ด, ความนุ่ม)" },
+                      icon: { type: "string", description: "Single emoji" },
+                      labels: {
+                        type: "array",
+                        description: "Exactly 5 emotional labels from level 1 (lacking) to level 5 (excessive)",
+                        items: { type: "string" },
+                        minItems: 5,
+                        maxItems: 5,
                       },
-                      required: ["name", "icon", "labels"],
-                      additionalProperties: false,
                     },
+                    required: ["name", "icon", "labels"],
+                    additionalProperties: false,
                   },
                 },
-                required: ["dish_name", "axes"],
-                additionalProperties: false,
               },
+              required: ["dish_name", "axes"],
+              additionalProperties: false,
             },
           },
-        ],
-        tool_choice: { type: "function", function: { name: "analyze_sensory_axes" } },
-      }),
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "analyze_sensory_axes" } },
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const text = await response.text();
-      console.error("AI gateway error:", response.status, text);
-      return new Response(JSON.stringify({ error: "AI processing failed" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-
-    if (!toolCall?.function?.arguments) {
-      return new Response(JSON.stringify({ error: "Failed to analyze", axes: [] }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const extracted = JSON.parse(toolCall.function.arguments);
     return new Response(JSON.stringify(extracted), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof StatusError) {
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     console.error("analyze-sensory error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error", axes: [] }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
