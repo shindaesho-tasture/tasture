@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/language-context";
 import BalanceSpiderChart from "./BalanceSpiderChart";
 import type { SensoryAxis } from "@/lib/sensory-types";
 import { cn } from "@/lib/utils";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface DnaTag {
   component_icon: string;
@@ -61,6 +62,13 @@ const DishDetailSheet = ({
 }: DishDetailSheetProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  // Collect all tag texts for translation
+  const allTagTexts = useMemo(() => {
+    const set = new Set<string>();
+    dnaTags.forEach((d) => { set.add(d.selected_tag); set.add(d.component_name); });
+    return Array.from(set);
+  }, [dnaTags]);
+  const { translateTag } = useTagTranslations(allTagTexts);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
@@ -341,10 +349,10 @@ const DishDetailSheet = ({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-foreground">
-                                {tag.component_name}
+                                {translateTag(tag.component_name)}
                               </span>
                               <span className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold leading-none bg-secondary text-foreground/80">
-                                {tag.selected_tag}
+                                {translateTag(tag.selected_tag)}
                                 {tag.count > 1 && (
                                   <span className="ml-1 opacity-60">×{tag.count}</span>
                                 )}
@@ -399,14 +407,14 @@ const DishDetailSheet = ({
                           <span className="text-2xl flex-shrink-0">{tag.component_icon}</span>
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-semibold text-foreground">
-                              {tag.component_name}
+                              {translateTag(tag.component_name)}
                             </span>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span
                                 className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold text-white leading-none"
                                 style={{ backgroundColor: `hsla(${hsl},0.85)` }}
                               >
-                                {tag.selected_tag}
+                                {translateTag(tag.selected_tag)}
                               </span>
                             </div>
                           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle, Users } from "lucide-react";
@@ -14,6 +14,7 @@ import { th } from "date-fns/locale";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import LiveQueueCard from "@/components/queue/LiveQueueCard";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface MenuItemRow {
   id: string;
@@ -82,6 +83,20 @@ const StoreOrder = () => {
 
   // Detail sheet state
   const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
+
+  // Collect all DNA tag texts for translation
+  const allTagTexts = useMemo(() => {
+    const tags = new Set<string>();
+    dnaByItem.forEach((dnaTags) => {
+      dnaTags.forEach((t) => {
+        tags.add(t.selected_tag);
+        tags.add(t.component_name);
+      });
+    });
+    return Array.from(tags);
+  }, [dnaByItem]);
+
+  const { translateTag } = useTagTranslations(allTagTexts);
 
   useEffect(() => {
     if (!storeId) return;
@@ -516,8 +531,8 @@ const StoreOrder = () => {
                       .sort((a, b) => b.count - a.count)
                       .map((t) => ({
                         icon: t.component_icon,
-                        label: t.selected_tag,
-                        score: t.selected_score, // average sentiment from community
+                        label: translateTag(t.selected_tag),
+                        score: t.selected_score,
                         count: t.count,
                         type: "texture" as const,
                       }));
