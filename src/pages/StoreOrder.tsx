@@ -681,13 +681,14 @@ const StoreOrder = () => {
                         🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span>
                        </p>
                       <div className="flex flex-wrap gap-2">
-                        {optionsItem.toppings.map((t) => {
-                          const selected = selectedToppings.includes(t);
+                        {optionsItem.toppings.map((tp) => {
+                          const selected = selectedToppings.includes(tp);
+                          const disabled = !selected && selectedToppings.length >= MAX_TOPPINGS;
                           return (
                             <motion.button
-                              key={t}
+                              key={tp}
                               whileTap={{ scale: 0.93 }}
-                              onClick={() => toggleTopping(t)}
+                              onClick={() => !disabled && toggleTopping(tp)}
                               className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
                                 selected
                                   ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
