@@ -30,6 +30,8 @@ const MetricRater = ({
   // Collect all translatable texts
   const allTexts = useMemo(() => {
     const texts: string[] = [metric.label, ...metric.options];
+    // Include score tier labels for translation
+    scoreTiers.forEach((t) => texts.push(t.label));
     if (metric.smartGate) {
       texts.push(metric.smartGate.question);
       if (metric.smartGate.yesLabel) texts.push(metric.smartGate.yesLabel);
@@ -125,6 +127,7 @@ const MetricRater = ({
                     <ScoreButton
                       key={tier.value}
                       {...tier}
+                      label={translateTag(tier.label)}
                       selected={subValues?.[sub.id] === tier.value}
                       onSelect={(v) => onSubChange?.(sub.id, v)}
                     />
@@ -157,6 +160,7 @@ const MetricRater = ({
           <ScoreButton
             key={tier.value}
             {...tier}
+            label={translateTag(tier.label)}
             selected={value === tier.value}
             onSelect={(v) => onChange(metric.id, v)}
           />
