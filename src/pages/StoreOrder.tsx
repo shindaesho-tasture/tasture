@@ -470,19 +470,29 @@ const StoreOrder = () => {
               const cats = Array.from(new Set(menuItems.map((m) => m.menu_category).filter(Boolean))) as string[];
               if (cats.length === 0) return null;
               const allCats = ["ทั้งหมด", ...cats];
+              const countMap = new Map<string, number>();
+              menuItems.forEach((m) => {
+                if (m.menu_category) countMap.set(m.menu_category, (countMap.get(m.menu_category) || 0) + 1);
+              });
               return (
                 <div className="px-4 pt-3 pb-1 flex gap-2 overflow-x-auto no-scrollbar">
-                  {allCats.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveCat(cat)}
-                      className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                        activeCat === cat ? "bg-score-emerald text-primary-foreground shadow-sm" : "bg-secondary text-foreground"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
+                  {allCats.map((cat) => {
+                    const count = cat === "ทั้งหมด" ? menuItems.length : (countMap.get(cat) || 0);
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCat(cat)}
+                        className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
+                          activeCat === cat ? "bg-score-emerald text-primary-foreground shadow-sm" : "bg-secondary text-foreground"
+                        }`}
+                      >
+                        {cat}
+                        <span className={`text-[10px] ${activeCat === cat ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               );
             })()}
