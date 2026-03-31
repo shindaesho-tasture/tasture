@@ -246,10 +246,10 @@ const CreatePost = () => {
     return (
       <PageTransition>
         <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 pb-24">
-          <p className="text-muted-foreground text-sm">กรุณาเข้าสู่ระบบก่อนโพส</p>
+          <p className="text-muted-foreground text-sm">{t("createPost.loginRequired")}</p>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate("/auth")}
             className="px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-semibold">
-            เข้าสู่ระบบ
+            {t("common.login")}
           </motion.button>
           <BottomNav />
         </div>
