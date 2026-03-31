@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ShieldCheck, Search, CheckCircle2, XCircle, Users, Store,
   MessageSquare, Dna, BarChart3, TrendingUp, Eye, EyeOff, Trash2, UserCog,
-  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags,
+  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags, UtensilsCrossed,
 } from "lucide-react";
 import DishTemplateEditor from "@/components/admin/DishTemplateEditor";
 import AdminStoreEditor from "@/components/admin/AdminStoreEditor";
@@ -609,6 +609,13 @@ const AdminDashboard = () => {
                                 )}
                               >
                                 {store.verified ? <><XCircle size={12} /> ยกเลิก</> : <><CheckCircle2 size={12} /> ยืนยัน</>}
+                              </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => { haptic(); navigate(`/menu-manager/${store.id}`); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                              >
+                                <UtensilsCrossed size={12} /> เมนู
                               </motion.button>
                               <motion.button
                                 whileTap={{ scale: 0.9 }}
