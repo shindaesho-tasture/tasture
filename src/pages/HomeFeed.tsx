@@ -1479,7 +1479,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               "text-[11px] font-medium",
               liked ? "text-score-ruby" : "text-muted-foreground"
             )}>
-              {likeCount > 0 ? likeCount : "ถูกใจ"}
+              {likeCount > 0 ? likeCount : t("feed.like")}
             </span>
           </motion.button>
           <AnimatePresence>
