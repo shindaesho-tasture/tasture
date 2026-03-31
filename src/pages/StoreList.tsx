@@ -26,6 +26,9 @@ const StoreList = () => {
   const [stores, setStores] = useState<StoreItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const storeNames = useMemo(() => stores.map((s) => s.name), [stores]);
+  const { translateTag } = useTagTranslations(storeNames);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
