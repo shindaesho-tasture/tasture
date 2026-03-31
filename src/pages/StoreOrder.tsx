@@ -331,10 +331,13 @@ const StoreOrder = () => {
     }
   };
 
-  const toggleTopping = (t: string) => {
-    setSelectedToppings((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
-    );
+  const MAX_TOPPINGS = 3;
+  const toggleTopping = (tp: string) => {
+    setSelectedToppings((prev) => {
+      if (prev.includes(tp)) return prev.filter((x) => x !== tp);
+      if (prev.length >= MAX_TOPPINGS) return prev;
+      return [...prev, tp];
+    });
   };
 
   // typeEmoji not needed anymore with SovereignMenuCard
@@ -674,25 +677,28 @@ const StoreOrder = () => {
                   {/* Toppings */}
                   {optionsItem.toppings && optionsItem.toppings.length > 0 && (
                     <div>
-                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🥩 {t("order.selectToppings", language)}
-                      </p>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span>
+                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {optionsItem.toppings.map((t) => {
-                          const selected = selectedToppings.includes(t);
+                        {optionsItem.toppings.map((tp) => {
+                          const selected = selectedToppings.includes(tp);
+                          const disabled = !selected && selectedToppings.length >= MAX_TOPPINGS;
                           return (
                             <motion.button
-                              key={t}
+                              key={tp}
                               whileTap={{ scale: 0.93 }}
-                              onClick={() => toggleTopping(t)}
+                              onClick={() => !disabled && toggleTopping(tp)}
                               className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
                                 selected
                                   ? "bg-score-emerald text-primary-foreground border-score-emerald shadow-sm"
-                                  : "bg-surface-elevated text-foreground border-border/50"
+                                  : disabled
+                                    ? "bg-secondary/50 text-muted-foreground border-border/30 opacity-50 cursor-not-allowed"
+                                    : "bg-surface-elevated text-foreground border-border/50"
                               }`}
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
-                              {t}
+                              {tp}
                             </motion.button>
                           );
                         })}

@@ -22,10 +22,14 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
     onChange({ ...item, [field]: item[field] === value ? undefined : value });
   };
 
+  const MAX_TOPPINGS = 3;
   const handleTopping = (topping: string) => {
     const current = item.selected_toppings || [];
-    const next = current.includes(topping) ? current.filter((t) => t !== topping) : [...current, topping];
-    onChange({ ...item, selected_toppings: next });
+    if (current.includes(topping)) {
+      onChange({ ...item, selected_toppings: current.filter((t) => t !== topping) });
+    } else if (current.length < MAX_TOPPINGS) {
+      onChange({ ...item, selected_toppings: [...current, topping] });
+    }
   };
 
   return (
@@ -112,7 +116,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
       {/* Toppings */}
       {item.toppings && item.toppings.length > 0 && (
         <div>
-          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.topping")}</span>
+          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.topping")} <span className="text-muted-foreground/60">({(item.selected_toppings || []).length}/{MAX_TOPPINGS})</span></span>
           <div className="flex flex-wrap gap-1.5 mt-1">
             {item.toppings.map((topping) => (
               <motion.button
