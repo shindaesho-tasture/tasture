@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Check, Loader2, Sparkles, Dna } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/language-context";
 import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
