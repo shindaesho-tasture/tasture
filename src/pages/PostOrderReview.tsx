@@ -433,10 +433,10 @@ const PostOrderReview = () => {
         }
       }
 
-      toast({ title: "✅ บันทึกรีวิวทั้งหมดสำเร็จ" });
+      toast({ title: t("por.saveSuccess") });
     } catch (err: any) {
       console.error("Save error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("por.saveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
