@@ -31,7 +31,7 @@ const AdminNameTranslationEditor = () => {
   const [editingKey, setEditingKey] = useState<string | null>(null); // "id-lang"
   const [editValue, setEditValue] = useState("");
   const [regenerating, setRegenerating] = useState<string | null>(null);
-
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
   const load = async () => {
     setLoading(true);
     const [{ data: stores }, { data: menuItems }] = await Promise.all([
