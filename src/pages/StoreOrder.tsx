@@ -93,8 +93,14 @@ const StoreOrder = () => {
         tags.add(t.component_name);
       });
     });
+    // Also include noodle types, styles, toppings for translation
+    menuItems.forEach((m) => {
+      m.noodle_types?.forEach((nt) => tags.add(nt));
+      m.noodle_styles?.forEach((ns) => tags.add(ns));
+      m.toppings?.forEach((tp) => tags.add(tp));
+    });
     return Array.from(tags);
-  }, [dnaByItem]);
+  }, [dnaByItem, menuItems]);
 
   const { translateTag } = useTagTranslations(allTagTexts);
 
