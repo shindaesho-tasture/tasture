@@ -618,7 +618,7 @@ const Index = () => {
             {/* Trending Section */}
             {trendingStores.length > 0 && (
               <HorizontalSection
-                title="กำลังเป็นเทรนด์"
+                title={t("discover.trending", language)}
                 emoji="🔥"
                 stores={trendingStores}
               />
