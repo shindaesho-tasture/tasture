@@ -108,7 +108,7 @@ const StoreOrder = () => {
       addOns.forEach((a) => tags.add(a.category));
     });
     return Array.from(tags);
-  }, [dnaByItem, menuItems, itemAddOns]);
+  }, [dnaByItem, menuItems, itemAddOns, storeName]);
 
   const { translateTag } = useTagTranslations(allTagTexts);
 
