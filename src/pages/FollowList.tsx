@@ -19,6 +19,7 @@ interface FollowUser {
 type Tab = "followers" | "following";
 
 const FollowList = () => {
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
