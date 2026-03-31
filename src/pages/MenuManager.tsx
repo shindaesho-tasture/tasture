@@ -212,7 +212,7 @@ const MenuManager = () => {
     try {
       let itemId = editingId;
       if (itemId) {
-        const { error } = await supabase.from("menu_items").update(payload).eq("id", itemId);
+        const { error } = await supabase.from("menu_items").update(payload as any).eq("id", itemId);
         if (error) throw error;
       } else {
         const { data: inserted, error } = await supabase
