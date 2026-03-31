@@ -263,7 +263,7 @@ const CreatePost = () => {
         {/* Header */}
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border/30">
           <div className="flex items-center justify-between px-4 py-3">
-            <h1 className="text-lg font-bold text-foreground">โพสใหม่</h1>
+            <h1 className="text-lg font-bold text-foreground">{t("createPost.title")}</h1>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleSubmit}
