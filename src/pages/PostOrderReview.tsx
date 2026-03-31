@@ -20,7 +20,7 @@ import { useLanguage } from "@/lib/language-context";
 import { categories, scoreTiers, getScoreTier, type Category } from "@/lib/categories";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { preTranslateDnaTags, preTranslateTags } from "@/lib/pre-translate";
+import { preTranslateDnaTags, preTranslateTags, preTranslateSensoryAxes } from "@/lib/pre-translate";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
 import PageTransition from "@/components/PageTransition";
 import MetricRater from "@/components/MetricRater";
