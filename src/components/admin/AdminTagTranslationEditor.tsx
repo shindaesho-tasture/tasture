@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Pencil, Check, X, Trash2, Globe } from "lucide-react";
+import { Search, Pencil, Check, X, Trash2, Globe, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -34,6 +34,11 @@ const AdminTagTranslationEditor = () => {
   const [langFilter, setLangFilter] = useState<string>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [newTagText, setNewTagText] = useState("");
+  const [newLang, setNewLang] = useState("en");
+  const [newTranslated, setNewTranslated] = useState("");
+  const [adding, setAdding] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -95,6 +100,31 @@ const AdminTagTranslationEditor = () => {
     toast.success("ลบแล้ว ✓");
   };
 
+  const addTranslation = async () => {
+    const tag = newTagText.trim();
+    const translated = newTranslated.trim();
+    if (!tag || !translated) {
+      toast.error("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+    setAdding(true);
+    const { data, error } = await supabase
+      .from("tag_translations")
+      .insert({ tag_text: tag, language: newLang, translated_text: translated } as any)
+      .select()
+      .single();
+    setAdding(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setTranslations((prev) => [...prev, data as TagTranslation]);
+    setNewTagText("");
+    setNewTranslated("");
+    setShowAdd(false);
+    toast.success("เพิ่มคำแปลแล้ว ✓");
+  };
+
   const languages = [...new Set(translations.map((t) => t.language))].sort();
 
   if (loading) {
@@ -110,8 +140,66 @@ const AdminTagTranslationEditor = () => {
       <div className="flex items-center gap-2">
         <Globe size={16} className="text-score-emerald" />
         <h2 className="text-sm font-semibold text-foreground">จัดการคำแปลแท็ก</h2>
-        <span className="text-[10px] text-muted-foreground ml-auto">{translations.length} รายการ</span>
+        <span className="text-[10px] text-muted-foreground">{translations.length} รายการ</span>
+        <button
+          onClick={() => setShowAdd((v) => !v)}
+          className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-xl bg-score-emerald text-white text-[11px] font-semibold"
+        >
+          <Plus size={13} /> เพิ่มคำแปล
+        </button>
       </div>
+
+      {/* Add new form */}
+      <AnimatePresence>
+        {showAdd && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-2xl bg-score-emerald/5 border border-score-emerald/20 p-4 space-y-3">
+              <p className="text-xs font-semibold text-foreground">เพิ่มคำแปลแท็กใหม่</p>
+              <input
+                value={newTagText}
+                onChange={(e) => setNewTagText(e.target.value)}
+                placeholder="แท็กต้นฉบับ (เช่น กรอบ)"
+                className="w-full px-3 py-2 rounded-xl bg-background border border-border text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald placeholder:text-muted-foreground/60"
+              />
+              <div className="flex gap-2">
+                <select
+                  value={newLang}
+                  onChange={(e) => setNewLang(e.target.value)}
+                  className="px-3 py-2 rounded-xl bg-background border border-border text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald"
+                >
+                  {["en", "ja", "zh", "ko"].map((l) => (
+                    <option key={l} value={l}>{LANG_FLAGS[l]} {LANG_LABELS[l]}</option>
+                  ))}
+                </select>
+                <input
+                  value={newTranslated}
+                  onChange={(e) => setNewTranslated(e.target.value)}
+                  placeholder="คำแปล (เช่น Crispy)"
+                  onKeyDown={(e) => e.key === "Enter" && addTranslation()}
+                  className="flex-1 px-3 py-2 rounded-xl bg-background border border-border text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald placeholder:text-muted-foreground/60"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:bg-secondary">
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={addTranslation}
+                  disabled={adding}
+                  className="px-4 py-2 rounded-xl bg-score-emerald text-white text-xs font-semibold disabled:opacity-50"
+                >
+                  {adding ? "กำลังบันทึก..." : "บันทึก"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Search + Filter */}
       <div className="space-y-2">
