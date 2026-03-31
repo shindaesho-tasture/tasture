@@ -222,7 +222,7 @@ const FollowList = () => {
                       )}
                     >
                       {u.isFollowing ? <UserCheck size={12} /> : <UserPlus size={12} />}
-                      {u.isFollowing ? "ติดตามแล้ว" : "ติดตาม"}
+                      {u.isFollowing ? t("feed.following", language) : t("feed.follow", language)}
                     </motion.button>
                   )}
                 </motion.div>
