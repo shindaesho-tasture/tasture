@@ -191,7 +191,7 @@ const DishDnaFeedback = () => {
       }
 
       setSaveSuccess(true);
-      toast({ title: "✅ บันทึก Dish DNA สำเร็จ", description: `${rows.length} ส่วนประกอบ` });
+      toast({ title: t("dna.success"), description: t("dna.components", { count: rows.length }) });
       setTimeout(() => {
         setSaveSuccess(false);
         navigate(-1);
