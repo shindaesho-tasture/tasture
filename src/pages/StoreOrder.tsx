@@ -696,7 +696,7 @@ const StoreOrder = () => {
                               }`}
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
-                              {t}
+                              {tp}
                             </motion.button>
                           );
                         })}

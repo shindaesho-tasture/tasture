@@ -116,7 +116,7 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
       {/* Toppings */}
       {item.toppings && item.toppings.length > 0 && (
         <div>
-          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.topping")}</span>
+          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">{t("card.topping")} <span className="text-muted-foreground/60">({(item.selected_toppings || []).length}/{MAX_TOPPINGS})</span></span>
           <div className="flex flex-wrap gap-1.5 mt-1">
             {item.toppings.map((topping) => (
               <motion.button
