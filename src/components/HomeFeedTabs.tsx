@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Compass, MapPin, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 
 export type FeedTab = "explore" | "nearby" | "following" | "foryou";
 
@@ -9,11 +11,11 @@ interface HomeFeedTabsProps {
   onChange: (tab: FeedTab) => void;
 }
 
-const tabs: { id: FeedTab; label: string; icon: typeof Compass; emoji: string }[] = [
-  { id: "explore", label: "สำรวจ", icon: Compass, emoji: "🔍" },
-  { id: "nearby", label: "ใกล้ฉัน", icon: MapPin, emoji: "📍" },
-  { id: "following", label: "กำลังติดตาม", icon: Users, emoji: "👥" },
-  { id: "foryou", label: "สำหรับคุณ", icon: Sparkles, emoji: "✨" },
+const tabDefs: { id: FeedTab; i18nKey: string; icon: typeof Compass; emoji: string }[] = [
+  { id: "explore", i18nKey: "tab.explore", icon: Compass, emoji: "🔍" },
+  { id: "nearby", i18nKey: "tab.nearby", icon: MapPin, emoji: "📍" },
+  { id: "following", i18nKey: "tab.following", icon: Users, emoji: "👥" },
+  { id: "foryou", i18nKey: "tab.foryou", icon: Sparkles, emoji: "✨" },
 ];
 
 const HomeFeedTabs = ({ active, onChange }: HomeFeedTabsProps) => {
