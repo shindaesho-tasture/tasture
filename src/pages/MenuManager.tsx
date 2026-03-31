@@ -16,6 +16,7 @@ import BottomNav from "@/components/BottomNav";
 import TagInput from "@/components/menu/TagInput";
 import AddOnManager from "@/components/menu/AddOnManager";
 import MenuTranslationSheet from "@/components/menu/MenuTranslationSheet";
+import { preTranslateTags, preTranslateStoreData } from "@/lib/pre-translate";
 
 type MenuItemRow = {
   id: string;
