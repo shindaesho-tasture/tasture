@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical } from "lucide-react";
+import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,6 +22,7 @@ type MenuItemRow = {
   noodle_styles: string[] | null;
   toppings: string[] | null;
   textures: string[] | null;
+  image_url: string | null;
 };
 
 const emptyForm = {
@@ -49,7 +50,12 @@ const MenuManager = () => {
   const [form, setForm] = useState(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [orderedItems, setOrderedItems] = useState<MenuItemRow[]>([]);
-
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null); // item id being uploaded
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const inlineFileRef = useRef<HTMLInputElement>(null);
+  const inlineTargetId = useRef<string | null>(null);
   // Fetch store name + menu items
   const { data, isLoading } = useQuery({
     queryKey: ["menu-manager", storeId],
@@ -58,7 +64,7 @@ const MenuManager = () => {
         supabase.from("stores").select("name, user_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order")
+          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url")
           .eq("store_id", storeId!)
           .order("sort_order", { ascending: true })
           .order("created_at", { ascending: true }),
@@ -72,24 +78,7 @@ const MenuManager = () => {
 
   const isOwner = data?.store?.user_id === user?.id;
 
-  // Upsert mutation
-  const saveMutation = useMutation({
-    mutationFn: async (payload: { id?: string; data: Record<string, unknown> }) => {
-      if (payload.id) {
-        const { error } = await supabase.from("menu_items").update(payload.data).eq("id", payload.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("menu_items").insert([{ ...payload.data, store_id: storeId! } as any]);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["menu-manager", storeId] });
-      toast.success(t("common.save") + " ✓");
-      resetForm();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const [isSaving, setIsSaving] = useState(false);
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -109,13 +98,50 @@ const MenuManager = () => {
     setForm(emptyForm);
     setEditingId(null);
     setShowAdd(false);
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  // Upload image to storage and update menu_item
+  const uploadImage = async (file: File, menuItemId: string) => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${storeId}/${menuItemId}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
+    const image_url = urlData.publicUrl + `?t=${Date.now()}`;
+    await supabase.from("menu_items").update({ image_url } as any).eq("id", menuItemId);
+    return image_url;
+  };
+
+  // Inline image upload for existing items (from list)
+  const handleInlineUpload = async (file: File, itemId: string) => {
+    setUploadingImage(itemId);
+    try {
+      await uploadImage(file, itemId);
+      queryClient.invalidateQueries({ queryKey: ["menu-manager", storeId] });
+      toast.success("📸 ✓");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
+  // Handle form image pick
+  const handleFormImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   // Reorder handler — save new order to DB
   const handleReorder = useCallback(
     async (newOrder: MenuItemRow[]) => {
       setOrderedItems(newOrder);
-      // Batch update sort_order
       const updates = newOrder.map((item, idx) => ({ id: item.id, sort_order: idx }));
       await Promise.all(
         updates.map(({ id, sort_order }) =>
@@ -143,7 +169,7 @@ const MenuManager = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.name.trim()) return toast.error("Name required");
     const splitArr = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
     const payload: Record<string, unknown> = {
@@ -158,7 +184,35 @@ const MenuManager = () => {
       toppings: splitArr(form.toppings),
       textures: splitArr(form.textures),
     };
-    saveMutation.mutate({ id: editingId || undefined, data: payload });
+
+    setIsSaving(true);
+    try {
+      let itemId = editingId;
+      if (itemId) {
+        const { error } = await supabase.from("menu_items").update(payload).eq("id", itemId);
+        if (error) throw error;
+      } else {
+        const { data: inserted, error } = await supabase
+          .from("menu_items")
+          .insert([{ ...payload, store_id: storeId! } as any])
+          .select("id")
+          .single();
+        if (error) throw error;
+        itemId = inserted.id;
+      }
+
+      if (imageFile && itemId) {
+        await uploadImage(imageFile, itemId);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["menu-manager", storeId] });
+      toast.success(t("common.save") + " ✓");
+      resetForm();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const typeLabel: Record<string, string> = {
@@ -240,6 +294,38 @@ const MenuManager = () => {
                     {isOwner && (
                       <GripVertical size={14} className="text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
                     )}
+
+                    {/* Thumbnail / upload button */}
+                    <div className="relative shrink-0">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                          <ImageIcon size={14} className="text-muted-foreground/40" />
+                        </div>
+                      )}
+                      {isOwner && (
+                        <button
+                          onClick={() => {
+                            inlineTargetId.current = item.id;
+                            inlineFileRef.current?.click();
+                          }}
+                          disabled={uploadingImage === item.id}
+                          className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-score-emerald flex items-center justify-center shadow-sm"
+                        >
+                          {uploadingImage === item.id ? (
+                            <Loader2 size={10} className="text-primary-foreground animate-spin" />
+                          ) : (
+                            <Camera size={10} className="text-primary-foreground" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{typeLabel[item.type] || item.type}</span>
@@ -371,21 +457,77 @@ const MenuManager = () => {
                   {/* Textures */}
                   <Field label={t("menuMgr.textures")} value={form.textures} onChange={(v) => setForm((f) => ({ ...f, textures: v }))} placeholder="กรอบ, นุ่ม, เหนียว" />
 
+                  {/* Image upload */}
+                  <div>
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">📸 รูปอาหาร</label>
+                    <div className="mt-1 flex items-center gap-3">
+                      {imagePreview ? (
+                        <div className="relative">
+                          <img src={imagePreview} alt="preview" className="w-16 h-16 rounded-xl object-cover" />
+                          <button
+                            onClick={() => { setImageFile(null); setImagePreview(null); }}
+                            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-score-ruby flex items-center justify-center"
+                          >
+                            <X size={10} className="text-white" />
+                          </button>
+                        </div>
+                      ) : editingId && orderedItems.find(i => i.id === editingId)?.image_url ? (
+                        <img
+                          src={orderedItems.find(i => i.id === editingId)!.image_url!}
+                          alt="current"
+                          className="w-16 h-16 rounded-xl object-cover"
+                        />
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-1 py-2.5 rounded-xl bg-secondary text-sm text-muted-foreground flex items-center justify-center gap-2 hover:bg-secondary/80 transition-colors"
+                      >
+                        <Camera size={14} />
+                        {imagePreview ? "เปลี่ยนรูป" : "เลือกรูป"}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleFormImagePick}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+
                   {/* Submit */}
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={handleSubmit}
-                    disabled={saveMutation.isPending}
+                    disabled={isSaving}
                     className="w-full py-3 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-semibold shadow-luxury flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Save size={16} />
-                    {saveMutation.isPending ? "..." : editingId ? t("common.save") : t("menuMgr.addItem")}
+                    {isSaving ? "..." : editingId ? t("common.save") : t("menuMgr.addItem")}
                   </motion.button>
                 </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Hidden file input for inline image uploads */}
+        <input
+          ref={inlineFileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file && inlineTargetId.current) {
+              handleInlineUpload(file, inlineTargetId.current);
+            }
+            e.target.value = "";
+          }}
+        />
 
         <BottomNav />
       </div>
