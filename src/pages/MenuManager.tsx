@@ -41,6 +41,7 @@ const emptyForm = {
   toppings: [] as string[],
   textures: [] as string[],
   noodle_type_prices: {} as Record<string, number>,
+  noodle_style_prices: {} as Record<string, number>,
 };
 
 const MenuManager = () => {
