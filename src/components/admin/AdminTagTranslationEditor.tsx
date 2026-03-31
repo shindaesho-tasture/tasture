@@ -153,6 +153,63 @@ const AdminTagTranslationEditor = () => {
 
   const languages = [...new Set(translations.map((t) => t.language))].sort();
 
+  // Count tags missing translations
+  const existingTagLangs = useMemo(() => {
+    const set = new Set<string>();
+    translations.forEach((t) => set.add(`${t.tag_text}::${t.language}`));
+    return set;
+  }, [translations]);
+
+  const missingCount = useMemo(() => {
+    let count = 0;
+    allSourceTags.forEach((tag) => {
+      LANGS.forEach((lang) => {
+        if (!existingTagLangs.has(`${tag}::${lang}`)) count++;
+      });
+    });
+    return count;
+  }, [allSourceTags, existingTagLangs]);
+
+  const batchTranslateAll = useCallback(async () => {
+    const tagsToTranslate = allSourceTags.filter((tag) =>
+      LANGS.some((lang) => !existingTagLangs.has(`${tag}::${lang}`))
+    );
+
+    if (tagsToTranslate.length === 0) {
+      toast.info("แท็กทั้งหมดมีคำแปลครบแล้ว ✓");
+      return;
+    }
+
+    const BATCH_SIZE = 20;
+    const totalBatches = Math.ceil(tagsToTranslate.length / BATCH_SIZE);
+    setBatchProgress({ current: 0, total: tagsToTranslate.length });
+    let successCount = 0;
+
+    try {
+      for (let i = 0; i < totalBatches; i++) {
+        const batch = tagsToTranslate.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+        setBatchProgress({ current: i * BATCH_SIZE, total: tagsToTranslate.length });
+
+        const { error } = await supabase.functions.invoke("translate-tags", {
+          body: { tags: batch, target_languages: [...LANGS] },
+        });
+        if (error) { console.error(`Batch ${i + 1} error:`, error); continue; }
+        successCount += batch.length;
+
+        if (i < totalBatches - 1) {
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
+
+      setBatchProgress(null);
+      toast.success(`แปลสำเร็จ ${successCount} แท็ก ✓`);
+      await load();
+    } catch (e: any) {
+      setBatchProgress(null);
+      toast.error(e.message || "Batch translate ล้มเหลว");
+    }
+  }, [allSourceTags, existingTagLangs]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
