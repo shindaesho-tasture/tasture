@@ -365,6 +365,16 @@ const MenuManager = () => {
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald transition-all placeholder:text-muted-foreground/60"
               />
             </div>
+            {isOwner && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={sortByCategory}
+                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowUpDown size={12} />
+                จัดลำดับตามหมวดหมู่
+              </motion.button>
+            )}
           </div>
         )}
 
