@@ -46,12 +46,34 @@ const AdminTagTranslationEditor = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("tag_translations")
-      .select("*")
-      .order("tag_text")
-      .order("language");
-    setTranslations((data as TagTranslation[]) || []);
+    const [{ data: transData }, { data: dnaData }, { data: menuData }, { data: templateData }] = await Promise.all([
+      supabase.from("tag_translations").select("*").order("tag_text").order("language"),
+      supabase.from("dish_dna").select("component_name, selected_tag"),
+      supabase.from("menu_items").select("textures, toppings, noodle_types, noodle_styles"),
+      supabase.from("dish_templates").select("components"),
+    ]);
+    setTranslations((transData as TagTranslation[]) || []);
+
+    // Collect all unique source tags from DNA, menus, templates
+    const sourceTags = new Set<string>();
+    (dnaData || []).forEach((d: any) => { sourceTags.add(d.component_name); sourceTags.add(d.selected_tag); });
+    (menuData || []).forEach((m: any) => {
+      (m.textures || []).forEach((t: string) => sourceTags.add(t));
+      (m.toppings || []).forEach((t: string) => sourceTags.add(t));
+      (m.noodle_types || []).forEach((t: string) => sourceTags.add(t));
+      (m.noodle_styles || []).forEach((t: string) => sourceTags.add(t));
+    });
+    (templateData || []).forEach((t: any) => {
+      const comps = Array.isArray(t.components) ? t.components : [];
+      comps.forEach((c: any) => {
+        if (c.name) sourceTags.add(c.name);
+        (c.tags || []).forEach((tag: any) => {
+          if (typeof tag === "string") sourceTags.add(tag);
+          else if (tag?.label) sourceTags.add(tag.label);
+        });
+      });
+    });
+    setAllSourceTags([...sourceTags].filter(Boolean).sort());
     setLoading(false);
   };
 
