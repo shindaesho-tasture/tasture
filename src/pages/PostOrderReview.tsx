@@ -776,14 +776,14 @@ const PostOrderReview = () => {
                     {/* Previous sensory score summary */}
                     <div className="rounded-2xl border border-border/50 bg-surface-elevated/50 overflow-hidden">
                       <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/30">
-                        <p className="text-[10px] font-medium text-muted-foreground tracking-wide">คะแนนรสชาติเดิม</p>
-                      </div>
-                      <div className="flex items-center justify-center gap-3 px-4 py-4">
-                        <span className="text-2xl">
-                          {previousSensoryScore[step.menuItemId] === 2 ? "🤩" : previousSensoryScore[step.menuItemId] === 0 ? "😐" : "😔"}
-                        </span>
-                        <span className="text-[11px] font-medium text-foreground">
-                          {previousSensoryScore[step.menuItemId] === 2 ? "รสสมบูรณ์แบบ" : previousSensoryScore[step.menuItemId] === 0 ? "ธรรมดาพอกินได้" : "ไม่ถูกปาก"}
+                         <p className="text-[10px] font-medium text-muted-foreground tracking-wide">{t("por.prevTasteScore")}</p>
+                       </div>
+                       <div className="flex items-center justify-center gap-3 px-4 py-4">
+                         <span className="text-2xl">
+                           {previousSensoryScore[step.menuItemId] === 2 ? "🤩" : previousSensoryScore[step.menuItemId] === 0 ? "😐" : "😔"}
+                         </span>
+                         <span className="text-[11px] font-medium text-foreground">
+                           {previousSensoryScore[step.menuItemId] === 2 ? t("por.perfectTaste") : previousSensoryScore[step.menuItemId] === 0 ? t("por.okTaste") : t("por.badTaste")}
                         </span>
                       </div>
                     </div>
