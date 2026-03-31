@@ -54,10 +54,24 @@ const MenuManager = () => {
   const [orderedItems, setOrderedItems] = useState<MenuItemRow[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState<string | null>(null); // item id being uploaded
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inlineFileRef = useRef<HTMLInputElement>(null);
   const inlineTargetId = useRef<string | null>(null);
+
+  // Check if current user is admin
+  const { data: adminRole } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles").select("role")
+        .eq("user_id", user!.id).eq("role", "admin").maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const isAdmin = !!adminRole;
+
   // Fetch store name + menu items
   const { data, isLoading } = useQuery({
     queryKey: ["menu-manager", storeId],
@@ -78,7 +92,7 @@ const MenuManager = () => {
     enabled: !!storeId && !authLoading,
   });
 
-  const isOwner = data?.store?.user_id === user?.id;
+  const isOwner = data?.store?.user_id === user?.id || isAdmin;
 
   const [isSaving, setIsSaving] = useState(false);
 
