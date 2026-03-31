@@ -8,7 +8,9 @@ export interface OrderItem {
   type: string;
   selectedOptions?: {
     noodleType?: string;
+    noodleTypePrice?: number;
     noodleStyle?: string;
+    noodleStylePrice?: number;
     toppings?: string[];
     size?: "ธรรมดา" | "พิเศษ";
     addOns?: string[];
