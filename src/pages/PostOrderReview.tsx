@@ -998,7 +998,7 @@ const PostOrderReview = () => {
                       )}
                       {dish.sensoryScore !== null && (
                         <div className="p-3 rounded-xl bg-secondary/50 text-center">
-                          <p className="text-[9px] text-muted-foreground uppercase tracking-wider">รสชาติ</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("por.taste")}</p>
                           <p className={cn(
                             "text-lg font-bold mt-1 tabular-nums",
                             dish.sensoryScore >= 1 ? "text-score-emerald" :
