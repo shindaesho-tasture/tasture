@@ -1221,12 +1221,12 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           ) : (
             <>
               {post.type === "combined"
-                ? "รีวิวและวิเคราะห์ DNA ของ"
+                ? t("feed.reviewAndDna")
                 : post.type === "menu_review"
-                ? "ให้คะแนน"
-                : "วิเคราะห์ Dish DNA ของ"}{" "}
+                ? t("feed.rated")
+                : t("feed.analyzedDna")}{" "}
               <span className="font-semibold text-foreground">{post.menuItemName}</span>
-              {" "}ที่{" "}
+              {" "}{t("feed.at")}{" "}
               <button
                 onClick={() => navigate(`/store/${post.storeId}/order`)}
                 className="font-semibold text-score-emerald hover:underline"
