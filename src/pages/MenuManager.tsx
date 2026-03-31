@@ -407,7 +407,7 @@ const MenuManager = () => {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                className="w-full max-w-lg bg-background rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
+                className="w-full max-w-lg bg-background rounded-t-3xl max-h-[85vh] flex flex-col"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-semibold text-foreground">
