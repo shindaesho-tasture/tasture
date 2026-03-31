@@ -100,8 +100,12 @@ const StoreOrder = () => {
       m.toppings?.forEach((tp) => tags.add(tp));
       if (m.menu_category) tags.add(m.menu_category);
     });
+    // Include add-on category names for translation
+    itemAddOns.forEach((addOns) => {
+      addOns.forEach((a) => tags.add(a.category));
+    });
     return Array.from(tags);
-  }, [dnaByItem, menuItems]);
+  }, [dnaByItem, menuItems, itemAddOns]);
 
   const { translateTag } = useTagTranslations(allTagTexts);
 
