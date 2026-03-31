@@ -312,9 +312,6 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   // ─── HomeFeed Extra ───
   "feed.sharedPhoto": { th: "แชร์รูปอาหาร", en: "Shared a food photo", ja: "料理写真を共有", zh: "分享了美食照片", ko: "음식 사진 공유" },
 
-  // ─── OrderHistory Extra ───
-  "history.empty": { th: "ยังไม่มีประวัติการไปร้านอาหาร", en: "No restaurant visit history yet", ja: "まだ訪問履歴がありません", zh: "暂无餐厅访问记录", ko: "아직 식당 방문 기록이 없습니다" },
-
 
   "profile.emeraldVault": { th: "Emerald Vault", en: "Emerald Vault", ja: "エメラルド金庫", zh: "翡翠宝库", ko: "에메랄드 보관함" },
   "profile.emeralds": { th: "เพชร", en: "Emeralds", ja: "エメラルド", zh: "翡翠", ko: "에메랄드" },
