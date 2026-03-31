@@ -1,13 +1,15 @@
 import { classifyTags, CATEGORY_CONFIG, type SensoryCategory } from "@/lib/sensory-classifier";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface SensoryPillsProps {
   textures: string[];
 }
 
-/** Renders sensory tags grouped by category with distinct icons */
+/** Renders sensory tags grouped by category with distinct icons, translated to current language */
 const SensoryPills = ({ textures }: SensoryPillsProps) => {
   if (!textures.length) return null;
 
+  const { translateTag } = useTagTranslations(textures);
   const classified = classifyTags(textures);
 
   // Group by category, preserving order of first appearance
@@ -32,7 +34,7 @@ const SensoryPills = ({ textures }: SensoryPillsProps) => {
             className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-medium text-muted-foreground ${config.color}`}
           >
             <span className="text-[8px]">{config.icon}</span>
-            {label}
+            {translateTag(label)}
           </span>
         ));
       })}

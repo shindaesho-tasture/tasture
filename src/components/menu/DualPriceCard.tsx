@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import type { MenuItem } from "@/lib/menu-types";
 import MenuRatingButtons from "./MenuRatingButtons";
+import SensoryPills from "./SensoryPills";
 
 interface DualPriceCardProps {
   item: MenuItem;
@@ -75,13 +76,7 @@ const DualPriceCard = ({ item, onChange }: DualPriceCardProps) => {
 
       {/* Texture pills */}
       {item.textures && item.textures.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {item.textures.map((t) => (
-            <span key={t} className="px-2 py-0.5 rounded-full bg-secondary text-[9px] font-medium text-muted-foreground">
-              {t}
-            </span>
-          ))}
-        </div>
+        <SensoryPills textures={item.textures} />
       )}
 
       {/* Rating */}
