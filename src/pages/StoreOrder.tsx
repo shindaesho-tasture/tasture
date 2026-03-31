@@ -332,7 +332,9 @@ const StoreOrder = () => {
       selectedOptions: {
         size: optionsItem.price_special != null ? selectedSize : undefined,
         noodleType: selectedNoodleType || undefined,
+        noodleTypePrice: noodleExtra > 0 ? noodleExtra : undefined,
         noodleStyle: selectedNoodleStyle || undefined,
+        noodleStylePrice: styleExtra > 0 ? styleExtra : undefined,
         toppings: selectedToppings.length > 0 ? selectedToppings : undefined,
         addOns: selectedAddOns.length > 0 ? selectedAddOns.map(a => a.name) : undefined,
       },
