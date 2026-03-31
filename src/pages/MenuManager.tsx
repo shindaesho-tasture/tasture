@@ -192,6 +192,7 @@ const MenuManager = () => {
   };
 
   const handleSubmit = async () => {
+    console.log("[MenuManager] handleSubmit called, form:", form.name, "isOwner:", isOwner, "editingId:", editingId);
     if (!form.name.trim()) return toast.error("Name required");
     const payload: Record<string, unknown> = {
       name: form.name.trim(),
@@ -212,7 +213,7 @@ const MenuManager = () => {
     try {
       let itemId = editingId;
       if (itemId) {
-        const { error } = await supabase.from("menu_items").update(payload).eq("id", itemId);
+        const { error } = await supabase.from("menu_items").update(payload as any).eq("id", itemId);
         if (error) throw error;
       } else {
         const { data: inserted, error } = await supabase
@@ -232,6 +233,7 @@ const MenuManager = () => {
       toast.success(t("common.save") + " ✓");
       resetForm();
     } catch (e: any) {
+      console.error("[MenuManager] save error:", e);
       toast.error(e.message);
     } finally {
       setIsSaving(false);
