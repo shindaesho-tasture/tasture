@@ -146,7 +146,7 @@ const OrderHistory = () => {
 
         grouped[sid] = {
           storeId: sid,
-          storeName: storeMap[sid] || "ร้านไม่ทราบชื่อ",
+          storeName: storeMap[sid] || t("history.unknownStore"),
           lastVisit,
           items,
         };
