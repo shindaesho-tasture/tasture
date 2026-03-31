@@ -50,7 +50,12 @@ const MenuManager = () => {
   const [form, setForm] = useState(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [orderedItems, setOrderedItems] = useState<MenuItemRow[]>([]);
-
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null); // item id being uploaded
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const inlineFileRef = useRef<HTMLInputElement>(null);
+  const inlineTargetId = useRef<string | null>(null);
   // Fetch store name + menu items
   const { data, isLoading } = useQuery({
     queryKey: ["menu-manager", storeId],
