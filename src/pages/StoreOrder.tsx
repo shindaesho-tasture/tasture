@@ -316,6 +316,9 @@ const StoreOrder = () => {
     const useSpecial = selectedSize === "พิเศษ" && optionsItem.price_special != null;
     const basePrice = useSpecial ? optionsItem.price_special! : optionsItem.price;
     const addOnTotal = selectedAddOns.reduce((s, a) => s + a.price, 0);
+    const noodleExtra = selectedNoodleType && optionsItem.noodle_type_prices
+      ? (optionsItem.noodle_type_prices[selectedNoodleType] || 0)
+      : 0;
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
