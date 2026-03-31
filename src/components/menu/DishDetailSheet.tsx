@@ -62,6 +62,13 @@ const DishDetailSheet = ({
 }: DishDetailSheetProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  // Collect all tag texts for translation
+  const allTagTexts = useMemo(() => {
+    const set = new Set<string>();
+    dnaTags.forEach((d) => { set.add(d.selected_tag); set.add(d.component_name); });
+    return Array.from(set);
+  }, [dnaTags]);
+  const { translateTag } = useTagTranslations(allTagTexts);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [sensoryAxes, setSensoryAxes] = useState<SensoryAxis[]>([]);
