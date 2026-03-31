@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          language: string
           menu_item_id: string
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          language?: string
           menu_item_id: string
         }
         Update: {
@@ -34,6 +36,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          language?: string
           menu_item_id?: string
         }
         Relationships: []
