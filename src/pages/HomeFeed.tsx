@@ -82,6 +82,17 @@ const HomeFeed = () => {
   const timeAgo = useMemo(() => makeTimeAgo(t), [t]);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Collect all DNA tag texts for translation
+  const allFeedTagTexts = useMemo(() => {
+    const set = new Set<string>();
+    posts.forEach((p) => {
+      p.dnaComponents?.forEach((c) => set.add(c.tag));
+      p.slides?.forEach((s) => s.dnaComponents?.forEach((c) => set.add(c.tag)));
+    });
+    return Array.from(set);
+  }, [posts]);
+  const { translateTag } = useTagTranslations(allFeedTagTexts);
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
