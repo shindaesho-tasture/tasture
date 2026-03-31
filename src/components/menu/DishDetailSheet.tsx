@@ -311,6 +311,9 @@ const DishDetailSheet = ({
 
               <div className="px-5 pt-4 pb-3">
                 <h2 className="text-xl font-bold text-foreground">{dishName}</h2>
+                {originalDishName && originalDishName !== dishName && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{originalDishName}</p>
+                )}
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-base font-semibold text-score-emerald">฿{price}</span>
                   {priceSpecial != null && (
