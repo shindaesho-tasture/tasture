@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import TagInput from "@/components/menu/TagInput";
+import AddOnManager from "@/components/menu/AddOnManager";
 
 type MenuItemRow = {
   id: string;
