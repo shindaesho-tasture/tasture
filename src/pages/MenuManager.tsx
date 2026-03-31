@@ -305,9 +305,25 @@ const MenuManager = () => {
           </div>
         )}
 
+        {/* Search */}
+        {!isLoading && data && orderedItems.length > 0 && (
+          <div className="px-4 pt-3">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ค้นหาเมนู..."
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald transition-all placeholder:text-muted-foreground/60"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Menu List */}
         {!isLoading && data && (
-          <div className="px-4 pt-4 space-y-2">
+          <div className="px-4 pt-3 space-y-2">
             {orderedItems.length === 0 && !showAdd && (
               <div className="text-center py-16">
                 <p className="text-sm text-muted-foreground">{t("feedback.noMenu")}</p>
@@ -319,7 +335,13 @@ const MenuManager = () => {
               onReorder={handleReorder}
               className="space-y-2"
             >
-              {orderedItems.map((item) => (
+              {orderedItems
+                .filter((item) => {
+                  if (!searchQuery.trim()) return true;
+                  const q = searchQuery.toLowerCase();
+                  return item.name.toLowerCase().includes(q) || (item.original_name || "").toLowerCase().includes(q) || (item.menu_category || "").toLowerCase().includes(q);
+                })
+                .map((item) => (
                 <Reorder.Item
                   key={item.id}
                   value={item}
