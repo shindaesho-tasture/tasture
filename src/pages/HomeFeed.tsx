@@ -1112,13 +1112,13 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
       >
         <div className="flex items-center justify-center py-6 bg-destructive/5 border border-destructive/20 rounded-2xl">
           <motion.div
-            initial={{ scale: 0, rotate: -45 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 500, damping: 25 }}
-            className="flex items-center gap-2 text-destructive"
-          >
-            <Trash2 size={18} />
-            <span className="text-sm font-semibold">ลบแล้ว</span>
+1120:             initial={{ scale: 0, rotate: -45 }}
+1121:             animate={{ scale: 1, rotate: 0 }}
+1122:             transition={{ type: "spring", stiffness: 500, damping: 25 }}
+1123:             className="flex items-center gap-2 text-destructive"
+1124:           >
+1125:             <Trash2 size={18} />
+1126:             <span className="text-sm font-semibold">{t("feed.deleted")}</span>
           </motion.div>
         </div>
       </motion.div>
