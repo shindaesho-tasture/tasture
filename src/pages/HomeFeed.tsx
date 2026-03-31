@@ -1073,7 +1073,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
       setComments((prev) => [...prev, {
         id: data.id,
         userId: user.id,
-        userName: profile?.display_name || "ผู้ใช้",
+        userName: profile?.display_name || t("feed.user"),
         userAvatar: profile?.avatar_url || null,
         content: trimmed,
         createdAt: data.created_at,
