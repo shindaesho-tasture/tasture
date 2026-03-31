@@ -886,11 +886,17 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
   const { t } = useLanguage();
   const timeAgo = useMemo(() => makeTimeAgo(t), [t]);
 
-  // Translate DNA tags
+  // Translate DNA tags + store/menu names for karaoke
   const cardTagTexts = useMemo(() => {
     const set = new Set<string>();
     post.dnaComponents?.forEach((c) => set.add(c.tag));
-    post.slides?.forEach((s) => s.dnaComponents?.forEach((c) => set.add(c.tag)));
+    post.slides?.forEach((s) => {
+      s.dnaComponents?.forEach((c) => set.add(c.tag));
+      if (s.storeName) set.add(s.storeName);
+      if (s.menuItemName) set.add(s.menuItemName);
+    });
+    if (post.storeName) set.add(post.storeName);
+    if (post.menuItemName) set.add(post.menuItemName);
     return Array.from(set);
   }, [post]);
   const { translateTag } = useTagTranslations(cardTagTexts);
