@@ -344,6 +344,13 @@ const Index = () => {
     if (h < 17) return "สวัสดีตอนบ่าย";
     return "สวัสดีตอนเย็น";
   }, []);
+  // Collect all metric labels for translation
+  const allMetricLabels = useMemo(() => {
+    const labels = new Set<string>();
+    stores.forEach((s) => s.metrics.forEach((m) => labels.add(m.label)));
+    return Array.from(labels);
+  }, [stores]);
+  const { translateTag } = useTagTranslations(allMetricLabels);
 
   // ─── Store Card Component ───
   const SpotifyStoreCard = ({ store, size = "normal" }: { store: StoreCard; size?: "normal" | "large" }) => {
