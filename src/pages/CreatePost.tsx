@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Image, X, Send, MapPin, Loader2, Search, ChevronDown, Star, Clock, Plus, GripVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/language-context";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
@@ -29,21 +30,23 @@ interface PostImage {
 
 const scoreEmoji = (s: number) => (s === 2 ? "🤩" : s === 0 ? "😐" : "😔");
 
-const timeAgo = (iso: string) => {
+const makeTimeAgoCp = (t: (key: string, params?: Record<string, string | number>) => string) => (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "เมื่อสักครู่";
-  if (mins < 60) return `${mins} นาทีที่แล้ว`;
+  if (mins < 1) return t("feed.justNow");
+  if (mins < 60) return t("feed.minsAgo", { n: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} ชม.ที่แล้ว`;
+  if (hrs < 24) return t("feed.hrsAgo", { n: hrs });
   const days = Math.floor(hrs / 24);
-  return `${days} วันที่แล้ว`;
+  return t("feed.daysAgo", { n: days });
 };
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const timeAgo = makeTimeAgoCp(t);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -124,8 +127,8 @@ const CreatePost = () => {
         const menu = menuMap.get(r.menu_item_id);
         return {
           id: r.id, menu_item_id: r.menu_item_id,
-          menu_item_name: menu?.name || "เมนู",
-          store_name: menu?.store_id ? (storeMap.get(menu.store_id) || "ร้านค้า") : "ร้านค้า",
+          menu_item_name: menu?.name || t("feed.menu"),
+          store_name: menu?.store_id ? (storeMap.get(menu.store_id) || t("feed.store")) : t("feed.store"),
           store_id: menu?.store_id || "", score: r.score, created_at: r.created_at,
         };
       }));
@@ -141,7 +144,7 @@ const CreatePost = () => {
     const files = Array.from(e.target.files || []);
     const valid = files.filter((f) => f.size <= 10 * 1024 * 1024);
     if (valid.length < files.length) {
-      toast({ title: "ไฟล์บางรูปใหญ่เกินไป", description: "ขนาดไฟล์ต้องไม่เกิน 10MB", variant: "destructive" });
+      toast({ title: t("createPost.fileTooLarge"), description: t("createPost.maxSize"), variant: "destructive" });
     }
     const newImages: PostImage[] = valid.map((file) => ({
       file,
@@ -229,11 +232,11 @@ const CreatePost = () => {
         if (imgErr) console.error("post_images insert error:", imgErr);
       }
 
-      toast({ title: "โพสสำเร็จ! 🎉" });
+      toast({ title: t("createPost.success") });
       navigate("/");
     } catch (err: any) {
       console.error(err);
-      toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: "destructive" });
+      toast({ title: t("createPost.error"), description: err.message, variant: "destructive" });
     } finally {
       setUploading(false);
     }
@@ -243,10 +246,10 @@ const CreatePost = () => {
     return (
       <PageTransition>
         <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 pb-24">
-          <p className="text-muted-foreground text-sm">กรุณาเข้าสู่ระบบก่อนโพส</p>
+          <p className="text-muted-foreground text-sm">{t("createPost.loginRequired")}</p>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate("/auth")}
             className="px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-semibold">
-            เข้าสู่ระบบ
+            {t("common.login")}
           </motion.button>
           <BottomNav />
         </div>
@@ -260,7 +263,7 @@ const CreatePost = () => {
         {/* Header */}
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border/30">
           <div className="flex items-center justify-between px-4 py-3">
-            <h1 className="text-lg font-bold text-foreground">โพสใหม่</h1>
+            <h1 className="text-lg font-bold text-foreground">{t("createPost.title")}</h1>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleSubmit}
@@ -273,7 +276,7 @@ const CreatePost = () => {
               )}
             >
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <Send size={14} />}
-              {uploading ? "กำลังโพส..." : "โพส"}
+              {uploading ? t("createPost.posting") : t("createPost.postBtn")}
             </motion.button>
           </div>
         </div>
@@ -378,7 +381,7 @@ const CreatePost = () => {
                   className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-score-amber/5 border border-score-amber/20 transition-all"
                 >
                   <Star size={14} className="text-score-amber" />
-                  <span className="text-xs text-muted-foreground">แนบรีวิวกับรูปนี้</span>
+                  <span className="text-xs text-muted-foreground">{t("createPost.attachReview")}</span>
                 </motion.button>
               )}
             </div>
@@ -389,22 +392,22 @@ const CreatePost = () => {
               className="rounded-2xl border-2 border-dashed border-border/50 bg-card aspect-square flex flex-col items-center justify-center gap-6"
             >
               <div className="text-4xl">📸</div>
-              <p className="text-sm text-muted-foreground font-medium">แชร์รูปอาหารของคุณ</p>
-              <p className="text-[10px] text-muted-foreground/60">เลือกได้สูงสุด 10 รูป</p>
+              <p className="text-sm text-muted-foreground font-medium">{t("createPost.shareYourFood")}</p>
+              <p className="text-[10px] text-muted-foreground/60">{t("createPost.maxPhotos")}</p>
               <div className="flex gap-3">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => cameraInputRef.current?.click()}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-sm font-semibold"
                 >
-                  <Camera size={16} /> ถ่ายรูป
+                  <Camera size={16} /> {t("createPost.takePhoto")}
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-foreground text-sm font-semibold"
                 >
-                  <Image size={16} /> เลือกรูป
+                  <Image size={16} /> {t("createPost.selectPhoto")}
                 </motion.button>
               </div>
             </motion.div>
@@ -432,8 +435,8 @@ const CreatePost = () => {
                     <div className="w-10 h-1 rounded-full bg-border" />
                   </div>
                   <div className="px-4 py-3 border-b border-border/20">
-                    <h3 className="text-sm font-bold text-foreground">เลือกรีวิวสำหรับรูปที่ {reviewPickerTarget + 1}</h3>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">รีวิวล่าสุดของคุณ</p>
+                    <h3 className="text-sm font-bold text-foreground">{t("createPost.selectReviewFor", { num: reviewPickerTarget + 1 })}</h3>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{t("createPost.yourReviews")}</p>
                   </div>
                   <div className="max-h-[50vh] overflow-y-auto">
                     {loadingReviews ? (
@@ -441,7 +444,7 @@ const CreatePost = () => {
                         <div className="w-6 h-6 border-2 border-score-amber border-t-transparent rounded-full animate-spin" />
                       </div>
                     ) : recentReviews.length === 0 ? (
-                      <p className="text-center text-xs text-muted-foreground py-8">ยังไม่มีรีวิว</p>
+                      <p className="text-center text-xs text-muted-foreground py-8">{t("createPost.noReviews")}</p>
                     ) : (
                       recentReviews.map((review) => {
                         const alreadyUsed = images.some((img, i) => i !== reviewPickerTarget && img.linkedReview?.id === review.id);
@@ -468,7 +471,7 @@ const CreatePost = () => {
                               </div>
                             </div>
                             {alreadyUsed && (
-                              <span className="text-[9px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">ใช้แล้ว</span>
+                              <span className="text-[9px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{t("createPost.alreadyUsed")}</span>
                             )}
                           </motion.button>
                         );
@@ -481,7 +484,7 @@ const CreatePost = () => {
                       onClick={() => setShowReviewPicker(false)}
                       className="w-full py-3 rounded-2xl bg-secondary text-sm font-medium text-muted-foreground"
                     >
-                      ข้ามไปก่อน
+                      {t("createPost.skipForNow")}
                     </motion.button>
                   </div>
                 </motion.div>
@@ -501,7 +504,7 @@ const CreatePost = () => {
             >
               <MapPin size={16} className={selectedStore ? "text-score-emerald" : "text-muted-foreground"} />
               <span className={cn("flex-1 text-left text-sm", selectedStore ? "font-semibold text-foreground" : "text-muted-foreground")}>
-                {selectedStore ? selectedStore.name : "แท็กร้านอาหาร (ไม่บังคับ)"}
+                {selectedStore ? selectedStore.name : t("createPost.tagStore")}
               </span>
               {selectedStore ? (
                 <motion.div whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setSelectedStore(null); }}
@@ -524,7 +527,7 @@ const CreatePost = () => {
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/20">
                     <Search size={14} className="text-muted-foreground shrink-0" />
                     <input type="text" value={storeSearch} onChange={(e) => setStoreSearch(e.target.value)}
-                      placeholder="ค้นหาร้าน..." autoFocus
+                      placeholder={t("createPost.searchStore")} autoFocus
                       className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none" />
                     {storeSearch && <button onClick={() => setStoreSearch("")}><X size={12} className="text-muted-foreground" /></button>}
                   </div>
@@ -532,7 +535,7 @@ const CreatePost = () => {
                     {loadingStores ? (
                       <div className="flex justify-center py-4"><div className="w-5 h-5 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" /></div>
                     ) : filteredStores.length === 0 ? (
-                      <p className="text-center text-xs text-muted-foreground py-4">ไม่พบร้าน</p>
+                      <p className="text-center text-xs text-muted-foreground py-4">{t("createPost.noStoreFound")}</p>
                     ) : filteredStores.map((store) => (
                       <motion.button key={store.id} whileTap={{ scale: 0.98 }}
                         onClick={() => { setSelectedStore(store); setShowStorePicker(false); setStoreSearch(""); }}
@@ -551,7 +554,7 @@ const CreatePost = () => {
           {/* Caption */}
           <div className="rounded-2xl bg-card border border-border/30 shadow-luxury overflow-hidden">
             <textarea value={caption} onChange={(e) => setCaption(e.target.value)}
-              placeholder="เขียนอะไรสักหน่อย... 🍜" maxLength={500} rows={3}
+              placeholder={t("createPost.captionPlaceholder")} maxLength={500} rows={3}
               className="w-full bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none" />
             <div className="px-4 pb-2 flex justify-end">
               <span className={cn("text-[10px] font-medium", caption.length > 450 ? "text-score-ruby" : "text-muted-foreground/40")}>

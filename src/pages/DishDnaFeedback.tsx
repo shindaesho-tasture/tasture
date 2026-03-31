@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft, Check, Loader2, Sparkles, Dna } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/language-context";
 import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
@@ -11,7 +12,7 @@ import DishDnaCard from "@/components/menu/DishDnaCard";
 import type { DishAnalysis, DishDnaSelection, DishComponent } from "@/lib/dish-dna-types";
 
 /* ─── Analyzing Animation ─── */
-const AnalyzingOverlay = ({ dishName }: { dishName: string }) => (
+const AnalyzingOverlay = ({ dishName, t }: { dishName: string; t: (key: string, params?: Record<string, string | number>) => string }) => (
   <div className="flex flex-col items-center justify-center py-24 gap-6">
     <motion.div
       animate={{ rotate: 360 }}
@@ -28,7 +29,7 @@ const AnalyzingOverlay = ({ dishName }: { dishName: string }) => (
       </motion.div>
     </motion.div>
     <div className="text-center space-y-1.5">
-      <p className="text-sm font-semibold text-foreground">กำลังวิเคราะห์</p>
+      <p className="text-sm font-semibold text-foreground">{t("dna.analyzing")}</p>
       <p className="text-base font-medium text-score-emerald">"{dishName}"</p>
       <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mt-2">
         sovereign culinary ai
@@ -42,6 +43,7 @@ const DishDnaFeedback = () => {
   const { menuItemId } = useParams<{ menuItemId: string }>();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
 
   const [dishName, setDishName] = useState("");
   const [components, setComponents] = useState<DishComponent[]>([]);
@@ -123,7 +125,7 @@ const DishDnaFeedback = () => {
       }
     } catch (err: any) {
       console.error("DishDnaFeedback load error:", err);
-      toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: "destructive" });
+      toast({ title: t("dna.error"), description: err.message, variant: "destructive" });
     } finally {
       setAnalyzing(false);
     }
@@ -189,14 +191,14 @@ const DishDnaFeedback = () => {
       }
 
       setSaveSuccess(true);
-      toast({ title: "✅ บันทึก Dish DNA สำเร็จ", description: `${rows.length} ส่วนประกอบ` });
+      toast({ title: t("dna.success"), description: t("dna.components", { count: rows.length }) });
       setTimeout(() => {
         setSaveSuccess(false);
         navigate(-1);
       }, 1500);
     } catch (err: any) {
       console.error("Save dish DNA error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("dna.saveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -220,7 +222,7 @@ const DishDnaFeedback = () => {
                 {dishName || "Dish DNA"}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
-                เลือกแท็กที่ตรงกับความรู้สึก
+                {t("dna.selectTag")}
               </p>
             </div>
             {!analyzing && totalComponents > 0 && (
@@ -244,7 +246,7 @@ const DishDnaFeedback = () => {
 
         {/* ─── Content ─── */}
         {analyzing ? (
-          <AnalyzingOverlay dishName={dishName} />
+          <AnalyzingOverlay dishName={dishName} t={t} />
         ) : components.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -255,8 +257,8 @@ const DishDnaFeedback = () => {
               <Dna size={36} className="text-muted-foreground" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground">ไม่สามารถวิเคราะห์ได้</p>
-              <p className="text-[11px] text-muted-foreground mt-1">ลองกลับไปเลือกเมนูอื่น</p>
+               <p className="text-sm font-medium text-foreground">{t("dna.cannotAnalyze")}</p>
+               <p className="text-[11px] text-muted-foreground mt-1">{t("dna.tryOther")}</p>
             </div>
           </motion.div>
         ) : (
@@ -271,12 +273,12 @@ const DishDnaFeedback = () => {
                 <Sparkles size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
               <div>
                   <p className="text-[11px] font-medium text-foreground leading-relaxed">
-                    แตะแท็กที่ตรงกับรสชาติ แล้วให้คะแนนเลย
+                    {t("dna.tapTag")}
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
-                    <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
-                    <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> {t("review.excellent")} ·
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> {t("review.normal")} ·
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> {t("review.disappointing")}
                   </p>
                 </div>
               </div>
@@ -321,14 +323,14 @@ const DishDnaFeedback = () => {
                     ) : saveSuccess ? (
                       <motion.div key="success" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex items-center gap-2">
                         <Check size={18} strokeWidth={2.5} />
-                        <span>สำเร็จ!</span>
+                        <span>{t("review.saveSuccess").replace("✅ ", "")}</span>
                       </motion.div>
                     ) : (
                       <motion.div key="default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
                         <Dna size={18} strokeWidth={2} />
                         <span>
-                          บันทึก Dish DNA
-                          {changedCount > 0 && <span className="ml-1 opacity-60">({changedCount} เปลี่ยน)</span>}
+                          {t("dna.saveBtn")}
+                          {changedCount > 0 && <span className="ml-1 opacity-60">({t("dna.changed", { count: changedCount })})</span>}
                         </span>
                       </motion.div>
                     )}

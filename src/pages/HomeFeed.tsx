@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send, Trash2, UserPlus, UserCheck, Bookmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/language-context";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
@@ -61,21 +62,23 @@ const tierBg: Record<ScoreTier, string> = {
   ruby: "bg-score-ruby/10",
 };
 
-const timeAgo = (iso: string) => {
+const makeTimeAgo = (t: (key: string, params?: Record<string, string | number>) => string) => (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "เมื่อสักครู่";
-  if (mins < 60) return `${mins} นาทีที่แล้ว`;
+  if (mins < 1) return t("feed.justNow");
+  if (mins < 60) return t("feed.minsAgo", { n: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} ชั่วโมงที่แล้ว`;
+  if (hrs < 24) return t("feed.hrsAgo", { n: hrs });
   const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days} วันที่แล้ว`;
+  if (days < 7) return t("feed.daysAgo", { n: days });
   return new Date(iso).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
 };
 
 const HomeFeed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const timeAgo = useMemo(() => makeTimeAgo(t), [t]);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -262,7 +265,7 @@ const HomeFeed = () => {
       const profileMap = new Map<string, { name: string; avatar: string | null }>();
       (profilesRes.data || []).forEach((p: any) => {
         if (p.banned) bannedUsers.add(p.id);
-        profileMap.set(p.id, { name: p.display_name || "ผู้ใช้", avatar: p.avatar_url });
+        profileMap.set(p.id, { name: p.display_name || t("feed.user"), avatar: p.avatar_url });
       });
 
       const menuMap = new Map<string, { name: string; storeId: string; image: string | null }>();
@@ -414,9 +417,9 @@ const HomeFeed = () => {
           id: `post-${key}`,
           type,
           userId: entry.userId,
-          userName: profile?.name || "ผู้ใช้",
+          userName: profile?.name || t("feed.user"),
           userAvatar: profile?.avatar || null,
-          storeName: menu ? (storeMap.get(menu.storeId) || "ร้านค้า") : "ร้านค้า",
+          storeName: menu ? (storeMap.get(menu.storeId) || t("feed.store")) : t("feed.store"),
           storeId: storeId || "",
           menuItemName: menu?.name || "เมนู",
           menuItemId: entry.menuItemId,
@@ -516,7 +519,7 @@ const HomeFeed = () => {
                 return {
                   imageUrl: pi.image_url,
                   reviewScore: review?.score ?? null,
-                  menuItemName: menuItem?.name || (review ? "เมนู" : null),
+                  menuItemName: menuItem?.name || (review ? t("feed.menu") : null),
                   storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
                   storeId: menuItem?.storeId || null,
                   dnaComponents: slideKey ? slideDnaMap.get(slideKey) : undefined,
@@ -529,9 +532,9 @@ const HomeFeed = () => {
             id: `photo-${pp.id}`,
             type: "photo_post",
             userId: pp.user_id,
-            userName: profile?.name || "ผู้ใช้",
+            userName: profile?.name || t("feed.user"),
             userAvatar: profile?.avatar || null,
-            storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "",
+            storeName: ppStoreId ? (storeMap.get(ppStoreId) || t("feed.store")) : "",
             storeId: ppStoreId,
             menuItemName: "",
             menuItemId: "",
@@ -550,8 +553,8 @@ const HomeFeed = () => {
           const ppStoreId = pp.store_id || "";
           allPosts.push({
             id: `photo-${pp.id}`, type: "photo_post",
-            userId: pp.user_id, userName: profile?.name || "ผู้ใช้", userAvatar: profile?.avatar || null,
-            storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "", storeId: ppStoreId,
+            userId: pp.user_id, userName: profile?.name || t("feed.user"), userAvatar: profile?.avatar || null,
+            storeName: ppStoreId ? (storeMap.get(ppStoreId) || t("feed.store")) : "", storeId: ppStoreId,
             menuItemName: "", menuItemId: "", menuItemImage: null, score: null, satisfaction: null,
             caption: pp.caption, photoUrl: pp.image_url,
             slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }],
@@ -707,10 +710,10 @@ const HomeFeed = () => {
   }, [activeTab, handleTabChange]);
 
   const emptyMessages: Record<FeedTab, string> = {
-    explore: "ยังไม่มีรีวิวจากชุมชน",
-    nearby: geoPos ? "ไม่พบรีวิวร้านใกล้เคียง" : "กรุณาเปิดตำแหน่งที่ตั้ง",
-    following: "ยังไม่มีรีวิวจากคนที่คุณติดตาม",
-    foryou: "ยังไม่มีรีวิวที่แนะนำสำหรับคุณ",
+    explore: t("feed.emptyExplore"),
+    nearby: geoPos ? t("feed.emptyNearby") : t("feed.emptyNearbyNoGeo"),
+    following: t("feed.emptyFollowing"),
+    foryou: t("feed.emptyForyou"),
   };
 
   return (
@@ -735,10 +738,10 @@ const HomeFeed = () => {
               />
             </motion.div>
             {pullProgress >= 1 && !refreshing && (
-              <span className="ml-2 text-[11px] font-medium text-score-emerald">ปล่อยเพื่อรีเฟรช</span>
+              <span className="ml-2 text-[11px] font-medium text-score-emerald">{t("feed.releaseRefresh")}</span>
             )}
             {refreshing && (
-              <span className="ml-2 text-[11px] font-medium text-muted-foreground">กำลังโหลด…</span>
+              <span className="ml-2 text-[11px] font-medium text-muted-foreground">{t("feed.refreshing")}</span>
             )}
           </motion.div>
         </div>
@@ -806,7 +809,7 @@ const HomeFeed = () => {
                     onClick={() => navigate("/store-list")}
                     className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
                   >
-                    เริ่มสำรวจร้าน
+                    {t("feed.exploreStores")}
                   </motion.button>
                 )}
                 {activeTab === "following" && (
@@ -815,7 +818,7 @@ const HomeFeed = () => {
                     onClick={() => navigate("/discover")}
                     className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
                   >
-                    ค้นหาคนเพื่อติดตาม
+                    {t("feed.findPeople")}
                   </motion.button>
                 )}
               </motion.div>
@@ -841,7 +844,7 @@ const HomeFeed = () => {
               </div>
             )}
             {!hasMore && filteredPosts.length > 0 && (
-              <p className="text-center text-[11px] text-muted-foreground/50 py-4">ไม่มีโพสเพิ่มเติม</p>
+              <p className="text-center text-[11px] text-muted-foreground/50 py-4">{t("feed.noMorePosts")}</p>
             )}
           </div>
             </motion.div>
@@ -879,6 +882,8 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initialLiked, initialCommentCount, initialFollowing, initialSaved }: PostCardProps) => {
+  const { t } = useLanguage();
+  const timeAgo = useMemo(() => makeTimeAgo(t), [t]);
   const [liked, setLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [showComments, setShowComments] = useState(false);
@@ -1022,12 +1027,12 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
         .in("id", userIds);
 
       const profileMap = new Map<string, { name: string; avatar: string | null }>();
-      (profiles || []).forEach((p) => profileMap.set(p.id, { name: p.display_name || "ผู้ใช้", avatar: p.avatar_url }));
+      (profiles || []).forEach((p) => profileMap.set(p.id, { name: p.display_name || t("feed.user"), avatar: p.avatar_url }));
 
       setComments(data.map((c) => ({
         id: c.id,
         userId: c.user_id,
-        userName: profileMap.get(c.user_id)?.name || "ผู้ใช้",
+        userName: profileMap.get(c.user_id)?.name || t("feed.user"),
         userAvatar: profileMap.get(c.user_id)?.avatar || null,
         content: c.content,
         createdAt: c.created_at,
@@ -1068,7 +1073,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
       setComments((prev) => [...prev, {
         id: data.id,
         userId: user.id,
-        userName: profile?.display_name || "ผู้ใช้",
+        userName: profile?.display_name || t("feed.user"),
         userAvatar: profile?.avatar_url || null,
         content: trimmed,
         createdAt: data.created_at,
@@ -1113,7 +1118,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
             className="flex items-center gap-2 text-destructive"
           >
             <Trash2 size={18} />
-            <span className="text-sm font-semibold">ลบแล้ว</span>
+            <span className="text-sm font-semibold">{t("feed.deleted")}</span>
           </motion.div>
         </div>
       </motion.div>
@@ -1170,12 +1175,12 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               )}
             >
               {isFollowing ? <UserCheck size={10} /> : <UserPlus size={10} />}
-              {isFollowing ? "ติดตามแล้ว" : "ติดตาม"}
+              {isFollowing ? t("feed.following") : t("feed.follow")}
             </motion.button>
           )}
           {(post.type === "combined" || post.type === "menu_review") && (
             <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-score-amber/10 text-score-amber">
-              ⭐ รีวิว
+              ⭐ {t("feed.review")}
             </span>
           )}
           {(post.type === "combined" || post.type === "dish_dna") && (
@@ -1185,7 +1190,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           )}
           {post.type === "photo_post" && (
             <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-primary/10 text-primary">
-              📸 โพส
+              📸 {t("feed.post")}
             </span>
           )}
         </div>
@@ -1203,7 +1208,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               )}
               {post.storeName && (
                 <>
-                  {" "}ที่{" "}
+                  {" "}{t("feed.at")}{" "}
                   <button
                     onClick={() => navigate(`/store/${post.storeId}/order`)}
                     className="font-semibold text-score-emerald hover:underline"
@@ -1216,12 +1221,12 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           ) : (
             <>
               {post.type === "combined"
-                ? "รีวิวและวิเคราะห์ DNA ของ"
+                ? t("feed.reviewAndDna")
                 : post.type === "menu_review"
-                ? "ให้คะแนน"
-                : "วิเคราะห์ Dish DNA ของ"}{" "}
+                ? t("feed.rated")
+                : t("feed.analyzedDna")}{" "}
               <span className="font-semibold text-foreground">{post.menuItemName}</span>
-              {" "}ที่{" "}
+              {" "}{t("feed.at")}{" "}
               <button
                 onClick={() => navigate(`/store/${post.storeId}/order`)}
                 className="font-semibold text-score-emerald hover:underline"
@@ -1258,7 +1263,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                 <motion.img
                   key={slideIndex}
                   src={post.slides[slideIndex].imageUrl}
-                  alt={post.slides[slideIndex].menuItemName || post.caption || "รูปอาหาร"}
+                  alt={post.slides[slideIndex].menuItemName || post.caption || t("feed.foodPhoto")}
                   className="absolute inset-0 w-full h-full object-cover"
                   initial={{ opacity: 0, x: 60 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -1474,7 +1479,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               "text-[11px] font-medium",
               liked ? "text-score-ruby" : "text-muted-foreground"
             )}>
-              {likeCount > 0 ? likeCount : "ถูกใจ"}
+              {likeCount > 0 ? likeCount : t("feed.like")}
             </span>
           </motion.button>
           <AnimatePresence>
@@ -1506,7 +1511,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
             "text-[11px] font-medium",
             showComments ? "text-score-emerald" : "text-muted-foreground"
           )}>
-            {commentCount > 0 ? commentCount : "คอมเมนต์"}
+            {commentCount > 0 ? commentCount : t("feed.comment")}
           </span>
         </motion.button>
 
@@ -1527,7 +1532,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               "text-[11px] font-medium",
               saved ? "text-score-emerald" : "text-muted-foreground"
             )}>
-              {saved ? "บันทึกแล้ว" : "บันทึก"}
+              {saved ? t("feed.saved") : t("feed.save")}
             </span>
           </motion.button>
         )}
@@ -1552,7 +1557,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           >
             <Trash2 size={16} />
             <span className="text-[11px] font-medium">
-              {confirmDelete ? "กดอีกครั้ง" : "ลบ"}
+              {confirmDelete ? t("feed.tapAgain") : t("common.delete")}
             </span>
           </motion.button>
         )}
@@ -1575,7 +1580,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                 </div>
               ) : comments.length === 0 ? (
                 <p className="text-[11px] text-muted-foreground text-center py-2">
-                  ยังไม่มีคอมเมนต์ — เป็นคนแรก!
+                  {t("feed.noCommentsFirst")}
                 </p>
               ) : (
                 <div className="space-y-2.5 max-h-60 overflow-y-auto">
@@ -1632,7 +1637,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
                       onKeyDown={(e) => e.key === "Enter" && submitComment()}
-                      placeholder="เขียนคอมเมนต์…"
+                      placeholder={t("feed.writeCommentPlaceholder")}
                       className="flex-1 bg-transparent text-[11px] text-foreground placeholder:text-muted-foreground outline-none"
                       maxLength={500}
                     />
@@ -1651,7 +1656,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                 </div>
               ) : (
                 <p className="text-[10px] text-muted-foreground text-center">
-                  เข้าสู่ระบบเพื่อคอมเมนต์
+                  {t("feed.loginToComment")}
                 </p>
               )}
             </div>

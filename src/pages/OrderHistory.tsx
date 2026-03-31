@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/language-context";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import { ClipboardList, ChevronRight, Store, LogIn, Star } from "lucide-react";
@@ -27,6 +28,7 @@ const scoreEmoji = (s: number | null) =>
 const OrderHistory = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -144,7 +146,7 @@ const OrderHistory = () => {
 
         grouped[sid] = {
           storeId: sid,
-          storeName: storeMap[sid] || "ร้านไม่ทราบชื่อ",
+          storeName: storeMap[sid] || t("history.unknownStore"),
           lastVisit,
           items,
         };
@@ -180,7 +182,7 @@ const OrderHistory = () => {
       <PageTransition>
         <div className="min-h-screen bg-background pb-24">
           <header className="px-6 pt-6 pb-4">
-            <h1 className="text-xl font-semibold text-foreground">รายการ</h1>
+             <h1 className="text-xl font-semibold text-foreground">{t("history.title")}</h1>
           </header>
           <div className="flex items-center justify-center h-[50vh]">
             <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
@@ -196,21 +198,21 @@ const OrderHistory = () => {
       <PageTransition>
         <div className="min-h-screen bg-background pb-24">
           <header className="px-6 pt-6 pb-4">
-            <h1 className="text-xl font-semibold text-foreground">รายการ</h1>
+             <h1 className="text-xl font-semibold text-foreground">{t("history.title")}</h1>
           </header>
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4 px-6">
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
               <LogIn size={28} strokeWidth={1.5} className="text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              เข้าสู่ระบบเพื่อดูประวัติการไปร้านอาหาร
-            </p>
-            <button
-              onClick={() => navigate("/auth")}
-              className="mt-2 px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-medium"
-            >
-              เข้าสู่ระบบ
-            </button>
+             <p className="text-sm text-muted-foreground text-center">
+               {t("history.loginPrompt")}
+             </p>
+             <button
+               onClick={() => navigate("/auth")}
+               className="mt-2 px-6 py-2.5 rounded-full bg-foreground text-background text-sm font-medium"
+             >
+               {t("common.login")}
+             </button>
           </div>
           <BottomNav />
         </div>
@@ -222,10 +224,10 @@ const OrderHistory = () => {
     <PageTransition>
       <div className="min-h-screen bg-background pb-24">
         <header className="px-6 pt-6 pb-2">
-          <h1 className="text-xl font-semibold text-foreground">รายการ</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            ประวัติร้านอาหารและเมนูที่คุณเคยออเดอร์
-          </p>
+           <h1 className="text-xl font-semibold text-foreground">{t("history.title")}</h1>
+           <p className="text-xs text-muted-foreground mt-1">
+             {t("history.subtitle")}
+           </p>
         </header>
 
         {visits.length === 0 ? (
@@ -262,7 +264,7 @@ const OrderHistory = () => {
                         {visit.storeName}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {formatDate(visit.lastVisit)} · {reviewedCount}/{visit.items.length} รีวิวแล้ว
+                        {formatDate(visit.lastVisit)} · {t("history.reviewed", { done: reviewedCount, total: visit.items.length })}
                       </p>
                     </div>
                     <ChevronRight size={16} className="text-muted-foreground shrink-0" />
@@ -293,8 +295,8 @@ const OrderHistory = () => {
                             }}
                             className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
                           >
-                            <Star size={12} />
-                            ให้คะแนน
+                             <Star size={12} />
+                             {t("history.rate")}
                           </button>
                         )}
                       </div>
