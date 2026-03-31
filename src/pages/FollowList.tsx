@@ -138,8 +138,8 @@ const FollowList = () => {
           {/* Tabs */}
           <div className="flex px-4 gap-1 pb-2">
             {([
-              { key: "followers" as Tab, label: "ผู้ติดตาม", count: counts.followers },
-              { key: "following" as Tab, label: "กำลังติดตาม", count: counts.following },
+              { key: "followers" as Tab, label: t("followList.followers", language), count: counts.followers },
+              { key: "following" as Tab, label: t("followList.following", language), count: counts.following },
             ]).map((t) => (
               <motion.button
                 key={t.key}
