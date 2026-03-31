@@ -9,6 +9,7 @@ import {
 import DishTemplateEditor from "@/components/admin/DishTemplateEditor";
 import AdminStoreEditor from "@/components/admin/AdminStoreEditor";
 import AdminCategoryEditor from "@/components/admin/AdminCategoryEditor";
+import AdminMenuCategoryEditor from "@/components/admin/AdminMenuCategoryEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -20,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 /* ─── Types ─── */
-type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories";
+type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories" | "menu_cats";
 
 interface AdminStore {
   id: string; name: string; category_id: string | null; verified: boolean;
@@ -68,6 +69,7 @@ const tabs: { id: AdminTab; label: string; icon: typeof BarChart3 }[] = [
   { id: "feedback", label: "ฟีดแบค", icon: Dna },
   { id: "templates", label: "แท็ก DNA", icon: Settings2 },
   { id: "categories", label: "กลุ่มร้าน", icon: Tags },
+  { id: "menu_cats", label: "หมวดเมนู", icon: UtensilsCrossed },
 ];
 
 const roleIcons: Record<string, typeof Crown> = { admin: Crown, moderator: Shield, user: UserIcon };
@@ -869,6 +871,13 @@ const AdminDashboard = () => {
               {activeTab === "categories" && (
                 <motion.div key="categories" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                   <AdminCategoryEditor />
+                </motion.div>
+              )}
+
+              {/* ─── Menu Categories Tab ─── */}
+              {activeTab === "menu_cats" && (
+                <motion.div key="menu_cats" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <AdminMenuCategoryEditor />
                 </motion.div>
               )}
             </AnimatePresence>
