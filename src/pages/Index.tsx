@@ -440,7 +440,8 @@ const Index = () => {
                       key={m.id}
                       className={cn("px-1.5 py-0.5 rounded-md text-[8px] font-semibold leading-none", tagColorMap[t])}
                     >
-                      {m.icon} {m.label}
+                      {m.icon} {translateTag(m.label)}
+                    </span>
                     </span>
                   );
                 })}
