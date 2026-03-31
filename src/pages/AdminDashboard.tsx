@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 /* ─── Types ─── */
-type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories" | "menu_cats";
+type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories" | "menu_cats" | "tag_trans";
 
 interface AdminStore {
   id: string; name: string; category_id: string | null; verified: boolean;
