@@ -957,7 +957,7 @@ const PostOrderReview = () => {
                     </span>
                   </div>
                   <div className="text-center">
-                    <h2 className="text-lg font-bold text-foreground">คะแนนรวม</h2>
+                    <h2 className="text-lg font-bold text-foreground">{t("por.overallScore")}</h2>
                     <p className="text-xs text-muted-foreground mt-0.5">{storeName}</p>
                   </div>
                 </motion.div>
