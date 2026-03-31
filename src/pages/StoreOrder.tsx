@@ -108,6 +108,25 @@ const StoreOrder = () => {
       const menuData = menuRes.data || [];
       setMenuItems(menuData);
 
+      // Fetch add-ons for all menu items
+      if (menuData.length > 0) {
+        const menuIds = menuData.map((m) => m.id);
+        const { data: addOnsData } = await supabase
+          .from("menu_addons")
+          .select("id, menu_item_id, name, price, category")
+          .in("menu_item_id", menuIds)
+          .order("category")
+          .order("sort_order");
+        if (addOnsData) {
+          const map = new Map<string, { id: string; name: string; price: number; category: string }[]>();
+          addOnsData.forEach((a: any) => {
+            if (!map.has(a.menu_item_id)) map.set(a.menu_item_id, []);
+            map.get(a.menu_item_id)!.push({ id: a.id, name: a.name, price: a.price, category: a.category });
+          });
+          setItemAddOns(map);
+        }
+      }
+
       // Fetch Dish DNA for these menu items
       if (menuData.length > 0) {
         const menuIds = menuData.map((m) => m.id);
