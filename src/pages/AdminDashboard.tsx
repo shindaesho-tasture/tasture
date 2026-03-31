@@ -4,12 +4,13 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ShieldCheck, Search, CheckCircle2, XCircle, Users, Store,
   MessageSquare, Dna, BarChart3, TrendingUp, Eye, EyeOff, Trash2, UserCog,
-  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags, UtensilsCrossed, Camera,
+  Crown, Shield, User as UserIcon, RefreshCw, ChevronDown, Filter, Ban, Settings2, Tags, UtensilsCrossed, Camera, Languages,
 } from "lucide-react";
 import DishTemplateEditor from "@/components/admin/DishTemplateEditor";
 import AdminStoreEditor from "@/components/admin/AdminStoreEditor";
 import AdminCategoryEditor from "@/components/admin/AdminCategoryEditor";
 import AdminMenuCategoryEditor from "@/components/admin/AdminMenuCategoryEditor";
+import AdminTagTranslationEditor from "@/components/admin/AdminTagTranslationEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 /* ─── Types ─── */
-type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories" | "menu_cats";
+type AdminTab = "overview" | "stores" | "users" | "content" | "feedback" | "templates" | "categories" | "menu_cats" | "tag_trans";
 
 interface AdminStore {
   id: string; name: string; category_id: string | null; verified: boolean;
@@ -70,6 +71,7 @@ const tabs: { id: AdminTab; label: string; icon: typeof BarChart3 }[] = [
   { id: "templates", label: "แท็ก DNA", icon: Settings2 },
   { id: "categories", label: "กลุ่มร้าน", icon: Tags },
   { id: "menu_cats", label: "หมวดเมนู", icon: UtensilsCrossed },
+  { id: "tag_trans", label: "แปลแท็ก", icon: Languages },
 ];
 
 const roleIcons: Record<string, typeof Crown> = { admin: Crown, moderator: Shield, user: UserIcon };
@@ -878,6 +880,13 @@ const AdminDashboard = () => {
               {activeTab === "menu_cats" && (
                 <motion.div key="menu_cats" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                   <AdminMenuCategoryEditor />
+                </motion.div>
+              )}
+
+              {/* ─── Tag Translations Tab ─── */}
+              {activeTab === "tag_trans" && (
+                <motion.div key="tag_trans" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <AdminTagTranslationEditor />
                 </motion.div>
               )}
             </AnimatePresence>
