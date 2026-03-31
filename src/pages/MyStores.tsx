@@ -260,7 +260,7 @@ const MyStores = () => {
                       )}
 
                       {topTags.length === 0 && (
-                        <p className="text-[11px] text-muted-foreground mt-3">ยังไม่มีฟีดแบค</p>
+                        <p className="text-[11px] text-muted-foreground mt-3">{t("myStores.noFeedback", language)}</p>
                       )}
                     </div>
 
