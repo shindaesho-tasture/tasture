@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import type { MenuItem } from "@/lib/menu-types";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import { preTranslateStoreData } from "@/lib/pre-translate";
 import { GOOGLE_MAPS_API_KEY, MAPS_LIBRARIES, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
