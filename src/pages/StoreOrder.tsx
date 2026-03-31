@@ -72,6 +72,8 @@ const StoreOrder = () => {
   const [selectedNoodleStyle, setSelectedNoodleStyle] = useState<string>("");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [selectedSize, setSelectedSize] = useState<"ธรรมดา" | "พิเศษ">("ธรรมดา");
+  const [itemAddOns, setItemAddOns] = useState<Map<string, { id: string; name: string; price: number; category: string }[]>>(new Map());
+  const [selectedAddOns, setSelectedAddOns] = useState<{ name: string; price: number }[]>([]);
 
   // Detail sheet state
   const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
@@ -105,6 +107,25 @@ const StoreOrder = () => {
       }
       const menuData = menuRes.data || [];
       setMenuItems(menuData);
+
+      // Fetch add-ons for all menu items
+      if (menuData.length > 0) {
+        const menuIds = menuData.map((m) => m.id);
+        const { data: addOnsData } = await supabase
+          .from("menu_addons")
+          .select("id, menu_item_id, name, price, category")
+          .in("menu_item_id", menuIds)
+          .order("category")
+          .order("sort_order");
+        if (addOnsData) {
+          const map = new Map<string, { id: string; name: string; price: number; category: string }[]>();
+          addOnsData.forEach((a: any) => {
+            if (!map.has(a.menu_item_id)) map.set(a.menu_item_id, []);
+            map.get(a.menu_item_id)!.push({ id: a.id, name: a.name, price: a.price, category: a.category });
+          });
+          setItemAddOns(map);
+        }
+      }
 
       // Fetch Dish DNA for these menu items
       if (menuData.length > 0) {
@@ -274,7 +295,8 @@ const StoreOrder = () => {
       (item.price_special != null) ||
       (item.noodle_types && item.noodle_types.length > 0) ||
       (item.noodle_styles && item.noodle_styles.length > 0) ||
-      (item.toppings && item.toppings.length > 0)
+      (item.toppings && item.toppings.length > 0) ||
+      (itemAddOns.get(item.id)?.length ?? 0) > 0
     );
   };
 
@@ -283,6 +305,7 @@ const StoreOrder = () => {
     setSelectedNoodleType(item.noodle_types?.[0] || "");
     setSelectedNoodleStyle(item.noodle_styles?.[0] || "");
     setSelectedToppings([]);
+    setSelectedAddOns([]);
     setSelectedSize("ธรรมดา");
   };
 
@@ -290,10 +313,12 @@ const StoreOrder = () => {
     if (!optionsItem) return;
     if (navigator.vibrate) navigator.vibrate(8);
     const useSpecial = selectedSize === "พิเศษ" && optionsItem.price_special != null;
+    const basePrice = useSpecial ? optionsItem.price_special! : optionsItem.price;
+    const addOnTotal = selectedAddOns.reduce((s, a) => s + a.price, 0);
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
-      price: useSpecial ? optionsItem.price_special! : optionsItem.price,
+      price: basePrice + addOnTotal,
       quantity: 1,
       type: optionsItem.type,
       selectedOptions: {
@@ -301,9 +326,19 @@ const StoreOrder = () => {
         noodleType: selectedNoodleType || undefined,
         noodleStyle: selectedNoodleStyle || undefined,
         toppings: selectedToppings.length > 0 ? selectedToppings : undefined,
+        addOns: selectedAddOns.length > 0 ? selectedAddOns.map(a => a.name) : undefined,
       },
     });
     setOptionsItem(null);
+  };
+
+  const toggleAddOn = (addon: { name: string; price: number }) => {
+    setSelectedAddOns((prev) => {
+      const exists = prev.find((a) => a.name === addon.name);
+      if (exists) return prev.filter((a) => a.name !== addon.name);
+      if (prev.length >= MAX_TOPPINGS) return prev;
+      return [...prev, addon];
+    });
   };
 
   const handleAddSimple = (item: MenuItemRow) => {
@@ -705,9 +740,46 @@ const StoreOrder = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Add-ons grouped by category */}
+                  {(() => {
+                    const addOns = itemAddOns.get(optionsItem.id);
+                    if (!addOns || addOns.length === 0) return null;
+                    const grouped = addOns.reduce<Record<string, typeof addOns>>((acc, a) => {
+                      (acc[a.category] = acc[a.category] || []).push(a);
+                      return acc;
+                    }, {});
+                    const catEmoji: Record<string, string> = { "เนื้อสัตว์": "🥩", "ผัก": "🥬", "ซอส": "🫙", "อื่นๆ": "➕" };
+                    return Object.entries(grouped).map(([cat, items]) => (
+                      <div key={cat}>
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                          {catEmoji[cat] || "📦"} {cat} <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {items.map((a) => {
+                            const selected = selectedAddOns.some((sa) => sa.name === a.name);
+                            return (
+                              <motion.button
+                                key={a.id}
+                                whileTap={{ scale: 0.93 }}
+                                onClick={() => toggleAddOn({ name: a.name, price: a.price })}
+                                className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                                  selected
+                                    ? "bg-score-amber text-primary-foreground border-score-amber shadow-sm"
+                                    : "bg-surface-elevated text-foreground border-border/50"
+                                }`}
+                              >
+                                {selected && <Check size={12} strokeWidth={2.5} />}
+                                {a.name} <span className="opacity-70">+฿{a.price}</span>
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
-                {/* Confirm */}
                 <div className="px-5 pb-8 pt-2">
                   <motion.button
                     whileTap={{ scale: 0.97 }}
@@ -715,6 +787,9 @@ const StoreOrder = () => {
                     className="w-full py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury"
                   >
                     {t("order.addToOrder", language)}
+                    {selectedAddOns.length > 0 && (
+                      <span className="ml-1 opacity-80">(+฿{selectedAddOns.reduce((s, a) => s + a.price, 0)})</span>
+                    )}
                   </motion.button>
                 </div>
               </motion.div>

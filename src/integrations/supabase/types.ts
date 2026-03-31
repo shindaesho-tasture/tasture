@@ -153,6 +153,7 @@ export type Database = {
       }
       menu_addons: {
         Row: {
+          category: string
           created_at: string
           id: string
           menu_item_id: string
@@ -161,6 +162,7 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          category?: string
           created_at?: string
           id?: string
           menu_item_id: string
@@ -169,6 +171,7 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          category?: string
           created_at?: string
           id?: string
           menu_item_id?: string

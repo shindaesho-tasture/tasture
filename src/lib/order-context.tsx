@@ -11,6 +11,7 @@ export interface OrderItem {
     noodleStyle?: string;
     toppings?: string[];
     size?: "ธรรมดา" | "พิเศษ";
+    addOns?: string[];
   };
 }
 

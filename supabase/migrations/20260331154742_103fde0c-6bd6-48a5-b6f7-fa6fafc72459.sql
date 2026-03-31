@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_addons ADD COLUMN category text NOT NULL DEFAULT 'อื่นๆ';
