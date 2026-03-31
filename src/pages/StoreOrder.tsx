@@ -703,7 +703,9 @@ const StoreOrder = () => {
                         🍲 {t("order.selectStyle", language)}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {optionsItem.noodle_styles.map((ns) => (
+                        {optionsItem.noodle_styles.map((ns) => {
+                          const extraPrice = optionsItem.noodle_style_prices?.[ns] || 0;
+                          return (
                           <motion.button
                             key={ns}
                             whileTap={{ scale: 0.93 }}
@@ -715,8 +717,10 @@ const StoreOrder = () => {
                             }`}
                           >
                             {ns}
+                            {extraPrice > 0 && <span className="ml-1 opacity-80">(+฿{extraPrice})</span>}
                           </motion.button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
