@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2, Search, Globe } from "lucide-react";
+import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2, Search, Globe, ChevronUp, ChevronDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -193,6 +193,21 @@ const MenuManager = () => {
     []
   );
 
+  const moveItem = useCallback((itemId: string, direction: "up" | "down") => {
+    setOrderedItems((prev) => {
+      const idx = prev.findIndex((i) => i.id === itemId);
+      if (idx < 0) return prev;
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[targetIdx]] = [next[targetIdx], next[idx]];
+      Promise.all(next.map((item, i) =>
+        supabase.from("menu_items").update({ sort_order: i } as any).eq("id", item.id)
+      ));
+      return next;
+    });
+  }, []);
+
   const startEdit = (item: MenuItemRow) => {
     setEditingId(item.id);
     setShowAdd(true);
@@ -362,7 +377,22 @@ const MenuManager = () => {
                 >
                   <div className="flex items-center gap-3">
                     {isOwner && (
-                      <GripVertical size={14} className="text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <button
+                          onClick={() => moveItem(item.id, "up")}
+                          disabled={orderedItems.indexOf(item) === 0}
+                          className="p-0.5 rounded hover:bg-secondary transition-colors disabled:opacity-20"
+                        >
+                          <ChevronUp size={13} className="text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => moveItem(item.id, "down")}
+                          disabled={orderedItems.indexOf(item) === orderedItems.length - 1}
+                          className="p-0.5 rounded hover:bg-secondary transition-colors disabled:opacity-20"
+                        >
+                          <ChevronDown size={13} className="text-muted-foreground" />
+                        </button>
+                      </div>
                     )}
 
                     {/* Thumbnail / upload button */}
