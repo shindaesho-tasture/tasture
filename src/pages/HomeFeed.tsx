@@ -1190,7 +1190,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           )}
           {post.type === "photo_post" && (
             <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-primary/10 text-primary">
-              📸 โพส
+              📸 {t("feed.post")}
             </span>
           )}
         </div>
