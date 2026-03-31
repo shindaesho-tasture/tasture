@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
