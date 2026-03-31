@@ -68,6 +68,7 @@ const StoreOrder = () => {
   const [storePosts, setStorePosts] = useState<StorePost[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("menu");
+  const [activeCat, setActiveCat] = useState("ทั้งหมด");
 
   // Noodle options popup state
   const [optionsItem, setOptionsItem] = useState<MenuItemRow | null>(null);
