@@ -793,6 +793,7 @@ const PostOrderReview = () => {
                           selection={(dnaSelections[step.menuItemId!] || {})[comp.name] || null}
                           onSelect={(score, tag) => handleDnaSelect(step.menuItemId!, comp.name, comp.icon, score, tag)}
                           index={i}
+                          translateTag={translateTag}
                         />
                       ))
                     )}
