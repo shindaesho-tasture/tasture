@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Image, X, Send, MapPin, Loader2, Search, ChevronDown, Star, Clock, Plus, GripVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/language-context";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
