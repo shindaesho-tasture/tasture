@@ -187,6 +187,7 @@ const MenuManager = () => {
       toppings: item.toppings || [],
       textures: item.textures || [],
       noodle_type_prices: (item.noodle_type_prices as Record<string, number>) || {},
+      noodle_style_prices: (item.noodle_style_prices as Record<string, number>) || {},
     });
   };
 
