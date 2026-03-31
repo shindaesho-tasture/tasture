@@ -94,9 +94,9 @@ const StoreOrder = () => {
         supabase.from("stores").select("name").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices")
+          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices, menu_category")
           .eq("store_id", storeId!)
-          .order("name"),
+          .order("sort_order", { ascending: true }),
       ]);
 
       if (storeRes.data) {
