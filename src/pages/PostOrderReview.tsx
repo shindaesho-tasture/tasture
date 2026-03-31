@@ -1092,7 +1092,7 @@ const PostOrderReview = () => {
                     <Loader2 size={18} className="animate-spin" />
                   ) : (
                     <>
-                      <span>{currentStep === totalSteps - 2 ? "ดูผลสรุป" : "ถัดไป"}</span>
+                      <span>{currentStep === totalSteps - 2 ? t("por.viewResults") : t("por.next")}</span>
                       <ChevronRight size={16} strokeWidth={2.5} />
                     </>
                   )}
