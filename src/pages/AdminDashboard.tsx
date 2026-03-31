@@ -872,6 +872,13 @@ const AdminDashboard = () => {
                   <AdminCategoryEditor />
                 </motion.div>
               )}
+
+              {/* ─── Menu Categories Tab ─── */}
+              {activeTab === "menu_cats" && (
+                <motion.div key="menu_cats" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <AdminMenuCategoryEditor />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         )}
