@@ -33,6 +33,7 @@ const tierBgMap: Record<ScoreTier, string> = {
 
 const MyStores = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [stores, setStores] = useState<StoreWithReviews[]>([]);
   const [loading, setLoading] = useState(true);
