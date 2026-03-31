@@ -1656,7 +1656,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                 </div>
               ) : (
                 <p className="text-[10px] text-muted-foreground text-center">
-                  เข้าสู่ระบบเพื่อคอมเมนต์
+                  {t("feed.loginToComment")}
                 </p>
               )}
             </div>
