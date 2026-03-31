@@ -345,12 +345,15 @@ const Index = () => {
     return "สวัสดีตอนเย็น";
   }, []);
   // Collect all metric labels for translation
-  const allMetricLabels = useMemo(() => {
+  const allTranslatableLabels = useMemo(() => {
     const labels = new Set<string>();
-    stores.forEach((s) => s.metrics.forEach((m) => labels.add(m.label)));
+    stores.forEach((s) => {
+      s.metrics.forEach((m) => labels.add(m.label));
+      if (s.categoryLabel) labels.add(s.categoryLabel);
+    });
     return Array.from(labels);
   }, [stores]);
-  const { translateTag } = useTagTranslations(allMetricLabels);
+  const { translateTag } = useTagTranslations(allTranslatableLabels);
 
   // ─── Store Card Component ───
   const SpotifyStoreCard = ({ store, size = "normal" }: { store: StoreCard; size?: "normal" | "large" }) => {
@@ -417,7 +420,7 @@ const Index = () => {
         <div className="pt-2 pb-1 px-0.5">
           <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{store.name}</p>
           <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-            {store.categoryLabel || "ร้านอาหาร"}
+            {translateTag(store.categoryLabel || "ร้านอาหาร")}
             {store.menuCount > 0 && ` · ${store.menuCount} เมนู`}
           </p>
           {/* Metric tags */}
@@ -569,7 +572,7 @@ const Index = () => {
                     : "bg-transparent text-foreground border-border hover:bg-secondary"
                 )}
               >
-                {cat.icon} {cat.labelTh || cat.label}
+                {cat.icon} {translateTag(cat.labelTh || cat.label)}
               </motion.button>
             );
           })}
@@ -631,7 +634,7 @@ const Index = () => {
             {categoryGroups.map(([catId, group], idx) => (
               <HorizontalSection
                 key={catId}
-                title={group.label}
+                title={translateTag(group.label)}
                 emoji={group.icon}
                 stores={group.stores}
                 gradient={sectionGradients[idx % sectionGradients.length]}
