@@ -966,6 +966,7 @@ const PostOrderReview = () => {
                                   <BalanceSpiderChart
                                     axes={sensoryAxes[step.menuItemId] || []}
                                     values={sensoryValues[step.menuItemId] || {}}
+                                    translateTag={translateTag}
                                   />
                                 </div>
                               )}
