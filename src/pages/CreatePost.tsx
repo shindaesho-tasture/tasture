@@ -144,7 +144,7 @@ const CreatePost = () => {
     const files = Array.from(e.target.files || []);
     const valid = files.filter((f) => f.size <= 10 * 1024 * 1024);
     if (valid.length < files.length) {
-      toast({ title: "ไฟล์บางรูปใหญ่เกินไป", description: "ขนาดไฟล์ต้องไม่เกิน 10MB", variant: "destructive" });
+      toast({ title: t("createPost.fileTooLarge"), description: t("createPost.maxSize"), variant: "destructive" });
     }
     const newImages: PostImage[] = valid.map((file) => ({
       file,
