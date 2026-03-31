@@ -882,6 +882,8 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initialLiked, initialCommentCount, initialFollowing, initialSaved }: PostCardProps) => {
+  const { t } = useLanguage();
+  const timeAgo = useMemo(() => makeTimeAgo(t), [t]);
   const [liked, setLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [showComments, setShowComments] = useState(false);
