@@ -608,7 +608,7 @@ const MenuManager = () => {
                 </div>
 
                 {/* Sticky submit button */}
-                <div className="p-5 pt-3 border-t border-border/30 bg-background">
+                <div className="shrink-0 p-5 pt-3 border-t border-border/30 bg-background rounded-b-none">
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={handleSubmit}
