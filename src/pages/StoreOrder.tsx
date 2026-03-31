@@ -86,7 +86,7 @@ const StoreOrder = () => {
   useEffect(() => {
     if (!storeId) return;
     fetchData();
-  }, [storeId]);
+  }, [storeId, language]);
 
   const fetchData = async () => {
     setLoading(true);
