@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/language-context";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
+import { preTranslateTags } from "@/lib/pre-translate";
 
 interface AddOn {
   id: string;
