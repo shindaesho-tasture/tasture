@@ -284,7 +284,7 @@ const MyStores = () => {
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-score-emerald/15 text-score-emerald text-[11px] font-medium uppercase tracking-wider hover:bg-score-emerald/25 transition-colors"
                       >
                         <UtensilsCrossed size={14} strokeWidth={1.5} />
-                        ฟีดแบคเมนู
+                        {t("myStores.menuFeedback", language)}
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.97 }}
