@@ -362,6 +362,12 @@ const MenuManager = () => {
                   {item.description && (
                     <p className="text-[10px] text-muted-foreground mt-1.5 line-clamp-2 ml-7">{item.description}</p>
                   )}
+                  {/* Add-on manager per item */}
+                  {isOwner && (
+                    <div className="ml-7 mt-1">
+                      <AddOnManager menuItemId={item.id} />
+                    </div>
+                  )}
                 </Reorder.Item>
               ))}
             </Reorder.Group>
