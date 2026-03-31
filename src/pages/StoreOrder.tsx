@@ -455,9 +455,12 @@ const StoreOrder = () => {
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-medium tracking-tight text-foreground truncate">
-                {storeName || t("order.restaurant", language)}
-              </h1>
+              <KaraokeName
+                original={storeName || t("order.restaurant", language)}
+                translated={storeName && translateTag(storeName) !== storeName ? translateTag(storeName) : undefined}
+                className="text-lg font-medium tracking-tight text-foreground leading-tight"
+                subClassName="text-[10px] text-muted-foreground leading-tight"
+              />
             </div>
           </div>
         </div>
