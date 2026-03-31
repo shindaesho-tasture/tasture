@@ -553,8 +553,8 @@ const HomeFeed = () => {
           const ppStoreId = pp.store_id || "";
           allPosts.push({
             id: `photo-${pp.id}`, type: "photo_post",
-            userId: pp.user_id, userName: profile?.name || "ผู้ใช้", userAvatar: profile?.avatar || null,
-            storeName: ppStoreId ? (storeMap.get(ppStoreId) || "ร้านค้า") : "", storeId: ppStoreId,
+            userId: pp.user_id, userName: profile?.name || t("feed.user"), userAvatar: profile?.avatar || null,
+            storeName: ppStoreId ? (storeMap.get(ppStoreId) || t("feed.store")) : "", storeId: ppStoreId,
             menuItemName: "", menuItemId: "", menuItemImage: null, score: null, satisfaction: null,
             caption: pp.caption, photoUrl: pp.image_url,
             slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }],
