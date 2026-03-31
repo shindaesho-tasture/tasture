@@ -201,6 +201,8 @@ const DishDnaFeedback = () => {
       if (rows.length > 0) {
         const { error } = await supabase.from("dish_dna").insert(rows);
         if (error) throw error;
+        // Pre-translate DNA tags into all languages (background)
+        preTranslateDnaTags(rows);
       }
 
       setSaveSuccess(true);
