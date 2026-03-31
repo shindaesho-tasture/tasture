@@ -548,7 +548,7 @@ const PostOrderReview = () => {
                     {previousReviewRows.length > 0 && category && (
                       <div className="rounded-2xl border border-border/50 bg-surface-elevated/50 overflow-hidden">
                         <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/30">
-                          <p className="text-[10px] font-medium text-muted-foreground tracking-wide">คะแนนเดิมที่เคยให้</p>
+                         <p className="text-[10px] font-medium text-muted-foreground tracking-wide">{t("por.prevScores")}</p>
                         </div>
                         <div className="divide-y divide-border/20 max-h-52 overflow-y-auto">
                           {previousReviewRows.map((row) => {
