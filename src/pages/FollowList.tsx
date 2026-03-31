@@ -5,6 +5,8 @@ import { ArrowLeft, UserPlus, UserCheck, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
 
 interface FollowUser {
@@ -17,6 +19,7 @@ interface FollowUser {
 type Tab = "followers" | "following";
 
 const FollowList = () => {
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -129,14 +132,14 @@ const FollowList = () => {
             >
               <ArrowLeft size={16} className="text-foreground" />
             </motion.button>
-            <h1 className="text-base font-semibold text-foreground">เครือข่าย</h1>
+            <h1 className="text-base font-semibold text-foreground">{t("followList.title", language)}</h1>
           </div>
 
           {/* Tabs */}
           <div className="flex px-4 gap-1 pb-2">
             {([
-              { key: "followers" as Tab, label: "ผู้ติดตาม", count: counts.followers },
-              { key: "following" as Tab, label: "กำลังติดตาม", count: counts.following },
+              { key: "followers" as Tab, label: t("followList.followers", language), count: counts.followers },
+              { key: "following" as Tab, label: t("followList.following", language), count: counts.following },
             ]).map((t) => (
               <motion.button
                 key={t.key}
@@ -172,7 +175,7 @@ const FollowList = () => {
             <div className="flex flex-col items-center py-16 gap-3">
               <Users size={32} className="text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground">
-                {tab === "followers" ? "ยังไม่มีผู้ติดตาม" : "ยังไม่ได้ติดตามใคร"}
+                {tab === "followers" ? t("followList.noFollowers", language) : t("followList.noFollowing", language)}
               </p>
             </div>
           ) : (
@@ -202,7 +205,7 @@ const FollowList = () => {
                   {/* Name */}
                   <div className="flex-1 min-w-0" onClick={() => navigate(`/user/${u.id}`)} role="button">
                     <p className="text-sm font-semibold text-foreground truncate cursor-pointer">
-                      {u.display_name || "ผู้ใช้"}
+                      {u.display_name || t("feed.user", language)}
                     </p>
                   </div>
 
@@ -219,7 +222,7 @@ const FollowList = () => {
                       )}
                     >
                       {u.isFollowing ? <UserCheck size={12} /> : <UserPlus size={12} />}
-                      {u.isFollowing ? "ติดตามแล้ว" : "ติดตาม"}
+                      {u.isFollowing ? t("feed.following", language) : t("feed.follow", language)}
                     </motion.button>
                   )}
                 </motion.div>
