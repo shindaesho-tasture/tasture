@@ -886,11 +886,17 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
   const { t } = useLanguage();
   const timeAgo = useMemo(() => makeTimeAgo(t), [t]);
 
-  // Translate DNA tags
+  // Translate DNA tags + store/menu names for karaoke
   const cardTagTexts = useMemo(() => {
     const set = new Set<string>();
     post.dnaComponents?.forEach((c) => set.add(c.tag));
-    post.slides?.forEach((s) => s.dnaComponents?.forEach((c) => set.add(c.tag)));
+    post.slides?.forEach((s) => {
+      s.dnaComponents?.forEach((c) => set.add(c.tag));
+      if (s.storeName) set.add(s.storeName);
+      if (s.menuItemName) set.add(s.menuItemName);
+    });
+    if (post.storeName) set.add(post.storeName);
+    if (post.menuItemName) set.add(post.menuItemName);
     return Array.from(set);
   }, [post]);
   const { translateTag } = useTagTranslations(cardTagTexts);
@@ -1224,6 +1230,9 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                     className="font-semibold text-score-emerald hover:underline"
                   >
                     {post.storeName}
+                    {translateTag(post.storeName) !== post.storeName && (
+                      <span className="font-normal text-muted-foreground ml-1 text-[10px]">({translateTag(post.storeName)})</span>
+                    )}
                   </button>
                 </>
               )}
@@ -1235,13 +1244,21 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                 : post.type === "menu_review"
                 ? t("feed.rated")
                 : t("feed.analyzedDna")}{" "}
-              <span className="font-semibold text-foreground">{post.menuItemName}</span>
+              <span className="font-semibold text-foreground">
+                {post.menuItemName}
+                {translateTag(post.menuItemName) !== post.menuItemName && (
+                  <span className="font-normal text-muted-foreground ml-1 text-[10px]">({translateTag(post.menuItemName)})</span>
+                )}
+              </span>
               {" "}{t("feed.at")}{" "}
               <button
                 onClick={() => navigate(`/store/${post.storeId}/order`)}
                 className="font-semibold text-score-emerald hover:underline"
               >
                 {post.storeName}
+                {translateTag(post.storeName) !== post.storeName && (
+                  <span className="font-normal text-muted-foreground ml-1 text-[10px]">({translateTag(post.storeName)})</span>
+                )}
               </button>
             </>
           )}
@@ -1352,10 +1369,16 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-semibold text-foreground truncate">
                         {post.slides[slideIndex].menuItemName}
+                        {post.slides[slideIndex].menuItemName && translateTag(post.slides[slideIndex].menuItemName!) !== post.slides[slideIndex].menuItemName && (
+                          <span className="font-normal text-muted-foreground/70 ml-1 text-[9px]">({translateTag(post.slides[slideIndex].menuItemName!)})</span>
+                        )}
                       </p>
                       {post.slides[slideIndex].storeName && (
                         <p className="text-[9px] text-muted-foreground truncate">
                           📍 {post.slides[slideIndex].storeName}
+                          {translateTag(post.slides[slideIndex].storeName!) !== post.slides[slideIndex].storeName && (
+                            <span className="ml-1 opacity-60">({translateTag(post.slides[slideIndex].storeName!)})</span>
+                          )}
                         </p>
                       )}
                     </div>

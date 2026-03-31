@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle, Users } from "lucide-react";
+import KaraokeName from "@/components/KaraokeName";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
@@ -100,12 +101,14 @@ const StoreOrder = () => {
       m.toppings?.forEach((tp) => tags.add(tp));
       if (m.menu_category) tags.add(m.menu_category);
     });
+    // Include store name for karaoke translation
+    if (storeName) tags.add(storeName);
     // Include add-on category names for translation
     itemAddOns.forEach((addOns) => {
       addOns.forEach((a) => tags.add(a.category));
     });
     return Array.from(tags);
-  }, [dnaByItem, menuItems, itemAddOns]);
+  }, [dnaByItem, menuItems, itemAddOns, storeName]);
 
   const { translateTag } = useTagTranslations(allTagTexts);
 
@@ -452,9 +455,12 @@ const StoreOrder = () => {
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-medium tracking-tight text-foreground truncate">
-                {storeName || t("order.restaurant", language)}
-              </h1>
+              <KaraokeName
+                original={storeName || t("order.restaurant", language)}
+                translated={storeName && translateTag(storeName) !== storeName ? translateTag(storeName) : undefined}
+                className="text-lg font-medium tracking-tight text-foreground leading-tight"
+                subClassName="text-[10px] text-muted-foreground leading-tight"
+              />
             </div>
           </div>
         </div>

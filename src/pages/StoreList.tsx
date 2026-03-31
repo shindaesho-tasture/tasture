@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Store, Plus } from "lucide-react";
@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
+import KaraokeName from "@/components/KaraokeName";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 
@@ -23,6 +25,9 @@ const StoreList = () => {
   const { user, loading: authLoading } = useAuth();
   const [stores, setStores] = useState<StoreItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const storeNames = useMemo(() => stores.map((s) => s.name), [stores]);
+  const { translateTag } = useTagTranslations(storeNames);
 
   useEffect(() => {
     if (authLoading) return;
@@ -179,7 +184,12 @@ const StoreList = () => {
                     <div className="px-4 py-4 flex items-center gap-3">
                       <span className="text-3xl flex-shrink-0">{getCategoryIcon(store.category_id)}</span>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-foreground truncate">{store.name}</h3>
+                        <KaraokeName
+                          original={store.name}
+                          translated={translateTag(store.name) !== store.name ? translateTag(store.name) : undefined}
+                          className="text-sm font-bold text-foreground leading-tight"
+                          subClassName="text-[9px] text-muted-foreground leading-tight"
+                        />
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
                           {getCategoryLabel(store.category_id)}
                         </p>
