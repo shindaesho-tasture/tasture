@@ -531,8 +531,8 @@ const StoreOrder = () => {
                       .sort((a, b) => b.count - a.count)
                       .map((t) => ({
                         icon: t.component_icon,
-                        label: t.selected_tag,
-                        score: t.selected_score, // average sentiment from community
+                        label: translateTag(t.selected_tag),
+                        score: t.selected_score,
                         count: t.count,
                         type: "texture" as const,
                       }));
