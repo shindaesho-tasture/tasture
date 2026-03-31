@@ -889,7 +889,8 @@ const AdminDashboard = () => {
 
               {/* ─── Tag Translations Tab ─── */}
               {activeTab === "tag_trans" && (
-                <motion.div key="tag_trans" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                <motion.div key="tag_trans" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+                  <BatchFeedbackTagsButton />
                   <AdminTagTranslationEditor />
                 </motion.div>
               )}
