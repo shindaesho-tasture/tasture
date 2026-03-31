@@ -634,6 +634,26 @@ const MenuManager = () => {
         />
 
         {!showAdd && <BottomNav />}
+
+        <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+          <AlertDialogContent className="max-w-xs rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("common.delete")}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("menuMgr.deleteConfirmMsg") || "ลบเมนูนี้แล้วจะไม่สามารถกู้คืนได้"}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-score-ruby hover:bg-score-ruby/90 text-white"
+                onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm)}
+              >
+                {t("common.delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageTransition>
   );
