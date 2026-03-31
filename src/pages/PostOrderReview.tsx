@@ -718,11 +718,11 @@ const PostOrderReview = () => {
                         {(previousDnaRows[step.menuItemId] || []).map((row, i) => (
                           <div key={i} className="flex items-center justify-between px-4 py-2.5">
                             <span className="text-[11px] text-foreground truncate flex-1 mr-3">
-                              {row.component_icon} {row.component_name}
+                              {row.component_icon} {translateTag(row.component_name)}
                             </span>
                             <span className="text-[10px] shrink-0">
                               {row.selected_score === 2 ? "🤩" : row.selected_score === 0 ? "😐" : "😔"}{" "}
-                              <span className="text-muted-foreground">{row.selected_tag}</span>
+                              <span className="text-muted-foreground">{translateTag(row.selected_tag)}</span>
                             </span>
                           </div>
                         ))}
