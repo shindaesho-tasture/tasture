@@ -264,7 +264,6 @@ const StoreOrder = () => {
     };
     fetchTranslations();
   }, [language, menuItems]);
-  };
 
   const fetchStorePosts = async () => {
     if (!storeId) return;
