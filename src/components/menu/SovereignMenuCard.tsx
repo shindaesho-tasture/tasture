@@ -5,6 +5,7 @@ import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getIntensityOpacity } from "@/lib/scoring";
 import { Flame, TrendingUp, Star } from "lucide-react";
 import { classifyTag, CATEGORY_CONFIG } from "@/lib/sensory-classifier";
+import KaraokeName from "@/components/KaraokeName";
 
 /** HSL values for each score tier */
 const tierHsl: Record<ScoreTier, string> = {
