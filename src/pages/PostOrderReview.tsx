@@ -953,6 +953,7 @@ const PostOrderReview = () => {
                                   value={(sensoryValues[step.menuItemId!] || {})[axis.name] ?? 3}
                                   onChange={(level) => handleSensoryChange(step.menuItemId!, axis.name, level)}
                                   index={i}
+                                  translateTag={translateTag}
                                 />
                               ))}
                               {(sensoryAxes[step.menuItemId] || []).length >= 3 && (
