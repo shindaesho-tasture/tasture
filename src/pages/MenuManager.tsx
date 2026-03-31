@@ -362,8 +362,11 @@ const MenuManager = () => {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{typeLabel[item.type] || item.type}</span>
+                        {item.menu_category && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-score-emerald/15 text-score-emerald font-medium">{item.menu_category}</span>
+                        )}
                         <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
                       </div>
                       {item.original_name && (
