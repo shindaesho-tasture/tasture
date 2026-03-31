@@ -101,6 +101,8 @@ const StoreOrder = () => {
       m.toppings?.forEach((tp) => tags.add(tp));
       if (m.menu_category) tags.add(m.menu_category);
     });
+    // Include store name for karaoke translation
+    if (storeName) tags.add(storeName);
     // Include add-on category names for translation
     itemAddOns.forEach((addOns) => {
       addOns.forEach((a) => tags.add(a.category));
