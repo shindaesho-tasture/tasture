@@ -1,4 +1,8 @@
 import { useState, useCallback, useRef } from "react";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2 } from "lucide-react";
@@ -366,20 +370,9 @@ const MenuManager = () => {
                         <button onClick={() => startEdit(item)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                           <Pencil size={14} className="text-muted-foreground" />
                         </button>
-                        {deleteConfirm === item.id ? (
-                          <motion.button
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            onClick={() => deleteMutation.mutate(item.id)}
-                            className="px-2 py-1 rounded-lg bg-score-ruby text-white text-[10px] font-medium"
-                          >
-                            {t("common.confirm")}
-                          </motion.button>
-                        ) : (
-                          <button onClick={() => setDeleteConfirm(item.id)} className="p-1.5 rounded-lg hover:bg-score-ruby/10 transition-colors">
+<button onClick={() => setDeleteConfirm(item.id)} className="p-1.5 rounded-lg hover:bg-score-ruby/10 transition-colors">
                             <Trash2 size={14} className="text-score-ruby/70" />
                           </button>
-                        )}
                       </div>
                     )}
                   </div>
@@ -641,6 +634,26 @@ const MenuManager = () => {
         />
 
         {!showAdd && <BottomNav />}
+
+        <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+          <AlertDialogContent className="max-w-xs rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("common.delete")}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("menuMgr.deleteConfirmMsg") || "ลบเมนูนี้แล้วจะไม่สามารถกู้คืนได้"}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-score-ruby hover:bg-score-ruby/90 text-white"
+                onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm)}
+              >
+                {t("common.delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageTransition>
   );
