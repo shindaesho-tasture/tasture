@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical } from "lucide-react";
+import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,6 +22,7 @@ type MenuItemRow = {
   noodle_styles: string[] | null;
   toppings: string[] | null;
   textures: string[] | null;
+  image_url: string | null;
 };
 
 const emptyForm = {
