@@ -434,6 +434,24 @@ const PostOrderReview = () => {
         }
       }
 
+      // Pre-translate all tags from this review session (background)
+      const allDnaTags: { component_name: string; selected_tag: string }[] = [];
+      const allMetricLabels: string[] = [];
+      for (const item of items) {
+        const sel = dnaSelections[item.menuItemId] || {};
+        Object.values(sel).forEach((s) => allDnaTags.push(s));
+        const prev = previousDnaRows[item.menuItemId] || [];
+        prev.forEach((r) => allDnaTags.push(r));
+      }
+      if (category) {
+        category.metrics.forEach((m) => {
+          allMetricLabels.push(m.label);
+          if (m.smartGate) m.smartGate.subMetrics.forEach((sub) => allMetricLabels.push(sub.label));
+        });
+      }
+      preTranslateDnaTags(allDnaTags);
+      if (allMetricLabels.length > 0) preTranslateTags(allMetricLabels);
+
       toast({ title: t("por.saveSuccess") });
     } catch (err: any) {
       console.error("Save error:", err);
