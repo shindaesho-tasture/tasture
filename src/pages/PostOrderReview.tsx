@@ -658,8 +658,8 @@ const PostOrderReview = () => {
                     <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
                       <Dna size={16} className="text-score-emerald mt-0.5 shrink-0" strokeWidth={1.5} />
                       <div>
-                        <p className="text-[11px] font-medium text-foreground">คุณเคยรีวิว DNA เมนูนี้แล้ว</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">รสชาติส่วนประกอบเปลี่ยนไปหรือเปล่า?</p>
+                        <p className="text-[11px] font-medium text-foreground">{t("por.prevDna")}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{t("por.dnaChanged")}</p>
                       </div>
                     </div>
 
