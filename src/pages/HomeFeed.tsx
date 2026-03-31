@@ -1204,7 +1204,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               {post.caption ? (
                 <span className="text-foreground">{post.caption}</span>
               ) : (
-                "แชร์รูปอาหาร"
+                t("feed.sharedPhoto")
               )}
               {post.storeName && (
                 <>

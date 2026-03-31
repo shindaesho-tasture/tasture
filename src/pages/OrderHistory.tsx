@@ -236,7 +236,7 @@ const OrderHistory = () => {
               <ClipboardList size={28} strokeWidth={1.5} className="text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground text-center">
-              ยังไม่มีประวัติการไปร้านอาหาร
+              {t("history.empty")}
             </p>
           </div>
         ) : (

@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrder } from "@/lib/order-context";
+import { useLanguage } from "@/lib/language-context";
 import { categories, scoreTiers, getScoreTier, type Category } from "@/lib/categories";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
