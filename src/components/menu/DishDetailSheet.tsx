@@ -61,7 +61,7 @@ const DishDetailSheet = ({
   totalReviews,
 }: DishDetailSheetProps) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Collect all tag texts for translation
   const allTagTexts = useMemo(() => {
     const set = new Set<string>();
