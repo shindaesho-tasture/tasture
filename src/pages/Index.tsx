@@ -423,7 +423,12 @@ const Index = () => {
 
         {/* Title area */}
         <div className="pt-2 pb-1 px-0.5">
-          <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{store.name}</p>
+          <KaraokeName
+            original={store.name}
+            translated={translateTag(store.name) !== store.name ? translateTag(store.name) : undefined}
+            className="text-[13px] font-semibold text-foreground leading-tight"
+            subClassName="text-[9px] text-muted-foreground leading-tight"
+          />
           <p className="text-[10px] text-muted-foreground truncate mt-0.5">
             {translateTag(store.categoryLabel || "ร้านอาหาร")}
             {store.menuCount > 0 && ` · ${store.menuCount} เมนู`}
