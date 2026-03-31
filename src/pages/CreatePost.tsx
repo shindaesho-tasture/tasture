@@ -484,7 +484,7 @@ const CreatePost = () => {
                       onClick={() => setShowReviewPicker(false)}
                       className="w-full py-3 rounded-2xl bg-secondary text-sm font-medium text-muted-foreground"
                     >
-                      ข้ามไปก่อน
+                      {t("createPost.skipForNow")}
                     </motion.button>
                   </div>
                 </motion.div>
