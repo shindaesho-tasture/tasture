@@ -7,9 +7,11 @@ interface BalanceSpiderChartProps {
   founderWeight?: boolean;
   size?: number;
   showBarChart?: boolean; // show additional horizontal bar breakdown
+  translateTag?: (tag: string) => string;
 }
 
-const BalanceSpiderChart = ({ axes, values, founderWeight, size = 240, showBarChart = true }: BalanceSpiderChartProps) => {
+const BalanceSpiderChart = ({ axes, values, founderWeight, size = 240, showBarChart = true, translateTag: tt }: BalanceSpiderChartProps) => {
+  const tr = tt || ((t: string) => t);
   const cx = size / 2;
   const cy = size / 2;
   const maxR = size * 0.375;
