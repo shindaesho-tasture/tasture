@@ -116,6 +116,23 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "common.logout": { th: "ออกจากระบบ", en: "Log Out", ja: "ログアウト", zh: "退出登录", ko: "로그아웃" },
   "common.loading": { th: "กำลังโหลด...", en: "Loading...", ja: "読み込み中...", zh: "加载中...", ko: "로딩 중..." },
   "common.language": { th: "ภาษา", en: "Language", ja: "言語", zh: "语言", ko: "언어" },
+  "common.noStores": { th: "ยังไม่มีร้านอาหาร", en: "No restaurants yet", ja: "まだレストランがありません", zh: "暂无餐厅", ko: "아직 식당이 없습니다" },
+
+  // ─── Discovery Sections ───
+  "discover.nearYou": { th: "ใกล้คุณ", en: "Near You", ja: "近くのお店", zh: "附近推荐", ko: "근처 맛집" },
+  "discover.trending": { th: "กำลังเป็นเทรนด์", en: "Trending", ja: "トレンド", zh: "热门趋势", ko: "트렌딩" },
+  "discover.matchYou": { th: "แมตช์กับคุณ", en: "Matched for You", ja: "あなた好み", zh: "为你推荐", ko: "당신과 매칭" },
+
+  // ─── Home Feed Tabs ───
+  "tab.explore": { th: "สำรวจ", en: "Explore", ja: "探索", zh: "探索", ko: "탐색" },
+  "tab.nearby": { th: "ใกล้ฉัน", en: "Nearby", ja: "近く", zh: "附近", ko: "근처" },
+  "tab.following": { th: "กำลังติดตาม", en: "Following", ja: "フォロー中", zh: "关注中", ko: "팔로잉" },
+  "tab.foryou": { th: "สำหรับคุณ", en: "For You", ja: "あなたへ", zh: "推荐", ko: "추천" },
+
+  // ─── Profile Stats ───
+  "profile.posts": { th: "โพส", en: "Posts", ja: "投稿", zh: "帖子", ko: "게시물" },
+  "profile.followers": { th: "ผู้ติดตาม", en: "Followers", ja: "フォロワー", zh: "粉丝", ko: "팔로워" },
+  "profile.following": { th: "กำลังติดตาม", en: "Following", ja: "フォロー中", zh: "关注中", ko: "팔로잉" },
 
   // ─── Auth ───
   "auth.login": { th: "เข้าสู่ระบบ", en: "Log In", ja: "ログイン", zh: "登录", ko: "로그인" },
