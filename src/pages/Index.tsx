@@ -11,6 +11,8 @@ import { categories as defaultCategories, getScoreTier, type ScoreTier } from "@
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import { cn } from "@/lib/utils";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import LocationPickerSheet from "@/components/LocationPickerSheet";
@@ -78,6 +80,7 @@ const sectionGradients = [
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const { position } = useGeolocation();
   const { categories: dynamicCategories } = useCategories();
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
@@ -600,13 +603,13 @@ const Index = () => {
         ) : categoryFiltered.length === 0 ? (
           <div className="flex flex-col items-center py-16 gap-3">
             <span className="text-4xl">🍽️</span>
-            <p className="text-sm text-muted-foreground">ยังไม่มีร้านอาหาร</p>
+            <p className="text-sm text-muted-foreground">{t("common.noStores", language)}</p>
           </div>
         ) : (
           <>
             {/* Nearby Section */}
             <HorizontalSection
-              title="ใกล้คุณ"
+              title={t("discover.nearYou", language)}
               emoji="📍"
               stores={nearbyStores}
               showAll={() => navigate("/store-list")}
@@ -615,7 +618,7 @@ const Index = () => {
             {/* Trending Section */}
             {trendingStores.length > 0 && (
               <HorizontalSection
-                title="กำลังเป็นเทรนด์"
+                title={t("discover.trending", language)}
                 emoji="🔥"
                 stores={trendingStores}
               />
@@ -624,7 +627,7 @@ const Index = () => {
             {/* Match Section */}
             {matchStores.length > 0 && (
               <HorizontalSection
-                title="แมตช์กับคุณ"
+                title={t("discover.matchYou", language)}
                 emoji="💎"
                 stores={matchStores}
               />

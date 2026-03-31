@@ -270,9 +270,9 @@ const UserProfile = () => {
             {/* Stats row */}
             <div className="flex-1 grid grid-cols-3 text-center">
               {[
-                { label: "โพส", value: postCount },
-                { label: "ผู้ติดตาม", value: followerCount, action: () => navigate(`/follows?userId=${userId}&tab=followers`) },
-                { label: "กำลังติดตาม", value: followingCount, action: () => navigate(`/follows?userId=${userId}&tab=following`) },
+                { label: t("profile.posts", language), value: postCount },
+                { label: t("profile.followers", language), value: followerCount, action: () => navigate(`/follows?userId=${userId}&tab=followers`) },
+                { label: t("profile.following", language), value: followingCount, action: () => navigate(`/follows?userId=${userId}&tab=following`) },
               ].map(({ label, value, action }) => (
                 <button key={label} onClick={action} className="flex flex-col items-center">
                   <span className="text-lg font-bold text-foreground">{value}</span>
