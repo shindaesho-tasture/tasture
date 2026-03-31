@@ -53,6 +53,7 @@ const formatCount = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${
 
 const SovereignMenuCard = ({
   name,
+  originalName,
   price,
   priceSpecial,
   imageUrl,
