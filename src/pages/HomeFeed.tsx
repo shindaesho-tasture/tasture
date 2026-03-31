@@ -1027,7 +1027,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
         .in("id", userIds);
 
       const profileMap = new Map<string, { name: string; avatar: string | null }>();
-      (profiles || []).forEach((p) => profileMap.set(p.id, { name: p.display_name || "ผู้ใช้", avatar: p.avatar_url }));
+      (profiles || []).forEach((p) => profileMap.set(p.id, { name: p.display_name || t("feed.user"), avatar: p.avatar_url }));
 
       setComments(data.map((c) => ({
         id: c.id,
