@@ -609,7 +609,7 @@ const Index = () => {
           <>
             {/* Nearby Section */}
             <HorizontalSection
-              title="ใกล้คุณ"
+              title={t("discover.nearYou", language)}
               emoji="📍"
               stores={nearbyStores}
               showAll={() => navigate("/store-list")}
