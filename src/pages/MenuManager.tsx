@@ -401,12 +401,15 @@ const MenuManager = () => {
                     <span className="text-sm font-semibold text-foreground shrink-0">฿{item.price}</span>
                     {isOwner && (
                       <div className="flex gap-1 shrink-0">
+                        <button onClick={() => setTranslateItem({ id: item.id, name: item.name, description: item.description })} className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
+                          <Globe size={14} className="text-primary" />
+                        </button>
                         <button onClick={() => startEdit(item)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                           <Pencil size={14} className="text-muted-foreground" />
                         </button>
-<button onClick={() => setDeleteConfirm(item.id)} className="p-1.5 rounded-lg hover:bg-score-ruby/10 transition-colors">
-                            <Trash2 size={14} className="text-score-ruby/70" />
-                          </button>
+                        <button onClick={() => setDeleteConfirm(item.id)} className="p-1.5 rounded-lg hover:bg-score-ruby/10 transition-colors">
+                          <Trash2 size={14} className="text-score-ruby/70" />
+                        </button>
                       </div>
                     )}
                   </div>
