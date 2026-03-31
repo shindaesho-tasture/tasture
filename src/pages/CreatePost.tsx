@@ -554,7 +554,7 @@ const CreatePost = () => {
           {/* Caption */}
           <div className="rounded-2xl bg-card border border-border/30 shadow-luxury overflow-hidden">
             <textarea value={caption} onChange={(e) => setCaption(e.target.value)}
-              placeholder="เขียนอะไรสักหน่อย... 🍜" maxLength={500} rows={3}
+              placeholder={t("createPost.captionPlaceholder")} maxLength={500} rows={3}
               className="w-full bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none" />
             <div className="px-4 pb-2 flex justify-end">
               <span className={cn("text-[10px] font-medium", caption.length > 450 ? "text-score-ruby" : "text-muted-foreground/40")}>
