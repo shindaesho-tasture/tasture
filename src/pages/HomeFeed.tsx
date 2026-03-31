@@ -1175,7 +1175,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               )}
             >
               {isFollowing ? <UserCheck size={10} /> : <UserPlus size={10} />}
-              {isFollowing ? "ติดตามแล้ว" : "ติดตาม"}
+              {isFollowing ? t("feed.following") : t("feed.follow")}
             </motion.button>
           )}
           {(post.type === "combined" || post.type === "menu_review") && (
