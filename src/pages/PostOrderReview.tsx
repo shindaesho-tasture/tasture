@@ -248,6 +248,8 @@ const PostOrderReview = () => {
           const defaults: Record<string, number> = {};
           data.axes.forEach((a: SensoryAxis) => { defaults[a.name] = 3; });
           setSensoryValues((prev) => ({ ...prev, [id]: defaults }));
+          // Pre-translate sensory axis names + labels
+          preTranslateSensoryAxes(data.axes);
         }
       } catch (err) {
         console.error("Sensory load error:", err);
