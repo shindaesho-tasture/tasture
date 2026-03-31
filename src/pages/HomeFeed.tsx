@@ -265,7 +265,7 @@ const HomeFeed = () => {
       const profileMap = new Map<string, { name: string; avatar: string | null }>();
       (profilesRes.data || []).forEach((p: any) => {
         if (p.banned) bannedUsers.add(p.id);
-        profileMap.set(p.id, { name: p.display_name || "ผู้ใช้", avatar: p.avatar_url });
+        profileMap.set(p.id, { name: p.display_name || t("feed.user"), avatar: p.avatar_url });
       });
 
       const menuMap = new Map<string, { name: string; storeId: string; image: string | null }>();
