@@ -175,7 +175,8 @@ const DishDetailSheet = ({
       const { data: cached } = await supabase
         .from("dish_descriptions")
         .select("component_name, description")
-        .eq("menu_item_id", menuItemId);
+        .eq("menu_item_id", menuItemId)
+        .eq("language", language);
 
       if (cached && cached.length > 0) {
         const descMap: Record<string, string> = {};
@@ -197,7 +198,7 @@ const DishDetailSheet = ({
       }));
 
       const { data, error } = await supabase.functions.invoke("describe-dish", {
-        body: { dish_name: dishName, tags: tagsPayload, menu_item_id: menuItemId },
+        body: { dish_name: dishName, tags: tagsPayload, menu_item_id: menuItemId, language },
       });
 
       if (!error && data?.descriptions) {
