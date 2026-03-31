@@ -93,11 +93,12 @@ const StoreOrder = () => {
         tags.add(t.component_name);
       });
     });
-    // Also include noodle types, styles, toppings for translation
+    // Also include noodle types, styles, toppings, menu categories for translation
     menuItems.forEach((m) => {
       m.noodle_types?.forEach((nt) => tags.add(nt));
       m.noodle_styles?.forEach((ns) => tags.add(ns));
       m.toppings?.forEach((tp) => tags.add(tp));
+      if (m.menu_category) tags.add(m.menu_category);
     });
     return Array.from(tags);
   }, [dnaByItem, menuItems]);
@@ -490,24 +491,27 @@ const StoreOrder = () => {
             {(() => {
               const cats = Array.from(new Set(menuItems.map((m) => m.menu_category).filter(Boolean))) as string[];
               if (cats.length === 0) return null;
-              const allCats = ["ทั้งหมด", ...cats];
+              const allLabel = t("queueMgr.filterAll", language);
+              const allCats = [allLabel, ...cats];
               const countMap = new Map<string, number>();
               menuItems.forEach((m) => {
                 if (m.menu_category) countMap.set(m.menu_category, (countMap.get(m.menu_category) || 0) + 1);
               });
               return (
                 <div className="px-4 pt-3 pb-1 flex gap-2 overflow-x-auto no-scrollbar">
-                  {allCats.map((cat) => {
-                    const count = cat === "ทั้งหมด" ? menuItems.length : (countMap.get(cat) || 0);
+                  {allCats.map((cat, idx) => {
+                    const isAll = idx === 0;
+                    const rawCat = isAll ? "ทั้งหมด" : cat;
+                    const count = isAll ? menuItems.length : (countMap.get(cat) || 0);
                     return (
                       <button
                         key={cat}
-                        onClick={() => setActiveCat(cat)}
+                        onClick={() => setActiveCat(rawCat)}
                         className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
-                          activeCat === cat ? "bg-score-emerald text-primary-foreground shadow-sm" : "bg-secondary text-foreground"
+                          activeCat === rawCat ? "bg-score-emerald text-primary-foreground shadow-sm" : "bg-secondary text-foreground"
                         }`}
                       >
-                        {cat}
+                        {isAll ? allLabel : translateTag(cat)}
                         <span className={`text-[10px] ${activeCat === cat ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                           {count}
                         </span>
