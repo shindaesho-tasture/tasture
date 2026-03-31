@@ -444,7 +444,7 @@ const CreatePost = () => {
                         <div className="w-6 h-6 border-2 border-score-amber border-t-transparent rounded-full animate-spin" />
                       </div>
                     ) : recentReviews.length === 0 ? (
-                      <p className="text-center text-xs text-muted-foreground py-8">ยังไม่มีรีวิว</p>
+                      <p className="text-center text-xs text-muted-foreground py-8">{t("createPost.noReviews")}</p>
                     ) : (
                       recentReviews.map((review) => {
                         const alreadyUsed = images.some((img, i) => i !== reviewPickerTarget && img.linkedReview?.id === review.id);
