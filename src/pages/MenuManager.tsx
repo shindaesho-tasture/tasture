@@ -25,6 +25,7 @@ type MenuItemRow = {
   toppings: string[] | null;
   textures: string[] | null;
   image_url: string | null;
+  noodle_type_prices: Record<string, number> | null;
 };
 
 const emptyForm = {
