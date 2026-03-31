@@ -24,6 +24,7 @@ interface DishDetailSheetProps {
   onClose: () => void;
   menuItemId: string;
   dishName: string;
+  originalDishName?: string;
   price: number;
   priceSpecial?: number | null;
   imageUrl?: string;
