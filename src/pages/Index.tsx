@@ -634,7 +634,7 @@ const Index = () => {
             {categoryGroups.map(([catId, group], idx) => (
               <HorizontalSection
                 key={catId}
-                title={group.label}
+                title={translateTag(group.label)}
                 emoji={group.icon}
                 stores={group.stores}
                 gradient={sectionGradients[idx % sectionGradients.length]}
