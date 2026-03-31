@@ -831,12 +831,12 @@ const PostOrderReview = () => {
                   <>
                     {/* ─── Taste Satisfaction Gate ─── */}
                     <div className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury p-4 space-y-3">
-                      <p className="text-[11px] font-semibold text-foreground">ความพอใจรสชาติโดยรวม</p>
+                      <p className="text-[11px] font-semibold text-foreground">{t("por.tasteSatisfaction")}</p>
                       <div className="flex gap-2">
                         {([
-                          { key: "perfect" as const, label: "รสสมบูรณ์แบบ", emoji: "🤩", activeBg: "bg-score-emerald", activeText: "text-primary-foreground" },
-                          { key: "ok" as const, label: "ธรรมดาพอกินได้", emoji: "😐", activeBg: "bg-score-slate", activeText: "text-primary-foreground" },
-                          { key: "bad" as const, label: "ไม่ถูกปาก", emoji: "😔", activeBg: "bg-score-ruby", activeText: "text-primary-foreground" },
+                          { key: "perfect" as const, label: t("por.perfectTaste"), emoji: "🤩", activeBg: "bg-score-emerald", activeText: "text-primary-foreground" },
+                          { key: "ok" as const, label: t("por.okTaste"), emoji: "😐", activeBg: "bg-score-slate", activeText: "text-primary-foreground" },
+                          { key: "bad" as const, label: t("por.badTaste"), emoji: "😔", activeBg: "bg-score-ruby", activeText: "text-primary-foreground" },
                         ]).map((opt) => {
                           const isActive = tasteSatisfaction[step.menuItemId!] === opt.key;
                           return (
