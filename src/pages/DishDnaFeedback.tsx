@@ -198,7 +198,7 @@ const DishDnaFeedback = () => {
       }, 1500);
     } catch (err: any) {
       console.error("Save dish DNA error:", err);
-      toast({ title: "บันทึกไม่สำเร็จ", description: err.message, variant: "destructive" });
+      toast({ title: t("dna.saveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
