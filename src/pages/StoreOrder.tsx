@@ -14,6 +14,7 @@ import { th } from "date-fns/locale";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import LiveQueueCard from "@/components/queue/LiveQueueCard";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface MenuItemRow {
   id: string;
