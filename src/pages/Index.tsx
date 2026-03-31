@@ -16,6 +16,7 @@ import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import LocationPickerSheet from "@/components/LocationPickerSheet";
+import KaraokeName from "@/components/KaraokeName";
 import BottomNav from "@/components/BottomNav";
 
 /* ─── Types ─── */
