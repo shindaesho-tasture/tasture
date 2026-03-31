@@ -122,20 +122,35 @@ const AdminDishDescriptionEditor = () => {
     toast.success("เพิ่มคำอธิบายแล้ว ✓");
   };
 
-  // Regenerate All
+  // Regenerate
   const [regenerating, setRegenerating] = useState(false);
   const [regenProgress, setRegenProgress] = useState({ done: 0, total: 0 });
+  const [showRegenPanel, setShowRegenPanel] = useState(false);
+  const [regenLangs, setRegenLangs] = useState<Set<string>>(new Set(ALL_LANGS));
+
+  const toggleRegenLang = (lang: string) => {
+    setRegenLangs((prev) => {
+      const next = new Set(prev);
+      next.has(lang) ? next.delete(lang) : next.add(lang);
+      return next;
+    });
+  };
 
   const regenerateAll = async () => {
-    if (!confirm("⚠️ ลบคำอธิบายทั้งหมดแล้วให้ AI สร้างใหม่ทุกภาษา?\nอาจใช้เวลาสักครู่")) return;
+    const selectedLangs = [...regenLangs];
+    if (selectedLangs.length === 0) { toast.error("กรุณาเลือกอย่างน้อย 1 ภาษา"); return; }
+    const langNames = selectedLangs.map((l) => `${LANG_FLAGS[l]} ${LANG_LABELS[l]}`).join(", ");
+    if (!confirm(`⚠️ ลบคำอธิบายภาษา ${langNames} แล้วให้ AI สร้างใหม่?\nอาจใช้เวลาสักครู่`)) return;
 
     setRegenerating(true);
+    setShowRegenPanel(false);
     setRegenProgress({ done: 0, total: 0 });
 
     try {
-      // 1. Delete all existing descriptions
-      const { error: delErr } = await supabase.from("dish_descriptions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      if (delErr) { toast.error("ลบไม่สำเร็จ: " + delErr.message); setRegenerating(false); return; }
+      // 1. Delete existing descriptions for selected languages only
+      for (const lang of selectedLangs) {
+        await supabase.from("dish_descriptions").delete().eq("language", lang);
+      }
 
       // 2. Get all dish_dna grouped by menu_item
       const { data: dnaRows } = await supabase
@@ -172,14 +187,13 @@ const AdminDishDescriptionEditor = () => {
           tag: r.selected_tag,
           score: r.selected_score,
         }));
-        for (const lang of ALL_LANGS) {
+        for (const lang of selectedLangs) {
           jobs.push({ menuItemId, dishName, tags, lang });
         }
       }
 
       setRegenProgress({ done: 0, total: jobs.length });
 
-      // 3. Call describe-dish for each job sequentially
       let doneCount = 0;
       for (const job of jobs) {
         try {
