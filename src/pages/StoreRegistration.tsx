@@ -20,7 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import type { MenuItem } from "@/lib/menu-types";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
-import { preTranslateStoreData } from "@/lib/pre-translate";
+import { preTranslateStoreData, preTranslateTags } from "@/lib/pre-translate";
 import { GOOGLE_MAPS_API_KEY, MAPS_LIBRARIES, MAPS_SILVER_STYLE, DEFAULT_CENTER, DEFAULT_ZOOM } from "@/lib/maps-config";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
@@ -345,6 +345,40 @@ const StoreRegistration = () => {
             menuNames: dishNames,
             menuCategories: [...new Set(menuItems.map((m) => m.type).filter(Boolean))],
           });
+
+          // Pre-translate noodle types, styles, toppings, textures
+          const extraTags = new Set<string>();
+          menuItems.forEach((m) => {
+            m.noodle_types?.forEach((t) => extraTags.add(t));
+            m.noodle_styles?.forEach((s) => extraTags.add(s));
+            m.toppings?.forEach((tp) => extraTags.add(tp));
+            m.textures?.forEach((tx) => extraTags.add(tx));
+          });
+          if (extraTags.size > 0) {
+            preTranslateTags(Array.from(extraTags));
+          }
+
+          // Translate menu card names via translate-menu edge function (background)
+          if (newItems && newItems.length > 0) {
+            supabase
+              .from("menu_items")
+              .select("id")
+              .eq("store_id", storeId)
+              .in("name", newItems.map((i) => i.name))
+              .then(({ data: insertedItems }) => {
+                if (insertedItems?.length) {
+                  supabase.functions.invoke("translate-menu", {
+                    body: {
+                      menu_item_ids: insertedItems.map((i) => i.id),
+                      target_languages: ["en", "ja", "zh", "ko"],
+                    },
+                  }).then(({ error }) => {
+                    if (error) console.error("translate-menu error:", error);
+                    else console.log("Menu translations created for", insertedItems.length, "items");
+                  });
+                }
+              });
+          }
         }
 
         const skippedCount = menuItems.length - (newItems?.length ?? menuItems.length);
