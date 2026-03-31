@@ -67,6 +67,9 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
       if (error) throw error;
     },
     onSuccess: () => {
+      const finalCat = category === "__custom" ? customCat.trim() : category;
+      // Pre-translate the new add-on name + category into all languages
+      preTranslateTags([name.trim(), finalCat].filter(Boolean));
       queryClient.invalidateQueries({ queryKey: ["menu-addons", menuItemId] });
       setName("");
       setPrice("");
