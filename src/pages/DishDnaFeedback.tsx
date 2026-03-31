@@ -323,7 +323,7 @@ const DishDnaFeedback = () => {
                     ) : saveSuccess ? (
                       <motion.div key="success" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex items-center gap-2">
                         <Check size={18} strokeWidth={2.5} />
-                        <span>สำเร็จ!</span>
+                        <span>{t("review.saveSuccess").replace("✅ ", "")}</span>
                       </motion.div>
                     ) : (
                       <motion.div key="default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
