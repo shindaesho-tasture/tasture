@@ -1,3 +1,4 @@
+// HomeFeedTabs – tab switcher for the home feed
 import { motion } from "framer-motion";
 import { Compass, MapPin, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
