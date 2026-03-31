@@ -442,7 +442,6 @@ const Index = () => {
                     >
                       {m.icon} {translateTag(m.label)}
                     </span>
-                    </span>
                   );
                 })}
             </div>
