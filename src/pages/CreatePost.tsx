@@ -471,7 +471,7 @@ const CreatePost = () => {
                               </div>
                             </div>
                             {alreadyUsed && (
-                              <span className="text-[9px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">ใช้แล้ว</span>
+                              <span className="text-[9px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{t("createPost.alreadyUsed")}</span>
                             )}
                           </motion.button>
                         );
