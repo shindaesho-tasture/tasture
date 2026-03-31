@@ -35,6 +35,155 @@ const langContexts: Record<string, { name: string; culture: string; outputLang: 
   },
 };
 
+const MAX_RETRIES = 2;
+const AI_TIMEOUT_MS = 25_000;
+
+/**
+ * Fuzzy-match AI-returned ingredient name back to original input names.
+ * Handles cases where AI translates or slightly modifies the ingredient name.
+ */
+function matchIngredient(aiName: string, originalNames: string[]): string | null {
+  // Exact match
+  if (originalNames.includes(aiName)) return aiName;
+  // Case-insensitive
+  const lower = aiName.toLowerCase().trim();
+  for (const orig of originalNames) {
+    if (orig.toLowerCase().trim() === lower) return orig;
+  }
+  // Substring containment (AI sometimes wraps or prefixes)
+  for (const orig of originalNames) {
+    if (lower.includes(orig.toLowerCase()) || orig.toLowerCase().includes(lower)) {
+      return orig;
+    }
+  }
+  return null;
+}
+
+/**
+ * Call AI with retry + timeout.
+ */
+async function callAIWithRetry(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  retries = MAX_RETRIES
+): Promise<Array<{ ingredient: string; description: string }>> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "return_descriptions",
+                description: "Return sensory descriptions for each ingredient",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    descriptions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          ingredient: { type: "string", description: "Original ingredient name exactly as given in input" },
+                          description: { type: "string" },
+                        },
+                        required: ["ingredient", "description"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ["descriptions"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "return_descriptions" } },
+        }),
+      });
+
+      clearTimeout(timeout);
+
+      if (response.status === 429 || response.status === 402) {
+        // Don't retry rate limit / payment errors
+        throw new StatusError(response.status, response.status === 429 ? "Rate limited" : "Payment required");
+      }
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error(`AI error (attempt ${attempt + 1}):`, response.status, errText);
+        lastError = new Error(`AI ${response.status}: ${errText.slice(0, 200)}`);
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+        throw lastError;
+      }
+
+      const result = await response.json();
+      const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+
+      if (!toolCall?.function?.arguments) {
+        console.warn(`No tool call in response (attempt ${attempt + 1})`);
+        lastError = new Error("No tool call in AI response");
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+        throw lastError;
+      }
+
+      const parsed = JSON.parse(toolCall.function.arguments);
+      if (Array.isArray(parsed.descriptions)) {
+        return parsed.descriptions;
+      }
+
+      lastError = new Error("Invalid descriptions format");
+      if (attempt < retries) continue;
+      throw lastError;
+
+    } catch (e) {
+      if (e instanceof StatusError) throw e;
+      if ((e as Error).name === "AbortError") {
+        console.warn(`AI timeout (attempt ${attempt + 1})`);
+        lastError = new Error("AI request timed out");
+        if (attempt < retries) continue;
+      }
+      lastError = e as Error;
+      if (attempt >= retries) throw lastError;
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+
+  throw lastError || new Error("All retries exhausted");
+}
+
+class StatusError extends Error {
+  status: number;
+  constructor(status: number, msg: string) {
+    super(msg);
+    this.status = status;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -85,7 +234,7 @@ serve(async (req) => {
       );
     }
 
-    // 3. Call AI for uncovered components
+    // 3. Call AI for uncovered components — with retry + timeout
     const ctx = langContexts[lang] || langContexts["en"];
 
     const systemPrompt = `Role: Expert food critic and sensory analyst native to ${ctx.name}-speaking culture.
@@ -98,7 +247,8 @@ Guidelines:
 - Describe the ACTUAL texture/aroma/mouthfeel that happens in your mouth
 - Use cross-cultural food analogies familiar to ${ctx.name} speakers
 - Someone who has NEVER tried this dish should immediately understand what to expect
-- No hyperbolic marketing words — be honest, vivid, and precise`;
+- No hyperbolic marketing words — be honest, vivid, and precise
+- CRITICAL: Return each ingredient name EXACTLY as given in the input — do not translate or modify ingredient names`;
 
     const userPrompt = `Dish: ${dish_name}
 Components and tags:
@@ -106,77 +256,47 @@ ${uncoveredTags
   .map((t) => `- ${t.icon} ${t.ingredient} (${t.tag}, score: ${t.score > 0 ? "+" : ""}${t.score})`)
   .join("\n")}
 
-Write a 1-sentence sensory description for each component in ${ctx.outputLang}.`;
+Write a 1-sentence sensory description for each component in ${ctx.outputLang}.
+IMPORTANT: The "ingredient" field in your response must use the EXACT original name from the list above.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_descriptions",
-              description: "Return sensory descriptions for each ingredient",
-              parameters: {
-                type: "object",
-                properties: {
-                  descriptions: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        ingredient: { type: "string" },
-                        description: { type: "string" },
-                      },
-                      required: ["ingredient", "description"],
-                      additionalProperties: false,
-                    },
-                  },
-                },
-                required: ["descriptions"],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "return_descriptions" } },
-      }),
-    });
+    let aiDescs: Array<{ ingredient: string; description: string }> = [];
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited, try again later" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    try {
+      const rawDescs = await callAIWithRetry(LOVABLE_API_KEY, systemPrompt, userPrompt);
+
+      // Fuzzy-match AI ingredient names back to original names
+      for (const d of rawDescs) {
+        const matched = matchIngredient(d.ingredient, componentNames);
+        if (matched && d.description) {
+          aiDescs.push({ ingredient: matched, description: d.description });
+        } else if (d.description) {
+          // If no match found, still try to use it by index as fallback
+          console.warn(`Could not match AI ingredient "${d.ingredient}" to any input name`);
+        }
+      }
+
+      // If AI returned fewer results than expected, try index-based matching for unmatched
+      const matchedNames = new Set(aiDescs.map((d) => d.ingredient));
+      const stillUncovered = uncoveredTags.filter((t) => !matchedNames.has(t.ingredient));
+      const unmatchedAi = rawDescs.filter((d) => !matchIngredient(d.ingredient, componentNames));
+
+      if (stillUncovered.length > 0 && unmatchedAi.length > 0) {
+        // Best-effort: assign unmatched AI results to uncovered tags by order
+        const limit = Math.min(stillUncovered.length, unmatchedAi.length);
+        for (let i = 0; i < limit; i++) {
+          aiDescs.push({ ingredient: stillUncovered[i].ingredient, description: unmatchedAi[i].description });
+          console.log(`Index-matched "${unmatchedAi[i].ingredient}" → "${stillUncovered[i].ingredient}"`);
+        }
+      }
+
+    } catch (e) {
+      if (e instanceof StatusError) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errText = await response.text();
-      console.error("AI error:", response.status, errText);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const result = await response.json();
-    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-
-    const aiDescs: Array<{ ingredient: string; description: string }> = [];
-    if (toolCall?.function?.arguments) {
-      const parsed = JSON.parse(toolCall.function.arguments);
-      if (parsed.descriptions) aiDescs.push(...parsed.descriptions);
+      console.error("AI call failed after retries:", e);
+      // Continue with partial results (cached only) — don't fail the whole request
     }
 
     // Merge cached + AI results
@@ -187,7 +307,7 @@ Write a 1-sentence sensory description for each component in ${ctx.outputLang}.`
       description: cachedMap[c] || "",
     }));
 
-    // 4. Save ALL descriptions to DB for this menu_item + language
+    // 4. Save descriptions to DB
     if (menu_item_id) {
       const rows = allDescriptions
         .filter((d) => d.description)
