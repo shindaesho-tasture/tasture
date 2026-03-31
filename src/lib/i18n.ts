@@ -472,8 +472,8 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "feed.saved": { th: "บันทึกแล้ว", en: "Saved", ja: "保存済み", zh: "已收藏", ko: "저장됨" },
   "feed.save": { th: "บันทึก", en: "Save", ja: "保存", zh: "收藏", ko: "저장" },
   "feed.tapAgain": { th: "กดอีกครั้ง", en: "Tap again", ja: "もう一度タップ", zh: "再次点击", ko: "다시 누르기" },
-  "feed.noComments": { th: "ยังไม่มีคอมเมนต์ — เป็นคนแรก!", en: "No comments yet — be the first!", ja: "まだコメントがありません — 最初の一人に！", zh: "暂无评论 — 来做第一个！", ko: "아직 댓글이 없습니다 — 첫 번째가 되세요!" },
-  "feed.writeComment": { th: "เขียนคอมเมนต์…", en: "Write a comment…", ja: "コメントを書く…", zh: "写评论…", ko: "댓글 작성…" },
+  "feed.noCommentsFirst": { th: "ยังไม่มีคอมเมนต์ — เป็นคนแรก!", en: "No comments yet — be the first!", ja: "まだコメントがありません — 最初の一人に！", zh: "暂无评论 — 来做第一个！", ko: "아직 댓글이 없습니다 — 첫 번째가 되세요!" },
+  "feed.writeCommentPlaceholder": { th: "เขียนคอมเมนต์…", en: "Write a comment…", ja: "コメントを書く…", zh: "写评论…", ko: "댓글 작성…" },
   "feed.loginToComment": { th: "เข้าสู่ระบบเพื่อคอมเมนต์", en: "Log in to comment", ja: "コメントするにはログイン", zh: "登录后评论", ko: "댓글을 달려면 로그인하세요" },
 };
 
