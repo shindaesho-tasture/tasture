@@ -381,7 +381,7 @@ const CreatePost = () => {
                   className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-score-amber/5 border border-score-amber/20 transition-all"
                 >
                   <Star size={14} className="text-score-amber" />
-                  <span className="text-xs text-muted-foreground">แนบรีวิวกับรูปนี้</span>
+                  <span className="text-xs text-muted-foreground">{t("createPost.attachReview")}</span>
                 </motion.button>
               )}
             </div>
