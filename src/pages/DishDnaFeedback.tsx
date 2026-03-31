@@ -293,6 +293,7 @@ const DishDnaFeedback = () => {
                   selection={selections[comp.name] || null}
                   onSelect={(score, tag) => handleSelect(comp.name, comp.icon, score, tag)}
                   index={i}
+                  translateTag={translateTag}
                 />
               ))}
             </div>
