@@ -434,6 +434,44 @@ export type Database = {
         }
         Relationships: []
       }
+      queues: {
+        Row: {
+          created_at: string
+          id: string
+          party_size: number
+          queue_number: number
+          status: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          party_size?: number
+          queue_number: number
+          status?: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          party_size?: number
+          queue_number?: number
+          status?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queues_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           created_at: string
@@ -626,6 +664,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_queue_number: { Args: { p_store_id: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
