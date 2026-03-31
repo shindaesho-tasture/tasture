@@ -1032,7 +1032,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
       setComments(data.map((c) => ({
         id: c.id,
         userId: c.user_id,
-        userName: profileMap.get(c.user_id)?.name || "ผู้ใช้",
+        userName: profileMap.get(c.user_id)?.name || t("feed.user"),
         userAvatar: profileMap.get(c.user_id)?.avatar || null,
         content: c.content,
         createdAt: c.created_at,
