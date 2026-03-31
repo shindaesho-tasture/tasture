@@ -8,7 +8,8 @@ interface DishDnaCardProps {
   selection: DishDnaSelection | null;
   onSelect: (score: -2 | 0 | 2, tag: string) => void;
   index: number;
-  communityScores?: Record<string, { avgScore: number; count: number }>; // tag -> community data
+  communityScores?: Record<string, { avgScore: number; count: number }>;
+  translateTag?: (tag: string) => string;
 }
 
 const ratingOptions = [
