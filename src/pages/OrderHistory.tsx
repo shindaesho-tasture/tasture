@@ -28,6 +28,7 @@ const scoreEmoji = (s: number | null) =>
 const OrderHistory = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [loading, setLoading] = useState(true);
   
