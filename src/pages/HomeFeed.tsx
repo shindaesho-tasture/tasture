@@ -809,7 +809,7 @@ const HomeFeed = () => {
                     onClick={() => navigate("/store-list")}
                     className="mt-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-medium"
                   >
-                    เริ่มสำรวจร้าน
+                    {t("feed.exploreStores")}
                   </motion.button>
                 )}
                 {activeTab === "following" && (
