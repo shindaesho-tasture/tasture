@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2, Search, Globe, ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical, Camera, ImageIcon, Loader2, Search, Globe, ChevronUp, ChevronDown, ArrowUpDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -208,6 +208,26 @@ const MenuManager = () => {
     });
   }, []);
 
+  const sortByCategory = useCallback(async () => {
+    const categoryOrder = MENU_CATEGORIES;
+    const sorted = [...orderedItems].sort((a, b) => {
+      const catA = a.menu_category || "";
+      const catB = b.menu_category || "";
+      let idxA = categoryOrder.indexOf(catA);
+      let idxB = categoryOrder.indexOf(catB);
+      if (idxA === -1) idxA = categoryOrder.length;
+      if (idxB === -1) idxB = categoryOrder.length;
+      return idxA - idxB;
+    });
+    setOrderedItems(sorted);
+    await Promise.all(
+      sorted.map((item, i) =>
+        supabase.from("menu_items").update({ sort_order: i } as any).eq("id", item.id)
+      )
+    );
+    toast.success("จัดลำดับตามหมวดหมู่แล้ว ✓");
+  }, [orderedItems, MENU_CATEGORIES]);
+
   const startEdit = (item: MenuItemRow) => {
     setEditingId(item.id);
     setShowAdd(true);
@@ -345,6 +365,16 @@ const MenuManager = () => {
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald transition-all placeholder:text-muted-foreground/60"
               />
             </div>
+            {isOwner && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={sortByCategory}
+                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowUpDown size={12} />
+                จัดลำดับตามหมวดหมู่
+              </motion.button>
+            )}
           </div>
         )}
 
