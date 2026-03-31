@@ -1070,7 +1070,7 @@ const PostOrderReview = () => {
                 onClick={handleFinish}
                 className="flex-1 py-3.5 rounded-2xl bg-foreground text-background text-sm font-bold"
               >
-                กลับหน้าหลัก
+                {t("por.goHome")}
               </motion.button>
             ) : (
               <>
