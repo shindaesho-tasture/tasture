@@ -100,7 +100,7 @@ const PostOrderReview = () => {
     s.push({ type: "results", label: t("por.summary"), icon: "🏆" });
     return s;
   }, [items, t]);
-  }, [items]);
+  
 
   const step = steps[currentStep];
   const totalSteps = steps.length;
