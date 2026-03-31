@@ -370,20 +370,9 @@ const MenuManager = () => {
                         <button onClick={() => startEdit(item)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                           <Pencil size={14} className="text-muted-foreground" />
                         </button>
-                        {deleteConfirm === item.id ? (
-                          <motion.button
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            onClick={() => deleteMutation.mutate(item.id)}
-                            className="px-2 py-1 rounded-lg bg-score-ruby text-white text-[10px] font-medium"
-                          >
-                            {t("common.confirm")}
-                          </motion.button>
-                        ) : (
-                          <button onClick={() => setDeleteConfirm(item.id)} className="p-1.5 rounded-lg hover:bg-score-ruby/10 transition-colors">
+<button onClick={() => setDeleteConfirm(item.id)} className="p-1.5 rounded-lg hover:bg-score-ruby/10 transition-colors">
                             <Trash2 size={14} className="text-score-ruby/70" />
                           </button>
-                        )}
                       </div>
                     )}
                   </div>
