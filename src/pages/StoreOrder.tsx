@@ -331,10 +331,13 @@ const StoreOrder = () => {
     }
   };
 
-  const toggleTopping = (t: string) => {
-    setSelectedToppings((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
-    );
+  const MAX_TOPPINGS = 3;
+  const toggleTopping = (tp: string) => {
+    setSelectedToppings((prev) => {
+      if (prev.includes(tp)) return prev.filter((x) => x !== tp);
+      if (prev.length >= MAX_TOPPINGS) return prev;
+      return [...prev, tp];
+    });
   };
 
   // typeEmoji not needed anymore with SovereignMenuCard
