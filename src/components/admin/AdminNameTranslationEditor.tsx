@@ -226,6 +226,43 @@ const AdminNameTranslationEditor = () => {
     }
   }, [items, transMap]);
 
+  /** Batch translate menu items into menu_translations table (used by StoreOrder) */
+  const batchTranslateMenuItems = useCallback(async () => {
+    if (allMenuIds.length === 0) {
+      toast.info("ไม่มีเมนูให้แปล");
+      return;
+    }
+
+    const BATCH_SIZE = 15;
+    const totalBatches = Math.ceil(allMenuIds.length / BATCH_SIZE);
+    setMenuBatchProgress({ current: 0, total: allMenuIds.length });
+    let successCount = 0;
+
+    try {
+      for (let i = 0; i < totalBatches; i++) {
+        const batch = allMenuIds.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+        setMenuBatchProgress({ current: i * BATCH_SIZE, total: allMenuIds.length });
+
+        const { data, error } = await supabase.functions.invoke("translate-menu", {
+          body: { menu_item_ids: batch, target_languages: [...LANGS] },
+        });
+        if (error) { console.error(`Menu batch ${i + 1} error:`, error); continue; }
+        successCount += data?.translated || 0;
+
+        if (i < totalBatches - 1) {
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+
+      setMenuBatchProgress(null);
+      toast.success(`แปลเมนูสำเร็จ ${successCount} รายการ ✓`);
+      await load();
+    } catch (e: any) {
+      setMenuBatchProgress(null);
+      toast.error(e.message || "Batch translate เมนูล้มเหลว");
+    }
+  }, [allMenuIds]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -242,18 +279,34 @@ const AdminNameTranslationEditor = () => {
         <span className="text-[10px] text-muted-foreground">
           {items.filter((i) => i.type === "store").length} ร้าน · {items.filter((i) => i.type === "menu").length} เมนู
         </span>
-        <button
-          onClick={batchTranslateAll}
-          disabled={!!batchProgress || missingCount === 0}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-score-emerald text-primary-foreground text-[11px] font-semibold disabled:opacity-50 transition-all hover:opacity-90"
-        >
-          <Zap size={12} />
-          {batchProgress
-            ? `กำลังแปล ${batchProgress.current}/${batchProgress.total}...`
-            : missingCount > 0
-              ? `Batch แปลทั้งหมด (${missingCount} ขาด)`
-              : "แปลครบแล้ว ✓"}
-        </button>
+        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          {/* Batch translate into menu_translations (for StoreOrder cards) */}
+          <button
+            onClick={batchTranslateMenuItems}
+            disabled={!!menuBatchProgress || menuTransCount === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-[11px] font-semibold disabled:opacity-50 transition-all hover:opacity-90"
+          >
+            <UtensilsCrossed size={12} />
+            {menuBatchProgress
+              ? `แปลเมนู ${menuBatchProgress.current}/${menuBatchProgress.total}...`
+              : menuTransCount > 0
+                ? `แปลการ์ดเมนู (${menuTransCount} ขาด)`
+                : "การ์ดเมนูครบ ✓"}
+          </button>
+          {/* Batch translate into tag_translations (for karaoke names) */}
+          <button
+            onClick={batchTranslateAll}
+            disabled={!!batchProgress || missingCount === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-score-emerald text-primary-foreground text-[11px] font-semibold disabled:opacity-50 transition-all hover:opacity-90"
+          >
+            <Zap size={12} />
+            {batchProgress
+              ? `แปลแท็ก ${batchProgress.current}/${batchProgress.total}...`
+              : missingCount > 0
+                ? `แปลแท็กชื่อ (${missingCount} ขาด)`
+                : "แท็กชื่อครบ ✓"}
+          </button>
+        </div>
       </div>
 
       {/* Search + Type Filter */}
