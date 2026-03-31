@@ -82,8 +82,18 @@ const OrderSummary = () => {
                     <h3 className="text-sm font-semibold text-foreground truncate">{item.name}</h3>
                     {item.selectedOptions && (
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {item.selectedOptions.noodleType && <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">{item.selectedOptions.noodleType}</span>}
-                        {item.selectedOptions.noodleStyle && <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">{item.selectedOptions.noodleStyle}</span>}
+                        {item.selectedOptions.noodleType && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                            🍜 {item.selectedOptions.noodleType}
+                            {item.selectedOptions.noodleTypePrice ? ` +฿${item.selectedOptions.noodleTypePrice}` : ""}
+                          </span>
+                        )}
+                        {item.selectedOptions.noodleStyle && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                            🍲 {item.selectedOptions.noodleStyle}
+                            {item.selectedOptions.noodleStylePrice ? ` +฿${item.selectedOptions.noodleStylePrice}` : ""}
+                          </span>
+                        )}
                         {item.selectedOptions.toppings?.map((tp) => <span key={tp} className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-emerald/10 text-score-emerald">{tp}</span>)}
                         {item.selectedOptions.addOns?.map((ao) => <span key={ao} className="text-[9px] px-1.5 py-0.5 rounded-md bg-accent/60 text-accent-foreground">+ {ao}</span>)}
                       </div>
