@@ -41,13 +41,16 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
     },
   });
 
-  // Collect add-on categories for translation
-  const allCatTexts = useMemo(() => {
-    const cats = new Set<string>(DEFAULT_CATEGORIES);
-    addOns.forEach((a: AddOn) => cats.add(a.category));
-    return Array.from(cats);
+  // Collect add-on categories + names for translation
+  const allTranslatableTexts = useMemo(() => {
+    const texts = new Set<string>(DEFAULT_CATEGORIES);
+    addOns.forEach((a: AddOn) => {
+      texts.add(a.category);
+      texts.add(a.name);
+    });
+    return Array.from(texts);
   }, [addOns]);
-  const { translateTag } = useTagTranslations(allCatTexts);
+  const { translateTag } = useTagTranslations(allTranslatableTexts);
 
   const addMutation = useMutation({
     mutationFn: async () => {
@@ -124,7 +127,7 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
               layout
               className="flex items-center justify-between px-3 py-2 rounded-xl bg-secondary/60 text-xs"
             >
-              <span className="text-foreground font-medium">{a.name}</span>
+              <span className="text-foreground font-medium">{translateTag(a.name)}</span>
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">+฿{a.price}</span>
                 {deleteConfirm === a.id ? (
