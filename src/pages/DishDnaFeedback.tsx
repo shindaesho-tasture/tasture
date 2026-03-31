@@ -276,9 +276,9 @@ const DishDnaFeedback = () => {
                     {t("dna.tapTag")}
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> สุดยอด ·
-                    <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> ปกติ ·
-                    <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> ผิดหวัง
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-emerald mr-0.5 align-middle" /> {t("review.excellent")} ·
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-slate mx-0.5 align-middle" /> {t("review.normal")} ·
+                    <span className="inline-block w-2 h-2 rounded-full bg-score-ruby mx-0.5 align-middle" /> {t("review.disappointing")}
                   </p>
                 </div>
               </div>
