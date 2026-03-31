@@ -710,10 +710,10 @@ const HomeFeed = () => {
   }, [activeTab, handleTabChange]);
 
   const emptyMessages: Record<FeedTab, string> = {
-    explore: "ยังไม่มีรีวิวจากชุมชน",
-    nearby: geoPos ? "ไม่พบรีวิวร้านใกล้เคียง" : "กรุณาเปิดตำแหน่งที่ตั้ง",
-    following: "ยังไม่มีรีวิวจากคนที่คุณติดตาม",
-    foryou: "ยังไม่มีรีวิวที่แนะนำสำหรับคุณ",
+    explore: t("feed.emptyExplore"),
+    nearby: geoPos ? t("feed.emptyNearby") : t("feed.emptyNearbyNoGeo"),
+    following: t("feed.emptyFollowing"),
+    foryou: t("feed.emptyForyou"),
   };
 
   return (
