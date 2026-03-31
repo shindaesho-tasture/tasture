@@ -20,6 +20,7 @@ import { useLanguage } from "@/lib/language-context";
 import { categories, scoreTiers, getScoreTier, type Category } from "@/lib/categories";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { preTranslateDnaTags, preTranslateTags } from "@/lib/pre-translate";
 import PageTransition from "@/components/PageTransition";
 import MetricRater from "@/components/MetricRater";
 import DishDnaCard from "@/components/menu/DishDnaCard";
@@ -432,6 +433,24 @@ const PostOrderReview = () => {
           }
         }
       }
+
+      // Pre-translate all tags from this review session (background)
+      const allDnaTags: { component_name: string; selected_tag: string }[] = [];
+      const allMetricLabels: string[] = [];
+      for (const item of items) {
+        const sel = dnaSelections[item.menuItemId] || {};
+        Object.values(sel).forEach((s) => allDnaTags.push(s));
+        const prev = previousDnaRows[item.menuItemId] || [];
+        prev.forEach((r) => allDnaTags.push(r));
+      }
+      if (category) {
+        category.metrics.forEach((m) => {
+          allMetricLabels.push(m.label);
+          if (m.smartGate) m.smartGate.subMetrics.forEach((sub) => allMetricLabels.push(sub.label));
+        });
+      }
+      preTranslateDnaTags(allDnaTags);
+      if (allMetricLabels.length > 0) preTranslateTags(allMetricLabels);
 
       toast({ title: t("por.saveSuccess") });
     } catch (err: any) {

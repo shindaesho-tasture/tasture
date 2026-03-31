@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/language-context";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
 import { toast } from "@/hooks/use-toast";
+import { preTranslateDnaTags } from "@/lib/pre-translate";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 import DishDnaCard from "@/components/menu/DishDnaCard";
@@ -200,6 +201,8 @@ const DishDnaFeedback = () => {
       if (rows.length > 0) {
         const { error } = await supabase.from("dish_dna").insert(rows);
         if (error) throw error;
+        // Pre-translate DNA tags into all languages (background)
+        preTranslateDnaTags(rows);
       }
 
       setSaveSuccess(true);
