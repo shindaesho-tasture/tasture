@@ -84,6 +84,20 @@ const StoreOrder = () => {
   // Detail sheet state
   const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
 
+  // Collect all DNA tag texts for translation
+  const allTagTexts = useMemo(() => {
+    const tags = new Set<string>();
+    dnaByItem.forEach((dnaTags) => {
+      dnaTags.forEach((t) => {
+        tags.add(t.selected_tag);
+        tags.add(t.component_name);
+      });
+    });
+    return Array.from(tags);
+  }, [dnaByItem]);
+
+  const { translateTag } = useTagTranslations(allTagTexts);
+
   useEffect(() => {
     if (!storeId) return;
     fetchData();
