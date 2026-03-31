@@ -338,6 +338,13 @@ const StoreRegistration = () => {
             if (error) console.error("Batch analyze error:", error);
             else console.log("Dish templates cached:", Object.keys(data?.templates || {}).length);
           });
+
+          // Pre-translate store name, menu names, categories into all languages (background)
+          preTranslateStoreData({
+            storeName: normalizedName,
+            menuNames: dishNames,
+            menuCategories: [...new Set(menuItems.map((m) => m.type).filter(Boolean))],
+          });
         }
 
         const skippedCount = menuItems.length - (newItems?.length ?? menuItems.length);
