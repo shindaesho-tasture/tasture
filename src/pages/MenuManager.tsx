@@ -185,6 +185,7 @@ const MenuManager = () => {
       textures: splitArr(form.textures),
     };
 
+    setIsSaving(true);
     try {
       let itemId = editingId;
       if (itemId) {
@@ -200,7 +201,6 @@ const MenuManager = () => {
         itemId = inserted.id;
       }
 
-      // Upload image if selected
       if (imageFile && itemId) {
         await uploadImage(imageFile, itemId);
       }
@@ -210,6 +210,8 @@ const MenuManager = () => {
       resetForm();
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
