@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera, Settings } from "lucide-react";
+import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera, Settings, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
@@ -290,6 +290,13 @@ const MyStores = () => {
                       >
                         <Camera size={14} strokeWidth={1.5} />
                         📷
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/queue-manager/${store.id}`)}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[11px] font-medium uppercase tracking-wider hover:bg-amber-200 dark:hover:bg-amber-900/30 transition-colors"
+                      >
+                        <Users size={14} strokeWidth={1.5} />
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.97 }}

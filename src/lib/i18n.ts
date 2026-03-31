@@ -240,7 +240,16 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "queue.goNow": { th: "เข้าร้านได้เลย!", en: "Go now!", ja: "今すぐ行こう！", zh: "现在去！", ko: "지금 가세요!" },
   "queue.pleaseWait": { th: "กรุณารอสักครู่", en: "Please wait", ja: "お待ちください", zh: "请稍等", ko: "잠시만 기다려주세요" },
 
-  // ─── Profile Stats Labels ───
+  // ─── Queue Manager (Owner) ───
+  "queueMgr.title": { th: "จัดการคิว", en: "Queue Manager", ja: "キュー管理", zh: "队列管理", ko: "대기열 관리" },
+  "queueMgr.waiting": { th: "กำลังรอ", en: "Waiting", ja: "待ち", zh: "等待中", ko: "대기 중" },
+  "queueMgr.called": { th: "เรียกแล้ว", en: "Called", ja: "呼び出し済", zh: "已叫号", ko: "호출됨" },
+  "queueMgr.filterActive": { th: "คิวที่ใช้งาน", en: "Active", ja: "アクティブ", zh: "进行中", ko: "활성" },
+  "queueMgr.filterAll": { th: "ทั้งหมด", en: "All", ja: "すべて", zh: "全部", ko: "전체" },
+  "queueMgr.empty": { th: "ยังไม่มีคิววันนี้", en: "No queues today", ja: "今日のキューはありません", zh: "今天没有排队", ko: "오늘 대기열 없음" },
+  "queueMgr.guest": { th: "ลูกค้า", en: "Guest", ja: "ゲスト", zh: "顾客", ko: "손님" },
+
+
   "profile.tasteDNA": { th: "Taste DNA", en: "Taste DNA", ja: "テイストDNA", zh: "味觉DNA", ko: "맛 DNA" },
   "profile.emeraldVault": { th: "Emerald Vault", en: "Emerald Vault", ja: "エメラルド金庫", zh: "翡翠宝库", ko: "에메랄드 보관함" },
   "profile.emeralds": { th: "เพชร", en: "Emeralds", ja: "エメラルド", zh: "翡翠", ko: "에메랄드" },
