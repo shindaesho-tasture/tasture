@@ -16,6 +16,7 @@ import BottomNav from "@/components/BottomNav";
 import TagInput from "@/components/menu/TagInput";
 import AddOnManager from "@/components/menu/AddOnManager";
 import MenuTranslationSheet from "@/components/menu/MenuTranslationSheet";
+import { preTranslateTags, preTranslateStoreData } from "@/lib/pre-translate";
 
 type MenuItemRow = {
   id: string;
@@ -289,6 +290,18 @@ const MenuManager = () => {
 
       queryClient.invalidateQueries({ queryKey: ["menu-manager", storeId] });
       toast.success(t("common.save") + " ✓");
+
+      // Pre-translate all menu attributes into all languages
+      const allTexts: string[] = [
+        form.name.trim(),
+        ...(form.noodle_types || []),
+        ...(form.noodle_styles || []),
+        ...(form.toppings || []),
+        ...(form.textures || []),
+        ...(form.menu_category ? [form.menu_category] : []),
+      ].filter(Boolean);
+      if (allTexts.length > 0) preTranslateTags(allTexts);
+
       resetForm();
     } catch (e: any) {
       console.error("[MenuManager] save error:", e);
