@@ -80,6 +80,7 @@ const sectionGradients = [
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const { position } = useGeolocation();
   const { categories: dynamicCategories } = useCategories();
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
