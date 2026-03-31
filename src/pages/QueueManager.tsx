@@ -79,7 +79,7 @@ const QueueManager = () => {
 
     if (data) {
       // Fetch profiles for display names
-      const userIds = [...new Set(data.map((q: any) => q.user_id))];
+      const userIds = [...new Set(data.map((q: any) => q.user_id))] as string[];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, display_name")
