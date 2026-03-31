@@ -232,7 +232,7 @@ const CreatePost = () => {
         if (imgErr) console.error("post_images insert error:", imgErr);
       }
 
-      toast({ title: "โพสสำเร็จ! 🎉" });
+      toast({ title: t("createPost.success") });
       navigate("/");
     } catch (err: any) {
       console.error(err);
