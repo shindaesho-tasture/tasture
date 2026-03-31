@@ -580,8 +580,8 @@ const PostOrderReview = () => {
                         className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl bg-score-emerald/10 border-2 border-score-emerald/30 hover:border-score-emerald/60 transition-all"
                       >
                         <span className="text-3xl">👍</span>
-                        <span className="text-sm font-semibold text-foreground">ยังเหมือนเดิม</span>
-                        <span className="text-[9px] text-muted-foreground">ข้ามไปรีวิวเมนูเลย</span>
+                         <span className="text-sm font-semibold text-foreground">{t("por.same")}</span>
+                         <span className="text-[9px] text-muted-foreground">{t("por.skipToMenu")}</span>
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
