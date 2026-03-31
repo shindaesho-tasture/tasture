@@ -1208,7 +1208,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               )}
               {post.storeName && (
                 <>
-                  {" "}ที่{" "}
+                  {" "}{t("feed.at")}{" "}
                   <button
                     onClick={() => navigate(`/store/${post.storeId}/order`)}
                     className="font-semibold text-score-emerald hover:underline"
