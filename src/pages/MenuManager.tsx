@@ -34,6 +34,8 @@ type MenuItemRow = {
   menu_category: string | null;
 };
 
+const MENU_CATEGORIES = ["แนะนำ", "ต้ม", "ผัด", "กับข้าว", "ราดข้าว", "ทอด", "ยำ", "อื่นๆ"];
+
 const emptyForm = {
   name: "",
   original_name: "",
@@ -47,6 +49,7 @@ const emptyForm = {
   textures: [] as string[],
   noodle_type_prices: {} as Record<string, number>,
   noodle_style_prices: {} as Record<string, number>,
+  menu_category: "" as string,
 };
 
 const MenuManager = () => {
