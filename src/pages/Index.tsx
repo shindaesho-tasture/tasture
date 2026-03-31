@@ -354,6 +354,7 @@ const Index = () => {
     stores.forEach((s) => {
       s.metrics.forEach((m) => labels.add(m.label));
       if (s.categoryLabel) labels.add(s.categoryLabel);
+      labels.add(s.name); // Store name for karaoke translation
     });
     return Array.from(labels);
   }, [stores]);
