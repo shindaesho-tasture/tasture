@@ -163,6 +163,8 @@ const AdminStoreEditor = ({ storeId, onClose, onUpdated }: AdminStoreEditorProps
         setMenuItems((prev) => [...prev, data]);
         setAddingMenu(false);
         toast({ title: "✅ เพิ่มเมนูแล้ว" });
+        // Pre-translate menu name
+        preTranslateTags([menuForm.name.trim()]);
       }
     } else if (editingMenuId) {
       const { error } = await supabase.from("menu_items").update({
