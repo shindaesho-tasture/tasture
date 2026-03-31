@@ -1080,7 +1080,7 @@ const PostOrderReview = () => {
                     onClick={goBack}
                     className="px-5 py-3.5 rounded-2xl bg-secondary text-foreground text-sm font-medium"
                   >
-                    ย้อนกลับ
+                    {t("por.goBack")}
                   </motion.button>
                 )}
                 <motion.button
