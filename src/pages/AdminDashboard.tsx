@@ -74,6 +74,7 @@ const tabs: { id: AdminTab; label: string; icon: typeof BarChart3 }[] = [
   { id: "categories", label: "กลุ่มร้าน", icon: Tags },
   { id: "menu_cats", label: "หมวดเมนู", icon: UtensilsCrossed },
   { id: "tag_trans", label: "แปลแท็ก", icon: Languages },
+  { id: "name_trans", label: "แปลชื่อ", icon: Type },
   { id: "dish_desc", label: "คำอธิบาย", icon: FileText },
 ];
 
