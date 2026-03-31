@@ -5,6 +5,8 @@ import { Plus, ChevronLeft, MessageSquarePlus, Store, UtensilsCrossed, Camera, S
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
 

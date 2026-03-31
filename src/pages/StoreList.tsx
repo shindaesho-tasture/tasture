@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { categories } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import KaraokeName from "@/components/KaraokeName";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
