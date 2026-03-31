@@ -738,10 +738,10 @@ const HomeFeed = () => {
               />
             </motion.div>
             {pullProgress >= 1 && !refreshing && (
-              <span className="ml-2 text-[11px] font-medium text-score-emerald">ปล่อยเพื่อรีเฟรช</span>
+              <span className="ml-2 text-[11px] font-medium text-score-emerald">{t("feed.releaseRefresh")}</span>
             )}
             {refreshing && (
-              <span className="ml-2 text-[11px] font-medium text-muted-foreground">กำลังโหลด…</span>
+              <span className="ml-2 text-[11px] font-medium text-muted-foreground">{t("feed.refreshing")}</span>
             )}
           </motion.div>
         </div>
