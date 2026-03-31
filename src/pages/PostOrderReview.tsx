@@ -871,7 +871,7 @@ const PostOrderReview = () => {
                           animate={{ opacity: 1 }}
                           className="text-[10px] text-score-emerald font-medium text-center"
                         >
-                          ✅ ตั้งค่ารสชาติทั้งหมดเป็นสมดุลพอดีแล้ว
+                          {t("por.perfectSet")}
                         </motion.p>
                       )}
                     </div>
