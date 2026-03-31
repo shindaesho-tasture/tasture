@@ -115,13 +115,50 @@ const MenuManager = () => {
     setForm(emptyForm);
     setEditingId(null);
     setShowAdd(false);
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  // Upload image to storage and update menu_item
+  const uploadImage = async (file: File, menuItemId: string) => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${storeId}/${menuItemId}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
+    const image_url = urlData.publicUrl + `?t=${Date.now()}`;
+    await supabase.from("menu_items").update({ image_url } as any).eq("id", menuItemId);
+    return image_url;
+  };
+
+  // Inline image upload for existing items (from list)
+  const handleInlineUpload = async (file: File, itemId: string) => {
+    setUploadingImage(itemId);
+    try {
+      await uploadImage(file, itemId);
+      queryClient.invalidateQueries({ queryKey: ["menu-manager", storeId] });
+      toast.success("📸 ✓");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
+  // Handle form image pick
+  const handleFormImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   // Reorder handler — save new order to DB
   const handleReorder = useCallback(
     async (newOrder: MenuItemRow[]) => {
       setOrderedItems(newOrder);
-      // Batch update sort_order
       const updates = newOrder.map((item, idx) => ({ id: item.id, sort_order: idx }));
       await Promise.all(
         updates.map(({ id, sort_order }) =>
