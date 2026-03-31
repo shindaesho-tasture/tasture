@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Pencil, Check, X, Trash2, FileText, Plus, Globe } from "lucide-react";
+import { Search, Pencil, Check, X, Trash2, FileText, Plus, Globe, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -12,8 +12,17 @@ interface DishDesc {
   language: string;
 }
 
+interface DishDnaRow {
+  menu_item_id: string;
+  component_name: string;
+  component_icon: string;
+  selected_tag: string;
+  selected_score: number;
+}
+
 const LANG_FLAGS: Record<string, string> = { th: "🇹🇭", en: "🇺🇸", ja: "🇯🇵", zh: "🇨🇳", ko: "🇰🇷" };
 const LANG_LABELS: Record<string, string> = { th: "ไทย", en: "English", ja: "日本語", zh: "中文", ko: "한국어" };
+const ALL_LANGS = ["th", "en", "ja", "zh", "ko"];
 
 const AdminDishDescriptionEditor = () => {
   const [items, setItems] = useState<DishDesc[]>([]);
@@ -113,6 +122,92 @@ const AdminDishDescriptionEditor = () => {
     toast.success("เพิ่มคำอธิบายแล้ว ✓");
   };
 
+  // Regenerate All
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenProgress, setRegenProgress] = useState({ done: 0, total: 0 });
+
+  const regenerateAll = async () => {
+    if (!confirm("⚠️ ลบคำอธิบายทั้งหมดแล้วให้ AI สร้างใหม่ทุกภาษา?\nอาจใช้เวลาสักครู่")) return;
+
+    setRegenerating(true);
+    setRegenProgress({ done: 0, total: 0 });
+
+    try {
+      // 1. Delete all existing descriptions
+      const { error: delErr } = await supabase.from("dish_descriptions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (delErr) { toast.error("ลบไม่สำเร็จ: " + delErr.message); setRegenerating(false); return; }
+
+      // 2. Get all dish_dna grouped by menu_item
+      const { data: dnaRows } = await supabase
+        .from("dish_dna")
+        .select("menu_item_id, component_name, component_icon, selected_tag, selected_score");
+
+      if (!dnaRows || dnaRows.length === 0) {
+        toast.info("ไม่พบ Dish DNA สำหรับสร้างคำอธิบาย");
+        setRegenerating(false);
+        return;
+      }
+
+      // Group by menu_item_id
+      const byItem = new Map<string, DishDnaRow[]>();
+      (dnaRows as DishDnaRow[]).forEach((r) => {
+        if (!byItem.has(r.menu_item_id)) byItem.set(r.menu_item_id, []);
+        byItem.get(r.menu_item_id)!.push(r);
+      });
+
+      // Get menu item names
+      const itemIds = [...byItem.keys()];
+      const { data: miData } = await supabase
+        .from("menu_items")
+        .select("id, name")
+        .in("id", itemIds);
+      const nameMap = new Map((miData || []).map((m) => [m.id, m.name]));
+
+      const jobs: Array<{ menuItemId: string; dishName: string; tags: any[]; lang: string }> = [];
+      for (const [menuItemId, rows] of byItem) {
+        const dishName = nameMap.get(menuItemId) || "Unknown";
+        const tags = rows.map((r) => ({
+          ingredient: r.component_name,
+          icon: r.component_icon,
+          tag: r.selected_tag,
+          score: r.selected_score,
+        }));
+        for (const lang of ALL_LANGS) {
+          jobs.push({ menuItemId, dishName, tags, lang });
+        }
+      }
+
+      setRegenProgress({ done: 0, total: jobs.length });
+
+      // 3. Call describe-dish for each job sequentially
+      let doneCount = 0;
+      for (const job of jobs) {
+        try {
+          await supabase.functions.invoke("describe-dish", {
+            body: {
+              dish_name: job.dishName,
+              tags: job.tags,
+              menu_item_id: job.menuItemId,
+              language: job.lang,
+            },
+          });
+        } catch (e) {
+          console.error("Regen error:", job.menuItemId, job.lang, e);
+        }
+        doneCount++;
+        setRegenProgress({ done: doneCount, total: jobs.length });
+      }
+
+      toast.success(`สร้างคำอธิบายใหม่เสร็จแล้ว ✓ (${doneCount} รายการ)`);
+      await load();
+    } catch (e) {
+      console.error("regenerateAll error:", e);
+      toast.error("เกิดข้อผิดพลาด");
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   const languages = [...new Set(items.map((d) => d.language))].sort();
 
   if (loading) {
@@ -125,16 +220,28 @@ const AdminDishDescriptionEditor = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <FileText size={16} className="text-score-emerald" />
         <h2 className="text-sm font-semibold text-foreground">จัดการคำอธิบายเมนู</h2>
         <span className="text-[10px] text-muted-foreground">{items.length} รายการ</span>
-        <button
-          onClick={() => setShowAdd((v) => !v)}
-          className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-xl bg-score-emerald text-white text-[11px] font-semibold"
-        >
-          <Plus size={13} /> เพิ่มคำอธิบาย
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={regenerateAll}
+            disabled={regenerating}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 text-white text-[11px] font-semibold disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={regenerating ? "animate-spin" : ""} />
+            {regenerating
+              ? `กำลังสร้าง... ${regenProgress.done}/${regenProgress.total}`
+              : "สร้างใหม่ทั้งหมด"}
+          </button>
+          <button
+            onClick={() => setShowAdd((v) => !v)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-score-emerald text-white text-[11px] font-semibold"
+          >
+            <Plus size={13} /> เพิ่มคำอธิบาย
+          </button>
+        </div>
       </div>
 
       {/* Add new form */}
