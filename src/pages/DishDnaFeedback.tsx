@@ -12,7 +12,7 @@ import DishDnaCard from "@/components/menu/DishDnaCard";
 import type { DishAnalysis, DishDnaSelection, DishComponent } from "@/lib/dish-dna-types";
 
 /* ─── Analyzing Animation ─── */
-const AnalyzingOverlay = ({ dishName }: { dishName: string }) => (
+const AnalyzingOverlay = ({ dishName, t }: { dishName: string; t: (key: string, params?: Record<string, string | number>) => string }) => (
   <div className="flex flex-col items-center justify-center py-24 gap-6">
     <motion.div
       animate={{ rotate: 360 }}
@@ -29,7 +29,7 @@ const AnalyzingOverlay = ({ dishName }: { dishName: string }) => (
       </motion.div>
     </motion.div>
     <div className="text-center space-y-1.5">
-      <p className="text-sm font-semibold text-foreground">กำลังวิเคราะห์</p>
+      <p className="text-sm font-semibold text-foreground">{t("dna.analyzing")}</p>
       <p className="text-base font-medium text-score-emerald">"{dishName}"</p>
       <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mt-2">
         sovereign culinary ai
