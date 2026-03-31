@@ -5,6 +5,7 @@ import { Heart, MessageCircle, Share2, Sparkles, Clock, ChefHat, RefreshCw, Send
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/language-context";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
