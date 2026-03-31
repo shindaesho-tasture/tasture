@@ -233,6 +233,7 @@ const MenuManager = () => {
       toast.success(t("common.save") + " ✓");
       resetForm();
     } catch (e: any) {
+      console.error("[MenuManager] save error:", e);
       toast.error(e.message);
     } finally {
       setIsSaving(false);
