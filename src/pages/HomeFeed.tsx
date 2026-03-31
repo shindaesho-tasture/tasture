@@ -1382,7 +1382,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                             : "bg-secondary border-border/50 text-muted-foreground"
                         )}
                       >
-                        {dna.icon} {dna.tag}
+                        {dna.icon} {translateTag(dna.tag)}
                       </span>
                     ))}
                   </div>
