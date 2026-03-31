@@ -572,7 +572,7 @@ const Index = () => {
                     : "bg-transparent text-foreground border-border hover:bg-secondary"
                 )}
               >
-                {cat.icon} {cat.labelTh || cat.label}
+                {cat.icon} {translateTag(cat.labelTh || cat.label)}
               </motion.button>
             );
           })}
