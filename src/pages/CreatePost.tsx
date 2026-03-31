@@ -527,7 +527,7 @@ const CreatePost = () => {
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/20">
                     <Search size={14} className="text-muted-foreground shrink-0" />
                     <input type="text" value={storeSearch} onChange={(e) => setStoreSearch(e.target.value)}
-                      placeholder="ค้นหาร้าน..." autoFocus
+                      placeholder={t("createPost.searchStore")} autoFocus
                       className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none" />
                     {storeSearch && <button onClick={() => setStoreSearch("")}><X size={12} className="text-muted-foreground" /></button>}
                   </div>
