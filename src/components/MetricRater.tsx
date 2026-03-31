@@ -160,6 +160,7 @@ const MetricRater = ({
           <ScoreButton
             key={tier.value}
             {...tier}
+            label={translateTag(tier.label)}
             selected={value === tier.value}
             onSelect={(v) => onChange(metric.id, v)}
           />
