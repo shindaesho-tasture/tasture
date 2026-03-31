@@ -1369,10 +1369,16 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-semibold text-foreground truncate">
                         {post.slides[slideIndex].menuItemName}
+                        {post.slides[slideIndex].menuItemName && translateTag(post.slides[slideIndex].menuItemName!) !== post.slides[slideIndex].menuItemName && (
+                          <span className="font-normal text-muted-foreground/70 ml-1 text-[9px]">({translateTag(post.slides[slideIndex].menuItemName!)})</span>
+                        )}
                       </p>
                       {post.slides[slideIndex].storeName && (
                         <p className="text-[9px] text-muted-foreground truncate">
                           📍 {post.slides[slideIndex].storeName}
+                          {translateTag(post.slides[slideIndex].storeName!) !== post.slides[slideIndex].storeName && (
+                            <span className="ml-1 opacity-60">({translateTag(post.slides[slideIndex].storeName!)})</span>
+                          )}
                         </p>
                       )}
                     </div>
