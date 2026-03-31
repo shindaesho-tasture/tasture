@@ -612,6 +612,13 @@ const AdminDashboard = () => {
                               </motion.button>
                               <motion.button
                                 whileTap={{ scale: 0.9 }}
+                                onClick={() => { haptic(); navigate(`/menu-manager/${store.id}`); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                              >
+                                <UtensilsCrossed size={12} /> เมนู
+                              </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
                                 onClick={() => { haptic(); setEditingStoreId(store.id); }}
                                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-secondary text-foreground hover:bg-accent transition-colors"
                               >
