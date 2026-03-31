@@ -65,6 +65,7 @@ const DishDnaFeedback = () => {
 
   const { translateTag } = useTagTranslations(allTagTexts);
 
+  useEffect(() => {
     if (!menuItemId || authLoading) return;
     loadData();
   }, [menuItemId, user, authLoading]);
