@@ -1637,7 +1637,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
                       onKeyDown={(e) => e.key === "Enter" && submitComment()}
-                      placeholder="เขียนคอมเมนต์…"
+                      placeholder={t("feed.writeCommentPlaceholder")}
                       className="flex-1 bg-transparent text-[11px] text-foreground placeholder:text-muted-foreground outline-none"
                       maxLength={500}
                     />
