@@ -246,7 +246,7 @@ const DishDnaFeedback = () => {
 
         {/* ─── Content ─── */}
         {analyzing ? (
-          <AnalyzingOverlay dishName={dishName} />
+          <AnalyzingOverlay dishName={dishName} t={t} />
         ) : components.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
