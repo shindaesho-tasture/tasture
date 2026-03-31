@@ -966,9 +966,9 @@ const PostOrderReview = () => {
                 {results.storeScore !== null && (
                   <ScoreSection
                     icon="🏪"
-                    title="ประสบการณ์ร้าน"
+                    title={t("por.storeExperience")}
                     score={results.storeScore}
-                    subtitle={`${results.storeMetricCount} ตัวชี้วัด`}
+                    subtitle={t("por.metrics", { count: results.storeMetricCount })}
                   />
                 )}
 
