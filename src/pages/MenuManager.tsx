@@ -201,6 +201,7 @@ const MenuManager = () => {
       noodle_styles: form.noodle_styles,
       toppings: form.toppings,
       textures: form.textures,
+      noodle_type_prices: form.noodle_type_prices,
     };
 
     setIsSaving(true);
