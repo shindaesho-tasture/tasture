@@ -472,6 +472,25 @@ const MenuManager = () => {
                     )}
                   </div>
 
+                  {/* Menu Category */}
+                  <div>
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">หมวดหมู่</label>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {MENU_CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, menu_category: f.menu_category === cat ? "" : cat }))}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all ${
+                            form.menu_category === cat ? "bg-score-emerald text-primary-foreground shadow-sm" : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Description */}
                   <Field label={t("menuMgr.desc")} value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} multiline />
 
