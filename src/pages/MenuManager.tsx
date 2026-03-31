@@ -75,7 +75,7 @@ const MenuManager = () => {
         const { error } = await supabase.from("menu_items").update(payload.data).eq("id", payload.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("menu_items").insert({ ...payload.data, store_id: storeId! });
+        const { error } = await supabase.from("menu_items").insert([{ ...payload.data, store_id: storeId! } as any]);
         if (error) throw error;
       }
     },

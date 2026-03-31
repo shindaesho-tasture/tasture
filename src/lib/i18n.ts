@@ -280,6 +280,21 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "taste.sour": { th: "เปรี้ยว", en: "Sour", ja: "酸味", zh: "酸", ko: "신맛" },
   "taste.spicy": { th: "เผ็ด", en: "Spicy", ja: "辛い", zh: "辣", ko: "매운맛" },
   "taste.umami": { th: "อูมามิ", en: "Umami", ja: "うま味", zh: "鲜", ko: "감칠맛" },
+
+  // ─── Menu Manager ───
+  "menuMgr.title": { th: "จัดการเมนู", en: "Manage Menu", ja: "メニュー管理", zh: "管理菜单", ko: "메뉴 관리" },
+  "menuMgr.addItem": { th: "เพิ่มเมนู", en: "Add Item", ja: "メニュー追加", zh: "添加菜品", ko: "메뉴 추가" },
+  "menuMgr.notOwner": { th: "คุณไม่ใช่เจ้าของร้านนี้", en: "You are not the owner", ja: "あなたはオーナーではありません", zh: "您不是店主", ko: "점주가 아닙니다" },
+  "menuMgr.type": { th: "ประเภท", en: "Type", ja: "種類", zh: "类型", ko: "유형" },
+  "menuMgr.name": { th: "ชื่อเมนู", en: "Menu Name", ja: "メニュー名", zh: "菜品名", ko: "메뉴 이름" },
+  "menuMgr.originalName": { th: "ชื่อต้นฉบับ", en: "Original Name", ja: "原語名", zh: "原名", ko: "원래 이름" },
+  "menuMgr.price": { th: "ราคา (฿)", en: "Price (฿)", ja: "価格 (฿)", zh: "价格 (฿)", ko: "가격 (฿)" },
+  "menuMgr.priceSpecial": { th: "ราคาพิเศษ", en: "Special Price", ja: "特別価格", zh: "特价", ko: "특별가" },
+  "menuMgr.desc": { th: "คำอธิบาย", en: "Description", ja: "説明", zh: "描述", ko: "설명" },
+  "menuMgr.noodleTypes": { th: "ประเภทเส้น", en: "Noodle Types", ja: "麺の種類", zh: "面条类型", ko: "면 종류" },
+  "menuMgr.noodleStyles": { th: "สไตล์", en: "Styles", ja: "スタイル", zh: "风格", ko: "스타일" },
+  "menuMgr.toppings": { th: "ท็อปปิ้ง", en: "Toppings", ja: "トッピング", zh: "配料", ko: "토핑" },
+  "menuMgr.textures": { th: "เท็กซ์เจอร์", en: "Textures", ja: "テクスチャー", zh: "口感", ko: "식감" },
 };
 
 /**

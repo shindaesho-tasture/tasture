@@ -27,6 +27,7 @@ import MenuFeedback from "./pages/MenuFeedback.tsx";
 import DishDnaFeedback from "./pages/DishDnaFeedback.tsx";
 import PostOrderReview from "./pages/PostOrderReview.tsx";
 import MenuImageManager from "./pages/MenuImageManager.tsx";
+import MenuManager from "./pages/MenuManager.tsx";
 import FollowList from "./pages/FollowList.tsx";
 import UserProfile from "./pages/UserProfile.tsx";
 import NotFound from "./pages/NotFound.tsx";
