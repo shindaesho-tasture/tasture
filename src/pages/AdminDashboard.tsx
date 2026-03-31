@@ -619,6 +619,12 @@ const AdminDashboard = () => {
                               </motion.button>
                               <motion.button
                                 whileTap={{ scale: 0.9 }}
+                                onClick={() => { haptic(); navigate(`/menu-images/${store.id}`); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-score-amber/10 text-score-amber hover:bg-score-amber/20 transition-colors"
+                              >
+                                <Camera size={12} /> รูปเมนู
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
                                 onClick={() => { haptic(); setEditingStoreId(store.id); }}
                                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-secondary text-foreground hover:bg-accent transition-colors"
                               >
