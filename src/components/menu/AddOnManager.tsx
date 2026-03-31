@@ -127,7 +127,7 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
               layout
               className="flex items-center justify-between px-3 py-2 rounded-xl bg-secondary/60 text-xs"
             >
-              <span className="text-foreground font-medium">{a.name}</span>
+              <span className="text-foreground font-medium">{translateTag(a.name)}</span>
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">+฿{a.price}</span>
                 {deleteConfirm === a.id ? (
