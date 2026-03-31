@@ -100,6 +100,31 @@ const AdminTagTranslationEditor = () => {
     toast.success("ลบแล้ว ✓");
   };
 
+  const addTranslation = async () => {
+    const tag = newTagText.trim();
+    const translated = newTranslated.trim();
+    if (!tag || !translated) {
+      toast.error("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+    setAdding(true);
+    const { data, error } = await supabase
+      .from("tag_translations")
+      .insert({ tag_text: tag, language: newLang, translated_text: translated } as any)
+      .select()
+      .single();
+    setAdding(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setTranslations((prev) => [...prev, data as TagTranslation]);
+    setNewTagText("");
+    setNewTranslated("");
+    setShowAdd(false);
+    toast.success("เพิ่มคำแปลแล้ว ✓");
+  };
+
   const languages = [...new Set(translations.map((t) => t.language))].sort();
 
   if (loading) {
