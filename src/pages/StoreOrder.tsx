@@ -491,7 +491,8 @@ const StoreOrder = () => {
             {(() => {
               const cats = Array.from(new Set(menuItems.map((m) => m.menu_category).filter(Boolean))) as string[];
               if (cats.length === 0) return null;
-              const allCats = [t("order.all", language), ...cats];
+              const allLabel = t("queueMgr.filterAll", language);
+              const allCats = [allLabel, ...cats];
               const countMap = new Map<string, number>();
               menuItems.forEach((m) => {
                 if (m.menu_category) countMap.set(m.menu_category, (countMap.get(m.menu_category) || 0) + 1);
