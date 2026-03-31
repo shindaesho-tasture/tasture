@@ -41,13 +41,16 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
     },
   });
 
-  // Collect add-on categories for translation
-  const allCatTexts = useMemo(() => {
-    const cats = new Set<string>(DEFAULT_CATEGORIES);
-    addOns.forEach((a: AddOn) => cats.add(a.category));
-    return Array.from(cats);
+  // Collect add-on categories + names for translation
+  const allTranslatableTexts = useMemo(() => {
+    const texts = new Set<string>(DEFAULT_CATEGORIES);
+    addOns.forEach((a: AddOn) => {
+      texts.add(a.category);
+      texts.add(a.name);
+    });
+    return Array.from(texts);
   }, [addOns]);
-  const { translateTag } = useTagTranslations(allCatTexts);
+  const { translateTag } = useTagTranslations(allTranslatableTexts);
 
   const addMutation = useMutation({
     mutationFn: async () => {
