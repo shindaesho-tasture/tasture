@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/language-context";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
+import { preTranslateTags } from "@/lib/pre-translate";
 
 interface AddOn {
   id: string;
@@ -66,6 +67,9 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
       if (error) throw error;
     },
     onSuccess: () => {
+      const finalCat = category === "__custom" ? customCat.trim() : category;
+      // Pre-translate the new add-on name + category into all languages
+      preTranslateTags([name.trim(), finalCat].filter(Boolean));
       queryClient.invalidateQueries({ queryKey: ["menu-addons", menuItemId] });
       setName("");
       setPrice("");
