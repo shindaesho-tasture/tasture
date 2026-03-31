@@ -951,7 +951,7 @@ const StoreOrder = () => {
             open={!!detailItem}
             onClose={() => setDetailItem(null)}
             menuItemId={detailItem.id}
-            dishName={detailItem.name}
+            dishName={translationMap.get(detailItem.id)?.name || detailItem.name}
             price={detailItem.price}
             priceSpecial={detailItem.price_special}
             dnaTags={dnaByItem.get(detailItem.id) || []}
