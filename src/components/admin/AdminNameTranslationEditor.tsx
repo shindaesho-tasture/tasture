@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Pencil, Check, X, RefreshCw, Store, UtensilsCrossed } from "lucide-react";
+import { Search, Pencil, Check, X, RefreshCw, Store, UtensilsCrossed, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
