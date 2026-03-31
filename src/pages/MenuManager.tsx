@@ -78,24 +78,7 @@ const MenuManager = () => {
 
   const isOwner = data?.store?.user_id === user?.id;
 
-  // Upsert mutation
-  const saveMutation = useMutation({
-    mutationFn: async (payload: { id?: string; data: Record<string, unknown> }) => {
-      if (payload.id) {
-        const { error } = await supabase.from("menu_items").update(payload.data).eq("id", payload.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("menu_items").insert([{ ...payload.data, store_id: storeId! } as any]);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["menu-manager", storeId] });
-      toast.success(t("common.save") + " ✓");
-      resetForm();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const [isSaving, setIsSaving] = useState(false);
 
   // Delete mutation
   const deleteMutation = useMutation({
