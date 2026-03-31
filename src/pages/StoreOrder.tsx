@@ -72,6 +72,8 @@ const StoreOrder = () => {
   const [selectedNoodleStyle, setSelectedNoodleStyle] = useState<string>("");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [selectedSize, setSelectedSize] = useState<"ธรรมดา" | "พิเศษ">("ธรรมดา");
+  const [itemAddOns, setItemAddOns] = useState<Map<string, { id: string; name: string; price: number; category: string }[]>>(new Map());
+  const [selectedAddOns, setSelectedAddOns] = useState<{ name: string; price: number }[]>([]);
 
   // Detail sheet state
   const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
