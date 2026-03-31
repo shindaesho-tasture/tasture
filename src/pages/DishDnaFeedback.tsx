@@ -257,8 +257,8 @@ const DishDnaFeedback = () => {
               <Dna size={36} className="text-muted-foreground" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground">ไม่สามารถวิเคราะห์ได้</p>
-              <p className="text-[11px] text-muted-foreground mt-1">ลองกลับไปเลือกเมนูอื่น</p>
+               <p className="text-sm font-medium text-foreground">{t("dna.cannotAnalyze")}</p>
+               <p className="text-[11px] text-muted-foreground mt-1">{t("dna.tryOther")}</p>
             </div>
           </motion.div>
         ) : (
