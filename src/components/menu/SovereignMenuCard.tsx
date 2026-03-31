@@ -135,6 +135,9 @@ const SovereignMenuCard = ({
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div>
             <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">{name}</h3>
+            {originalName && (
+              <p className="text-[10px] text-muted-foreground truncate mt-0.5">{originalName}</p>
+            )}
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-sm font-semibold text-score-emerald">฿{price}</span>
               {priceSpecial != null && (
