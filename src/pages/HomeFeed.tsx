@@ -519,7 +519,7 @@ const HomeFeed = () => {
                 return {
                   imageUrl: pi.image_url,
                   reviewScore: review?.score ?? null,
-                  menuItemName: menuItem?.name || (review ? "เมนู" : null),
+                  menuItemName: menuItem?.name || (review ? t("feed.menu") : null),
                   storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
                   storeId: menuItem?.storeId || null,
                   dnaComponents: slideKey ? slideDnaMap.get(slideKey) : undefined,
