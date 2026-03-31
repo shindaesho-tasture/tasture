@@ -35,7 +35,7 @@ type MenuItemRow = {
   menu_category: string | null;
 };
 
-const MENU_CATEGORIES = ["แนะนำ", "ต้ม", "ผัด", "กับข้าว", "ราดข้าว", "ทอด", "ยำ", "อื่นๆ"];
+const DEFAULT_MENU_CATEGORIES = ["แนะนำ", "ต้ม", "ผัด", "กับข้าว", "ราดข้าว", "ทอด", "ยำ", "อื่นๆ"];
 
 const emptyForm = {
   name: "",
