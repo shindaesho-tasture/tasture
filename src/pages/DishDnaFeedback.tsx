@@ -125,7 +125,7 @@ const DishDnaFeedback = () => {
       }
     } catch (err: any) {
       console.error("DishDnaFeedback load error:", err);
-      toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: "destructive" });
+      toast({ title: t("dna.error"), description: err.message, variant: "destructive" });
     } finally {
       setAnalyzing(false);
     }
