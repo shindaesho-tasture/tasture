@@ -61,7 +61,7 @@ const DishDetailSheet = ({
   totalReviews,
 }: DishDetailSheetProps) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Collect all tag texts for translation
   const allTagTexts = useMemo(() => {
     const set = new Set<string>();
@@ -86,7 +86,7 @@ const DishDetailSheet = ({
     fetchUserPhotos();
     fetchMyDna();
     setActivePhotoIdx(0);
-  }, [open, menuItemId]);
+  }, [open, menuItemId, language]);
 
   const fetchMyDna = async () => {
     if (!user) { setMyDnaTags([]); return; }
@@ -175,7 +175,8 @@ const DishDetailSheet = ({
       const { data: cached } = await supabase
         .from("dish_descriptions")
         .select("component_name, description")
-        .eq("menu_item_id", menuItemId);
+        .eq("menu_item_id", menuItemId)
+        .eq("language", language);
 
       if (cached && cached.length > 0) {
         const descMap: Record<string, string> = {};
@@ -197,7 +198,7 @@ const DishDetailSheet = ({
       }));
 
       const { data, error } = await supabase.functions.invoke("describe-dish", {
-        body: { dish_name: dishName, tags: tagsPayload, menu_item_id: menuItemId },
+        body: { dish_name: dishName, tags: tagsPayload, menu_item_id: menuItemId, language },
       });
 
       if (!error && data?.descriptions) {
