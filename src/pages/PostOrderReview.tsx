@@ -735,10 +735,10 @@ const PostOrderReview = () => {
                         </p>
                       </div>
                     </div>
-                    {dnaLoading[step.menuItemId] ? (
-                      <AnalyzingSpinner label="กำลังวิเคราะห์ส่วนประกอบ..." />
-                    ) : (dnaComponents[step.menuItemId] || []).length === 0 ? (
-                      <EmptyState label="ไม่สามารถวิเคราะห์ได้" />
+                     {dnaLoading[step.menuItemId] ? (
+                       <AnalyzingSpinner label={t("por.analyzingComponents")} />
+                     ) : (dnaComponents[step.menuItemId] || []).length === 0 ? (
+                       <EmptyState label={t("por.cannotAnalyze")} />
                     ) : (
                       (dnaComponents[step.menuItemId] || []).map((comp, i) => (
                         <DishDnaCard
