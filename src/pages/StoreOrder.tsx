@@ -805,8 +805,9 @@ const StoreOrder = () => {
                     {t("order.addToOrder", language)}
                     {(() => {
                       const noodleExtra = selectedNoodleType && optionsItem?.noodle_type_prices?.[selectedNoodleType] || 0;
+                      const styleExtra = selectedNoodleStyle && optionsItem?.noodle_style_prices?.[selectedNoodleStyle] || 0;
                       const addOnExtra = selectedAddOns.reduce((s, a) => s + a.price, 0);
-                      const total = noodleExtra + addOnExtra;
+                      const total = noodleExtra + styleExtra + addOnExtra;
                       return total > 0 ? <span className="ml-1 opacity-80">(+฿{total})</span> : null;
                     })()}
                   </motion.button>
