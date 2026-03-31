@@ -362,7 +362,22 @@ const MenuManager = () => {
                 >
                   <div className="flex items-center gap-3">
                     {isOwner && (
-                      <GripVertical size={14} className="text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <button
+                          onClick={() => moveItem(item.id, "up")}
+                          disabled={orderedItems.indexOf(item) === 0}
+                          className="p-0.5 rounded hover:bg-secondary transition-colors disabled:opacity-20"
+                        >
+                          <ChevronUp size={13} className="text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => moveItem(item.id, "down")}
+                          disabled={orderedItems.indexOf(item) === orderedItems.length - 1}
+                          className="p-0.5 rounded hover:bg-secondary transition-colors disabled:opacity-20"
+                        >
+                          <ChevronDown size={13} className="text-muted-foreground" />
+                        </button>
+                      </div>
                     )}
 
                     {/* Thumbnail / upload button */}
