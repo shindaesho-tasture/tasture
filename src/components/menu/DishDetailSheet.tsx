@@ -407,14 +407,14 @@ const DishDetailSheet = ({
                           <span className="text-2xl flex-shrink-0">{tag.component_icon}</span>
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-semibold text-foreground">
-                              {tag.component_name}
+                              {translateTag(tag.component_name)}
                             </span>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span
                                 className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px] font-bold text-white leading-none"
                                 style={{ backgroundColor: `hsla(${hsl},0.85)` }}
                               >
-                                {tag.selected_tag}
+                                {translateTag(tag.selected_tag)}
                               </span>
                             </div>
                           </div>
