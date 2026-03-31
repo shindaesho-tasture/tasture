@@ -175,7 +175,7 @@ const AddOnManager = ({ menuItemId }: { menuItemId: string }) => {
                           : "bg-secondary text-foreground"
                       }`}
                     >
-                      {categoryEmoji[c] || "📦"} {c}
+                      {categoryEmoji[c] || "📦"} {translateTag(c)}
                     </button>
                   ))}
                   <button
