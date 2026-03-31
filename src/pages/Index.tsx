@@ -10,6 +10,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { categories as defaultCategories, getScoreTier, type ScoreTier } from "@/lib/categories";
 import { getPopularityTier, getPopularityTierInfo } from "@/lib/popularity-tier";
 import { cn } from "@/lib/utils";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 import PageTransition from "@/components/PageTransition";
 import TastureHeader from "@/components/TastureHeader";
 import LocationPickerSheet from "@/components/LocationPickerSheet";
@@ -343,6 +344,13 @@ const Index = () => {
     if (h < 17) return "สวัสดีตอนบ่าย";
     return "สวัสดีตอนเย็น";
   }, []);
+  // Collect all metric labels for translation
+  const allMetricLabels = useMemo(() => {
+    const labels = new Set<string>();
+    stores.forEach((s) => s.metrics.forEach((m) => labels.add(m.label)));
+    return Array.from(labels);
+  }, [stores]);
+  const { translateTag } = useTagTranslations(allMetricLabels);
 
   // ─── Store Card Component ───
   const SpotifyStoreCard = ({ store, size = "normal" }: { store: StoreCard; size?: "normal" | "large" }) => {
@@ -432,7 +440,7 @@ const Index = () => {
                       key={m.id}
                       className={cn("px-1.5 py-0.5 rounded-md text-[8px] font-semibold leading-none", tagColorMap[t])}
                     >
-                      {m.icon} {m.label}
+                      {m.icon} {translateTag(m.label)}
                     </span>
                   );
                 })}
