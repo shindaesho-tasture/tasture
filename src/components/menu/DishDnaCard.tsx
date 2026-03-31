@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 import type { DishComponent, DishDnaSelection } from "@/lib/dish-dna-types";
 
 interface DishDnaCardProps {
@@ -12,11 +13,15 @@ interface DishDnaCardProps {
   translateTag?: (tag: string) => string;
 }
 
-const ratingOptions = [
-  { score: 2 as const, emoji: "🤩", label: "สุดยอด", color: "emerald" as const },
-  { score: 0 as const, emoji: "😐", label: "ปกติ", color: "slate" as const },
-  { score: -2 as const, emoji: "😔", label: "ไม่ชอบ", color: "ruby" as const },
-];
+const DishDnaCard = ({ component, selection, onSelect, index, communityScores, translateTag: tt }: DishDnaCardProps) => {
+  const { t } = useLanguage();
+  const tr = tt || ((t: string) => t);
+
+  const ratingOptions = [
+    { score: 2 as const, emoji: "🤩", label: t("review.excellent"), color: "emerald" as const },
+    { score: 0 as const, emoji: "😐", label: t("review.normal"), color: "slate" as const },
+    { score: -2 as const, emoji: "😔", label: t("review.disappointing"), color: "ruby" as const },
+  ];
 
 const colorMap = {
   emerald: {
