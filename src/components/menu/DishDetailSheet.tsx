@@ -86,7 +86,7 @@ const DishDetailSheet = ({
     fetchUserPhotos();
     fetchMyDna();
     setActivePhotoIdx(0);
-  }, [open, menuItemId]);
+  }, [open, menuItemId, language]);
 
   const fetchMyDna = async () => {
     if (!user) { setMyDnaTags([]); return; }
