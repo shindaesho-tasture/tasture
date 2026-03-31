@@ -314,6 +314,9 @@ const AdminDishDescriptionEditor = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add new form */}
+      <AnimatePresence>
         {showAdd && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
