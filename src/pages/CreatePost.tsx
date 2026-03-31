@@ -236,7 +236,7 @@ const CreatePost = () => {
       navigate("/");
     } catch (err: any) {
       console.error(err);
-      toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: "destructive" });
+      toast({ title: t("createPost.error"), description: err.message, variant: "destructive" });
     } finally {
       setUploading(false);
     }
