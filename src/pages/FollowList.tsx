@@ -5,6 +5,8 @@ import { ArrowLeft, UserPlus, UserCheck, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
+import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
 
 interface FollowUser {
