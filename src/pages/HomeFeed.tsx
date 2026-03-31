@@ -1263,7 +1263,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                 <motion.img
                   key={slideIndex}
                   src={post.slides[slideIndex].imageUrl}
-                  alt={post.slides[slideIndex].menuItemName || post.caption || "รูปอาหาร"}
+                  alt={post.slides[slideIndex].menuItemName || post.caption || t("feed.foodPhoto")}
                   className="absolute inset-0 w-full h-full object-cover"
                   initial={{ opacity: 0, x: 60 }}
                   animate={{ opacity: 1, x: 0 }}
