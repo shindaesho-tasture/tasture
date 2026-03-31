@@ -1244,7 +1244,12 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                 : post.type === "menu_review"
                 ? t("feed.rated")
                 : t("feed.analyzedDna")}{" "}
-              <span className="font-semibold text-foreground">{post.menuItemName}</span>
+              <span className="font-semibold text-foreground">
+                {post.menuItemName}
+                {translateTag(post.menuItemName) !== post.menuItemName && (
+                  <span className="font-normal text-muted-foreground ml-1 text-[10px]">({translateTag(post.menuItemName)})</span>
+                )}
+              </span>
               {" "}{t("feed.at")}{" "}
               <button
                 onClick={() => navigate(`/store/${post.storeId}/order`)}
