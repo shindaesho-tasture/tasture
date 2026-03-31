@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Pencil, Check, X, Trash2, Globe, Plus } from "lucide-react";
+import { Search, Pencil, Check, X, Trash2, Globe, Plus, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -27,6 +27,8 @@ const LANG_LABELS: Record<string, string> = {
   th: "ไทย",
 };
 
+const LANGS = ["en", "ja", "zh", "ko"] as const;
+
 const AdminTagTranslationEditor = () => {
   const [translations, setTranslations] = useState<TagTranslation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,15 +41,39 @@ const AdminTagTranslationEditor = () => {
   const [newLang, setNewLang] = useState("en");
   const [newTranslated, setNewTranslated] = useState("");
   const [adding, setAdding] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
+  const [allSourceTags, setAllSourceTags] = useState<string[]>([]);
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("tag_translations")
-      .select("*")
-      .order("tag_text")
-      .order("language");
-    setTranslations((data as TagTranslation[]) || []);
+    const [{ data: transData }, { data: dnaData }, { data: menuData }, { data: templateData }] = await Promise.all([
+      supabase.from("tag_translations").select("*").order("tag_text").order("language"),
+      supabase.from("dish_dna").select("component_name, selected_tag"),
+      supabase.from("menu_items").select("textures, toppings, noodle_types, noodle_styles"),
+      supabase.from("dish_templates").select("components"),
+    ]);
+    setTranslations((transData as TagTranslation[]) || []);
+
+    // Collect all unique source tags from DNA, menus, templates
+    const sourceTags = new Set<string>();
+    (dnaData || []).forEach((d: any) => { sourceTags.add(d.component_name); sourceTags.add(d.selected_tag); });
+    (menuData || []).forEach((m: any) => {
+      (m.textures || []).forEach((t: string) => sourceTags.add(t));
+      (m.toppings || []).forEach((t: string) => sourceTags.add(t));
+      (m.noodle_types || []).forEach((t: string) => sourceTags.add(t));
+      (m.noodle_styles || []).forEach((t: string) => sourceTags.add(t));
+    });
+    (templateData || []).forEach((t: any) => {
+      const comps = Array.isArray(t.components) ? t.components : [];
+      comps.forEach((c: any) => {
+        if (c.name) sourceTags.add(c.name);
+        (c.tags || []).forEach((tag: any) => {
+          if (typeof tag === "string") sourceTags.add(tag);
+          else if (tag?.label) sourceTags.add(tag.label);
+        });
+      });
+    });
+    setAllSourceTags([...sourceTags].filter(Boolean).sort());
     setLoading(false);
   };
 
@@ -127,6 +153,63 @@ const AdminTagTranslationEditor = () => {
 
   const languages = [...new Set(translations.map((t) => t.language))].sort();
 
+  // Count tags missing translations
+  const existingTagLangs = useMemo(() => {
+    const set = new Set<string>();
+    translations.forEach((t) => set.add(`${t.tag_text}::${t.language}`));
+    return set;
+  }, [translations]);
+
+  const missingCount = useMemo(() => {
+    let count = 0;
+    allSourceTags.forEach((tag) => {
+      LANGS.forEach((lang) => {
+        if (!existingTagLangs.has(`${tag}::${lang}`)) count++;
+      });
+    });
+    return count;
+  }, [allSourceTags, existingTagLangs]);
+
+  const batchTranslateAll = useCallback(async () => {
+    const tagsToTranslate = allSourceTags.filter((tag) =>
+      LANGS.some((lang) => !existingTagLangs.has(`${tag}::${lang}`))
+    );
+
+    if (tagsToTranslate.length === 0) {
+      toast.info("แท็กทั้งหมดมีคำแปลครบแล้ว ✓");
+      return;
+    }
+
+    const BATCH_SIZE = 20;
+    const totalBatches = Math.ceil(tagsToTranslate.length / BATCH_SIZE);
+    setBatchProgress({ current: 0, total: tagsToTranslate.length });
+    let successCount = 0;
+
+    try {
+      for (let i = 0; i < totalBatches; i++) {
+        const batch = tagsToTranslate.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+        setBatchProgress({ current: i * BATCH_SIZE, total: tagsToTranslate.length });
+
+        const { error } = await supabase.functions.invoke("translate-tags", {
+          body: { tags: batch, target_languages: [...LANGS] },
+        });
+        if (error) { console.error(`Batch ${i + 1} error:`, error); continue; }
+        successCount += batch.length;
+
+        if (i < totalBatches - 1) {
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
+
+      setBatchProgress(null);
+      toast.success(`แปลสำเร็จ ${successCount} แท็ก ✓`);
+      await load();
+    } catch (e: any) {
+      setBatchProgress(null);
+      toast.error(e.message || "Batch translate ล้มเหลว");
+    }
+  }, [allSourceTags, existingTagLangs]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -137,16 +220,30 @@ const AdminTagTranslationEditor = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Globe size={16} className="text-score-emerald" />
         <h2 className="text-sm font-semibold text-foreground">จัดการคำแปลแท็ก</h2>
-        <span className="text-[10px] text-muted-foreground">{translations.length} รายการ</span>
-        <button
-          onClick={() => setShowAdd((v) => !v)}
-          className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-xl bg-score-emerald text-white text-[11px] font-semibold"
-        >
-          <Plus size={13} /> เพิ่มคำแปล
-        </button>
+        <span className="text-[10px] text-muted-foreground">{translations.length} รายการ · {allSourceTags.length} แท็กต้นทาง</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <button
+            onClick={batchTranslateAll}
+            disabled={!!batchProgress || missingCount === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-score-emerald text-primary-foreground text-[11px] font-semibold disabled:opacity-50 transition-all hover:opacity-90"
+          >
+            <Zap size={12} />
+            {batchProgress
+              ? `กำลังแปล ${batchProgress.current}/${batchProgress.total}...`
+              : missingCount > 0
+                ? `Batch แปล (${missingCount} ขาด)`
+                : "แปลครบแล้ว ✓"}
+          </button>
+          <button
+            onClick={() => setShowAdd((v) => !v)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-secondary text-foreground text-[11px] font-semibold"
+          >
+            <Plus size={13} /> เพิ่มคำแปล
+          </button>
+        </div>
       </div>
 
       {/* Add new form */}
