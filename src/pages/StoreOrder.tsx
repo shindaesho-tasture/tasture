@@ -240,26 +240,30 @@ const StoreOrder = () => {
     } finally {
       setLoading(false);
     }
+  };
 
-    // Fetch translations for selected language (skip if Thai)
-    if (language !== "th") {
+  // Fetch translations when language changes (or after menu loads)
+  useEffect(() => {
+    if (language === "th" || menuItems.length === 0) {
+      setTranslationMap(new Map());
+      return;
+    }
+    const fetchTranslations = async () => {
       try {
-        const menuIds = menuItems.length > 0 ? menuItems.map((m) => m.id) : [];
-        // Re-fetch menu IDs from the just-loaded data
         const { data: transData } = await supabase
           .from("menu_translations")
           .select("menu_item_id, name, description")
           .eq("language", language)
-          .in("menu_item_id", menuItems.map((m) => m.id).length > 0 ? menuItems.map((m) => m.id) : ["__none__"]);
+          .in("menu_item_id", menuItems.map((m) => m.id));
         const tMap = new Map<string, { name: string; description?: string }>();
         (transData || []).forEach((row: any) => {
           tMap.set(row.menu_item_id, { name: row.name, description: row.description || undefined });
         });
         setTranslationMap(tMap);
       } catch {}
-    } else {
-      setTranslationMap(new Map());
-    }
+    };
+    fetchTranslations();
+  }, [language, menuItems]);
   };
 
   const fetchStorePosts = async () => {
