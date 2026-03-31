@@ -163,16 +163,15 @@ const MenuManager = () => {
       type: item.type,
       price: item.price,
       price_special: item.price_special,
-      noodle_types: (item.noodle_types || []).join(", "),
-      noodle_styles: (item.noodle_styles || []).join(", "),
-      toppings: (item.toppings || []).join(", "),
-      textures: (item.textures || []).join(", "),
+      noodle_types: item.noodle_types || [],
+      noodle_styles: item.noodle_styles || [],
+      toppings: item.toppings || [],
+      textures: item.textures || [],
     });
   };
 
   const handleSubmit = async () => {
     if (!form.name.trim()) return toast.error("Name required");
-    const splitArr = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
     const payload: Record<string, unknown> = {
       name: form.name.trim(),
       original_name: form.original_name.trim() || null,
@@ -180,10 +179,10 @@ const MenuManager = () => {
       type: form.type,
       price: form.price,
       price_special: form.price_special,
-      noodle_types: splitArr(form.noodle_types),
-      noodle_styles: splitArr(form.noodle_styles),
-      toppings: splitArr(form.toppings),
-      textures: splitArr(form.textures),
+      noodle_types: form.noodle_types,
+      noodle_styles: form.noodle_styles,
+      toppings: form.toppings,
+      textures: form.textures,
     };
 
     setIsSaving(true);
