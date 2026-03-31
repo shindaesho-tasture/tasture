@@ -309,6 +309,38 @@ const MenuManager = () => {
                     {isOwner && (
                       <GripVertical size={14} className="text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
                     )}
+
+                    {/* Thumbnail / upload button */}
+                    <div className="relative shrink-0">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                          <ImageIcon size={14} className="text-muted-foreground/40" />
+                        </div>
+                      )}
+                      {isOwner && (
+                        <button
+                          onClick={() => {
+                            inlineTargetId.current = item.id;
+                            inlineFileRef.current?.click();
+                          }}
+                          disabled={uploadingImage === item.id}
+                          className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-score-emerald flex items-center justify-center shadow-sm"
+                        >
+                          {uploadingImage === item.id ? (
+                            <Loader2 size={10} className="text-primary-foreground animate-spin" />
+                          ) : (
+                            <Camera size={10} className="text-primary-foreground" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{typeLabel[item.type] || item.type}</span>
