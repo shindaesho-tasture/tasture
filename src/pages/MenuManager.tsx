@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { ChevronLeft, Plus, Pencil, Trash2, Save, X, GripVertical } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,7 @@ const MenuManager = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [orderedItems, setOrderedItems] = useState<MenuItemRow[]>([]);
 
   // Fetch store name + menu items
   const { data, isLoading } = useQuery({
@@ -57,11 +58,14 @@ const MenuManager = () => {
         supabase.from("stores").select("name, user_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures")
+          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order")
           .eq("store_id", storeId!)
+          .order("sort_order", { ascending: true })
           .order("created_at", { ascending: true }),
       ]);
-      return { store: storeRes.data, items: (menuRes.data || []) as MenuItemRow[] };
+      const items = (menuRes.data || []) as (MenuItemRow & { sort_order: number })[];
+      setOrderedItems(items);
+      return { store: storeRes.data, items };
     },
     enabled: !!storeId && !authLoading,
   });
@@ -106,6 +110,21 @@ const MenuManager = () => {
     setEditingId(null);
     setShowAdd(false);
   };
+
+  // Reorder handler — save new order to DB
+  const handleReorder = useCallback(
+    async (newOrder: MenuItemRow[]) => {
+      setOrderedItems(newOrder);
+      // Batch update sort_order
+      const updates = newOrder.map((item, idx) => ({ id: item.id, sort_order: idx }));
+      await Promise.all(
+        updates.map(({ id, sort_order }) =>
+          supabase.from("menu_items").update({ sort_order } as any).eq("id", id)
+        )
+      );
+    },
+    []
+  );
 
   const startEdit = (item: MenuItemRow) => {
     setEditingId(item.id);
@@ -199,23 +218,28 @@ const MenuManager = () => {
         {/* Menu List */}
         {!isLoading && data && (
           <div className="px-4 pt-4 space-y-2">
-            {data.items.length === 0 && !showAdd && (
+            {orderedItems.length === 0 && !showAdd && (
               <div className="text-center py-16">
                 <p className="text-sm text-muted-foreground">{t("feedback.noMenu")}</p>
               </div>
             )}
-            <AnimatePresence>
-              {data.items.map((item) => (
-                <motion.div
+            <Reorder.Group
+              axis="y"
+              values={orderedItems}
+              onReorder={handleReorder}
+              className="space-y-2"
+            >
+              {orderedItems.map((item) => (
+                <Reorder.Item
                   key={item.id}
-                  layout
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -60 }}
-                  className="bg-surface-elevated rounded-2xl border border-border/40 p-3 shadow-luxury"
+                  value={item}
+                  className="bg-surface-elevated rounded-2xl border border-border/40 p-3 shadow-luxury list-none touch-none"
+                  whileDrag={{ scale: 1.03, boxShadow: "0 8px 30px rgba(0,0,0,0.18)", zIndex: 50 }}
                 >
                   <div className="flex items-center gap-3">
-                    <GripVertical size={14} className="text-muted-foreground/40 shrink-0" />
+                    {isOwner && (
+                      <GripVertical size={14} className="text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{typeLabel[item.type] || item.type}</span>
@@ -251,9 +275,9 @@ const MenuManager = () => {
                   {item.description && (
                     <p className="text-[10px] text-muted-foreground mt-1.5 line-clamp-2 ml-7">{item.description}</p>
                   )}
-                </motion.div>
+                </Reorder.Item>
               ))}
-            </AnimatePresence>
+            </Reorder.Group>
           </div>
         )}
 

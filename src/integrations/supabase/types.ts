@@ -164,6 +164,7 @@ export type Database = {
           price: number
           price_special: number | null
           rating: number | null
+          sort_order: number
           store_id: string
           textures: string[] | null
           toppings: string[] | null
@@ -181,6 +182,7 @@ export type Database = {
           price?: number
           price_special?: number | null
           rating?: number | null
+          sort_order?: number
           store_id: string
           textures?: string[] | null
           toppings?: string[] | null
@@ -198,6 +200,7 @@ export type Database = {
           price?: number
           price_special?: number | null
           rating?: number | null
+          sort_order?: number
           store_id?: string
           textures?: string[] | null
           toppings?: string[] | null
