@@ -1180,7 +1180,7 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           )}
           {(post.type === "combined" || post.type === "menu_review") && (
             <span className="px-2.5 py-1 rounded-full text-[9px] font-bold tracking-wide bg-score-amber/10 text-score-amber">
-              ⭐ รีวิว
+              ⭐ {t("feed.review")}
             </span>
           )}
           {(post.type === "combined" || post.type === "dish_dna") && (
