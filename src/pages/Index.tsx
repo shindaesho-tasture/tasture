@@ -420,7 +420,7 @@ const Index = () => {
         <div className="pt-2 pb-1 px-0.5">
           <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{store.name}</p>
           <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-            {store.categoryLabel || "ร้านอาหาร"}
+            {translateTag(store.categoryLabel || "ร้านอาหาร")}
             {store.menuCount > 0 && ` · ${store.menuCount} เมนู`}
           </p>
           {/* Metric tags */}
