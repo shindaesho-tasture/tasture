@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Dna, ChevronDown, ChevronUp } from "lucide-react";
@@ -7,6 +7,7 @@ import { getScoreTier, type ScoreTier } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
 import type { SensoryAxis } from "@/lib/sensory-types";
 import { useLanguage } from "@/lib/language-context";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 import SensorySliderCard from "./SensorySliderCard";
 import BalanceSpiderChart from "./BalanceSpiderChart";
 
@@ -101,7 +102,9 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
   const avgTier = hasAvg ? getScoreTier(item.avg_score!) : null;
   const config = typeConfig[item.type] || typeConfig.standard;
   const [topTags, setTopTags] = useState<DnaTag[]>([]);
-  
+
+  const tagTexts = useMemo(() => topTags.map((t) => t.selected_tag), [topTags]);
+  const { translateTag } = useTagTranslations(tagTexts);
   // Taste satisfaction gate
   const [tasteSatisfaction, setTasteSatisfaction] = useState<"perfect" | "ok" | "bad" | null>(null);
 
@@ -265,7 +268,7 @@ const MenuFeedbackCard = ({ item, myScore, onRate, index = 0 }: MenuFeedbackCard
                   )}
                 >
                   <span>{tag.component_icon}</span>
-                  <span className="truncate max-w-[120px]">{tag.selected_tag}</span>
+                  <span className="truncate max-w-[120px]">{translateTag(tag.selected_tag)}</span>
                 </motion.span>
               );
             })}

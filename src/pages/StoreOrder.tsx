@@ -93,8 +93,14 @@ const StoreOrder = () => {
         tags.add(t.component_name);
       });
     });
+    // Also include noodle types, styles, toppings for translation
+    menuItems.forEach((m) => {
+      m.noodle_types?.forEach((nt) => tags.add(nt));
+      m.noodle_styles?.forEach((ns) => tags.add(ns));
+      m.toppings?.forEach((tp) => tags.add(tp));
+    });
     return Array.from(tags);
-  }, [dnaByItem]);
+  }, [dnaByItem, menuItems]);
 
   const { translateTag } = useTagTranslations(allTagTexts);
 
@@ -767,7 +773,7 @@ const StoreOrder = () => {
                                 : "bg-surface-elevated text-foreground border-border/50"
                             }`}
                           >
-                            {nt}
+                            {translateTag(nt)}
                             {extraPrice > 0 && <span className="ml-1 opacity-80">(+฿{extraPrice})</span>}
                           </motion.button>
                           );
@@ -796,7 +802,7 @@ const StoreOrder = () => {
                                 : "bg-surface-elevated text-foreground border-border/50"
                             }`}
                           >
-                            {ns}
+                            {translateTag(ns)}
                             {extraPrice > 0 && <span className="ml-1 opacity-80">(+฿{extraPrice})</span>}
                           </motion.button>
                           );
@@ -829,7 +835,7 @@ const StoreOrder = () => {
                               }`}
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
-                              {tp}
+                              {translateTag(tp)}
                             </motion.button>
                           );
                         })}
