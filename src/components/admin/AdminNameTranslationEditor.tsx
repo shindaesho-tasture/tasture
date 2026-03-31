@@ -32,6 +32,9 @@ const AdminNameTranslationEditor = () => {
   const [editValue, setEditValue] = useState("");
   const [regenerating, setRegenerating] = useState<string | null>(null);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
+  const [menuBatchProgress, setMenuBatchProgress] = useState<{ current: number; total: number } | null>(null);
+  const [menuTransCount, setMenuTransCount] = useState(0);
+  const [allMenuIds, setAllMenuIds] = useState<string[]>([]);
   const load = async () => {
     setLoading(true);
     const [{ data: stores }, { data: menuItems }] = await Promise.all([
