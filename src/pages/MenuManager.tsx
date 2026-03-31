@@ -472,6 +472,46 @@ const MenuManager = () => {
                   {/* Textures */}
                   <Field label={t("menuMgr.textures")} value={form.textures} onChange={(v) => setForm((f) => ({ ...f, textures: v }))} placeholder="กรอบ, นุ่ม, เหนียว" />
 
+                  {/* Image upload */}
+                  <div>
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">📸 รูปอาหาร</label>
+                    <div className="mt-1 flex items-center gap-3">
+                      {imagePreview ? (
+                        <div className="relative">
+                          <img src={imagePreview} alt="preview" className="w-16 h-16 rounded-xl object-cover" />
+                          <button
+                            onClick={() => { setImageFile(null); setImagePreview(null); }}
+                            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-score-ruby flex items-center justify-center"
+                          >
+                            <X size={10} className="text-white" />
+                          </button>
+                        </div>
+                      ) : editingId && orderedItems.find(i => i.id === editingId)?.image_url ? (
+                        <img
+                          src={orderedItems.find(i => i.id === editingId)!.image_url!}
+                          alt="current"
+                          className="w-16 h-16 rounded-xl object-cover"
+                        />
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-1 py-2.5 rounded-xl bg-secondary text-sm text-muted-foreground flex items-center justify-center gap-2 hover:bg-secondary/80 transition-colors"
+                      >
+                        <Camera size={14} />
+                        {imagePreview ? "เปลี่ยนรูป" : "เลือกรูป"}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleFormImagePick}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+
                   {/* Submit */}
                   <motion.button
                     whileTap={{ scale: 0.97 }}
@@ -487,6 +527,22 @@ const MenuManager = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Hidden file input for inline image uploads */}
+        <input
+          ref={inlineFileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file && inlineTargetId.current) {
+              handleInlineUpload(file, inlineTargetId.current);
+            }
+            e.target.value = "";
+          }}
+        />
 
         <BottomNav />
       </div>
