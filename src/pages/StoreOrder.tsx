@@ -76,33 +76,6 @@ const StoreOrder = () => {
   // Detail sheet state
   const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
 
-  // Collect all DNA tag texts for translation
-  const allTagTexts = useMemo(() => {
-    const tags = new Set<string>();
-    dnaByItem.forEach((dnaTags) => {
-      dnaTags.forEach((t) => {
-        tags.add(t.selected_tag);
-        tags.add(t.component_name);
-      });
-    });
-    // Also include noodle types, styles, toppings, menu categories for translation
-    menuItems.forEach((m) => {
-      m.noodle_types?.forEach((nt) => tags.add(nt));
-      m.noodle_styles?.forEach((ns) => tags.add(ns));
-      m.toppings?.forEach((tp) => tags.add(tp));
-      if (m.menu_category) tags.add(m.menu_category);
-    });
-    // Include store name for karaoke translation
-    if (storeName) tags.add(storeName);
-    // Include add-on category names for translation
-    itemAddOns.forEach((addOns) => {
-      addOns.forEach((a) => tags.add(a.category));
-    });
-    return Array.from(tags);
-  }, [dnaByItem, menuItems, itemAddOns, storeName]);
-
-  const { translateTag } = useTagTranslations(allTagTexts);
-
   const {
     data: storeData,
     isLoading: loading,
