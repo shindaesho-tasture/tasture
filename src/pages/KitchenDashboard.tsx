@@ -92,6 +92,7 @@ const KitchenDashboard = () => {
   const [rejectReason, setRejectReason] = useState("");
   const alertTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [waiterCalls, setWaiterCalls] = useState<{ id: string; table_number: number; created_at: string }[]>([]);
+  const [billRequests, setBillRequests] = useState<{ id: string; table_number: number; total_amount: number; created_at: string }[]>([]);
 
   const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
 
