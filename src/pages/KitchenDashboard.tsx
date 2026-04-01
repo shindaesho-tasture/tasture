@@ -164,8 +164,10 @@ const KitchenDashboard = () => {
     }
   }, [loading]);
 
-  const updateStatus = async (orderId: string, status: string) => {
-    await supabase.from("orders").update({ status, updated_at: new Date().toISOString() } as any).eq("id", orderId);
+  const updateStatus = async (orderId: string, status: string, rejection_reason?: string) => {
+    const updateData: any = { status, updated_at: new Date().toISOString() };
+    if (rejection_reason) updateData.rejection_reason = rejection_reason;
+    await supabase.from("orders").update(updateData).eq("id", orderId);
   };
 
   const filtered = orders.filter((o) => {
