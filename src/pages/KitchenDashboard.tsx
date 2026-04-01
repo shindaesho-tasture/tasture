@@ -91,6 +91,8 @@ const KitchenDashboard = () => {
 
   const dismissAlert = useCallback(() => {
     setNewOrderAlert(null);
+    setShowRejectDialog(false);
+    setRejectReason("");
     if (alertTimeout.current) clearTimeout(alertTimeout.current);
   }, []);
 
