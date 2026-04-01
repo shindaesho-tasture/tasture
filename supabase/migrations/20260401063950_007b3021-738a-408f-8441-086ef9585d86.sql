@@ -1,0 +1,1 @@
+ALTER TABLE public.stores ADD COLUMN cover_photo text DEFAULT NULL;

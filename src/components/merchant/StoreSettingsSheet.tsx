@@ -25,14 +25,18 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [menuPhoto, setMenuPhoto] = useState<string | null>(null);
+  const [coverPhoto, setCoverPhoto] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [openingHours, setOpeningHours] = useState("");
   const [phone, setPhone] = useState("");
   const [lineId, setLineId] = useState("");
   const [address, setAddress] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const coverFileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
   const [loadingGeo, setLoadingGeo] = useState(true);
@@ -42,17 +46,19 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     if (!open) return;
     setName(store.name);
     setCategoryId(store.category_id || "");
-    supabase.from("stores").select("pin_lat, pin_lng, menu_photo, description, opening_hours, phone, line_id, address").eq("id", store.id).single()
+    supabase.from("stores").select("pin_lat, pin_lng, menu_photo, cover_photo, description, opening_hours, phone, line_id, address").eq("id", store.id).single()
       .then(({ data }) => {
         setLat(data?.pin_lat ?? null);
         setLng(data?.pin_lng ?? null);
         setMenuPhoto(data?.menu_photo ?? null);
+        setCoverPhoto((data as any)?.cover_photo ?? null);
         setDescription((data as any)?.description ?? "");
         setOpeningHours((data as any)?.opening_hours ?? "");
         setPhone((data as any)?.phone ?? "");
         setLineId((data as any)?.line_id ?? "");
         setAddress((data as any)?.address ?? "");
         setPreviewUrl(null);
+        setCoverPreviewUrl(null);
         setLoadingGeo(false);
       });
   }, [open, store.id]);
@@ -78,7 +84,28 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     }
   };
 
-  const handleLocate = () => {
+  const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverPreviewUrl(URL.createObjectURL(file));
+    setUploadingCover(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${store.id}/cover-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
+      setCoverPhoto(urlData.publicUrl);
+      toast({ title: isTh ? "🖼️ อัปโหลดหน้าปกสำเร็จ" : "🖼️ Cover uploaded" });
+    } catch (err: any) {
+      toast({ title: isTh ? "อัปโหลดล้มเหลว" : "Upload failed", description: err.message, variant: "destructive" });
+      setCoverPreviewUrl(null);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+
     if (!navigator.geolocation) return;
     setLocating(true);
     if (navigator.vibrate) navigator.vibrate(8);
@@ -110,6 +137,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
           pin_lat: lat,
           pin_lng: lng,
           menu_photo: menuPhoto,
+          cover_photo: coverPhoto,
           description: description.trim() || null,
           opening_hours: openingHours.trim() || null,
           phone: phone.trim() || null,
@@ -316,6 +344,35 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
                   rows={2}
                   className="w-full px-4 py-3 rounded-xl bg-secondary text-foreground text-sm border border-border/50 outline-none focus:ring-2 focus:ring-score-emerald/30 resize-none"
                 />
+              </div>
+
+              {/* Cover Photo */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  🖼️ {isTh ? "รูปหน้าปกร้าน" : "Cover Photo"}
+                </label>
+                <input ref={coverFileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleCoverFileChange} />
+
+                {(coverPreviewUrl || coverPhoto) ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border/50">
+                    <img src={coverPreviewUrl || coverPhoto!} alt="Cover" className="w-full h-44 object-cover" />
+                    {uploadingCover && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 size={24} className="animate-spin text-white" />
+                      </div>
+                    )}
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => coverFileRef.current?.click()} disabled={uploadingCover}
+                      className="absolute bottom-2 right-2 px-3 py-1.5 rounded-lg bg-black/60 text-white text-[10px] font-semibold flex items-center gap-1">
+                      <Camera size={12} /> {isTh ? "เปลี่ยน" : "Change"}
+                    </motion.button>
+                  </div>
+                ) : (
+                  <motion.button whileTap={{ scale: 0.97 }} onClick={() => coverFileRef.current?.click()} disabled={uploadingCover}
+                    className="w-full py-8 rounded-xl border-2 border-dashed border-border/50 bg-secondary/50 flex flex-col items-center gap-2 text-muted-foreground hover:bg-secondary transition-colors">
+                    <ImageIcon size={24} />
+                    <span className="text-xs font-medium">{isTh ? "อัปโหลดรูปหน้าปก" : "Upload Cover Photo"}</span>
+                  </motion.button>
+                )}
               </div>
 
               {/* Menu Photo */}

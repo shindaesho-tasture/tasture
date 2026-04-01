@@ -50,6 +50,7 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
     address?: string | null;
     pin_lat?: number | null;
     pin_lng?: number | null;
+    cover_photo?: string | null;
   }>({});
 
   // Find matching category for metrics
@@ -91,7 +92,7 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
   const fetchStoreInfo = async () => {
     const { data } = await supabase
       .from("stores")
-      .select("description, opening_hours, phone, line_id, address, pin_lat, pin_lng")
+      .select("description, opening_hours, phone, line_id, address, pin_lat, pin_lng, cover_photo")
       .eq("id", storeId)
       .single();
     if (data) setStoreInfo(data as any);
@@ -178,6 +179,22 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
         </div>
       ) : (
         <>
+          {/* Cover Photo */}
+          {storeInfo.cover_photo && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl overflow-hidden border border-border/40 -mx-0"
+            >
+              <img
+                src={storeInfo.cover_photo}
+                alt={`${storeName} cover`}
+                className="w-full h-48 object-cover"
+                loading="lazy"
+              />
+            </motion.div>
+          )}
+
           {/* Store Info */}
           {(storeInfo.description || storeInfo.opening_hours || storeInfo.phone || storeInfo.line_id || storeInfo.address) && (
             <motion.div
