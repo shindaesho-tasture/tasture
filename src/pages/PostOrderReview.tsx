@@ -95,8 +95,6 @@ const PostOrderReview = () => {
   const [shareToFeed, setShareToFeed] = useState(true);
   const [showRewardCoupon, setShowRewardCoupon] = useState(false);
 
-  // Texture 3-stage state per menu item
-  const [textureStages, setTextureStages] = useState<Record<string, TextureStageValues>>({});
 
   // Collect all translatable texts from DNA components + sensory axes
   const allTranslatableTexts = useMemo(() => {
