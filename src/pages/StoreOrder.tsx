@@ -800,7 +800,12 @@ const StoreOrder = () => {
                                 : "bg-surface-elevated text-foreground border-border/50"
                             }`}
                           >
-                            {translateTag(nt)}
+                            <span className="flex flex-col items-start leading-tight">
+                              <span>{translateTag(nt)}</span>
+                              {language !== "th" && translateTag(nt) !== nt && (
+                                <span className="text-[8px] opacity-60">{nt}</span>
+                              )}
+                            </span>
                             {extraPrice > 0 && <span className="ml-1 opacity-80">(+฿{extraPrice})</span>}
                           </motion.button>
                           );
