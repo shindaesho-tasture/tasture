@@ -80,6 +80,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
     setStoreId(null);
     setStoreName(null);
+    setTableNumber(null);
   };
 
   const setOrderStore = (id: string, name: string) => {
