@@ -44,6 +44,7 @@ import MerchantKitchen from "./pages/merchant/MerchantKitchen.tsx";
 import MerchantMenu from "./pages/merchant/MerchantMenu.tsx";
 import MerchantQueue from "./pages/merchant/MerchantQueue.tsx";
 import MerchantProfile from "./pages/merchant/MerchantProfile.tsx";
+import MerchantClaimStore from "./pages/merchant/MerchantClaimStore.tsx";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const AnimatedRoutes = () => {
         <Route path="/m/kitchen" element={<MerchantKitchen />} />
         <Route path="/m/menu" element={<MerchantMenu />} />
         <Route path="/m/queue" element={<MerchantQueue />} />
+        <Route path="/m/claim" element={<MerchantClaimStore />} />
         <Route path="/m/profile" element={<MerchantProfile />} />
 
         <Route path="*" element={<NotFound />} />
