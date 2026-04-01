@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN table_number integer;

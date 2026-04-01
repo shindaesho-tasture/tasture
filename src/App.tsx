@@ -36,6 +36,7 @@ import KitchenDashboard from "./pages/KitchenDashboard.tsx";
 import MerchantHub from "./pages/MerchantHub.tsx";
 import MyStores from "./pages/MyStores.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import QrRedirect from "./pages/QrRedirect.tsx";
 
 // Merchant sub-app
 import MerchantLogin from "./pages/merchant/MerchantLogin.tsx";
@@ -46,6 +47,7 @@ import MerchantQueue from "./pages/merchant/MerchantQueue.tsx";
 import MerchantProfile from "./pages/merchant/MerchantProfile.tsx";
 import MerchantClaimStore from "./pages/merchant/MerchantClaimStore.tsx";
 import MerchantSalesReport from "./pages/merchant/MerchantSalesReport.tsx";
+import MerchantQrCodes from "./pages/merchant/MerchantQrCodes.tsx";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +84,7 @@ const AnimatedRoutes = () => {
         <Route path="/kitchen/:storeId" element={<KitchenDashboard />} />
         <Route path="/merchant/:storeId" element={<MerchantHub />} />
         <Route path="/my-stores" element={<MyStores />} />
+        <Route path="/qr/:storeId/:tableNumber" element={<QrRedirect />} />
 
         {/* ── Merchant sub-app (/m/*) ── */}
         <Route path="/m/login" element={<MerchantLogin />} />
@@ -91,6 +94,7 @@ const AnimatedRoutes = () => {
         <Route path="/m/queue" element={<MerchantQueue />} />
         <Route path="/m/claim" element={<MerchantClaimStore />} />
         <Route path="/m/sales" element={<MerchantSalesReport />} />
+        <Route path="/m/qr" element={<MerchantQrCodes />} />
         <Route path="/m/profile" element={<MerchantProfile />} />
 
         <Route path="*" element={<NotFound />} />

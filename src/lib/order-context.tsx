@@ -22,12 +22,14 @@ interface OrderContextType {
   items: OrderItem[];
   storeId: string | null;
   storeName: string | null;
+  tableNumber: number | null;
   addItem: (item: OrderItem) => void;
   removeItem: (menuItemId: string) => void;
   updateQuantity: (menuItemId: string, quantity: number) => void;
   updateItemNote: (menuItemId: string, note: string) => void;
   clearOrder: () => void;
   setOrderStore: (id: string, name: string) => void;
+  setTableNumber: (n: number | null) => void;
   totalItems: number;
   totalPrice: number;
 }
@@ -38,6 +40,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [storeName, setStoreName] = useState<string | null>(null);
+  const [tableNumber, setTableNumber] = useState<number | null>(null);
 
   const addItem = (item: OrderItem) => {
     setItems((prev) => {
@@ -77,6 +80,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
     setStoreId(null);
     setStoreName(null);
+    setTableNumber(null);
   };
 
   const setOrderStore = (id: string, name: string) => {
@@ -96,12 +100,14 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         items,
         storeId,
         storeName,
+        tableNumber,
         addItem,
         removeItem,
         updateQuantity,
         updateItemNote,
         clearOrder,
         setOrderStore,
+        setTableNumber,
         totalItems,
         totalPrice,
       }}

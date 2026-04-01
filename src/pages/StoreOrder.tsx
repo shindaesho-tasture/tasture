@@ -59,7 +59,7 @@ const StoreOrder = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
-  const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice } = useOrder();
+  const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice, tableNumber } = useOrder();
 
   // Store posts state
   const [storePosts, setStorePosts] = useState<StorePost[]>([]);
@@ -415,12 +415,19 @@ const StoreOrder = () => {
               {loading ? (
                 <Skeleton className="h-5 w-32 rounded" />
               ) : (
-                <KaraokeName
-                  original={storeName || t("order.restaurant", language)}
-                  translated={storeName && translateTag(storeName) !== storeName ? translateTag(storeName) : undefined}
-                  className="text-lg font-medium tracking-tight text-foreground leading-tight"
-                  subClassName="text-[10px] text-muted-foreground leading-tight"
-                />
+                <div className="flex items-center gap-2">
+                  <KaraokeName
+                    original={storeName || t("order.restaurant", language)}
+                    translated={storeName && translateTag(storeName) !== storeName ? translateTag(storeName) : undefined}
+                    className="text-lg font-medium tracking-tight text-foreground leading-tight"
+                    subClassName="text-[10px] text-muted-foreground leading-tight"
+                  />
+                  {tableNumber && (
+                    <span className="shrink-0 px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-xs font-bold">
+                      🪑 โต๊ะ {tableNumber}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
