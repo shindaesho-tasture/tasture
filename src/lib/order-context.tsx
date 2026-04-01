@@ -6,6 +6,7 @@ export interface OrderItem {
   price: number;
   quantity: number;
   type: string;
+  note?: string;
   selectedOptions?: {
     noodleType?: string;
     noodleTypePrice?: number;
@@ -24,6 +25,7 @@ interface OrderContextType {
   addItem: (item: OrderItem) => void;
   removeItem: (menuItemId: string) => void;
   updateQuantity: (menuItemId: string, quantity: number) => void;
+  updateItemNote: (menuItemId: string, note: string) => void;
   clearOrder: () => void;
   setOrderStore: (id: string, name: string) => void;
   totalItems: number;
@@ -65,6 +67,12 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const updateItemNote = (menuItemId: string, note: string) => {
+    setItems((prev) =>
+      prev.map((i) => (i.menuItemId === menuItemId ? { ...i, note } : i))
+    );
+  };
+
   const clearOrder = () => {
     setItems([]);
     setStoreId(null);
@@ -91,6 +99,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         addItem,
         removeItem,
         updateQuantity,
+        updateItemNote,
         clearOrder,
         setOrderStore,
         totalItems,
