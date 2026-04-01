@@ -141,6 +141,7 @@ const KitchenDashboard = () => {
               if (soundEnabled) playOrderBeep();
               sendBrowserNotification(newOrder.order_number, (newOrder.items || []).length);
               navigator.vibrate?.([100, 50, 100, 50, 200]);
+              showNewOrderAlert(newOrder);
             }
           } else if (payload.eventType === "UPDATE") {
             setOrders((prev) =>
