@@ -99,6 +99,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         addItem,
         removeItem,
         updateQuantity,
+        updateItemNote,
         clearOrder,
         setOrderStore,
         totalItems,
