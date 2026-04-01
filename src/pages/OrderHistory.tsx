@@ -13,6 +13,7 @@ interface MenuItem {
   name: string;
   score: number | null;
   hasReview: boolean;
+  note?: string;
 }
 
 interface VisitRecord {
