@@ -165,6 +165,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
           pin_lng: lng,
           menu_photo: menuPhoto,
           cover_photo: coverPhoto,
+          logo_url: logoUrl,
           description: description.trim() || null,
           opening_hours: openingHours.trim() || null,
           phone: phone.trim() || null,
