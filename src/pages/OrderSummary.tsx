@@ -118,6 +118,50 @@ const OrderSummary = () => {
   const handleReview = () => navigate("/post-review");
   const handleDone = () => { clearOrder(); navigate("/store-list"); };
 
+  const handleRequestBill = async () => {
+    if (!storeId || requestingBill) return;
+    setRequestingBill(true);
+    if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+    try {
+      await supabase.from("bill_requests" as any).insert({
+        store_id: storeId,
+        table_number: tableNumber || 0,
+        guest_id: user ? null : guestId,
+        total_amount: totalPrice,
+      } as any);
+      setBillRequested(true);
+      toast({ title: language === "th" ? "💰 เรียกเก็บเงินแล้ว" : "💰 Bill requested" });
+    } catch (err: any) {
+      toast({ title: language === "th" ? "เกิดข้อผิดพลาด" : "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setRequestingBill(false);
+    }
+  };
+
+  // Listen for bill paid status via realtime
+  useEffect(() => {
+    if (!billRequested || !storeId) return;
+    const channel = supabase
+      .channel("bill-status")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "bill_requests", filter: `store_id=eq.${storeId}` },
+        (payload) => {
+          const updated = payload.new as any;
+          if (updated.status === "paid" && updated.table_number === (tableNumber || 0)) {
+            setBillPaid(true);
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            // Auto redirect to feedback after 2s
+            setTimeout(() => {
+              navigate(`/menu-feedback/${storeId}`);
+            }, 2000);
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [billRequested, storeId, tableNumber]);
+
   if (confirmed) {
     return (
       <PageTransition>
