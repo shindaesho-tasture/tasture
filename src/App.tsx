@@ -37,6 +37,7 @@ import MerchantHub from "./pages/MerchantHub.tsx";
 import MyStores from "./pages/MyStores.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import QrRedirect from "./pages/QrRedirect.tsx";
+import GuestOrderTracker from "./pages/GuestOrderTracker.tsx";
 
 // Merchant sub-app
 import MerchantLogin from "./pages/merchant/MerchantLogin.tsx";
