@@ -123,6 +123,21 @@ const MerchantSalesReport = () => {
     return { totalRevenue, totalOrders, avg, trendUp };
   }, [dayData]);
 
+  const handleExportCSV = () => {
+    if (!dayData.length) return;
+    const header = isTh ? "วันที่,รายได้ (฿),จำนวนออเดอร์" : "Date,Revenue (฿),Orders";
+    const rows = dayData.map((d) => `${d.date},${d.revenue},${d.orders}`);
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sales-${activeStore?.name || "report"}-${range}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (navigator.vibrate) navigator.vibrate(8);
+  };
+
   const isPageLoading = authLoading || storesLoading || loading;
 
   return (
