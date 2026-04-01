@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Store, Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -15,8 +15,28 @@ const MerchantLogin = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
+
+  // Auto-redirect if already logged in with stores
+  useEffect(() => {
+    const check = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { count } = await supabase
+          .from("stores")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", session.user.id);
+        if ((count ?? 0) > 0) {
+          navigate("/m", { replace: true });
+          return;
+        }
+      }
+      setChecking(false);
+    };
+    check();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +72,9 @@ const MerchantLogin = () => {
       setLoading(false);
     }
   };
+  if (checking) {
+    return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" /></div>;
+  }
 
   return (
     <PageTransition>
