@@ -51,6 +51,7 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
     pin_lat?: number | null;
     pin_lng?: number | null;
     cover_photo?: string | null;
+    logo_url?: string | null;
   }>({});
 
   // Find matching category for metrics
