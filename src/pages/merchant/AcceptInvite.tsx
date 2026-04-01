@@ -71,41 +71,43 @@ const AcceptInvite = () => {
   };
 
   const handleAccept = async () => {
-    if (!invite || !user) return;
+    if (!invite || !user || !token) return;
     setStatus("accepting");
 
     try {
-      // Insert store member
-      const { error: memberErr } = await supabase
-        .from("store_members")
-        .insert({
-          store_id: invite.store_id,
-          user_id: user.id,
-          role: invite.role,
-        });
+      const { data, error: acceptErr } = await supabase.rpc("accept_store_invite", {
+        _token: token,
+      });
 
-      if (memberErr) {
-        if (memberErr.message.includes("duplicate") || memberErr.message.includes("unique")) {
-          setStatus("error");
-          setErrorMsg(isTh ? "คุณเป็นสมาชิกร้านนี้อยู่แล้ว" : "You are already a member of this store");
-          return;
-        }
-        throw memberErr;
+      if (acceptErr) throw acceptErr;
+
+      const result = data as { success?: boolean; error?: string } | null;
+
+      if (result?.error === "Already a member") {
+        setStatus("success");
+        setTimeout(() => navigate("/m"), 1200);
+        return;
       }
 
-      // Mark invite as used
-      await supabase
-        .from("store_invites")
-        .update({ used_by: user.id, used_at: new Date().toISOString() } as any)
-        .eq("id", invite.id);
+      if (!result?.success) {
+        setStatus("error");
+        setErrorMsg(
+          result?.error === "Invalid or expired invite"
+            ? isTh
+              ? "ลิงก์เชิญนี้ไม่ถูกต้องหรือหมดอายุแล้ว"
+              : "This invite link is invalid or expired"
+            : result?.error || (isTh ? "เกิดข้อผิดพลาด" : "Something went wrong")
+        );
+        return;
+      }
 
       setStatus("success");
 
       // Redirect to merchant dashboard after delay
-      setTimeout(() => navigate("/m"), 2000);
+      setTimeout(() => navigate("/m"), 1200);
     } catch (err: any) {
       setStatus("error");
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || (isTh ? "เกิดข้อผิดพลาด" : "Something went wrong"));
     }
   };
 
