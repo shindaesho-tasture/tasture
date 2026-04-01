@@ -233,6 +233,36 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
                 )}
               </div>
 
+              {/* Menu Photo */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  <Camera size={10} className="inline mr-1" />
+                  {isTh ? "รูปเมนู" : "Menu Photo"}
+                </label>
+                <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
+
+                {(previewUrl || menuPhoto) ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border/50">
+                    <img src={previewUrl || menuPhoto!} alt="Menu" className="w-full h-40 object-cover" />
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 size={24} className="animate-spin text-white" />
+                      </div>
+                    )}
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => fileRef.current?.click()} disabled={uploading}
+                      className="absolute bottom-2 right-2 px-3 py-1.5 rounded-lg bg-black/60 text-white text-[10px] font-semibold flex items-center gap-1">
+                      <Camera size={12} /> {isTh ? "เปลี่ยน" : "Change"}
+                    </motion.button>
+                  </div>
+                ) : (
+                  <motion.button whileTap={{ scale: 0.97 }} onClick={() => fileRef.current?.click()} disabled={uploading}
+                    className="w-full py-8 rounded-xl border-2 border-dashed border-border/50 bg-secondary/50 flex flex-col items-center gap-2 text-muted-foreground hover:bg-secondary transition-colors">
+                    <ImageIcon size={24} />
+                    <span className="text-xs font-medium">{isTh ? "อัปโหลดรูปเมนู" : "Upload Menu Photo"}</span>
+                  </motion.button>
+                )}
+              </div>
+
               {/* Save */}
               <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving || !name.trim()}
                 className="w-full py-3.5 rounded-xl bg-score-emerald text-white text-sm font-bold shadow-md flex items-center justify-center gap-2 disabled:opacity-50">
