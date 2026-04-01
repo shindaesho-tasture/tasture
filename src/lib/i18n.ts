@@ -444,6 +444,7 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "orderSum.skipBtn": { th: "ข้ามไป", en: "Skip", ja: "スキップ", zh: "跳过", ko: "건너뛰기" },
   "orderSum.empty": { th: "ยังไม่มีรายการ", en: "No items yet", ja: "まだ注文がありません", zh: "暂无商品", ko: "아직 항목이 없습니다" },
   "orderSum.selectMenu": { th: "เลือกเมนู", en: "Select menu", ja: "メニューを選択", zh: "选择菜品", ko: "메뉴 선택" },
+  "orderSum.notes": { th: "หมายเหตุ / โน้ตพิเศษ", en: "Special notes", ja: "特記事項", zh: "备注", ko: "특이사항" },
   "orderSum.total": { th: "รวมทั้งหมด", en: "Total", ja: "合計", zh: "总计", ko: "합계" },
   "orderSum.items": { th: "{count} รายการ", en: "{count} items", ja: "{count}品", zh: "{count}项", ko: "{count}개" },
   "orderSum.confirmBtn": { th: "ยืนยันออเดอร์", en: "Confirm Order", ja: "注文を確定", zh: "确认订单", ko: "주문 확인" },
