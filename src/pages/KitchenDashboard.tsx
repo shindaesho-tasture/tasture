@@ -83,7 +83,11 @@ const KitchenDashboard = () => {
   );
   const initialLoadDone = useRef(false);
   const [newOrderAlert, setNewOrderAlert] = useState<OrderRow | null>(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   const alertTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
 
   const dismissAlert = useCallback(() => {
     setNewOrderAlert(null);
