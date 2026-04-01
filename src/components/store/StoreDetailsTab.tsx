@@ -176,6 +176,53 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
         </div>
       ) : (
         <>
+          {/* Store Info */}
+          {(storeInfo.description || storeInfo.opening_hours || storeInfo.phone || storeInfo.line_id || storeInfo.address) && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-2xl border border-border/40 overflow-hidden"
+            >
+              {storeInfo.description && (
+                <div className="px-4 py-3 border-b border-border/20">
+                  <p className="text-sm text-foreground leading-relaxed">{storeInfo.description}</p>
+                </div>
+              )}
+              <div className="divide-y divide-border/20">
+                {storeInfo.opening_hours && (
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <Clock size={16} className="text-score-emerald shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground font-medium">เวลาเปิด-ปิด</p>
+                      <p className="text-sm text-foreground font-medium">{storeInfo.opening_hours}</p>
+                    </div>
+                  </div>
+                )}
+                {storeInfo.address && (
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <MapPin size={16} className="text-primary shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground font-medium">ที่อยู่</p>
+                      <p className="text-sm text-foreground">{storeInfo.address}</p>
+                    </div>
+                  </div>
+                )}
+                {(storeInfo.phone || storeInfo.line_id) && (
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <span className="text-base shrink-0">📞</span>
+                    <div className="flex flex-wrap gap-3">
+                      {storeInfo.phone && (
+                        <a href={`tel:${storeInfo.phone}`} className="text-sm text-primary font-medium">{storeInfo.phone}</a>
+                      )}
+                      {storeInfo.line_id && (
+                        <span className="text-sm text-score-emerald font-medium">Line: {storeInfo.line_id}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
           {/* Overall Score Card */}
           {overallScore != null && overallTier && (
             <motion.div
