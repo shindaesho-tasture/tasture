@@ -111,6 +111,16 @@ const Auth = () => {
             >
               {isLogin ? t("auth.noAccount", language) : t("auth.hasAccount", language)}
             </button>
+
+            <div className="pt-3 border-t border-border/30">
+              <button
+                type="button"
+                onClick={() => navigate("/m/login")}
+                className="w-full text-center text-xs text-score-emerald font-medium hover:underline py-2"
+              >
+                🏪 {language === "th" ? "เข้าสู่ระบบร้านค้า" : "Merchant Login"}
+              </button>
+            </div>
           </motion.form>
         </div>
       </div>
