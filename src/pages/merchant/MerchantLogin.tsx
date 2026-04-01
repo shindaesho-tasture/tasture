@@ -26,11 +26,11 @@ const MerchantLogin = () => {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const { count } = await supabase
-          .from("stores")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", session.user.id);
-        if ((count ?? 0) > 0) {
+        const [{ count: ownedCount }, { count: memberCount }] = await Promise.all([
+          supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", session.user.id),
+          supabase.from("store_members").select("id", { count: "exact", head: true }).eq("user_id", session.user.id),
+        ]);
+        if ((ownedCount ?? 0) > 0 || (memberCount ?? 0) > 0) {
           navigate(redirectTo || "/m", { replace: true });
           return;
         }
