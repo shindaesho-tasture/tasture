@@ -42,6 +42,13 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
   const [reviewSummary, setReviewSummary] = useState<ReviewSummary[]>([]);
   const [totalReviewers, setTotalReviewers] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [storeInfo, setStoreInfo] = useState<{
+    description?: string | null;
+    opening_hours?: string | null;
+    phone?: string | null;
+    line_id?: string | null;
+    address?: string | null;
+  }>({});
 
   // Find matching category for metrics
   const storeCategory = useMemo(() => {
