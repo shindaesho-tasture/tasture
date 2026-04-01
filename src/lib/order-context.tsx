@@ -40,6 +40,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [storeName, setStoreName] = useState<string | null>(null);
+  const [tableNumber, setTableNumber] = useState<number | null>(null);
 
   const addItem = (item: OrderItem) => {
     setItems((prev) => {
