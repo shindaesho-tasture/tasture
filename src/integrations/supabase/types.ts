@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      bill_requests: {
+        Row: {
+          created_at: string
+          guest_id: string | null
+          id: string
+          order_ids: Json
+          paid_at: string | null
+          status: string
+          store_id: string
+          table_number: number
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+          order_ids?: Json
+          paid_at?: string | null
+          status?: string
+          store_id: string
+          table_number: number
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+          order_ids?: Json
+          paid_at?: string | null
+          status?: string
+          store_id?: string
+          table_number?: number
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dish_descriptions: {
         Row: {
           component_name: string
