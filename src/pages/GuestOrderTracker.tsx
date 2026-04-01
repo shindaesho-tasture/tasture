@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Clock, ChefHat, CheckCircle2, XCircle, Receipt, Utensils } from "lucide-react";
+import { ChevronLeft, Clock, ChefHat, CheckCircle2, XCircle, Receipt, Utensils, Volume2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGuestSession } from "@/hooks/use-guest-session";
 import { useLanguage } from "@/lib/language-context";
@@ -61,7 +62,32 @@ const GuestOrderTracker = () => {
     })();
   }, [guestId]);
 
-  // Realtime updates
+  // Play a short beep for status change
+  const playBeep = () => {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.value = 0.3;
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+      setTimeout(() => {
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.frequency.value = 1100;
+        gain2.gain.value = 0.3;
+        osc2.start();
+        osc2.stop(ctx.currentTime + 0.2);
+      }, 180);
+    } catch {}
+  };
+
+  // Realtime updates with notifications
   useEffect(() => {
     if (!guestId) return;
     const channel = supabase
@@ -72,20 +98,52 @@ const GuestOrderTracker = () => {
         (payload) => {
           const updated = payload.new as any;
           if (updated.guest_id === guestId) {
+            const oldOrder = orders.find((o) => o.id === updated.id);
+            const oldStatus = oldOrder?.status;
+            const newStatus = updated.status;
+
             setOrders((prev) =>
               prev.map((o) =>
                 o.id === updated.id
-                  ? { ...o, status: updated.status, rejection_reason: updated.rejection_reason }
+                  ? { ...o, status: newStatus, rejection_reason: updated.rejection_reason }
                   : o
               )
             );
-            if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+
+            // Only notify if status actually changed
+            if (oldStatus && oldStatus !== newStatus) {
+              const cfg = statusConfig[newStatus];
+              const orderNum = oldOrder?.order_number || "";
+
+              if (newStatus === "accepted") {
+                navigator.vibrate?.([80, 40, 80, 40, 80]);
+                playBeep();
+                toast({
+                  title: language === "th" ? `🍳 ออเดอร์ #${orderNum} กำลังทำ!` : `🍳 Order #${orderNum} is being prepared!`,
+                  description: language === "th" ? "ร้านยืนยันออเดอร์แล้ว รอสักครู่" : "Restaurant confirmed. Please wait.",
+                });
+              } else if (newStatus === "served") {
+                navigator.vibrate?.([100, 60, 100, 60, 200]);
+                playBeep();
+                toast({
+                  title: language === "th" ? `✅ ออเดอร์ #${orderNum} เสิร์ฟแล้ว!` : `✅ Order #${orderNum} served!`,
+                  description: language === "th" ? "อาหารพร้อมแล้ว!" : "Your food is ready!",
+                });
+              } else if (newStatus === "rejected") {
+                navigator.vibrate?.([200, 100, 200]);
+                toast({
+                  title: language === "th" ? `❌ ออเดอร์ #${orderNum} ถูกปฏิเสธ` : `❌ Order #${orderNum} rejected`,
+                  description: updated.rejection_reason || (language === "th" ? "กรุณาติดต่อร้าน" : "Please contact the restaurant"),
+                  variant: "destructive",
+                });
+              }
+            }
           }
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [guestId]);
+  }, [guestId, orders, language]);
 
   const activeOrders = orders.filter((o) => ["pending", "accepted"].includes(o.status));
   const pastOrders = orders.filter((o) => ["served", "rejected"].includes(o.status));
