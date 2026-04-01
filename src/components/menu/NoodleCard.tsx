@@ -12,12 +12,21 @@ interface NoodleCardProps {
 }
 
 const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [editName, setEditName] = useState(item.name);
   const [editPrice, setEditPrice] = useState(String(item.price));
 
   const defaultNoodleTypes = item.noodle_types?.length ? item.noodle_types : ["เส้นเล็ก", "เส้นใหญ่", "บะหมี่", "วุ้นเส้น", "มาม่า"];
   const defaultStyles = item.noodle_styles?.length ? item.noodle_styles : ["น้ำ", "แห้ง", "ต้มยำ", "เย็นตาโฟ"];
+
+  // Collect all translatable texts
+  const allTexts = useMemo(() => [
+    ...defaultNoodleTypes,
+    ...defaultStyles,
+    ...(item.toppings || []),
+  ], [defaultNoodleTypes.join(","), defaultStyles.join(","), item.toppings?.join(",")]);
+  const { translateTag } = useTagTranslations(allTexts);
+
 
   const handleChip = (field: "selected_noodle_type" | "selected_noodle_style", value: string) => {
     onChange({ ...item, [field]: item[field] === value ? undefined : value });
