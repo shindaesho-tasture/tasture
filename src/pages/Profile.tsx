@@ -403,7 +403,7 @@ const Profile = () => {
                   {uploadingAvatar ? (
                     <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
                   ) : profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                    <LazyImage src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" transformWidth={160} quality={80} />
                   ) : (
                     <Crown size={32} strokeWidth={1.5} className="text-score-emerald" />
                   )}
