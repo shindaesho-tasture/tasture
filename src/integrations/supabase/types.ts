@@ -255,6 +255,7 @@ export type Database = {
           sort_order: number
           store_id: string
           textures: string[] | null
+          topping_prices: Json
           toppings: string[] | null
           type: string
         }
@@ -276,6 +277,7 @@ export type Database = {
           sort_order?: number
           store_id: string
           textures?: string[] | null
+          topping_prices?: Json
           toppings?: string[] | null
           type?: string
         }
@@ -297,6 +299,7 @@ export type Database = {
           sort_order?: number
           store_id?: string
           textures?: string[] | null
+          topping_prices?: Json
           toppings?: string[] | null
           type?: string
         }
