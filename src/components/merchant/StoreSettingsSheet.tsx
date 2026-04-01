@@ -42,11 +42,16 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     if (!open) return;
     setName(store.name);
     setCategoryId(store.category_id || "");
-    supabase.from("stores").select("pin_lat, pin_lng, menu_photo").eq("id", store.id).single()
+    supabase.from("stores").select("pin_lat, pin_lng, menu_photo, description, opening_hours, phone, line_id, address").eq("id", store.id).single()
       .then(({ data }) => {
         setLat(data?.pin_lat ?? null);
         setLng(data?.pin_lng ?? null);
         setMenuPhoto(data?.menu_photo ?? null);
+        setDescription((data as any)?.description ?? "");
+        setOpeningHours((data as any)?.opening_hours ?? "");
+        setPhone((data as any)?.phone ?? "");
+        setLineId((data as any)?.line_id ?? "");
+        setAddress((data as any)?.address ?? "");
         setPreviewUrl(null);
         setLoadingGeo(false);
       });
