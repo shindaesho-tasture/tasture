@@ -106,8 +106,6 @@ const MerchantMenu = () => {
     enabled: !!storeId,
   });
 
-  // Auth guard
-  if (!authLoading && !user) { navigate("/m/login", { replace: true }); return null; }
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
