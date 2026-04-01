@@ -560,7 +560,10 @@ const KitchenDashboard = () => {
                         {(billOrderItems.get(bill.id) || []).map((item, idx) => (
                           <div key={idx} className="flex justify-between text-xs text-zinc-300">
                             <span className="truncate mr-2">{item.name}</span>
-                            <span className="text-zinc-400 shrink-0">×{item.qty}</span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-zinc-400">×{item.qty}</span>
+                              <span className="text-zinc-400 font-medium">฿{(item.price * item.qty).toLocaleString()}</span>
+                            </div>
                           </div>
                         ))}
                       </div>
