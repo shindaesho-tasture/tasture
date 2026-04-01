@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { UserPlus, Copy, Trash2, Loader2, Users, Shield, ChefHat, Check, Link2 } from "lucide-react";
+import { UserPlus, Copy, Trash2, Loader2, Users, Shield, ChefHat, Check, Link2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-context";
@@ -48,6 +48,8 @@ const StoreTeamManager = () => {
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [inviteRole, setInviteRole] = useState<"manager" | "staff">("staff");
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [emailInput, setEmailInput] = useState("");
+  const [addingByEmail, setAddingByEmail] = useState(false);
 
   const storeRole = activeStore?.role;
   const canManage = storeRole === "owner" || storeRole === "manager";
@@ -101,6 +103,39 @@ const StoreTeamManager = () => {
   useEffect(() => {
     fetchTeam();
   }, [fetchTeam]);
+
+  const handleAddByEmail = async () => {
+    if (!activeStore || !emailInput.trim()) return;
+    setAddingByEmail(true);
+    try {
+      const { data, error } = await supabase.rpc("add_store_member_by_email", {
+        _store_id: activeStore.id,
+        _email: emailInput.trim(),
+        _role: inviteRole,
+      });
+      if (error) throw error;
+      const result = data as { success?: boolean; error?: string } | null;
+      if (result?.error) {
+        const msg = result.error === "User not found"
+          ? (isTh ? "ไม่พบบัญชีผู้ใช้อีเมลนี้" : "No account found with this email")
+          : result.error === "Already a member"
+            ? (isTh ? "เป็นสมาชิกอยู่แล้ว" : "Already a member")
+            : result.error === "Already owner"
+              ? (isTh ? "เป็นเจ้าของร้านอยู่แล้ว" : "Already the owner")
+              : result.error;
+        toast({ title: msg, variant: "destructive" });
+      } else {
+        toast({ title: isTh ? "✅ เพิ่มสมาชิกแล้ว" : "✅ Member added" });
+        setEmailInput("");
+        fetchTeam();
+        refetch();
+      }
+    } catch (err: any) {
+      toast({ title: isTh ? "เกิดข้อผิดพลาด" : "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setAddingByEmail(false);
+    }
+  };
 
   const handleCreateInvite = async () => {
     if (!activeStore) return;
@@ -235,19 +270,46 @@ const StoreTeamManager = () => {
           {/* Create invite */}
           {canManage && (
             <div className="space-y-3 pt-2">
+              {/* Add by email */}
+              <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                {isTh ? "เพิ่มจากอีเมล" : "Add by Email"}
+              </p>
               <div className="flex items-center gap-2">
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as "manager" | "staff")}
-                  className="flex-1 px-3 py-2.5 rounded-xl bg-secondary text-foreground text-xs border border-border/50 outline-none"
+                  className="px-3 py-2.5 rounded-xl bg-secondary text-foreground text-xs border border-border/50 outline-none shrink-0"
                 >
                   <option value="staff">{isTh ? "🍳 พนักงาน (Staff)" : "🍳 Staff"}</option>
                   <option value="manager">{isTh ? "👔 ผู้จัดการ (Manager)" : "👔 Manager"}</option>
                 </select>
+                <div className="relative flex-1">
+                  <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder={isTh ? "อีเมลสมาชิก" : "Member email"}
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-secondary text-foreground text-xs border border-border/50 outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60"
+                    onKeyDown={(e) => { if (e.key === "Enter") handleAddByEmail(); }}
+                  />
+                </div>
+                <motion.button whileTap={{ scale: 0.95 }} onClick={handleAddByEmail} disabled={addingByEmail || !emailInput.trim()}
+                  className="px-4 py-2.5 rounded-xl bg-score-emerald text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 shrink-0">
+                  {addingByEmail ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
+                  {isTh ? "เพิ่ม" : "Add"}
+                </motion.button>
+              </div>
+
+              {/* Create invite link */}
+              <div className="flex items-center justify-between pt-1">
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                  {isTh ? "หรือสร้างลิงก์เชิญ" : "Or Create Invite Link"}
+                </p>
                 <motion.button whileTap={{ scale: 0.95 }} onClick={handleCreateInvite} disabled={creatingInvite}
-                  className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 shrink-0">
-                  {creatingInvite ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
-                  {isTh ? "สร้างลิงก์เชิญ" : "Create Invite"}
+                  className="px-3 py-1.5 rounded-lg bg-secondary text-foreground text-[11px] font-semibold flex items-center gap-1 disabled:opacity-50">
+                  {creatingInvite ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />}
+                  {isTh ? "สร้างลิงก์" : "Create Link"}
                 </motion.button>
               </div>
 
