@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Save, Loader2, Navigation } from "lucide-react";
+import { X, MapPin, Save, Loader2, Navigation, Camera, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/use-categories";
 import { useLanguage } from "@/lib/language-context";
@@ -24,6 +24,10 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
   const [categoryId, setCategoryId] = useState(store.category_id || "");
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
+  const [menuPhoto, setMenuPhoto] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
   const [loadingGeo, setLoadingGeo] = useState(true);
@@ -33,13 +37,36 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     if (!open) return;
     setName(store.name);
     setCategoryId(store.category_id || "");
-    supabase.from("stores").select("pin_lat, pin_lng").eq("id", store.id).single()
+    supabase.from("stores").select("pin_lat, pin_lng, menu_photo").eq("id", store.id).single()
       .then(({ data }) => {
         setLat(data?.pin_lat ?? null);
         setLng(data?.pin_lng ?? null);
+        setMenuPhoto(data?.menu_photo ?? null);
+        setPreviewUrl(null);
         setLoadingGeo(false);
       });
   }, [open, store.id]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${store.id}/menu-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
+      setMenuPhoto(urlData.publicUrl);
+      toast({ title: isTh ? "📸 อัปโหลดสำเร็จ" : "📸 Uploaded" });
+    } catch (err: any) {
+      toast({ title: isTh ? "อัปโหลดล้มเหลว" : "Upload failed", description: err.message, variant: "destructive" });
+      setPreviewUrl(null);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleLocate = () => {
     if (!navigator.geolocation) return;
@@ -72,6 +99,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
           category_id: categoryId || null,
           pin_lat: lat,
           pin_lng: lng,
+          menu_photo: menuPhoto,
         })
         .eq("id", store.id);
       if (error) throw error;
@@ -202,6 +230,36 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
                       {isTh ? "ใช้ตำแหน่งปัจจุบัน" : "Use Current Location"}
                     </motion.button>
                   </div>
+                )}
+              </div>
+
+              {/* Menu Photo */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  <Camera size={10} className="inline mr-1" />
+                  {isTh ? "รูปเมนู" : "Menu Photo"}
+                </label>
+                <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
+
+                {(previewUrl || menuPhoto) ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border/50">
+                    <img src={previewUrl || menuPhoto!} alt="Menu" className="w-full h-40 object-cover" />
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 size={24} className="animate-spin text-white" />
+                      </div>
+                    )}
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => fileRef.current?.click()} disabled={uploading}
+                      className="absolute bottom-2 right-2 px-3 py-1.5 rounded-lg bg-black/60 text-white text-[10px] font-semibold flex items-center gap-1">
+                      <Camera size={12} /> {isTh ? "เปลี่ยน" : "Change"}
+                    </motion.button>
+                  </div>
+                ) : (
+                  <motion.button whileTap={{ scale: 0.97 }} onClick={() => fileRef.current?.click()} disabled={uploading}
+                    className="w-full py-8 rounded-xl border-2 border-dashed border-border/50 bg-secondary/50 flex flex-col items-center gap-2 text-muted-foreground hover:bg-secondary transition-colors">
+                    <ImageIcon size={24} />
+                    <span className="text-xs font-medium">{isTh ? "อัปโหลดรูปเมนู" : "Upload Menu Photo"}</span>
+                  </motion.button>
                 )}
               </div>
 
