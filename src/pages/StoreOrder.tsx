@@ -839,20 +839,20 @@ const StoreOrder = () => {
 
                   {/* Add-ons grouped by category */}
                   {(() => {
-                    const addOns = itemAddOns.get(optionsItem.id);
+                    const addOns = itemAddOns.get(optionsItem.id) as { id: string; name: string; price: number; category: string }[] | undefined;
                     if (!addOns || addOns.length === 0) return null;
                     const grouped = addOns.reduce<Record<string, typeof addOns>>((acc, a) => {
                       (acc[a.category] = acc[a.category] || []).push(a);
                       return acc;
                     }, {});
                     const catEmoji: Record<string, string> = { "เนื้อสัตว์": "🥩", "ผัก": "🥬", "ซอส": "🫙", "อื่นๆ": "➕" };
-                    return Object.entries(grouped).map(([cat, items]) => (
+                    return Object.entries(grouped).map(([cat, catItems]) => (
                       <div key={cat}>
                         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
                           {catEmoji[cat] || "📦"} {translateTag(cat)} <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {items.map((a) => {
+                          {catItems.map((a) => {
                             const selected = selectedAddOns.some((sa) => sa.name === a.name);
                             return (
                               <motion.button
