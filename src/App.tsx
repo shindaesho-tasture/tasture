@@ -34,6 +34,7 @@ import UserProfile from "./pages/UserProfile.tsx";
 import QueueManager from "./pages/QueueManager.tsx";
 import KitchenDashboard from "./pages/KitchenDashboard.tsx";
 import MerchantHub from "./pages/MerchantHub.tsx";
+import MyStores from "./pages/MyStores.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 // Merchant sub-app
