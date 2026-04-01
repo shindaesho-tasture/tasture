@@ -526,7 +526,7 @@ const Profile = () => {
                     className="relative aspect-square bg-secondary overflow-hidden group"
                     onClick={() => setSelectedPost(post)}
                   >
-                    <img src={post.images[0] || post.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    <LazyImage src={post.images[0] || post.image_url} alt="" className="w-full h-full object-cover" transformWidth={300} quality={75} />
                     {post.images.length > 1 && (
                       <div className="absolute top-2 right-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" className="drop-shadow-md">

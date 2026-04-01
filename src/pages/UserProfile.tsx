@@ -339,7 +339,7 @@ const UserProfile = () => {
                 {posts.map((post) => (
                   <motion.button key={post.id} onClick={() => setSelectedPost(post)}
                     className="relative aspect-square group overflow-hidden bg-secondary">
-                    <img src={post.images[0] || post.image_url} alt="" className="w-full h-full object-cover" />
+                    <LazyImage src={post.images[0] || post.image_url} alt="" className="w-full h-full object-cover" transformWidth={300} quality={75} />
                     {post.images.length > 1 && (
                       <div className="absolute top-1.5 right-1.5">
                         <Images size={14} className="text-white drop-shadow-lg" />
