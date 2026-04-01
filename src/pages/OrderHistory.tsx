@@ -99,11 +99,11 @@ const OrderHistory = () => {
       }
 
       // 4. Get menu item info for ordered items only
-      let allItems: { id: string; name: string; store_id: string }[] = [];
+      let allItems: { id: string; name: string; store_id: string; price: number; type: string }[] = [];
       if (orderedItemIds.length > 0) {
         const { data: items } = await supabase
           .from("menu_items")
-          .select("id, name, store_id")
+          .select("id, name, store_id, price, type")
           .in("id", orderedItemIds);
         if (items) allItems = items;
       }
