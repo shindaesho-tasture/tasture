@@ -67,6 +67,12 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const updateItemNote = (menuItemId: string, note: string) => {
+    setItems((prev) =>
+      prev.map((i) => (i.menuItemId === menuItemId ? { ...i, note } : i))
+    );
+  };
+
   const clearOrder = () => {
     setItems([]);
     setStoreId(null);
