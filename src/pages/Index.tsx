@@ -14,6 +14,7 @@ import { useTagTranslations } from "@/hooks/use-tag-translations";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
+import { Skeleton } from "@/components/ui/skeleton";
 import TastureHeader from "@/components/TastureHeader";
 import LocationPickerSheet from "@/components/LocationPickerSheet";
 import KaraokeName from "@/components/KaraokeName";
