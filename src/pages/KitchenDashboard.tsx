@@ -76,6 +76,17 @@ const KitchenDashboard = () => {
   const [storeName, setStoreName] = useState("");
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "accepted" | "all">("pending");
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
+    "Notification" in window ? Notification.permission : "denied"
+  );
+  const initialLoadDone = useRef(false);
+
+  const requestNotifPermission = useCallback(async () => {
+    if (!("Notification" in window)) return;
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+  }, []);
 
   // Fetch orders
   useEffect(() => {
