@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
+import LazyImage from "@/components/ui/lazy-image";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import FeedRadarChart from "@/components/FeedRadarChart";
@@ -259,7 +260,7 @@ const UserProfile = () => {
             {/* Avatar */}
             <div className="w-20 h-20 rounded-full bg-secondary overflow-hidden ring-2 ring-border/20 flex-shrink-0">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                <LazyImage src={profile.avatar_url} alt="" className="w-full h-full object-cover" transformWidth={160} quality={80} />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground">
                   {(profile.display_name || "?").charAt(0)}
@@ -338,7 +339,7 @@ const UserProfile = () => {
                 {posts.map((post) => (
                   <motion.button key={post.id} onClick={() => setSelectedPost(post)}
                     className="relative aspect-square group overflow-hidden bg-secondary">
-                    <img src={post.images[0] || post.image_url} alt="" className="w-full h-full object-cover" />
+                    <LazyImage src={post.images[0] || post.image_url} alt="" className="w-full h-full object-cover" transformWidth={300} quality={75} />
                     {post.images.length > 1 && (
                       <div className="absolute top-1.5 right-1.5">
                         <Images size={14} className="text-white drop-shadow-lg" />

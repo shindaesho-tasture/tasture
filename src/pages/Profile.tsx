@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import LazyImage from "@/components/ui/lazy-image";
 import { useLanguage, LANGUAGES, type AppLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 
@@ -402,7 +403,7 @@ const Profile = () => {
                   {uploadingAvatar ? (
                     <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
                   ) : profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                    <LazyImage src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" transformWidth={160} quality={80} />
                   ) : (
                     <Crown size={32} strokeWidth={1.5} className="text-score-emerald" />
                   )}
@@ -525,7 +526,7 @@ const Profile = () => {
                     className="relative aspect-square bg-secondary overflow-hidden group"
                     onClick={() => setSelectedPost(post)}
                   >
-                    <img src={post.images[0] || post.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    <LazyImage src={post.images[0] || post.image_url} alt="" className="w-full h-full object-cover" transformWidth={300} quality={75} />
                     {post.images.length > 1 && (
                       <div className="absolute top-2 right-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" className="drop-shadow-md">
