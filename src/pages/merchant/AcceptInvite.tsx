@@ -22,10 +22,7 @@ const AcceptInvite = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      // Clear any stale session before redirecting to login
-      supabase.auth.signOut().finally(() => {
-        navigate(`/m/login?redirect=/m/invite/${token}`, { replace: true });
-      });
+      navigate(`/m/login?redirect=/m/invite/${token}`, { replace: true });
       return;
     }
     fetchInvite();
