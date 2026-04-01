@@ -89,8 +89,8 @@ const AdminClaimReview = () => {
         user_id: claim.claimant_id,
         type: "claim",
         title: action === "approved"
-          ? `✅ คำขอเชื่อมร้าน "${claim.storeName}" ได้รับการอนุมัติแล้ว`
-          : `❌ คำขอเชื่อมร้าน "${claim.storeName}" ถูกปฏิเสธ`,
+          ? `✅ คำขอเชื่อมร้าน "${claim.store_name}" ได้รับการอนุมัติแล้ว`
+          : `❌ คำขอเชื่อมร้าน "${claim.store_name}" ถูกปฏิเสธ`,
         body: adminNote || (action === "approved" ? "ร้านถูกโอนมาให้คุณแล้ว" : "กรุณาติดต่อ Admin หากมีข้อสงสัย"),
         ref_type: "store",
         ref_id: claim.store_id,
