@@ -67,8 +67,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   pending: { label: "รอรับ", color: "text-amber-700", bg: "bg-amber-100" },
   accepted: { label: "กำลังทำ", color: "text-blue-700", bg: "bg-blue-100" },
   served: { label: "เสิร์ฟแล้ว", color: "text-emerald-700", bg: "bg-emerald-100" },
+  rejected: { label: "ปฏิเสธ", color: "text-red-700", bg: "bg-red-100" },
 };
-
 const KitchenDashboard = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
@@ -83,10 +83,16 @@ const KitchenDashboard = () => {
   );
   const initialLoadDone = useRef(false);
   const [newOrderAlert, setNewOrderAlert] = useState<OrderRow | null>(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   const alertTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
 
   const dismissAlert = useCallback(() => {
     setNewOrderAlert(null);
+    setShowRejectDialog(false);
+    setRejectReason("");
     if (alertTimeout.current) clearTimeout(alertTimeout.current);
   }, []);
 
@@ -164,8 +170,10 @@ const KitchenDashboard = () => {
     }
   }, [loading]);
 
-  const updateStatus = async (orderId: string, status: string) => {
-    await supabase.from("orders").update({ status, updated_at: new Date().toISOString() } as any).eq("id", orderId);
+  const updateStatus = async (orderId: string, status: string, rejection_reason?: string) => {
+    const updateData: any = { status, updated_at: new Date().toISOString() };
+    if (rejection_reason) updateData.rejection_reason = rejection_reason;
+    await supabase.from("orders").update(updateData).eq("id", orderId);
   };
 
   const filtered = orders.filter((o) => {
@@ -235,26 +243,82 @@ const KitchenDashboard = () => {
                   )}
                 </div>
 
-                {/* Action buttons */}
-                <div className="px-6 pb-6 flex gap-3">
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      updateStatus(newOrderAlert.id, "accepted");
-                      dismissAlert();
-                    }}
-                    className="flex-1 py-4 rounded-2xl bg-amber-500 text-zinc-900 text-xl font-black shadow-lg"
-                  >
-                    ✅ รับออเดอร์
-                  </motion.button>
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={dismissAlert}
-                    className="px-5 py-4 rounded-2xl bg-zinc-800 text-zinc-400 text-sm font-medium"
-                  >
-                    ปิด
-                  </motion.button>
-                </div>
+                {/* Action buttons / Reject dialog */}
+                {!showRejectDialog ? (
+                  <div className="px-6 pb-6 flex gap-3">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        updateStatus(newOrderAlert.id, "accepted");
+                        dismissAlert();
+                      }}
+                      className="flex-1 py-4 rounded-2xl bg-amber-500 text-zinc-900 text-xl font-black shadow-lg"
+                    >
+                      ✅ รับออเดอร์
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => { setRejectReason(""); setShowRejectDialog(true); }}
+                      className="px-5 py-4 rounded-2xl bg-red-600 text-white text-sm font-bold"
+                    >
+                      ❌ ปฏิเสธ
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={dismissAlert}
+                      className="px-5 py-4 rounded-2xl bg-zinc-800 text-zinc-400 text-sm font-medium"
+                    >
+                      ปิด
+                    </motion.button>
+                  </div>
+                ) : (
+                  <div className="px-6 pb-6 space-y-3">
+                    <p className="text-lg font-bold text-red-400 text-center">เลือกเหตุผลปฏิเสธ</p>
+                    <div className="flex flex-wrap gap-2">
+                      {REJECT_REASONS.map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => setRejectReason(r)}
+                          className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                            rejectReason === r
+                              ? "bg-red-600 border-red-500 text-white"
+                              : "bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700"
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      placeholder="เหตุผลอื่น (ถ้ามี)..."
+                      value={REJECT_REASONS.includes(rejectReason) ? "" : rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      className="w-full rounded-xl bg-zinc-800 border border-zinc-700 text-white px-3 py-2 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      rows={2}
+                    />
+                    <div className="flex gap-3">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        disabled={!rejectReason.trim()}
+                        onClick={() => {
+                          updateStatus(newOrderAlert.id, "rejected", rejectReason.trim());
+                          setShowRejectDialog(false);
+                          dismissAlert();
+                        }}
+                        className="flex-1 py-3 rounded-2xl bg-red-600 text-white text-lg font-bold shadow-lg disabled:opacity-40"
+                      >
+                        ยืนยันปฏิเสธ
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowRejectDialog(false)}
+                        className="px-5 py-3 rounded-2xl bg-zinc-800 text-zinc-400 text-sm font-medium"
+                      >
+                        ย้อนกลับ
+                      </motion.button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}
