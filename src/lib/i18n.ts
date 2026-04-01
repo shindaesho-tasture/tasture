@@ -322,6 +322,7 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "por.goBack": { th: "ย้อนกลับ", en: "Go Back", ja: "戻る", zh: "返回", ko: "뒤로" },
   "por.viewResults": { th: "ดูผลสรุป", en: "View Results", ja: "結果を見る", zh: "查看结果", ko: "결과 보기" },
   "por.next": { th: "ถัดไป", en: "Next", ja: "次へ", zh: "下一步", ko: "다음" },
+  "por.skipItem": { th: "ข้ามเมนูนี้ ›", en: "Skip this item ›", ja: "この料理をスキップ ›", zh: "跳过这道菜 ›", ko: "이 메뉴 건너뛰기 ›" },
 
   // ─── HomeFeed Extra ───
   "feed.sharedPhoto": { th: "แชร์รูปอาหาร", en: "Shared a food photo", ja: "料理写真を共有", zh: "分享了美食照片", ko: "음식 사진 공유" },
