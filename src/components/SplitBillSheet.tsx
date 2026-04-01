@@ -373,11 +373,33 @@ const SplitBillSheet = ({ open, onOpenChange, items, totalPrice }: SplitBillShee
                         {language === "th" ? `คนที่ ${i + 1}` : `Person ${i + 1}`}
                       </span>
                     </div>
-                    <span className="text-xs font-bold text-foreground">
-                      ฿{personTotals[i].toLocaleString()}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-foreground">
+                        ฿{personTotals[i].toLocaleString()}
+                      </span>
+                      <motion.button
+                        whileTap={{ scale: 0.85 }}
+                        onClick={(e) => { e.stopPropagation(); handleShare(i); }}
+                        className="w-6 h-6 rounded-md bg-secondary flex items-center justify-center"
+                      >
+                        <Share2 size={11} className="text-muted-foreground" />
+                      </motion.button>
+                    </div>
                   </div>
                 ))}
+                {/* Share all button */}
+                <div className="pt-1">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleShare()}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs"
+                  >
+                    {copied ? <CheckCircle size={14} /> : <Share2 size={14} />}
+                    {copied
+                      ? (language === "th" ? "คัดลอกแล้ว!" : "Copied!")
+                      : (language === "th" ? "แชร์ทั้งหมด" : "Share all")}
+                  </motion.button>
+                </div>
                 <div className="border-t border-border/30 pt-2 flex items-center justify-between">
                   <span className="text-[10px] text-muted-foreground">
                     {language === "th" ? "รวมที่แบ่งแล้ว" : "Assigned total"}
