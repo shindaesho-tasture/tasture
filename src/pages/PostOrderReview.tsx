@@ -581,6 +581,10 @@ const PostOrderReview = () => {
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
                 {storeName} · {currentStep + 1}/{totalSteps}
+                {(step?.type === "dish-dna" || step?.type === "sensory") && step?.menuItemId && (() => {
+                  const menuIndex = items.findIndex((i) => i.menuItemId === step.menuItemId);
+                  return menuIndex >= 0 ? ` · เมนูที่ ${menuIndex + 1}/${items.length}` : "";
+                })()}
               </p>
             </div>
           </div>
