@@ -1,10 +1,47 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe } from "lucide-react";
+import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe, Volume2, VolumeX, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import PageTransition from "@/components/PageTransition";
+
+// Generate a notification beep using Web Audio API
+const playOrderBeep = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const playTone = (freq: number, start: number, dur: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur);
+    };
+    // Three ascending tones
+    playTone(880, 0, 0.15);
+    playTone(1100, 0.18, 0.15);
+    playTone(1320, 0.36, 0.25);
+  } catch (e) {
+    console.warn("Audio not supported", e);
+  }
+};
+
+const sendBrowserNotification = (orderNumber: number, itemCount: number) => {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  try {
+    new Notification(`🔔 ออเดอร์ใหม่ #${orderNumber}`, {
+      body: `${itemCount} รายการ`,
+      icon: "/placeholder.svg",
+      tag: `order-${orderNumber}`,
+    });
+  } catch (e) {
+    console.warn("Notification failed", e);
+  }
+};
 
 interface OrderRow {
   id: string;
