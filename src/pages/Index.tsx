@@ -605,8 +605,38 @@ const Index = () => {
 
         {/* ─── Content Sections ─── */}
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
+          <div className="px-4 space-y-6 py-4">
+            {/* Horizontal section skeleton */}
+            <div>
+              <Skeleton className="h-5 w-32 mb-3" />
+              <div className="flex gap-3 overflow-hidden">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex-shrink-0 w-[200px] rounded-2xl overflow-hidden border border-border/50">
+                    <Skeleton className="h-28 w-full" />
+                    <div className="p-3 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* List section skeleton */}
+            <div>
+              <Skeleton className="h-5 w-28 mb-3" />
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-surface-elevated border border-border/50">
+                    <Skeleton className="w-14 h-14 rounded-xl flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/5" />
+                      <Skeleton className="h-3 w-2/5" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : categoryFiltered.length === 0 ? (
           <div className="flex flex-col items-center py-16 gap-3">
