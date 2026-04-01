@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle, Users } from "lucide-react";
 import KaraokeName from "@/components/KaraokeName";
 import { supabase } from "@/integrations/supabase/client";

@@ -247,7 +247,7 @@ const SovereignMenuCard = ({
                   key={idx}
                   className="w-8 h-8 rounded-lg overflow-hidden border-2 border-background flex-shrink-0 shadow-sm"
                 >
-                  <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  <LazyImage src={url} alt="" transformWidth={64} quality={70} className="w-full h-full object-cover" containerClassName="w-full h-full" />
                 </div>
               ))}
             </div>
