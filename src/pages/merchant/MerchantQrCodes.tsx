@@ -123,12 +123,21 @@ const MerchantQrCodes = () => {
                 transition={{ delay: table * 0.02 }}
                 className="rounded-2xl border border-border/40 bg-card p-4 flex flex-col items-center gap-2"
               >
-                <img
-                  src={getQrImageUrl(qrData)}
-                  alt={`Table ${table} QR`}
-                  className="w-32 h-32 rounded-lg"
-                  loading="lazy"
-                />
+                <div className="relative w-32 h-32">
+                  <img
+                    src={getQrImageUrl(qrData)}
+                    alt={`Table ${table} QR`}
+                    className="w-32 h-32 rounded-lg"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-white border-2 border-score-emerald flex items-center justify-center shadow-sm">
+                      <span className="text-xs font-black text-score-emerald leading-none">
+                        {activeStore.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
                 <p className="text-[10px] text-muted-foreground">{activeStore.name}</p>
                 <p className="text-2xl font-black text-foreground">โต๊ะ {table}</p>
                 <p className="text-[9px] text-muted-foreground break-all text-center leading-tight max-w-full">
