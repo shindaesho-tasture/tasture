@@ -121,13 +121,21 @@ const SovereignMenuCard = ({
         {/* Left: Food image 1:1 */}
         <div className="w-[88px] h-[88px] rounded-xl overflow-hidden flex-shrink-0 bg-secondary relative">
           {imageUrl ? (
-            <img src={imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
+            <LazyImage
+              src={imageUrl}
+              alt={name}
+              transformWidth={400}
+              quality={80}
+              className="w-full h-full object-cover"
+              containerClassName="w-full h-full"
+              fallback={<div className="w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br from-secondary to-muted">🍽️</div>}
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br from-secondary to-muted">🍽️</div>
           )}
           {/* Review count badge */}
           {totalReviews > 0 && (
-            <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-lg bg-foreground/70 backdrop-blur-sm">
+            <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-lg bg-foreground/70 backdrop-blur-sm z-20">
               <span className="text-[8px] font-semibold text-background">{formatCount(totalReviews)} {t("card.reviewCount")}</span>
             </div>
           )}
@@ -239,7 +247,7 @@ const SovereignMenuCard = ({
                   key={idx}
                   className="w-8 h-8 rounded-lg overflow-hidden border-2 border-background flex-shrink-0 shadow-sm"
                 >
-                  <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  <LazyImage src={url} alt="" transformWidth={64} quality={70} className="w-full h-full object-cover" containerClassName="w-full h-full" />
                 </div>
               ))}
             </div>

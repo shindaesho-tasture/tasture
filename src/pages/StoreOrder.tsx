@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle, Users } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import KaraokeName from "@/components/KaraokeName";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrder } from "@/lib/order-context";
@@ -14,6 +16,7 @@ import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import LazyImage from "@/components/ui/lazy-image";
 import LiveQueueCard from "@/components/queue/LiveQueueCard";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
 import StoreDetailsTab from "@/components/store/StoreDetailsTab";
@@ -57,17 +60,6 @@ const StoreOrder = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
   const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice } = useOrder();
-  const [menuItems, setMenuItems] = useState<MenuItemRow[]>([]);
-  const [storeName, setStoreName] = useState("");
-  const [storeCategoryId, setStoreCategoryId] = useState<string | null>(null);
-  const [storeLat, setStoreLat] = useState<number | null>(null);
-  const [storeLng, setStoreLng] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [dnaByItem, setDnaByItem] = useState<Map<string, DnaTag[]>>(new Map());
-  const [menuReviewCounts, setMenuReviewCounts] = useState<Map<string, number>>(new Map());
-  const [dnaCounts, setDnaCounts] = useState<Map<string, number>>(new Map());
-  const [topPhotoByItem, setTopPhotoByItem] = useState<Map<string, string[]>>(new Map());
-  const [translationMap, setTranslationMap] = useState<Map<string, { name: string; description?: string }>>(new Map());
 
   // Store posts state
   const [storePosts, setStorePosts] = useState<StorePost[]>([]);
@@ -81,47 +73,17 @@ const StoreOrder = () => {
   const [selectedNoodleStyle, setSelectedNoodleStyle] = useState<string>("");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
   const [selectedSize, setSelectedSize] = useState<"ธรรมดา" | "พิเศษ">("ธรรมดา");
-  const [itemAddOns, setItemAddOns] = useState<Map<string, { id: string; name: string; price: number; category: string }[]>>(new Map());
   const [selectedAddOns, setSelectedAddOns] = useState<{ name: string; price: number }[]>([]);
 
   // Detail sheet state
   const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
 
-  // Collect all DNA tag texts for translation
-  const allTagTexts = useMemo(() => {
-    const tags = new Set<string>();
-    dnaByItem.forEach((dnaTags) => {
-      dnaTags.forEach((t) => {
-        tags.add(t.selected_tag);
-        tags.add(t.component_name);
-      });
-    });
-    // Also include noodle types, styles, toppings, menu categories for translation
-    menuItems.forEach((m) => {
-      m.noodle_types?.forEach((nt) => tags.add(nt));
-      m.noodle_styles?.forEach((ns) => tags.add(ns));
-      m.toppings?.forEach((tp) => tags.add(tp));
-      if (m.menu_category) tags.add(m.menu_category);
-    });
-    // Include store name for karaoke translation
-    if (storeName) tags.add(storeName);
-    // Include add-on category names for translation
-    itemAddOns.forEach((addOns) => {
-      addOns.forEach((a) => tags.add(a.category));
-    });
-    return Array.from(tags);
-  }, [dnaByItem, menuItems, itemAddOns, storeName]);
-
-  const { translateTag } = useTagTranslations(allTagTexts);
-
-  useEffect(() => {
-    if (!storeId) return;
-    fetchData();
-  }, [storeId, language]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
+  const {
+    data: storeData,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: ["store-order", storeId, language],
+    queryFn: async () => {
       const [storeRes, menuRes] = await Promise.all([
         supabase.from("stores").select("name, category_id").eq("id", storeId!).single(),
         supabase
@@ -131,171 +93,163 @@ const StoreOrder = () => {
           .order("sort_order", { ascending: true }),
       ]);
 
-      if (storeRes.data) {
-        setStoreName(storeRes.data.name);
-        setStoreCategoryId(storeRes.data.category_id || null);
-        setOrderStore(storeId!, storeRes.data.name);
-        // Fetch lat/lng separately to avoid type issues
-        const { data: locData } = await (supabase as any).from("stores").select("lat, lng").eq("id", storeId!).single();
-        if (locData) {
-          setStoreLat(locData.lat ?? null);
-          setStoreLng(locData.lng ?? null);
-        }
-      }
-      const menuData = menuRes.data || [];
-      setMenuItems(menuData.map((m: any) => ({ ...m, noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {}, noodle_style_prices: (m.noodle_style_prices as Record<string, number>) || {} })));
+      const store = storeRes.data;
+      const menuData = (menuRes.data || []).map((m: any) => ({
+        ...m,
+        noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {},
+        noodle_style_prices: (m.noodle_style_prices as Record<string, number>) || {},
+      })) as MenuItemRow[];
 
-      // Fetch add-ons for all menu items
+      // Fetch add-ons, DNA, reviews, photos in parallel
+      let addOnsMap = new Map<string, { id: string; name: string; price: number; category: string }[]>();
+      let dnaMap = new Map<string, DnaTag[]>();
+      let revCounts = new Map<string, number>();
+      let dnaCountMap = new Map<string, number>();
+      let photoMap = new Map<string, string[]>();
+      let tMap = new Map<string, { name: string; description?: string }>();
+
       if (menuData.length > 0) {
         const menuIds = menuData.map((m) => m.id);
-        const { data: addOnsData } = await supabase
-          .from("menu_addons")
-          .select("id, menu_item_id, name, price, category")
-          .in("menu_item_id", menuIds)
-          .order("category")
-          .order("sort_order");
-        if (addOnsData) {
-          const map = new Map<string, { id: string; name: string; price: number; category: string }[]>();
-          addOnsData.forEach((a: any) => {
-            if (!map.has(a.menu_item_id)) map.set(a.menu_item_id, []);
-            map.get(a.menu_item_id)!.push({ id: a.id, name: a.name, price: a.price, category: a.category });
-          });
-          setItemAddOns(map);
-        }
-      }
 
-      // Fetch Dish DNA for these menu items
-      if (menuData.length > 0) {
-        const menuIds = menuData.map((m) => m.id);
-        const [dnaRes, menuRevRes] = await Promise.all([
-          supabase
-            .from("dish_dna")
-            .select("menu_item_id, component_icon, component_name, selected_tag, selected_score")
-            .in("menu_item_id", menuIds),
-          supabase
-            .from("menu_reviews")
-            .select("id, menu_item_id")
-            .in("menu_item_id", menuIds),
-        ]);
+        const baseFetches = [
+          supabase.from("menu_addons").select("id, menu_item_id, name, price, category").in("menu_item_id", menuIds).order("category").order("sort_order"),
+          supabase.from("dish_dna").select("menu_item_id, component_icon, component_name, selected_tag, selected_score").in("menu_item_id", menuIds),
+          supabase.from("menu_reviews").select("id, menu_item_id").in("menu_item_id", menuIds),
+        ] as const;
 
-        // Menu review counts
-        const revCounts = new Map<string, number>();
+        const transFetch = language !== "th"
+          ? supabase.from("menu_translations").select("menu_item_id, name, description").eq("language", language).in("menu_item_id", menuIds)
+          : null;
+
+        const [addOnsRes, dnaRes, menuRevRes] = await Promise.all(baseFetches);
+        const transRes = transFetch ? await transFetch : null;
+
+        // Add-ons
+        (addOnsRes.data || []).forEach((a: any) => {
+          if (!addOnsMap.has(a.menu_item_id)) addOnsMap.set(a.menu_item_id, []);
+          addOnsMap.get(a.menu_item_id)!.push({ id: a.id, name: a.name, price: a.price, category: a.category });
+        });
+
+        // Review counts
         const reviewIdToMenuItem = new Map<string, string>();
-        (menuRevRes.data || []).forEach((r) => {
+        (menuRevRes.data || []).forEach((r: any) => {
           revCounts.set(r.menu_item_id, (revCounts.get(r.menu_item_id) || 0) + 1);
           reviewIdToMenuItem.set(r.id, r.menu_item_id);
         });
-        setMenuReviewCounts(revCounts);
 
-        // Fetch most-liked user photos per menu item
-        const reviewIds = (menuRevRes.data || []).map((r) => r.id);
+        // Top photos
+        const reviewIds = (menuRevRes.data || []).map((r: any) => r.id);
         if (reviewIds.length > 0) {
-          const { data: postImages } = await supabase
-            .from("post_images")
-            .select("image_url, post_id, menu_review_id")
-            .in("menu_review_id", reviewIds);
-
+          const { data: postImages } = await supabase.from("post_images").select("image_url, post_id, menu_review_id").in("menu_review_id", reviewIds);
           if (postImages && postImages.length > 0) {
             const postIds = [...new Set(postImages.map((pi) => pi.post_id))];
-            const { data: likes } = await supabase
-              .from("post_likes")
-              .select("ref_id")
-              .in("ref_id", postIds);
-
+            const { data: likes } = await supabase.from("post_likes").select("ref_id").in("ref_id", postIds);
             const likesMap = new Map<string, number>();
             (likes || []).forEach((l) => likesMap.set(l.ref_id, (likesMap.get(l.ref_id) || 0) + 1));
-
-            // Group images by menu_item_id, sorted by likes desc
             const itemPhotos = new Map<string, { url: string; likes: number }[]>();
             postImages.forEach((pi) => {
               if (!pi.menu_review_id) return;
               const menuItemId = reviewIdToMenuItem.get(pi.menu_review_id);
               if (!menuItemId) return;
-              const lc = likesMap.get(pi.post_id) || 0;
               if (!itemPhotos.has(menuItemId)) itemPhotos.set(menuItemId, []);
-              itemPhotos.get(menuItemId)!.push({ url: pi.image_url, likes: lc });
+              itemPhotos.get(menuItemId)!.push({ url: pi.image_url, likes: likesMap.get(pi.post_id) || 0 });
             });
-
-            const photoMap = new Map<string, string[]>();
             itemPhotos.forEach((photos, k) => {
               photos.sort((a, b) => b.likes - a.likes);
               photoMap.set(k, photos.slice(0, 4).map((p) => p.url));
             });
-            setTopPhotoByItem(photoMap);
           }
         }
 
-        // DNA counts per item
-        const dnaCountMap = new Map<string, number>();
+        // DNA
         const dnaRows = dnaRes.data || [];
-        dnaRows.forEach((r) => {
-          dnaCountMap.set(r.menu_item_id, (dnaCountMap.get(r.menu_item_id) || 0) + 1);
-        });
-        setDnaCounts(dnaCountMap);
-
-        // Aggregate DNA tags
+        dnaRows.forEach((r: any) => dnaCountMap.set(r.menu_item_id, (dnaCountMap.get(r.menu_item_id) || 0) + 1));
         if (dnaRows.length > 0) {
           const tagMap = new Map<string, Map<string, DnaTag>>();
-          dnaRows.forEach((r) => {
+          dnaRows.forEach((r: any) => {
             if (!tagMap.has(r.menu_item_id)) tagMap.set(r.menu_item_id, new Map());
             const itemMap = tagMap.get(r.menu_item_id)!;
             const key = `${r.component_name}::${r.selected_tag}`;
             if (!itemMap.has(key)) {
-              itemMap.set(key, {
-                component_icon: r.component_icon,
-                component_name: r.component_name,
-                selected_tag: r.selected_tag,
-                selected_score: 0, // will hold sum, then averaged
-                count: 0,
-              });
+              itemMap.set(key, { component_icon: r.component_icon, component_name: r.component_name, selected_tag: r.selected_tag, selected_score: 0, count: 0 });
             }
             const entry = itemMap.get(key)!;
             entry.selected_score += r.selected_score;
             entry.count++;
           });
-
-          const result = new Map<string, DnaTag[]>();
           tagMap.forEach((itemMap, menuItemId) => {
-            const tags = Array.from(itemMap.values()).map((t) => ({
-              ...t,
-              selected_score: t.count > 0 ? t.selected_score / t.count : 0, // average
-            }))
-              .sort((a, b) => b.count - a.count)
-              .slice(0, 3);
-            result.set(menuItemId, tags);
+            const tags = Array.from(itemMap.values()).map((t) => ({ ...t, selected_score: t.count > 0 ? t.selected_score / t.count : 0 })).sort((a, b) => b.count - a.count).slice(0, 3);
+            dnaMap.set(menuItemId, tags);
           });
-          setDnaByItem(result);
+        }
+
+        // Translations
+        if (transRes?.data) {
+          (transRes.data as any[]).forEach((row: any) => {
+            tMap.set(row.menu_item_id, { name: row.name, description: row.description || undefined });
+          });
         }
       }
-    } catch (err) {
-      console.error("Failed to fetch:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Fetch translations when language changes (or after menu loads)
+      return {
+        storeName: store?.name || "",
+        storeCategoryId: store?.category_id || null,
+        menuItems: menuData,
+        itemAddOns: addOnsMap,
+        dnaByItem: dnaMap,
+        menuReviewCounts: revCounts,
+        dnaCounts: dnaCountMap,
+        topPhotoByItem: photoMap,
+        translationMap: tMap,
+      };
+    },
+    enabled: !!storeId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // Extract data from query result
+  const storeName = storeData?.storeName || "";
+  const storeCategoryId = storeData?.storeCategoryId || null;
+  const menuItems = storeData?.menuItems || [];
+  const itemAddOns = storeData?.itemAddOns || new Map();
+  const dnaByItem = storeData?.dnaByItem || new Map();
+  const menuReviewCounts = storeData?.menuReviewCounts || new Map();
+  const dnaCounts = storeData?.dnaCounts || new Map();
+  const topPhotoByItem = storeData?.topPhotoByItem || new Map();
+  const translationMap = storeData?.translationMap || new Map();
+
+  // Collect all DNA tag texts for translation
+  const allTagTexts = useMemo(() => {
+    const tags = new Set<string>();
+    dnaByItem.forEach((dnaTags: DnaTag[]) => {
+      dnaTags.forEach((t) => {
+        tags.add(t.selected_tag);
+        tags.add(t.component_name);
+      });
+    });
+    menuItems.forEach((m: MenuItemRow) => {
+      m.noodle_types?.forEach((nt) => tags.add(nt));
+      m.noodle_styles?.forEach((ns) => tags.add(ns));
+      m.toppings?.forEach((tp) => tags.add(tp));
+      if (m.menu_category) tags.add(m.menu_category);
+    });
+    if (storeName) tags.add(storeName);
+    itemAddOns.forEach((addOns: any[]) => {
+      addOns.forEach((a: any) => tags.add(a.category));
+    });
+    return Array.from(tags);
+  }, [dnaByItem, menuItems, itemAddOns, storeName]);
+
+  const { translateTag } = useTagTranslations(allTagTexts);
+
+
+  // Set order store when data loads
   useEffect(() => {
-    if (language === "th" || menuItems.length === 0) {
-      setTranslationMap(new Map());
-      return;
+    if (storeData && storeId) {
+      setOrderStore(storeId, storeData.storeName);
     }
-    const fetchTranslations = async () => {
-      try {
-        const { data: transData } = await supabase
-          .from("menu_translations")
-          .select("menu_item_id, name, description")
-          .eq("language", language)
-          .in("menu_item_id", menuItems.map((m) => m.id));
-        const tMap = new Map<string, { name: string; description?: string }>();
-        (transData || []).forEach((row: any) => {
-          tMap.set(row.menu_item_id, { name: row.name, description: row.description || undefined });
-        });
-        setTranslationMap(tMap);
-      } catch {}
-    };
-    fetchTranslations();
-  }, [language, menuItems]);
+  }, [storeData, storeId]);
 
   const fetchStorePosts = async () => {
     if (!storeId) return;
@@ -458,12 +412,16 @@ const StoreOrder = () => {
               <ChevronLeft size={22} strokeWidth={1.5} className="text-foreground" />
             </button>
             <div className="flex-1 min-w-0">
-              <KaraokeName
-                original={storeName || t("order.restaurant", language)}
-                translated={storeName && translateTag(storeName) !== storeName ? translateTag(storeName) : undefined}
-                className="text-lg font-medium tracking-tight text-foreground leading-tight"
-                subClassName="text-[10px] text-muted-foreground leading-tight"
-              />
+              {loading ? (
+                <Skeleton className="h-5 w-32 rounded" />
+              ) : (
+                <KaraokeName
+                  original={storeName || t("order.restaurant", language)}
+                  translated={storeName && translateTag(storeName) !== storeName ? translateTag(storeName) : undefined}
+                  className="text-lg font-medium tracking-tight text-foreground leading-tight"
+                  subClassName="text-[10px] text-muted-foreground leading-tight"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -542,9 +500,22 @@ const StoreOrder = () => {
             })()}
             <div className="px-4 pt-4 space-y-2">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-                  <span className="text-xs text-muted-foreground">{t("order.loadingMenu", language)}</span>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="rounded-2xl border border-border/40 bg-surface-elevated p-3">
+                      <div className="flex gap-3.5">
+                        <Skeleton className="w-[88px] h-[88px] rounded-xl flex-shrink-0" />
+                        <div className="flex-1 space-y-2 py-1">
+                          <Skeleton className="h-4 w-3/4 rounded" />
+                          <Skeleton className="h-3 w-16 rounded" />
+                          <div className="flex gap-1.5 mt-2">
+                            <Skeleton className="h-5 w-14 rounded-full" />
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : menuItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -630,15 +601,25 @@ const StoreOrder = () => {
           </TabsContent>
 
           <TabsContent value="queue" className="mt-0">
-            {storeId && <LiveQueueCard storeId={storeId} storeLat={storeLat} storeLng={storeLng} />}
+            {storeId && <LiveQueueCard storeId={storeId} storeLat={null} storeLng={null} />}
           </TabsContent>
 
           <TabsContent value="posts" className="mt-0">
             <div className="px-4 pt-4">
               {postsLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-                  <span className="text-xs text-muted-foreground">{t("order.loadingPosts", language)}</span>
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+                      <Skeleton className="aspect-[4/3] w-full" />
+                      <div className="p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="w-7 h-7 rounded-full" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                        <Skeleton className="h-3 w-full" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : storePosts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -656,11 +637,13 @@ const StoreOrder = () => {
                     >
                       {/* Post image */}
                       <div className="aspect-[4/3] overflow-hidden">
-                        <img
+                        <LazyImage
                           src={post.image_url}
                           alt={post.caption || t("order.customerPost", language)}
+                          transformWidth={400}
+                          quality={80}
                           className="w-full h-full object-cover"
-                          loading="lazy"
+                          containerClassName="w-full h-full"
                         />
                       </div>
 
@@ -887,20 +870,20 @@ const StoreOrder = () => {
 
                   {/* Add-ons grouped by category */}
                   {(() => {
-                    const addOns = itemAddOns.get(optionsItem.id);
+                    const addOns = itemAddOns.get(optionsItem.id) as { id: string; name: string; price: number; category: string }[] | undefined;
                     if (!addOns || addOns.length === 0) return null;
                     const grouped = addOns.reduce<Record<string, typeof addOns>>((acc, a) => {
                       (acc[a.category] = acc[a.category] || []).push(a);
                       return acc;
                     }, {});
                     const catEmoji: Record<string, string> = { "เนื้อสัตว์": "🥩", "ผัก": "🥬", "ซอส": "🫙", "อื่นๆ": "➕" };
-                    return Object.entries(grouped).map(([cat, items]) => (
+                    return Object.entries(grouped).map(([cat, catItems]) => (
                       <div key={cat}>
                         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
                           {catEmoji[cat] || "📦"} {translateTag(cat)} <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {items.map((a) => {
+                          {catItems.map((a) => {
                             const selected = selectedAddOns.some((sa) => sa.name === a.name);
                             return (
                               <motion.button
