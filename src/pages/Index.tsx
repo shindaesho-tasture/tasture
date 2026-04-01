@@ -540,7 +540,31 @@ const Index = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background pb-24">
+      <div
+        ref={scrollRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="min-h-screen bg-background pb-24 overflow-y-auto"
+      >
+        {/* Pull-to-refresh indicator */}
+        <motion.div
+          animate={{ height: pullDistance, opacity: pullDistance > 10 ? 1 : 0 }}
+          transition={{ type: "spring", damping: 20, stiffness: 300 }}
+          className="flex items-center justify-center overflow-hidden"
+        >
+          <motion.div
+            animate={{ rotate: isRefreshing ? 360 : pullDistance * 2 }}
+            transition={isRefreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : { duration: 0 }}
+            className="text-lg"
+          >
+            {isRefreshing ? "⏳" : pullDistance >= PULL_THRESHOLD ? "🔄" : "⬇️"}
+          </motion.div>
+          <span className="ml-2 text-[11px] text-muted-foreground font-medium">
+            {isRefreshing ? "กำลังรีเฟรช..." : pullDistance >= PULL_THRESHOLD ? "ปล่อยเพื่อรีเฟรช" : "ดึงลงเพื่อรีเฟรช"}
+          </span>
+        </motion.div>
+
         <TastureHeader />
 
         {/* ─── Spotify Greeting + Gradient ─── */}
