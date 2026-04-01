@@ -90,6 +90,9 @@ const MerchantProfile = () => {
             <button onClick={() => navigate("/register")} className="text-[10px] text-score-emerald font-semibold flex items-center gap-0.5">
               <Plus size={12} /> {isTh ? "เพิ่มร้าน" : "Add"}
             </button>
+            <button onClick={() => navigate("/m/claim")} className="text-[10px] text-primary font-semibold flex items-center gap-0.5 ml-2">
+              🔗 {isTh ? "เชื่อมร้าน" : "Claim"}
+            </button>
           </div>
           <div className="space-y-2">
             {stores.map((s) => {
