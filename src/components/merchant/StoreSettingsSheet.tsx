@@ -137,6 +137,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
           pin_lat: lat,
           pin_lng: lng,
           menu_photo: menuPhoto,
+          cover_photo: coverPhoto,
           description: description.trim() || null,
           opening_hours: openingHours.trim() || null,
           phone: phone.trim() || null,
