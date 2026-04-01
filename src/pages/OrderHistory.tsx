@@ -60,6 +60,22 @@ const OrderHistory = () => {
         .select("menu_item_id, created_at")
         .eq("user_id", user.id);
 
+      // 3b. Get orders by user to extract per-item notes
+      const { data: userOrders } = await supabase
+        .from("orders")
+        .select("items")
+        .eq("user_id", user.id);
+
+      // Build a map: menuItemId → note (last order wins)
+      const itemNoteMap = new Map<string, string>();
+      (userOrders || []).forEach((order: any) => {
+        ((order.items as any[]) || []).forEach((item: any) => {
+          if (item.note && item.menuItemId) {
+            itemNoteMap.set(item.menuItemId, item.note);
+          }
+        });
+      });
+
       const menuReviewMap = new Map(
         (menuReviews || []).map((r) => [r.menu_item_id, r])
       );
