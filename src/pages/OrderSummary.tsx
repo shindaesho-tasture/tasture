@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag, MessageSquare, ChevronDown } from "lucide-react";
+import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag, MessageSquare, ChevronDown, Receipt } from "lucide-react";
 import { useOrder } from "@/lib/order-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useGuestSession } from "@/hooks/use-guest-session";
 import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 /* ── Category-specific quick tags ── */
