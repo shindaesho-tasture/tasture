@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, Download, Plus, Minus, QrCode } from "lucide-react";
+import { ChevronLeft, Download, Plus, Minus, QrCode, ImageDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMerchant } from "@/lib/merchant-context";
 import { useLanguage } from "@/lib/language-context";
@@ -22,6 +22,26 @@ const MerchantQrCodes = () => {
 
   const getQrImageUrl = (text: string, size = 200) =>
     `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&margin=8`;
+
+  const downloadSingleQr = useCallback(async (table: number) => {
+    if (!activeStore) return;
+    const qrData = getQrUrl(activeStore.id, table);
+    const qrSrc = getQrImageUrl(qrData, 400);
+    try {
+      const res = await fetch(qrSrc);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${activeStore.name}_table_${table}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(qrSrc, "_blank");
+    }
+  }, [activeStore]);
 
   const handlePrint = () => {
     if (printRef.current) {
@@ -143,6 +163,14 @@ const MerchantQrCodes = () => {
                 <p className="text-[9px] text-muted-foreground break-all text-center leading-tight max-w-full">
                   {isTh ? "สแกนเพื่อสั่งอาหาร" : "Scan to order"}
                 </p>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => downloadSingleQr(table)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-[10px] font-medium text-foreground transition-colors mt-1"
+                >
+                  <ImageDown size={12} />
+                  {isTh ? "ดาวน์โหลด" : "Download"}
+                </motion.button>
               </motion.div>
             );
           })}
