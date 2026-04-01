@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import type { MenuItem } from "@/lib/menu-types";
 import MenuRatingButtons from "./MenuRatingButtons";
 import SensoryPills from "./SensoryPills";
 import { useLanguage } from "@/lib/language-context";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface NoodleCardProps {
   item: MenuItem;
@@ -11,12 +12,21 @@ interface NoodleCardProps {
 }
 
 const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [editName, setEditName] = useState(item.name);
   const [editPrice, setEditPrice] = useState(String(item.price));
 
   const defaultNoodleTypes = item.noodle_types?.length ? item.noodle_types : ["เส้นเล็ก", "เส้นใหญ่", "บะหมี่", "วุ้นเส้น", "มาม่า"];
   const defaultStyles = item.noodle_styles?.length ? item.noodle_styles : ["น้ำ", "แห้ง", "ต้มยำ", "เย็นตาโฟ"];
+
+  // Collect all translatable texts
+  const allTexts = useMemo(() => [
+    ...defaultNoodleTypes,
+    ...defaultStyles,
+    ...(item.toppings || []),
+  ], [defaultNoodleTypes.join(","), defaultStyles.join(","), item.toppings?.join(",")]);
+  const { translateTag } = useTagTranslations(allTexts);
+
 
   const handleChip = (field: "selected_noodle_type" | "selected_noodle_style", value: string) => {
     onChange({ ...item, [field]: item[field] === value ? undefined : value });
@@ -86,7 +96,10 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
                   : "bg-secondary text-foreground"
               }`}
             >
-              {type}
+              <span className="block">{translateTag(type)}</span>
+              {language !== "th" && translateTag(type) !== type && (
+                <span className="block text-[8px] opacity-60 leading-tight">{type}</span>
+              )}
             </motion.button>
           ))}
         </div>
@@ -107,7 +120,10 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
                   : "bg-secondary text-foreground"
               }`}
             >
-              {style}
+              <span className="block">{translateTag(style)}</span>
+              {language !== "th" && translateTag(style) !== style && (
+                <span className="block text-[8px] opacity-60 leading-tight">{style}</span>
+              )}
             </motion.button>
           ))}
         </div>
@@ -129,7 +145,10 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
                     : "bg-secondary text-foreground"
                 }`}
               >
-                {topping}
+                <span className="block">{translateTag(topping)}</span>
+                {language !== "th" && translateTag(topping) !== topping && (
+                  <span className="block text-[8px] opacity-60 leading-tight">{topping}</span>
+                )}
               </motion.button>
             ))}
           </div>
