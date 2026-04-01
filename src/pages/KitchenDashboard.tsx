@@ -259,6 +259,7 @@ const KitchenDashboard = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        {/* Header */}
         <div className="sticky top-0 z-20 bg-zinc-900 border-b border-zinc-800">
           <div className="flex items-center gap-3 px-4 py-3">
             <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-xl hover:bg-zinc-800 transition-colors">
