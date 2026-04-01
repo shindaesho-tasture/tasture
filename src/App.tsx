@@ -87,6 +87,7 @@ const AnimatedRoutes = () => {
         <Route path="/merchant/:storeId" element={<MerchantHub />} />
         <Route path="/my-stores" element={<MyStores />} />
         <Route path="/qr/:storeId/:tableNumber" element={<QrRedirect />} />
+        <Route path="/guest-orders" element={<GuestOrderTracker />} />
 
         {/* ── Merchant sub-app (/m/*) ── */}
         <Route path="/m/login" element={<MerchantLogin />} />
