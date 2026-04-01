@@ -1217,15 +1217,26 @@ const PostOrderReview = () => {
               </motion.button>
             ) : (
               <>
-                {currentStep > 0 && (
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={goBack}
-                    className="px-5 py-3.5 rounded-2xl bg-secondary text-foreground text-sm font-medium"
-                  >
-                    {t("por.goBack")}
-                  </motion.button>
-                )}
+                <div className="flex gap-2 items-center">
+                  {currentStep > 0 && (
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={goBack}
+                      className="px-5 py-3.5 rounded-2xl bg-secondary text-foreground text-sm font-medium"
+                    >
+                      {t("por.goBack")}
+                    </motion.button>
+                  )}
+                  {(step?.type === "dish-dna" || step?.type === "sensory") && items.length > 1 && (
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={goSkipItem}
+                      className="px-4 py-3.5 rounded-2xl text-muted-foreground text-xs font-medium hover:bg-secondary/80 transition-colors"
+                    >
+                      {t("por.skipItem") || "ข้ามเมนูนี้ ›"}
+                    </motion.button>
+                  )}
+                </div>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={goNext}
