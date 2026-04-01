@@ -163,9 +163,9 @@ const OrderSummary = () => {
         {items.length > 0 && (
           <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 380, damping: 34 }}
             className="fixed bottom-6 left-4 right-4 z-50">
-            <motion.button whileTap={{ scale: 0.97 }} onClick={handleConfirm}
-              className="w-full py-4 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury">
-              {t("orderSum.confirmBtn", language)} · ฿{totalPrice.toLocaleString()}
+            <motion.button whileTap={{ scale: 0.97 }} onClick={handleConfirm} disabled={submitting}
+              className="w-full py-4 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury disabled:opacity-50">
+              {submitting ? "กำลังส่ง..." : `${t("orderSum.confirmBtn", language)} · ฿${totalPrice.toLocaleString()}`}
             </motion.button>
           </motion.div>
         )}
