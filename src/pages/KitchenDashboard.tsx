@@ -137,12 +137,16 @@ const KitchenDashboard = () => {
     })();
   }, [storeId]);
 
-  // Fetch pending waiter calls
+  // Fetch pending waiter calls & bill requests
   useEffect(() => {
     if (!storeId) return;
     (async () => {
-      const { data } = await supabase.from("waiter_calls" as any).select("id, table_number, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true });
-      setWaiterCalls((data as any) || []);
+      const [waiterRes, billRes] = await Promise.all([
+        supabase.from("waiter_calls" as any).select("id, table_number, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
+        supabase.from("bill_requests" as any).select("id, table_number, total_amount, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
+      ]);
+      setWaiterCalls((waiterRes.data as any) || []);
+      setBillRequests((billRes.data as any) || []);
     })();
   }, [storeId]);
 
