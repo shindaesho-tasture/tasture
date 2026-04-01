@@ -1016,24 +1016,6 @@ const PostOrderReview = () => {
               </div>
             )}
 
-            {/* Texture 3-Stage */}
-            {step?.type === "texture" && step.menuItemId && (
-              <div className="px-4 pt-4 space-y-4">
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
-                  <span className="text-lg mt-0.5">🦷</span>
-                  <div>
-                    <p className="text-[11px] font-medium text-foreground">Texture Timeline</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">ให้คะแนนความรู้สึกเนื้อสัมผัส 3 ช่วง</p>
-                  </div>
-                </div>
-                <TextureStageSlider
-                  dishName={step.menuItemName || ""}
-                  values={textureStages[step.menuItemId] || { initial: 0, mastication: 0, residual: 0 }}
-                  onChange={(vals) => setTextureStages((prev) => ({ ...prev, [step.menuItemId!]: vals }))}
-                  translateTag={translateTag}
-                />
-              </div>
-            )}
 
             {/* Results */}
             {step?.type === "results" && results && (
