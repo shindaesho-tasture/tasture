@@ -235,6 +235,13 @@ const OrderSummary = () => {
               {t("orderSum.skipBtn", language)}
             </motion.button>
           </motion.div>
+
+          <SplitBillSheet
+            open={splitOpen}
+            onOpenChange={setSplitOpen}
+            items={items}
+            totalPrice={totalPrice}
+          />
         </div>
       </PageTransition>
     );
