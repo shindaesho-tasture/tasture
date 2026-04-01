@@ -32,6 +32,7 @@ const OrderSummary = () => {
         price: i.price,
         quantity: i.quantity,
         type: i.type,
+        note: i.note || undefined,
         selectedOptions: i.selectedOptions,
       }));
       const { error } = await supabase.from("orders").insert({
