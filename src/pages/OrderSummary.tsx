@@ -9,7 +9,33 @@ import { useAuth } from "@/hooks/use-auth";
 import { useGuestSession } from "@/hooks/use-guest-session";
 import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+/* ── Category-specific quick tags ── */
+const CATEGORY_TAGS: Record<string, { th: string[]; en: string[] }> = {
+  noodle: {
+    th: ["เส้นหนึบ", "เส้นนุ่ม", "น้ำน้อย", "แยกน้ำ", "ไม่ใส่ถั่ว", "ไม่เผ็ด", "เผ็ดมาก", "ไม่ใส่ผักชี"],
+    en: ["Firm noodles", "Soft noodles", "Less soup", "Soup separate", "No peanuts", "Not spicy", "Extra spicy", "No cilantro"],
+  },
+  rice: {
+    th: ["ข้าวน้อย", "ข้าวเพิ่ม", "ไม่เผ็ด", "เผ็ดน้อย", "เผ็ดมาก", "ไม่ใส่ผัก", "ไม่ใส่ผักชี", "ไข่ดาวสุก"],
+    en: ["Less rice", "Extra rice", "Not spicy", "Less spicy", "Extra spicy", "No veggies", "No cilantro", "Well-done egg"],
+  },
+  cafe: {
+    th: ["หวานน้อย", "ไม่หวาน", "เพิ่มช็อต", "นมออ๊ต", "ไม่ใส่น้ำแข็ง", "ใส่วิปครีม"],
+    en: ["Less sweet", "No sugar", "Extra shot", "Oat milk", "No ice", "Add whipped cream"],
+  },
+  dessert: {
+    th: ["หวานน้อย", "ไม่หวาน", "เพิ่มท็อปปิ้ง", "ไม่ใส่ถั่ว", "ไม่ใส่นม"],
+    en: ["Less sweet", "No sugar", "Extra topping", "No peanuts", "No milk"],
+  },
+};
+
+const DEFAULT_TAGS = {
+  th: ["ไม่เผ็ด", "ไม่ใส่ผัก", "ไม่ใส่ผักชี", "เผ็ดน้อย", "เผ็ดมาก", "ไม่ใส่ถั่ว", "ไม่ใส่น้ำตาล", "แยกน้ำ"],
+  en: ["Not spicy", "No veggies", "No cilantro", "Less spicy", "Extra spicy", "No peanuts", "No sugar", "Soup separate"],
+};
 
 const OrderSummary = () => {
   const navigate = useNavigate();
@@ -21,6 +47,28 @@ const OrderSummary = () => {
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState("");
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+
+  // Fetch store category for context-aware quick tags
+  const { data: storeCategory } = useQuery({
+    queryKey: ["store-category", storeId],
+    queryFn: async () => {
+      if (!storeId) return null;
+      const { data } = await supabase.from("stores").select("category_id").eq("id", storeId).single();
+      return data?.category_id || null;
+    },
+    enabled: !!storeId,
+    staleTime: Infinity,
+  });
+
+  const quickTags = useMemo(() => {
+    const catId = storeCategory?.toLowerCase() || "";
+    for (const key of Object.keys(CATEGORY_TAGS)) {
+      if (catId.includes(key)) {
+        return CATEGORY_TAGS[key];
+      }
+    }
+    return DEFAULT_TAGS;
+  }, [storeCategory]);
 
   const handleConfirm = async () => {
     if (!storeId || items.length === 0) return;
@@ -175,10 +223,7 @@ const OrderSummary = () => {
                       >
                         {/* Quick tags */}
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          {(language === "th"
-                            ? ["ไม่เผ็ด", "ไม่ใส่ผัก", "ไม่ใส่ผักชี", "เผ็ดน้อย", "เผ็ดมาก", "ไม่ใส่ถั่ว", "ไม่ใส่น้ำตาล", "แยกน้ำ"]
-                            : ["Not spicy", "No veggies", "No cilantro", "Less spicy", "Extra spicy", "No peanuts", "No sugar", "Soup separate"]
-                          ).map((tag) => {
+                          {(language === "th" ? quickTags.th : quickTags.en).map((tag) => {
                             const currentNote = item.note || "";
                             const isActive = currentNote.includes(tag);
                             return (
