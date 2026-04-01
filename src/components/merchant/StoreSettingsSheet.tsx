@@ -37,13 +37,36 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     if (!open) return;
     setName(store.name);
     setCategoryId(store.category_id || "");
-    supabase.from("stores").select("pin_lat, pin_lng").eq("id", store.id).single()
+    supabase.from("stores").select("pin_lat, pin_lng, menu_photo").eq("id", store.id).single()
       .then(({ data }) => {
         setLat(data?.pin_lat ?? null);
         setLng(data?.pin_lng ?? null);
+        setMenuPhoto(data?.menu_photo ?? null);
+        setPreviewUrl(null);
         setLoadingGeo(false);
       });
   }, [open, store.id]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${store.id}/menu-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
+      setMenuPhoto(urlData.publicUrl);
+      toast({ title: isTh ? "📸 อัปโหลดสำเร็จ" : "📸 Uploaded" });
+    } catch (err: any) {
+      toast({ title: isTh ? "อัปโหลดล้มเหลว" : "Upload failed", description: err.message, variant: "destructive" });
+      setPreviewUrl(null);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleLocate = () => {
     if (!navigator.geolocation) return;
