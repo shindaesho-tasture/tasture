@@ -443,6 +443,11 @@ const KitchenDashboard = () => {
                     <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl font-black text-white">#{order.order_number}</span>
+                        {order.table_number && (
+                          <span className="px-2 py-0.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 text-xs font-bold">
+                            🪑 โต๊ะ {order.table_number}
+                          </span>
+                        )}
                         <span className="text-2xl">{flag}</span>
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${statusCfg.bg} ${statusCfg.color}`}>
                           {statusCfg.label}
