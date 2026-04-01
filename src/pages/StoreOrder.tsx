@@ -450,6 +450,15 @@ const StoreOrder = () => {
             {tableNumber && (
               <motion.button
                 whileTap={{ scale: 0.9 }}
+                onClick={() => navigate("/guest-orders")}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-primary/10 text-primary"
+              >
+                📋
+              </motion.button>
+            )}
+            {tableNumber && (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
                 onClick={handleCallWaiter}
                 disabled={callingWaiter || waiterCalled}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
