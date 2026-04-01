@@ -111,6 +111,27 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     }
   };
 
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoPreviewUrl(URL.createObjectURL(file));
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${store.id}/logo-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
+      setLogoUrl(urlData.publicUrl);
+      toast({ title: isTh ? "🏪 อัปโหลดโลโก้สำเร็จ" : "🏪 Logo uploaded" });
+    } catch (err: any) {
+      toast({ title: isTh ? "อัปโหลดล้มเหลว" : "Upload failed", description: err.message, variant: "destructive" });
+      setLogoPreviewUrl(null);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const handleLocate = () => {
     if (!navigator.geolocation) return;
     setLocating(true);
