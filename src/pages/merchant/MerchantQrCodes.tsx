@@ -151,10 +151,14 @@ const MerchantQrCodes = () => {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-white border-2 border-score-emerald flex items-center justify-center shadow-sm">
-                      <span className="text-xs font-black text-score-emerald leading-none">
-                        {activeStore.name.charAt(0).toUpperCase()}
-                      </span>
+                    <div className="w-8 h-8 rounded-lg bg-white border-2 border-score-emerald flex items-center justify-center shadow-sm overflow-hidden">
+                      {activeStore.logo_url ? (
+                        <img src={activeStore.logo_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs font-black text-score-emerald leading-none">
+                          {activeStore.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
