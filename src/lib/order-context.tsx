@@ -25,6 +25,7 @@ interface OrderContextType {
   addItem: (item: OrderItem) => void;
   removeItem: (menuItemId: string) => void;
   updateQuantity: (menuItemId: string, quantity: number) => void;
+  updateItemNote: (menuItemId: string, note: string) => void;
   clearOrder: () => void;
   setOrderStore: (id: string, name: string) => void;
   totalItems: number;
