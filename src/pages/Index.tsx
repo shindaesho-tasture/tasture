@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import LazyImage from "@/components/ui/lazy-image";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -80,6 +80,27 @@ const sectionGradients = [
   "from-orange-900/40 to-transparent",
 ];
 
+const chunkedIn = async (
+  table: string,
+  column: string,
+  ids: string[],
+  selectStr: string,
+  extra?: (q: any) => any,
+): Promise<any[]> => {
+  if (ids.length === 0) return [];
+  const CHUNK = 200;
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+  const results = await Promise.all(
+    chunks.map((chunk) => {
+      let q = (supabase.from(table as any) as any).select(selectStr).in(column, chunk).limit(1000);
+      if (extra) q = extra(q);
+      return q;
+    }),
+  );
+  return results.flatMap((r: any) => r.data || []);
+};
+
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -93,33 +114,11 @@ const Index = () => {
 
   const activePosition = customPos || position;
 
-  const chunkedIn = async (
-    table: string,
-    column: string,
-    ids: string[],
-    selectStr: string,
-    extra?: (q: any) => any,
-  ): Promise<any[]> => {
-    if (ids.length === 0) return [];
-    const CHUNK = 200;
-    const chunks: string[][] = [];
-    for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
-    const results = await Promise.all(
-      chunks.map((chunk) => {
-        let q = (supabase.from(table as any) as any).select(selectStr).in(column, chunk).limit(1000);
-        if (extra) q = extra(q);
-        return q;
-      }),
-    );
-    return results.flatMap((r: any) => r.data || []);
-  };
-
-  // ─── React Query cached data fetching ───
-  const { data: queryData, isLoading: loading } = useQuery({
-    queryKey: ["discover-stores", user?.id ?? "anon"],
+  // ─── Phase 1: FAST essential query (stores + menu counts + images) ───
+  const { data: essentialData, isLoading: essentialLoading } = useQuery({
+    queryKey: ["discover-essential"],
     queryFn: async () => {
-      // Step 1: Fetch stores + menu IDs in parallel
-      const [storesRes, menuResStep1] = await Promise.all([
+      const [storesRes, menuRes] = await Promise.all([
         supabase.from("stores")
           .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
           .order("created_at", { ascending: false })
@@ -127,16 +126,35 @@ const Index = () => {
         supabase.from("menu_items").select("id, store_id, image_url").limit(2000),
       ]);
 
-      const allStores = storesRes.data;
-      if (!allStores || allStores.length === 0) return { rawStores: [] as any[], rawData: null };
-
+      const allStores = storesRes.data || [];
       const storeIdSet = new Set(allStores.map((s) => s.id));
-      const storeMenus = (menuResStep1.data || []).filter((m: any) => storeIdSet.has(m.store_id));
-      const menuIds = storeMenus.map((m: any) => m.id);
-      const storeIds = allStores.map((s) => s.id);
+      const storeMenus = (menuRes.data || []).filter((m: any) => storeIdSet.has(m.store_id));
+
+      const menuCountMap = new Map<string, number>();
+      const storeImageMap = new Map<string, string>();
+      const menuToStore = new Map<string, string>();
+      storeMenus.forEach((m: any) => {
+        menuToStore.set(m.id, m.store_id);
+        menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
+        if (m.image_url && !storeImageMap.has(m.store_id)) {
+          storeImageMap.set(m.store_id, m.image_url);
+        }
+      });
+
+      return { allStores, menuCountMap, storeImageMap, menuToStore, menuIds: storeMenus.map((m: any) => m.id), storeIds: allStores.map((s) => s.id) };
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // ─── Phase 2: DEFERRED enrichment (reviews, DNA, match) — only after essential loads ───
+  const { data: enrichData } = useQuery({
+    queryKey: ["discover-enrich", user?.id ?? "anon"],
+    queryFn: async () => {
+      const { menuIds, storeIds, menuToStore } = essentialData!;
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Step 2: All remaining queries in ONE parallel batch
       const [reviewsData, recentReviewsData, recentDnaData, userDnaData, allDnaData, allMenuRevData] = await Promise.all([
         chunkedIn("reviews", "store_id", storeIds, "store_id, metric_id, score"),
         chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id, created_at",
@@ -149,17 +167,6 @@ const Index = () => {
         chunkedIn("dish_dna", "menu_item_id", menuIds, "menu_item_id, component_name, selected_score"),
         chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id"),
       ]);
-
-      const menuToStore = new Map<string, string>();
-      const menuCountMap = new Map<string, number>();
-      const storeImageMap = new Map<string, string>();
-      storeMenus.forEach((m: any) => {
-        menuToStore.set(m.id, m.store_id);
-        menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
-        if (m.image_url && !storeImageMap.has(m.store_id)) {
-          storeImageMap.set(m.store_id, m.image_url);
-        }
-      });
 
       const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
       reviewsData.forEach((r: any) => {
@@ -206,73 +213,80 @@ const Index = () => {
         if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
 
-      return {
-        rawStores: allStores,
-        rawData: { menuToStore, menuCountMap, storeImageMap, metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs },
-      };
+      return { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs };
     },
-    staleTime: 5 * 60 * 1000, // cache 5 minutes
+    enabled: !!essentialData && essentialData.allStores.length > 0,
+    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  const rawStores = queryData?.rawStores ?? null;
-  const rawData = queryData?.rawData ?? null;
-
-  // ─── Derive store cards from raw data + position (no refetch on GPS change) ───
+  // ─── Derive store cards ───
   const stores = useMemo(() => {
-    if (!rawStores || !rawData) return [];
-    const { menuCountMap, storeImageMap, metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs } = rawData;
+    if (!essentialData || essentialData.allStores.length === 0) return [];
+    const { allStores, menuCountMap, storeImageMap } = essentialData;
 
-    return rawStores.map((s) => {
-      const sm = metricMap.get(s.id);
+    return allStores.map((s) => {
       const cat = dynamicCategories.find((c) => c.id === s.category_id) || defaultCategories.find((c) => c.id === s.category_id);
 
       const metrics: MetricAvg[] = [];
       let totalScore = 0;
       let totalCount = 0;
+      let recentActivityCount = 0;
+      let dnaCount = 0;
+      let menuReviewCount = 0;
+      let matchPercent: number | null = null;
 
-      if (sm && cat) {
-        cat.metrics.flatMap((m) => m.smartGate ? m.smartGate.subMetrics : [m]).forEach((cm) => {
-          const data = sm.get(cm.id);
-          if (data) {
+      // Enrichment data (available after phase 2)
+      if (enrichData) {
+        const { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs } = enrichData;
+        const sm = metricMap.get(s.id);
+
+        if (sm && cat) {
+          cat.metrics.flatMap((m) => m.smartGate ? m.smartGate.subMetrics : [m]).forEach((cm) => {
+            const data = sm.get(cm.id);
+            if (data) {
+              const avg = data.total / data.count;
+              metrics.push({ id: cm.id, label: cm.label, icon: cm.icon, score: Math.round(avg * 10) / 10, count: data.count });
+              totalScore += data.total;
+              totalCount += data.count;
+            }
+          });
+        } else if (sm) {
+          sm.forEach((data, metricId) => {
             const avg = data.total / data.count;
-            metrics.push({ id: cm.id, label: cm.label, icon: cm.icon, score: Math.round(avg * 10) / 10, count: data.count });
+            metrics.push({ id: metricId, label: metricId, icon: "📊", score: Math.round(avg * 10) / 10, count: data.count });
             totalScore += data.total;
             totalCount += data.count;
+          });
+        }
+
+        recentActivityCount = recentActivityMap.get(s.id) || 0;
+        dnaCount = dnaCountMap.get(s.id) || 0;
+        menuReviewCount = menuRevCountMap.get(s.id) || 0;
+
+        if (userPrefs.size > 0) {
+          const storeDna = storeDnaMap.get(s.id);
+          if (storeDna && storeDna.size > 0) {
+            let matchScore = 0, maxScore = 0;
+            userPrefs.forEach((prefScore, compName) => {
+              const storeEntry = storeDna.get(compName);
+              if (storeEntry && storeEntry.count > 0) {
+                const storeAvg = storeEntry.total / storeEntry.count;
+                if ((prefScore > 0 && storeAvg > 0) || (prefScore < 0 && storeAvg < 0)) {
+                  matchScore += Math.min(Math.abs(prefScore), Math.abs(storeAvg));
+                }
+                maxScore += Math.abs(prefScore);
+              } else { maxScore += Math.abs(prefScore); }
+            });
+            matchPercent = maxScore > 0 ? Math.round((matchScore / maxScore) * 100) : null;
           }
-        });
-      } else if (sm) {
-        sm.forEach((data, metricId) => {
-          const avg = data.total / data.count;
-          metrics.push({ id: metricId, label: metricId, icon: "📊", score: Math.round(avg * 10) / 10, count: data.count });
-          totalScore += data.total;
-          totalCount += data.count;
-        });
+        }
       }
 
       let distanceKm: number | null = null;
       if (activePosition && s.pin_lat != null && s.pin_lng != null) {
         distanceKm = Math.round(haversineKm(activePosition.lat, activePosition.lng, s.pin_lat, s.pin_lng) * 10) / 10;
-      }
-
-      let matchPercent: number | null = null;
-      if (userPrefs.size > 0) {
-        const storeDna = storeDnaMap.get(s.id);
-        if (storeDna && storeDna.size > 0) {
-          let matchScore = 0, maxScore = 0;
-          userPrefs.forEach((prefScore, compName) => {
-            const storeEntry = storeDna.get(compName);
-            if (storeEntry && storeEntry.count > 0) {
-              const storeAvg = storeEntry.total / storeEntry.count;
-              if ((prefScore > 0 && storeAvg > 0) || (prefScore < 0 && storeAvg < 0)) {
-                matchScore += Math.min(Math.abs(prefScore), Math.abs(storeAvg));
-              }
-              maxScore += Math.abs(prefScore);
-            } else { maxScore += Math.abs(prefScore); }
-          });
-          matchPercent = maxScore > 0 ? Math.round((matchScore / maxScore) * 100) : null;
-        }
       }
 
       return {
@@ -284,15 +298,15 @@ const Index = () => {
         reviewCount: totalCount,
         menuCount: menuCountMap.get(s.id) || 0,
         metrics,
-        dnaCount: dnaCountMap.get(s.id) || 0,
-        menuReviewCount: menuRevCountMap.get(s.id) || 0,
+        dnaCount,
+        menuReviewCount,
         distanceKm,
-        recentActivityCount: recentActivityMap.get(s.id) || 0,
+        recentActivityCount,
         matchPercent,
         imageUrl: s.menu_photo || storeImageMap.get(s.id) || null,
       } as StoreCard;
     });
-  }, [rawStores, rawData, activePosition, dynamicCategories]);
+  }, [essentialData, enrichData, activePosition, dynamicCategories]);
 
   // ─── Derived Data ───
   const searchFiltered = useMemo(() => {
@@ -306,7 +320,6 @@ const Index = () => {
     return searchFiltered.filter((s) => s.category_id === selectedCategoryFilter);
   }, [searchFiltered, selectedCategoryFilter]);
 
-  // Nearby stores (sorted by distance)
   const nearbyStores = useMemo(() =>
     [...categoryFiltered].sort((a, b) => {
       if (a.distanceKm == null && b.distanceKm == null) return 0;
@@ -316,21 +329,18 @@ const Index = () => {
     }).slice(0, 10)
   , [categoryFiltered]);
 
-  // Trending stores
   const trendingStores = useMemo(() =>
     [...categoryFiltered].filter((s) => s.recentActivityCount > 0)
       .sort((a, b) => b.recentActivityCount - a.recentActivityCount)
       .slice(0, 10)
   , [categoryFiltered]);
 
-  // Match stores
   const matchStores = useMemo(() =>
     [...categoryFiltered].filter((s) => s.matchPercent != null && s.matchPercent > 0)
       .sort((a, b) => (b.matchPercent || 0) - (a.matchPercent || 0))
       .slice(0, 10)
   , [categoryFiltered]);
 
-  // Group by category for Spotify-style sections
   const categoryGroups = useMemo(() => {
     const groups = new Map<string, { label: string; icon: string; stores: StoreCard[] }>();
     categoryFiltered.forEach((s) => {
@@ -343,27 +353,26 @@ const Index = () => {
     return Array.from(groups.entries()).filter(([, g]) => g.stores.length > 0);
   }, [categoryFiltered]);
 
-  // Greeting based on time
   const greeting = useMemo(() => {
     const h = new Date().getHours();
     if (h < 12) return "สวัสดีตอนเช้า";
     if (h < 17) return "สวัสดีตอนบ่าย";
     return "สวัสดีตอนเย็น";
   }, []);
-  // Collect all metric labels for translation
+
   const allTranslatableLabels = useMemo(() => {
     const labels = new Set<string>();
     stores.forEach((s) => {
       s.metrics.forEach((m) => labels.add(m.label));
       if (s.categoryLabel) labels.add(s.categoryLabel);
-      labels.add(s.name); // Store name for karaoke translation
+      labels.add(s.name);
     });
     return Array.from(labels);
   }, [stores]);
   const { translateTag } = useTagTranslations(allTranslatableLabels);
 
   // ─── Store Card Component ───
-  const SpotifyStoreCard = ({ store, size = "normal" }: { store: StoreCard; size?: "normal" | "large" }) => {
+  const SpotifyStoreCard = useCallback(({ store, size = "normal" }: { store: StoreCard; size?: "normal" | "large" }) => {
     const tier = store.avgScore !== null ? getScoreTier(store.avgScore) : null;
     const isLarge = size === "large";
 
@@ -376,7 +385,6 @@ const Index = () => {
           isLarge ? "w-[180px]" : "w-[150px]"
         )}
       >
-        {/* Card bg with image or gradient */}
         <div className={cn(
           "aspect-square rounded-xl flex items-center justify-center relative overflow-hidden",
           "bg-gradient-to-br from-muted to-secondary"
@@ -395,19 +403,16 @@ const Index = () => {
             </span>
           )}
 
-          {/* Dark overlay for text readability when image present */}
           {store.imageUrl && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
           )}
 
-          {/* Score badge */}
           {tier && store.avgScore !== null && (
             <div className={cn("absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold text-primary-foreground", tierColors[tier])}>
               {store.avgScore > 0 ? "+" : ""}{store.avgScore.toFixed(1)}
             </div>
           )}
 
-          {/* Match % or Trending fire */}
           {store.matchPercent != null && store.matchPercent > 0 ? (
             <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full bg-score-emerald/90 backdrop-blur-sm text-[9px] font-bold text-primary-foreground flex items-center gap-0.5">
               💚 {store.matchPercent}%
@@ -416,7 +421,6 @@ const Index = () => {
             <div className="absolute top-2 left-2 text-xs">🔥</div>
           ) : null}
 
-          {/* Distance pill */}
           {store.distanceKm != null && (
             <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-full bg-background/70 backdrop-blur-sm text-[9px] font-medium text-foreground">
               {store.distanceKm} km
@@ -424,7 +428,6 @@ const Index = () => {
           )}
         </div>
 
-        {/* Title area */}
         <div className="pt-2 pb-1 px-0.5">
           <KaraokeName
             original={store.name}
@@ -436,7 +439,6 @@ const Index = () => {
             {translateTag(store.categoryLabel || "ร้านอาหาร")}
             {store.menuCount > 0 && ` · ${store.menuCount} เมนู`}
           </p>
-          {/* Metric tags */}
           {store.metrics.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {[...store.metrics]
@@ -465,10 +467,10 @@ const Index = () => {
         </div>
       </motion.button>
     );
-  };
+  }, [navigate, translateTag]);
 
   // ─── Horizontal Scroll Section ───
-  const HorizontalSection = ({ title, emoji, stores: sectionStores, gradient, showAll }: {
+  const HorizontalSection = useCallback(({ title, emoji, stores: sectionStores, gradient, showAll }: {
     title: string;
     emoji: string;
     stores: StoreCard[];
@@ -500,7 +502,7 @@ const Index = () => {
         </div>
       </motion.section>
     );
-  };
+  }, [SpotifyStoreCard]);
 
   return (
     <PageTransition>
@@ -606,9 +608,8 @@ const Index = () => {
         </div>
 
         {/* ─── Content Sections ─── */}
-        {loading ? (
+        {essentialLoading ? (
           <div className="px-4 space-y-6 py-4">
-            {/* Horizontal section skeleton */}
             <div>
               <Skeleton className="h-5 w-32 mb-3" />
               <div className="flex gap-3 overflow-hidden">
@@ -623,7 +624,6 @@ const Index = () => {
                 ))}
               </div>
             </div>
-            {/* List section skeleton */}
             <div>
               <Skeleton className="h-5 w-28 mb-3" />
               <div className="space-y-3">
@@ -684,7 +684,6 @@ const Index = () => {
               />
             ))}
 
-            {/* Bottom spacer */}
             <div className="h-6" />
           </>
         )}
