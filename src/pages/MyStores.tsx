@@ -223,7 +223,8 @@ const MyStores = () => {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.06, duration: 0.4 }}
-                    className={`rounded-2xl bg-surface-elevated border border-border/50 overflow-hidden relative ${popInfo.borderClass} ${popInfo.glowClass || 'shadow-luxury'}`}
+                    onClick={() => navigate(`/merchant/${store.id}`)}
+                    className={`rounded-2xl bg-surface-elevated border border-border/50 overflow-hidden relative cursor-pointer active:scale-[0.98] transition-transform ${popInfo.borderClass} ${popInfo.glowClass || 'shadow-luxury'}`}
                   >
                     <div className="px-4 pt-4 pb-3">
                       <div className="flex items-start justify-between">
@@ -236,6 +237,7 @@ const MyStores = () => {
                             </p>
                           </div>
                         </div>
+                        <ChevronLeft size={16} className="text-muted-foreground rotate-180 flex-shrink-0 mt-1" />
                       </div>
 
                       {/* Score Tags */}
@@ -264,58 +266,31 @@ const MyStores = () => {
                       )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="px-4 pb-4 flex gap-2">
+                    {/* Quick shortcuts row */}
+                    <div className="px-4 pb-3 flex gap-2">
                       <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => {
-                          if (store.category_id) {
-                            navigate(`/review/${store.category_id}?store=${store.id}`);
-                          }
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-muted transition-colors"
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/kitchen/${store.id}`); }}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold"
                       >
-                        <MessageSquarePlus size={14} strokeWidth={1.5} />
-                        {t("myStores.storeFeedback", language)}
+                        <ChefHat size={13} /> {language === "th" ? "ครัว" : "Kitchen"}
                       </motion.button>
                       <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => navigate(`/menu-feedback/${store.id}`)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-score-emerald/15 text-score-emerald text-[11px] font-medium uppercase tracking-wider hover:bg-score-emerald/25 transition-colors"
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/menu-manager/${store.id}`); }}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 text-primary text-[10px] font-semibold"
                       >
-                        <UtensilsCrossed size={14} strokeWidth={1.5} />
-                        {t("myStores.menuFeedback", language)}
+                        <Settings size={13} /> {language === "th" ? "เมนู" : "Menu"}
                       </motion.button>
                       <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => navigate(`/menu-images/${store.id}`)}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-accent/50 text-foreground text-[11px] font-medium uppercase tracking-wider hover:bg-accent transition-colors"
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/queue-manager/${store.id}`); }}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-semibold"
                       >
-                        <Camera size={14} strokeWidth={1.5} />
-                        📷
-                      </motion.button>
-                      <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => navigate(`/queue-manager/${store.id}`)}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[11px] font-medium uppercase tracking-wider hover:bg-amber-200 dark:hover:bg-amber-900/30 transition-colors"
-                      >
-                        <Users size={14} strokeWidth={1.5} />
-                      </motion.button>
-                      <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => navigate(`/kitchen/${store.id}`)}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[11px] font-medium uppercase tracking-wider hover:bg-emerald-200 dark:hover:bg-emerald-900/30 transition-colors"
-                      >
-                        <ChefHat size={14} strokeWidth={1.5} />
-                      </motion.button>
-                      <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => navigate(`/menu-manager/${store.id}`)}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary/10 text-primary text-[11px] font-medium uppercase tracking-wider hover:bg-primary/20 transition-colors"
-                      >
-                        <Settings size={14} strokeWidth={1.5} />
+                        <Users size={13} /> {language === "th" ? "คิว" : "Queue"}
                       </motion.button>
                     </div>
+
                     {popInfo.label && (
                       <span className="absolute bottom-2 right-3 text-[8px] font-extralight text-muted-foreground tracking-wide">
                         {popInfo.label}
