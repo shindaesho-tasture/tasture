@@ -84,6 +84,26 @@ const MerchantSalesReport = () => {
       });
 
       setDayData(result);
+
+      // Build top menu items
+      const menuMap: Record<string, { qty: number; revenue: number }> = {};
+      (data || []).forEach((o) => {
+        const items = Array.isArray(o.items) ? o.items : [];
+        items.forEach((item: any) => {
+          const name = item.name || item.menuName || "Unknown";
+          const qty = Number(item.qty || item.quantity || 1);
+          const price = Number(item.price || 0) * qty;
+          if (!menuMap[name]) menuMap[name] = { qty: 0, revenue: 0 };
+          menuMap[name].qty += qty;
+          menuMap[name].revenue += price;
+        });
+      });
+      const topSorted = Object.entries(menuMap)
+        .map(([name, v]) => ({ name, ...v }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+      setTopMenus(topSorted);
+
       setLoading(false);
     };
     fetchOrders();
