@@ -218,7 +218,9 @@ const OrderHistory = () => {
     setTimeout(() => setReorderToast(null), 1500);
   };
 
-  const handleReorderAll = (visit: VisitRecord) => {
+  const [confirmVisit, setConfirmVisit] = useState<VisitRecord | null>(null);
+
+  const executeReorderAll = (visit: VisitRecord) => {
     setOrderStore(visit.storeId, visit.storeName);
     visit.items.forEach((item) => {
       addItem({
@@ -237,6 +239,14 @@ const OrderHistory = () => {
         ? `${visit.items.length} รายการจาก ${visit.storeName}`
         : `${visit.items.length} items from ${visit.storeName}`,
     });
+  };
+
+  const handleReorderAll = (visit: VisitRecord) => {
+    if (items.length > 0) {
+      setConfirmVisit(visit);
+    } else {
+      executeReorderAll(visit);
+    }
   };
 
   if (authLoading || loading) {
