@@ -417,6 +417,38 @@ const KitchenDashboard = () => {
           </div>
         </div>
 
+        {/* Waiter Calls */}
+        <AnimatePresence>
+          {waiterCalls.length > 0 && (
+            <div className="px-3 pt-3 space-y-2">
+              {waiterCalls.map((call) => (
+                <motion.div
+                  key={call.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="flex items-center justify-between px-4 py-3 rounded-2xl bg-amber-500/20 border-2 border-amber-500/40 animate-pulse"
+                >
+                  <div className="flex items-center gap-3">
+                    <BellRing size={20} className="text-amber-400" />
+                    <div>
+                      <p className="text-sm font-bold text-white">🪑 โต๊ะ {call.table_number} เรียกพนักงาน</p>
+                      <p className="text-[10px] text-zinc-400">{timeSince(call.created_at)}</p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => acknowledgeWaiterCall(call.id)}
+                    className="px-4 py-2 rounded-xl bg-amber-500 text-zinc-900 text-xs font-bold"
+                  >
+                    รับทราบ
+                  </motion.button>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* Orders */}
         <div className="px-3 py-3 space-y-3">
           {loading ? (
