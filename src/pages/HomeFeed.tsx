@@ -1430,11 +1430,12 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
             className="relative rounded-xl overflow-hidden cursor-pointer aspect-[16/10] select-none"
             onClick={handleDoubleTap}
           >
-            <img
+            <LazyImage
               src={post.menuItemImage}
               alt={post.menuItemName}
               className="w-full h-full object-cover"
-              loading="lazy"
+              transformWidth={400}
+              quality={80}
               draggable={false}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
