@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, Check, Loader2, Sparkles, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useGuestSession } from "@/hooks/use-guest-session";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-context";
 import PageTransition from "@/components/PageTransition";
