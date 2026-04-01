@@ -41,6 +41,7 @@ const OrderSummary = () => {
         status: "pending",
         customer_language: language,
         total_price: totalPrice,
+        notes: notes.trim() || null,
       } as any);
       if (error) throw error;
       setConfirmed(true);
