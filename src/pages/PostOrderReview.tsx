@@ -732,6 +732,15 @@ const PostOrderReview = () => {
             {/* Dish DNA */}
             {step?.type === "dish-dna" && step.menuItemId && (
               <div className="px-4 pt-4 space-y-4">
+                {/* Menu item name banner */}
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-primary/5 border border-primary/10">
+                  <span className="text-2xl">🍽️</span>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">กำลังรีวิว</p>
+                    <p className="text-lg font-bold text-foreground leading-tight">{step.menuItemName}</p>
+                  </div>
+                  <span className="ml-auto text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-semibold">🧬 DNA</span>
+                </div>
                 {hasPreviousDna[step.menuItemId] && !dnaReviewChoice[step.menuItemId] ? (
                   /* ─── Previous DNA Gate ─── */
                   <motion.div
@@ -843,6 +852,15 @@ const PostOrderReview = () => {
             {/* Sensory Feedback */}
             {step?.type === "sensory" && step.menuItemId && (
               <div className="px-4 pt-4 space-y-4">
+                {/* Menu item name banner */}
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-score-amber/5 border border-score-amber/10">
+                  <span className="text-2xl">🍽️</span>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">กำลังรีวิว</p>
+                    <p className="text-lg font-bold text-foreground leading-tight">{step.menuItemName}</p>
+                  </div>
+                  <span className="ml-auto text-xs px-2 py-1 rounded-full bg-score-amber/10 text-score-amber font-semibold">🎯 รสชาติ</span>
+                </div>
                 {hasPreviousSensory[step.menuItemId] && !sensoryReviewChoice[step.menuItemId] ? (
                   /* ─── Previous Sensory Gate ─── */
                   <motion.div
