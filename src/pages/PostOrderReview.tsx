@@ -552,7 +552,7 @@ const PostOrderReview = () => {
     }
   };
 
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <PageTransition>
         <div className="min-h-screen bg-background flex items-center justify-center">
