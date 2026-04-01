@@ -8,6 +8,8 @@ import PageTransition from "@/components/PageTransition";
 
 const MerchantLogin = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { language } = useLanguage();
   const isTh = language === "th";
 
