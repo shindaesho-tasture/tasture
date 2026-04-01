@@ -87,7 +87,17 @@ const StoreOrder = () => {
     try {
       await supabase.from("waiter_calls" as any).insert({ store_id: storeId, table_number: tableNumber, guest_id: null });
       setWaiterCalled(true);
-      setTimeout(() => setWaiterCalled(false), 30000); // cooldown 30s
+      setTimeout(() => setWaiterCalled(false), 30000);
+      // Trigger push notification to merchant
+      supabase.functions.invoke("send-push", {
+        body: {
+          store_id: storeId,
+          title: `🔔 โต๊ะ ${tableNumber} เรียกพนักงาน`,
+          body: "ลูกค้าต้องการความช่วยเหลือ",
+          url: `/kitchen/${storeId}`,
+          tag: `waiter-${storeId}-${tableNumber}`,
+        },
+      }).catch(() => {});
     } catch (e) {
       console.error("Call waiter error:", e);
     } finally {
