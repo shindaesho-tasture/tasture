@@ -585,7 +585,7 @@ const StoreOrder = () => {
           </TabsContent>
 
           <TabsContent value="queue" className="mt-0">
-            {storeId && <LiveQueueCard storeId={storeId} storeLat={storeLat} storeLng={storeLng} />}
+            {storeId && <LiveQueueCard storeId={storeId} storeLat={null} storeLng={null} />}
           </TabsContent>
 
           <TabsContent value="posts" className="mt-0">
