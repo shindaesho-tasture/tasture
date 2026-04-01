@@ -84,6 +84,18 @@ const AdminClaimReview = () => {
         if (storeErr) throw storeErr;
       }
 
+      // Notify merchant
+      await supabase.from("notifications").insert({
+        user_id: claim.claimant_id,
+        type: "claim",
+        title: action === "approved"
+          ? `✅ คำขอเชื่อมร้าน "${claim.store_name}" ได้รับการอนุมัติแล้ว`
+          : `❌ คำขอเชื่อมร้าน "${claim.store_name}" ถูกปฏิเสธ`,
+        body: adminNote || (action === "approved" ? "ร้านถูกโอนมาให้คุณแล้ว" : "กรุณาติดต่อ Admin หากมีข้อสงสัย"),
+        ref_type: "store",
+        ref_id: claim.store_id,
+      });
+
       toast({ title: action === "approved" ? "✅ อนุมัติแล้ว — โอนร้านเรียบร้อย" : "❌ ปฏิเสธแล้ว" });
       fetchClaims();
     } catch (err: any) {
