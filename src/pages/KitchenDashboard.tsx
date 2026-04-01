@@ -140,7 +140,14 @@ const KitchenDashboard = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [storeId]);
+  }, [storeId, soundEnabled]);
+
+  // Mark initial load done after first fetch
+  useEffect(() => {
+    if (!loading && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+    }
+  }, [loading]);
 
   const updateStatus = async (orderId: string, status: string) => {
     await supabase.from("orders").update({ status, updated_at: new Date().toISOString() } as any).eq("id", orderId);
