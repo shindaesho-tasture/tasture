@@ -150,7 +150,24 @@ const OrderSummary = () => {
                 </div>
               </motion.div>
             ))}
-            <div className="rounded-2xl bg-secondary/60 px-4 py-4 mt-4">
+            {/* Notes */}
+            <div className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury px-4 py-3 mt-3">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare size={14} className="text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">{t("orderSum.notes", language)}</span>
+              </div>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={language === "th" ? "เช่น ไม่ใส่ผัก, ไม่เผ็ด, แพ้ถั่ว..." : "e.g. No vegetables, not spicy, nut allergy..."}
+                rows={2}
+                maxLength={200}
+                className="w-full bg-secondary/60 rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 border-0 outline-none resize-none focus:ring-1 focus:ring-score-emerald/30"
+              />
+              {notes.length > 0 && <p className="text-[10px] text-muted-foreground text-right mt-1">{notes.length}/200</p>}
+            </div>
+
+            <div className="rounded-2xl bg-secondary/60 px-4 py-4 mt-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground uppercase tracking-wider">{t("orderSum.total", language)}</span>
                 <span className="text-lg font-bold text-foreground">฿{totalPrice.toLocaleString()}</span>
