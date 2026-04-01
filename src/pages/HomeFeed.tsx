@@ -23,6 +23,7 @@ interface PostImageSlide {
   reviewScore: number | null;
   menuItemName: string | null;
   storeName: string | null;
+  storeLogo: string | null;
   storeId: string | null;
   dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
   satisfaction?: SatisfactionAxes | null;
@@ -35,6 +36,7 @@ interface FeedPost {
   userName: string;
   userAvatar: string | null;
   storeName: string;
+  storeLogo: string | null;
   storeId: string;
   menuItemName: string;
   menuItemId: string;
@@ -281,11 +283,11 @@ const HomeFeed = () => {
         if (pp.store_id) storeIds.add(pp.store_id);
       });
 
-      const { data: storesData } = await supabase.from("stores").select("id, name, pin_lat, pin_lng").in("id", [...storeIds]);
-      const storeMap = new Map<string, string>();
+      const { data: storesData } = await supabase.from("stores").select("id, name, pin_lat, pin_lng, logo_url").in("id", [...storeIds]);
+      const storeMap = new Map<string, { name: string; logo: string | null }>();
       const locMap = new Map<string, { lat: number; lng: number }>();
       (storesData || []).forEach((s) => {
-        storeMap.set(s.id, s.name);
+        storeMap.set(s.id, { name: s.name, logo: s.logo_url });
         if (s.pin_lat != null && s.pin_lng != null) locMap.set(s.id, { lat: s.pin_lat, lng: s.pin_lng });
       });
       setStoreLocations(locMap);
@@ -421,7 +423,8 @@ const HomeFeed = () => {
           userId: entry.userId,
           userName: profile?.name || t("feed.user"),
           userAvatar: profile?.avatar || null,
-          storeName: menu ? (storeMap.get(menu.storeId) || t("feed.store")) : t("feed.store"),
+          storeName: menu ? (storeMap.get(menu.storeId)?.name || t("feed.store")) : t("feed.store"),
+          storeLogo: menu ? (storeMap.get(menu.storeId)?.logo || null) : null,
           storeId: storeId || "",
           menuItemName: menu?.name || "เมนู",
           menuItemId: entry.menuItemId,
@@ -518,17 +521,19 @@ const HomeFeed = () => {
                 const review = pi.menu_review_id ? slideReviewMap.get(pi.menu_review_id) : null;
                 const menuItem = review ? menuMap.get(review.menu_item_id) : null;
                 const slideKey = review ? `${pp.user_id}-${review.menu_item_id}` : null;
+                const storeInfo = menuItem?.storeId ? storeMap.get(menuItem.storeId) : null;
                 return {
                   imageUrl: pi.image_url,
                   reviewScore: review?.score ?? null,
                   menuItemName: menuItem?.name || (review ? t("feed.menu") : null),
-                  storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
+                  storeName: storeInfo?.name || null,
+                  storeLogo: storeInfo?.logo || null,
                   storeId: menuItem?.storeId || null,
                   dnaComponents: slideKey ? slideDnaMap.get(slideKey) : undefined,
                   satisfaction: slideKey ? slideSatMap.get(slideKey) : undefined,
                 };
               })
-            : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }];
+            : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeLogo: null, storeId: null }];
 
           allPosts.push({
             id: `photo-${pp.id}`,
@@ -536,7 +541,8 @@ const HomeFeed = () => {
             userId: pp.user_id,
             userName: profile?.name || t("feed.user"),
             userAvatar: profile?.avatar || null,
-            storeName: ppStoreId ? (storeMap.get(ppStoreId) || t("feed.store")) : "",
+            storeName: ppStoreId ? (storeMap.get(ppStoreId)?.name || t("feed.store")) : "",
+            storeLogo: ppStoreId ? (storeMap.get(ppStoreId)?.logo || null) : null,
             storeId: ppStoreId,
             menuItemName: "",
             menuItemId: "",
@@ -556,10 +562,12 @@ const HomeFeed = () => {
           allPosts.push({
             id: `photo-${pp.id}`, type: "photo_post",
             userId: pp.user_id, userName: profile?.name || t("feed.user"), userAvatar: profile?.avatar || null,
-            storeName: ppStoreId ? (storeMap.get(ppStoreId) || t("feed.store")) : "", storeId: ppStoreId,
+            storeName: ppStoreId ? (storeMap.get(ppStoreId)?.name || t("feed.store")) : "",
+            storeLogo: ppStoreId ? (storeMap.get(ppStoreId)?.logo || null) : null,
+            storeId: ppStoreId,
             menuItemName: "", menuItemId: "", menuItemImage: null, score: null, satisfaction: null,
             caption: pp.caption, photoUrl: pp.image_url,
-            slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }],
+            slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeLogo: null, storeId: null }],
             createdAt: pp.created_at,
           });
         });
@@ -1229,8 +1237,11 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                   {" "}{t("feed.at")}{" "}
                   <button
                     onClick={() => navigate(`/store/${post.storeId}/order`)}
-                    className="font-semibold text-score-emerald hover:underline"
+                    className="inline-flex items-center gap-1 font-semibold text-score-emerald hover:underline align-middle"
                   >
+                    {post.storeLogo && (
+                      <img src={post.storeLogo} alt="" className="w-4 h-4 rounded-full object-cover inline-block" />
+                    )}
                     {post.storeName}
                     {translateTag(post.storeName) !== post.storeName && (
                       <span className="font-normal text-muted-foreground ml-1 text-[10px]">({translateTag(post.storeName)})</span>
@@ -1255,8 +1266,11 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               {" "}{t("feed.at")}{" "}
               <button
                 onClick={() => navigate(`/store/${post.storeId}/order`)}
-                className="font-semibold text-score-emerald hover:underline"
+                className="inline-flex items-center gap-1 font-semibold text-score-emerald hover:underline align-middle"
               >
+                {post.storeLogo && (
+                  <img src={post.storeLogo} alt="" className="w-4 h-4 rounded-full object-cover inline-block" />
+                )}
                 {post.storeName}
                 {translateTag(post.storeName) !== post.storeName && (
                   <span className="font-normal text-muted-foreground ml-1 text-[10px]">({translateTag(post.storeName)})</span>
@@ -1376,8 +1390,13 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                         )}
                       </p>
                       {post.slides[slideIndex].storeName && (
-                        <p className="text-[9px] text-muted-foreground truncate">
-                          📍 {post.slides[slideIndex].storeName}
+                        <p className="text-[9px] text-muted-foreground truncate flex items-center gap-1">
+                          {post.slides[slideIndex].storeLogo ? (
+                            <img src={post.slides[slideIndex].storeLogo!} alt="" className="w-3 h-3 rounded-full object-cover" />
+                          ) : (
+                            <span>📍</span>
+                          )}
+                          {post.slides[slideIndex].storeName}
                           {translateTag(post.slides[slideIndex].storeName!) !== post.slides[slideIndex].storeName && (
                             <span className="ml-1 opacity-60">({translateTag(post.slides[slideIndex].storeName!)})</span>
                           )}
