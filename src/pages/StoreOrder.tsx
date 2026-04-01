@@ -492,6 +492,12 @@ const StoreOrder = () => {
               🎫 {t("queue.title", language)}
             </TabsTrigger>
             <TabsTrigger
+              value="details"
+              className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
+            >
+              📋 {t("storeDetail.details", language)}
+            </TabsTrigger>
+            <TabsTrigger
               value="posts"
               className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
             >
