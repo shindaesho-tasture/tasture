@@ -66,7 +66,7 @@ const MerchantLogin = () => {
             return;
           }
         }
-        navigate("/m");
+        navigate(redirectTo || "/m");
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong");
