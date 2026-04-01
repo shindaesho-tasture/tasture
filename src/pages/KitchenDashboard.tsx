@@ -82,6 +82,19 @@ const KitchenDashboard = () => {
     "Notification" in window ? Notification.permission : "denied"
   );
   const initialLoadDone = useRef(false);
+  const [newOrderAlert, setNewOrderAlert] = useState<OrderRow | null>(null);
+  const alertTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const dismissAlert = useCallback(() => {
+    setNewOrderAlert(null);
+    if (alertTimeout.current) clearTimeout(alertTimeout.current);
+  }, []);
+
+  const showNewOrderAlert = useCallback((order: OrderRow) => {
+    setNewOrderAlert(order);
+    if (alertTimeout.current) clearTimeout(alertTimeout.current);
+    alertTimeout.current = setTimeout(() => setNewOrderAlert(null), 8000);
+  }, []);
 
   const requestNotifPermission = useCallback(async () => {
     if (!("Notification" in window)) return;
