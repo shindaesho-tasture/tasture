@@ -22,8 +22,10 @@ const AcceptInvite = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      // Redirect to merchant login, then come back
-      navigate(`/m/login?redirect=/m/invite/${token}`);
+      // Clear any stale session before redirecting to login
+      supabase.auth.signOut().finally(() => {
+        navigate(`/m/login?redirect=/m/invite/${token}`, { replace: true });
+      });
       return;
     }
     fetchInvite();
