@@ -36,6 +36,7 @@ import KitchenDashboard from "./pages/KitchenDashboard.tsx";
 import MerchantHub from "./pages/MerchantHub.tsx";
 import MyStores from "./pages/MyStores.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import QrRedirect from "./pages/QrRedirect.tsx";
 
 // Merchant sub-app
 import MerchantLogin from "./pages/merchant/MerchantLogin.tsx";
