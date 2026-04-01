@@ -110,7 +110,12 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
           pin_lat: lat,
           pin_lng: lng,
           menu_photo: menuPhoto,
-        })
+          description: description.trim() || null,
+          opening_hours: openingHours.trim() || null,
+          phone: phone.trim() || null,
+          line_id: lineId.trim() || null,
+          address: address.trim() || null,
+        } as any)
         .eq("id", store.id);
       if (error) throw error;
       toast({ title: isTh ? "✅ บันทึกแล้ว" : "✅ Saved" });
