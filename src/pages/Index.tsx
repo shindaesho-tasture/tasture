@@ -101,8 +101,11 @@ const chunkedIn = async (
   return results.flatMap((r: any) => r.data || []);
 };
 
+const PULL_THRESHOLD = 80;
+
 const Index = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { language } = useLanguage();
   const { position } = useGeolocation();
@@ -111,8 +114,39 @@ const Index = () => {
   const [customPos, setCustomPos] = useState<{ lat: number; lng: number } | null>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const activePosition = customPos || position;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (scrollRef.current && scrollRef.current.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (isRefreshing) return;
+    if (scrollRef.current && scrollRef.current.scrollTop > 0) return;
+    const diff = e.touches[0].clientY - touchStartY.current;
+    if (diff > 0) {
+      setPullDistance(Math.min(diff * 0.5, 120));
+    }
+  }, [isRefreshing]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDistance >= PULL_THRESHOLD && !isRefreshing) {
+      setIsRefreshing(true);
+      setPullDistance(PULL_THRESHOLD);
+      navigator.vibrate?.(8);
+      await queryClient.invalidateQueries({ queryKey: ["discover-essential"] });
+      await queryClient.invalidateQueries({ queryKey: ["discover-enrich"] });
+      setIsRefreshing(false);
+    }
+    setPullDistance(0);
+  }, [pullDistance, isRefreshing, queryClient]);
 
   // ─── Phase 1: FAST essential query (stores + menu counts + images) ───
   const { data: essentialData, isLoading: essentialLoading } = useQuery({
