@@ -603,9 +603,19 @@ const StoreOrder = () => {
           <TabsContent value="posts" className="mt-0">
             <div className="px-4 pt-4">
               {postsLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-                  <span className="text-xs text-muted-foreground">{t("order.loadingPosts", language)}</span>
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+                      <Skeleton className="aspect-[4/3] w-full" />
+                      <div className="p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="w-7 h-7 rounded-full" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                        <Skeleton className="h-3 w-full" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : storePosts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
