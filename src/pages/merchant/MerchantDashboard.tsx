@@ -117,6 +117,7 @@ const MerchantDashboard = () => {
     { icon: UtensilsCrossed, labelTh: "จัดการเมนู", labelEn: "Menu", path: "/m/menu", color: "bg-primary/10 text-primary", iconBg: "bg-primary/20" },
     { icon: Users, labelTh: "จัดการคิว", labelEn: "Queue", path: "/m/queue", color: "bg-amber-500/15 text-amber-600 dark:text-amber-400", iconBg: "bg-amber-500/20" },
     { icon: Camera, labelTh: "รูปเมนู", labelEn: "Images", path: `/menu-images/${activeStore?.id}`, color: "bg-violet-500/15 text-violet-600 dark:text-violet-400", iconBg: "bg-violet-500/20" },
+    { icon: QrCode, labelTh: "QR โต๊ะ", labelEn: "Table QR", path: "/m/qr", color: "bg-blue-500/15 text-blue-600 dark:text-blue-400", iconBg: "bg-blue-500/20" },
   ];
 
   if (!user && !authLoading) return null;
