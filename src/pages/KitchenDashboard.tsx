@@ -94,7 +94,7 @@ const KitchenDashboard = () => {
   const alertTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [waiterCalls, setWaiterCalls] = useState<{ id: string; table_number: number; created_at: string }[]>([]);
   const [billRequests, setBillRequests] = useState<{ id: string; table_number: number; total_amount: number; order_ids: string[]; created_at: string }[]>([]);
-  const [billOrderItems, setBillOrderItems] = useState<Map<string, { name: string; qty: number }[]>>(new Map());
+  const [billOrderItems, setBillOrderItems] = useState<Map<string, { name: string; qty: number; price: number }[]>>(new Map());
   const { isSubscribed: pushSubscribed, isSupported: pushSupported, loading: pushLoading, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications(storeId || null, user?.id || null);
 
   const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
@@ -155,16 +155,16 @@ const KitchenDashboard = () => {
       const allOrderIds = bills.flatMap((b: any) => b.order_ids);
       if (allOrderIds.length > 0) {
         const { data: ordersData } = await supabase.from("orders").select("id, items").in("id", allOrderIds);
-        const itemsMap = new Map<string, { name: string; qty: number }[]>();
+        const itemsMap = new Map<string, { name: string; qty: number; price: number }[]>();
         bills.forEach((bill: any) => {
-          const items: { name: string; qty: number }[] = [];
+          const items: { name: string; qty: number; price: number }[] = [];
           bill.order_ids.forEach((oid: string) => {
             const order = (ordersData || []).find((o: any) => o.id === oid);
             if (order?.items && Array.isArray(order.items)) {
               (order.items as any[]).forEach((item: any) => {
-                const existing = items.find((i) => i.name === item.name);
+                const existing = items.find((i) => i.name === item.name && i.price === (item.price || 0));
                 if (existing) existing.qty += (item.quantity || 1);
-                else items.push({ name: item.name, qty: item.quantity || 1 });
+                else items.push({ name: item.name, qty: item.quantity || 1, price: item.price || 0 });
               });
             }
           });
@@ -223,13 +223,13 @@ const KitchenDashboard = () => {
             // Fetch items for this bill
             if (orderIds.length > 0) {
               supabase.from("orders").select("id, items").in("id", orderIds).then(({ data }) => {
-                const items: { name: string; qty: number }[] = [];
+                const items: { name: string; qty: number; price: number }[] = [];
                 (data || []).forEach((o: any) => {
                   if (Array.isArray(o.items)) {
                     (o.items as any[]).forEach((item: any) => {
-                      const existing = items.find((i) => i.name === item.name);
+                      const existing = items.find((i) => i.name === item.name && i.price === (item.price || 0));
                       if (existing) existing.qty += (item.quantity || 1);
-                      else items.push({ name: item.name, qty: item.quantity || 1 });
+                      else items.push({ name: item.name, qty: item.quantity || 1, price: item.price || 0 });
                     });
                   }
                 });
@@ -560,7 +560,10 @@ const KitchenDashboard = () => {
                         {(billOrderItems.get(bill.id) || []).map((item, idx) => (
                           <div key={idx} className="flex justify-between text-xs text-zinc-300">
                             <span className="truncate mr-2">{item.name}</span>
-                            <span className="text-zinc-400 shrink-0">×{item.qty}</span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-zinc-400">×{item.qty}</span>
+                              <span className="text-zinc-400 font-medium">฿{(item.price * item.qty).toLocaleString()}</span>
+                            </div>
                           </div>
                         ))}
                       </div>
