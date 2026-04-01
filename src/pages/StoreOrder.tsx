@@ -800,7 +800,12 @@ const StoreOrder = () => {
                                 : "bg-surface-elevated text-foreground border-border/50"
                             }`}
                           >
-                            {translateTag(nt)}
+                            <span className="flex flex-col items-start leading-tight">
+                              <span>{translateTag(nt)}</span>
+                              {language !== "th" && translateTag(nt) !== nt && (
+                                <span className="text-[8px] opacity-60">{nt}</span>
+                              )}
+                            </span>
                             {extraPrice > 0 && <span className="ml-1 opacity-80">(+฿{extraPrice})</span>}
                           </motion.button>
                           );
@@ -829,7 +834,12 @@ const StoreOrder = () => {
                                 : "bg-surface-elevated text-foreground border-border/50"
                             }`}
                           >
-                            {translateTag(ns)}
+                            <span className="flex flex-col items-start leading-tight">
+                              <span>{translateTag(ns)}</span>
+                              {language !== "th" && translateTag(ns) !== ns && (
+                                <span className="text-[8px] opacity-60">{ns}</span>
+                              )}
+                            </span>
                             {extraPrice > 0 && <span className="ml-1 opacity-80">(+฿{extraPrice})</span>}
                           </motion.button>
                           );
@@ -862,7 +872,12 @@ const StoreOrder = () => {
                               }`}
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
-                              {translateTag(tp)}
+                              <span className="flex flex-col items-start leading-tight">
+                                <span>{translateTag(tp)}</span>
+                                {language !== "th" && translateTag(tp) !== tp && (
+                                  <span className="text-[8px] opacity-60">{tp}</span>
+                                )}
+                              </span>
                             </motion.button>
                           );
                         })}
@@ -899,7 +914,13 @@ const StoreOrder = () => {
                                 }`}
                               >
                                 {selected && <Check size={12} strokeWidth={2.5} />}
-                                {a.name} <span className="opacity-70">+฿{a.price}</span>
+                                <span className="flex flex-col items-start leading-tight">
+                                  <span>{translateTag(a.name)}</span>
+                                  {language !== "th" && translateTag(a.name) !== a.name && (
+                                    <span className="text-[8px] opacity-60">{a.name}</span>
+                                  )}
+                                </span>
+                                <span className="opacity-70">+฿{a.price}</span>
                               </motion.button>
                             );
                           })}
