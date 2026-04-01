@@ -437,14 +437,20 @@ const OrderHistory = () => {
                   : `Your cart has ${cartItems.length} item(s). Add items from "${confirmVisit?.storeName}"?`}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="gap-2">
-              <AlertDialogCancel className="text-xs">{language === "th" ? "ยกเลิก" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+              <AlertDialogAction
+                onClick={() => { if (confirmVisit) { clearOrder(); executeReorderAll(confirmVisit); } setConfirmVisit(null); }}
+                className="bg-primary hover:bg-primary/90 text-xs w-full"
+              >
+                {language === "th" ? "🗑️ ล้างตะกร้าแล้วสั่งซ้ำ" : "🗑️ Clear cart & reorder"}
+              </AlertDialogAction>
               <AlertDialogAction
                 onClick={() => { if (confirmVisit) executeReorderAll(confirmVisit); setConfirmVisit(null); }}
-                className="bg-score-emerald hover:bg-score-emerald/90 text-xs"
+                className="bg-score-emerald hover:bg-score-emerald/90 text-xs w-full"
               >
-                {language === "th" ? "เพิ่มเลย" : "Add anyway"}
+                {language === "th" ? "➕ เพิ่มเข้าตะกร้าเดิม" : "➕ Add to existing cart"}
               </AlertDialogAction>
+              <AlertDialogCancel className="text-xs w-full mt-0">{language === "th" ? "ยกเลิก" : "Cancel"}</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
