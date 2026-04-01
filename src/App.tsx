@@ -31,6 +31,7 @@ import MenuManager from "./pages/MenuManager.tsx";
 import FollowList from "./pages/FollowList.tsx";
 import UserProfile from "./pages/UserProfile.tsx";
 import QueueManager from "./pages/QueueManager.tsx";
+import KitchenDashboard from "./pages/KitchenDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
