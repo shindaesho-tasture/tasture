@@ -77,6 +77,7 @@ const tabs: { id: AdminTab; label: string; icon: typeof BarChart3 }[] = [
   { id: "tag_trans", label: "แปลแท็ก", icon: Languages },
   { id: "name_trans", label: "แปลชื่อ", icon: Type },
   { id: "dish_desc", label: "คำอธิบาย", icon: FileText },
+  { id: "claims", label: "Claim ร้าน", icon: Handshake },
 ];
 
 const roleIcons: Record<string, typeof Crown> = { admin: Crown, moderator: Shield, user: UserIcon };
