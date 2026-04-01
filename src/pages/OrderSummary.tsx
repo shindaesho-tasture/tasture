@@ -128,6 +128,10 @@ const OrderSummary = () => {
               className="px-8 py-2.5 rounded-2xl bg-secondary text-foreground text-xs font-medium mt-2">
               {t("orderSum.skipBtn", language)}
             </motion.button>
+            <motion.button whileTap={{ scale: 0.97 }} onClick={() => navigate("/m/kitchen")}
+              className="px-8 py-2.5 rounded-2xl bg-accent text-accent-foreground text-xs font-medium mt-1 flex items-center gap-1.5">
+              🍳 {language === "th" ? "ดูในครัว (Merchant)" : "View in Kitchen (Merchant)"}
+            </motion.button>
           </motion.div>
         </div>
       </PageTransition>
