@@ -93,7 +93,8 @@ const KitchenDashboard = () => {
   const [rejectReason, setRejectReason] = useState("");
   const alertTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [waiterCalls, setWaiterCalls] = useState<{ id: string; table_number: number; created_at: string }[]>([]);
-  const [billRequests, setBillRequests] = useState<{ id: string; table_number: number; total_amount: number; created_at: string }[]>([]);
+  const [billRequests, setBillRequests] = useState<{ id: string; table_number: number; total_amount: number; order_ids: string[]; created_at: string }[]>([]);
+  const [billOrderItems, setBillOrderItems] = useState<Map<string, { name: string; qty: number }[]>>(new Map());
   const { isSubscribed: pushSubscribed, isSupported: pushSupported, loading: pushLoading, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications(storeId || null, user?.id || null);
 
   const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
@@ -145,10 +146,32 @@ const KitchenDashboard = () => {
     (async () => {
       const [waiterRes, billRes] = await Promise.all([
         supabase.from("waiter_calls" as any).select("id, table_number, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
-        supabase.from("bill_requests" as any).select("id, table_number, total_amount, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
+        supabase.from("bill_requests" as any).select("id, table_number, total_amount, order_ids, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
       ]);
       setWaiterCalls((waiterRes.data as any) || []);
-      setBillRequests((billRes.data as any) || []);
+      const bills = ((billRes.data as any) || []).map((b: any) => ({ ...b, order_ids: Array.isArray(b.order_ids) ? b.order_ids : [] }));
+      setBillRequests(bills);
+      // Fetch order items for all bills
+      const allOrderIds = bills.flatMap((b: any) => b.order_ids);
+      if (allOrderIds.length > 0) {
+        const { data: ordersData } = await supabase.from("orders").select("id, items").in("id", allOrderIds);
+        const itemsMap = new Map<string, { name: string; qty: number }[]>();
+        bills.forEach((bill: any) => {
+          const items: { name: string; qty: number }[] = [];
+          bill.order_ids.forEach((oid: string) => {
+            const order = (ordersData || []).find((o: any) => o.id === oid);
+            if (order?.items && Array.isArray(order.items)) {
+              (order.items as any[]).forEach((item: any) => {
+                const existing = items.find((i) => i.name === item.name);
+                if (existing) existing.qty += (item.quantity || 1);
+                else items.push({ name: item.name, qty: item.quantity || 1 });
+              });
+            }
+          });
+          itemsMap.set(bill.id, items);
+        });
+        setBillOrderItems(itemsMap);
+      }
     })();
   }, [storeId]);
 
@@ -195,7 +218,24 @@ const KitchenDashboard = () => {
         (payload) => {
           const bill = payload.new as any;
           if (bill.status === "pending") {
-            setBillRequests((prev) => [...prev, { id: bill.id, table_number: bill.table_number, total_amount: bill.total_amount, created_at: bill.created_at }]);
+            const orderIds = Array.isArray(bill.order_ids) ? bill.order_ids : [];
+            setBillRequests((prev) => [...prev, { id: bill.id, table_number: bill.table_number, total_amount: bill.total_amount, order_ids: orderIds, created_at: bill.created_at }]);
+            // Fetch items for this bill
+            if (orderIds.length > 0) {
+              supabase.from("orders").select("id, items").in("id", orderIds).then(({ data }) => {
+                const items: { name: string; qty: number }[] = [];
+                (data || []).forEach((o: any) => {
+                  if (Array.isArray(o.items)) {
+                    (o.items as any[]).forEach((item: any) => {
+                      const existing = items.find((i) => i.name === item.name);
+                      if (existing) existing.qty += (item.quantity || 1);
+                      else items.push({ name: item.name, qty: item.quantity || 1 });
+                    });
+                  }
+                });
+                setBillOrderItems((prev) => new Map(prev).set(bill.id, items));
+              });
+            }
             if (soundEnabled) playOrderBeep();
             navigator.vibrate?.([150, 80, 150]);
           }
@@ -494,22 +534,38 @@ const KitchenDashboard = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500/40 animate-pulse"
+                  className="rounded-2xl bg-emerald-500/20 border-2 border-emerald-500/40 animate-pulse overflow-hidden"
                 >
-                  <div className="flex items-center gap-3">
-                    <Receipt size={20} className="text-emerald-400" />
-                    <div>
-                      <p className="text-sm font-bold text-white">💰 โต๊ะ {bill.table_number} เรียกเก็บเงิน</p>
-                      <p className="text-[10px] text-zinc-400">฿{Number(bill.total_amount).toLocaleString()} · {timeSince(bill.created_at)}</p>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Receipt size={20} className="text-emerald-400" />
+                      <div>
+                        <p className="text-sm font-bold text-white">💰 โต๊ะ {bill.table_number} เรียกเก็บเงิน</p>
+                        <p className="text-[10px] text-zinc-400">฿{Number(bill.total_amount).toLocaleString()} · {timeSince(bill.created_at)}</p>
+                      </div>
                     </div>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => markBillPaid(bill.id)}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 text-zinc-900 text-xs font-bold"
+                    >
+                      ✅ เก็บแล้ว
+                    </motion.button>
                   </div>
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => markBillPaid(bill.id)}
-                    className="px-4 py-2 rounded-xl bg-emerald-500 text-zinc-900 text-xs font-bold"
-                  >
-                    ✅ เก็บแล้ว
-                  </motion.button>
+                  {/* Order items summary */}
+                  {billOrderItems.get(bill.id) && (billOrderItems.get(bill.id) || []).length > 0 && (
+                    <div className="px-4 pb-3 pt-0">
+                      <div className="bg-zinc-800/60 rounded-xl p-2.5 space-y-1">
+                        <p className="text-[10px] font-bold text-zinc-400 mb-1">📋 รายการที่สั่ง</p>
+                        {(billOrderItems.get(bill.id) || []).map((item, idx) => (
+                          <div key={idx} className="flex justify-between text-xs text-zinc-300">
+                            <span className="truncate mr-2">{item.name}</span>
+                            <span className="text-zinc-400 shrink-0">×{item.qty}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
