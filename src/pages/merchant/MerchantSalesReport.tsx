@@ -18,6 +18,12 @@ interface DayData {
   orders: number;
 }
 
+interface TopMenuItem {
+  name: string;
+  qty: number;
+  revenue: number;
+}
+
 const MerchantSalesReport = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -27,6 +33,7 @@ const MerchantSalesReport = () => {
 
   const [range, setRange] = useState<"7d" | "30d">("7d");
   const [dayData, setDayData] = useState<DayData[]>([]);
+  const [topMenus, setTopMenus] = useState<TopMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,7 +51,7 @@ const MerchantSalesReport = () => {
 
       const { data } = await supabase
         .from("orders")
-        .select("total_price, created_at")
+        .select("total_price, created_at, items")
         .eq("store_id", activeStore.id)
         .gte("created_at", since.toISOString())
         .neq("status", "rejected");
@@ -77,6 +84,26 @@ const MerchantSalesReport = () => {
       });
 
       setDayData(result);
+
+      // Build top menu items
+      const menuMap: Record<string, { qty: number; revenue: number }> = {};
+      (data || []).forEach((o) => {
+        const items = Array.isArray(o.items) ? o.items : [];
+        items.forEach((item: any) => {
+          const name = item.name || item.menuName || "Unknown";
+          const qty = Number(item.qty || item.quantity || 1);
+          const price = Number(item.price || 0) * qty;
+          if (!menuMap[name]) menuMap[name] = { qty: 0, revenue: 0 };
+          menuMap[name].qty += qty;
+          menuMap[name].revenue += price;
+        });
+      });
+      const topSorted = Object.entries(menuMap)
+        .map(([name, v]) => ({ name, ...v }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+      setTopMenus(topSorted);
+
       setLoading(false);
     };
     fetchOrders();
@@ -225,6 +252,34 @@ const MerchantSalesReport = () => {
                 </ResponsiveContainer>
               </motion.div>
             </div>
+
+            {/* Top 5 Menu Items */}
+            {topMenus.length > 0 && (
+              <div className="px-4 pt-5">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">
+                  🏆 {isTh ? "เมนูยอดนิยม Top 5" : "Top 5 Menu Items"}
+                </p>
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  className="rounded-xl bg-surface-elevated border border-border/50 p-3">
+                  <ResponsiveContainer width="100%" height={topMenus.length * 44 + 16}>
+                    <BarChart data={topMenus} layout="vertical" margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false}
+                        tickFormatter={(v) => `฿${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} axisLine={false} tickLine={false} width={90} />
+                      <Tooltip
+                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+                        formatter={(value: number, _name: string, props: any) => {
+                          const item = props.payload as TopMenuItem;
+                          return [`฿${value.toLocaleString()} (${item.qty} ${isTh ? "ชิ้น" : "pcs"})`, isTh ? "รายได้" : "Revenue"];
+                        }}
+                      />
+                      <Bar dataKey="revenue" fill="hsl(var(--score-amber))" radius={[0, 6, 6, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </motion.div>
+              </div>
+            )}
 
             {/* Daily breakdown table */}
             <div className="px-4 pt-5">
