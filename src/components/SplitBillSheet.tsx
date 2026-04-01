@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Users, ListChecks, Divide, Minus, Plus, Check } from "lucide-react";
+import { Users, ListChecks, Divide, Minus, Plus, Check, Share2, Copy, CheckCircle } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import type { OrderItem } from "@/lib/order-context";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 type SplitMode = "by-item" | "equal";
 
