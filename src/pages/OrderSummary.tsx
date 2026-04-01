@@ -71,7 +71,16 @@ const OrderSummary = () => {
   }, [storeCategory]);
 
   const handleConfirm = async () => {
-    if (!storeId || items.length === 0) return;
+    if (!storeId || items.length === 0) {
+      toast({
+        title: language === "th" ? "ไม่สามารถส่งออเดอร์ได้" : "Cannot submit order",
+        description: !storeId
+          ? (language === "th" ? "ไม่พบข้อมูลร้านค้า กรุณาเลือกร้านใหม่" : "Store not found. Please select a store again.")
+          : (language === "th" ? "ยังไม่มีรายการอาหาร กรุณาเลือกเมนู" : "No items in order. Please add menu items."),
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
     try {
       const orderItems = items.map((i) => ({
