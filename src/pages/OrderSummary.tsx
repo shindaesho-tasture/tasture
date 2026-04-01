@@ -150,6 +150,41 @@ const OrderSummary = () => {
                       className="w-7 h-7 rounded-lg bg-score-ruby/10 flex items-center justify-center ml-1"><Trash2 size={12} strokeWidth={2} className="text-score-ruby" /></motion.button>
                   </div>
                 </div>
+                {/* Per-item note */}
+                <div className="mt-2 pt-2 border-t border-border/30">
+                  <button
+                    onClick={() => setExpandedNotes((prev) => {
+                      const next = new Set(prev);
+                      next.has(item.menuItemId) ? next.delete(item.menuItemId) : next.add(item.menuItemId);
+                      return next;
+                    })}
+                    className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <MessageSquare size={10} />
+                    <span>{item.note ? item.note.slice(0, 30) + (item.note.length > 30 ? "…" : "") : (language === "th" ? "เพิ่มโน้ตเฉพาะจาน" : "Add item note")}</span>
+                    <ChevronDown size={10} className={`transition-transform ${expandedNotes.has(item.menuItemId) ? "rotate-180" : ""}`} />
+                  </button>
+                  <AnimatePresence>
+                    {expandedNotes.has(item.menuItemId) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <textarea
+                          value={item.note || ""}
+                          onChange={(e) => updateItemNote(item.menuItemId, e.target.value)}
+                          placeholder={language === "th" ? "เช่น ไม่ใส่ผัก, เผ็ดน้อย..." : "e.g. No veggies, less spicy..."}
+                          rows={1}
+                          maxLength={100}
+                          className="w-full mt-2 bg-secondary/60 rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 border-0 outline-none resize-none focus:ring-1 focus:ring-score-emerald/30"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </motion.div>
             ))}
             {/* Notes */}
