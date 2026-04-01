@@ -447,6 +447,24 @@ const StoreOrder = () => {
                 </div>
               )}
             </div>
+            {tableNumber && (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={handleCallWaiter}
+                disabled={callingWaiter || waiterCalled}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                  waiterCalled
+                    ? "bg-score-emerald/20 text-score-emerald"
+                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400 active:bg-amber-500/30"
+                } disabled:opacity-60`}
+              >
+                <BellRing size={14} />
+                {waiterCalled ? "เรียกแล้ว ✓" : "เรียกพนักงาน"}
+              </motion.button>
+            )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
