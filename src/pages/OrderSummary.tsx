@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag, MessageSquare } from "lucide-react";
+import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag, MessageSquare, ChevronDown } from "lucide-react";
 import { useOrder } from "@/lib/order-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
