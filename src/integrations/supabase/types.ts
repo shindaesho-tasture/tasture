@@ -390,6 +390,7 @@ export type Database = {
           rejection_reason: string | null
           status: string
           store_id: string
+          table_number: number | null
           total_price: number
           updated_at: string
           user_id: string | null
@@ -405,6 +406,7 @@ export type Database = {
           rejection_reason?: string | null
           status?: string
           store_id: string
+          table_number?: number | null
           total_price?: number
           updated_at?: string
           user_id?: string | null
@@ -420,6 +422,7 @@ export type Database = {
           rejection_reason?: string | null
           status?: string
           store_id?: string
+          table_number?: number | null
           total_price?: number
           updated_at?: string
           user_id?: string | null
