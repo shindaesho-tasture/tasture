@@ -49,6 +49,20 @@ const OrderHistory = () => {
     }
 
     const load = async () => {
+      // 0. Fetch recent orders with status
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("id, order_number, items, total_price, status, created_at, store_id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (orders && orders.length > 0) {
+        const storeIds = [...new Set(orders.map((o: any) => o.store_id))];
+        const { data: storeData } = await supabase.from("stores").select("id, name").in("id", storeIds);
+        const storeNames = Object.fromEntries((storeData || []).map((s: any) => [s.id, s.name]));
+        setRecentOrders(orders.map((o: any) => ({ ...o, storeName: storeNames[o.store_id] || "—" })));
+      }
       // 1. Get stores user reviewed (store-level reviews)
       const { data: storeReviews } = await supabase
         .from("reviews")
