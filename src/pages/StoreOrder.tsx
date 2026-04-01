@@ -115,14 +115,12 @@ const StoreOrder = () => {
 
   const { translateTag } = useTagTranslations(allTagTexts);
 
-  useEffect(() => {
-    if (!storeId) return;
-    fetchData();
-  }, [storeId, language]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
+  const {
+    data: storeData,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: ["store-order", storeId, language],
+    queryFn: async () => {
       const [storeRes, menuRes] = await Promise.all([
         supabase.from("stores").select("name, category_id").eq("id", storeId!).single(),
         supabase
@@ -132,171 +130,139 @@ const StoreOrder = () => {
           .order("sort_order", { ascending: true }),
       ]);
 
-      if (storeRes.data) {
-        setStoreName(storeRes.data.name);
-        setStoreCategoryId(storeRes.data.category_id || null);
-        setOrderStore(storeId!, storeRes.data.name);
-        // Fetch lat/lng separately to avoid type issues
-        const { data: locData } = await (supabase as any).from("stores").select("lat, lng").eq("id", storeId!).single();
-        if (locData) {
-          setStoreLat(locData.lat ?? null);
-          setStoreLng(locData.lng ?? null);
-        }
-      }
-      const menuData = menuRes.data || [];
-      setMenuItems(menuData.map((m: any) => ({ ...m, noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {}, noodle_style_prices: (m.noodle_style_prices as Record<string, number>) || {} })));
+      const store = storeRes.data;
+      const menuData = (menuRes.data || []).map((m: any) => ({
+        ...m,
+        noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {},
+        noodle_style_prices: (m.noodle_style_prices as Record<string, number>) || {},
+      })) as MenuItemRow[];
 
-      // Fetch add-ons for all menu items
+      // Fetch add-ons, DNA, reviews, photos in parallel
+      let addOnsMap = new Map<string, { id: string; name: string; price: number; category: string }[]>();
+      let dnaMap = new Map<string, DnaTag[]>();
+      let revCounts = new Map<string, number>();
+      let dnaCountMap = new Map<string, number>();
+      let photoMap = new Map<string, string[]>();
+      let tMap = new Map<string, { name: string; description?: string }>();
+
       if (menuData.length > 0) {
         const menuIds = menuData.map((m) => m.id);
-        const { data: addOnsData } = await supabase
-          .from("menu_addons")
-          .select("id, menu_item_id, name, price, category")
-          .in("menu_item_id", menuIds)
-          .order("category")
-          .order("sort_order");
-        if (addOnsData) {
-          const map = new Map<string, { id: string; name: string; price: number; category: string }[]>();
-          addOnsData.forEach((a: any) => {
-            if (!map.has(a.menu_item_id)) map.set(a.menu_item_id, []);
-            map.get(a.menu_item_id)!.push({ id: a.id, name: a.name, price: a.price, category: a.category });
-          });
-          setItemAddOns(map);
+
+        const fetches: Promise<any>[] = [
+          supabase.from("menu_addons").select("id, menu_item_id, name, price, category").in("menu_item_id", menuIds).order("category").order("sort_order"),
+          supabase.from("dish_dna").select("menu_item_id, component_icon, component_name, selected_tag, selected_score").in("menu_item_id", menuIds),
+          supabase.from("menu_reviews").select("id, menu_item_id").in("menu_item_id", menuIds),
+        ];
+        // Fetch translations if not Thai
+        if (language !== "th") {
+          fetches.push(
+            supabase.from("menu_translations").select("menu_item_id, name, description").eq("language", language).in("menu_item_id", menuIds)
+          );
         }
-      }
 
-      // Fetch Dish DNA for these menu items
-      if (menuData.length > 0) {
-        const menuIds = menuData.map((m) => m.id);
-        const [dnaRes, menuRevRes] = await Promise.all([
-          supabase
-            .from("dish_dna")
-            .select("menu_item_id, component_icon, component_name, selected_tag, selected_score")
-            .in("menu_item_id", menuIds),
-          supabase
-            .from("menu_reviews")
-            .select("id, menu_item_id")
-            .in("menu_item_id", menuIds),
-        ]);
+        const [addOnsRes, dnaRes, menuRevRes, transRes] = await Promise.all(fetches);
 
-        // Menu review counts
-        const revCounts = new Map<string, number>();
+        // Add-ons
+        (addOnsRes.data || []).forEach((a: any) => {
+          if (!addOnsMap.has(a.menu_item_id)) addOnsMap.set(a.menu_item_id, []);
+          addOnsMap.get(a.menu_item_id)!.push({ id: a.id, name: a.name, price: a.price, category: a.category });
+        });
+
+        // Review counts
         const reviewIdToMenuItem = new Map<string, string>();
-        (menuRevRes.data || []).forEach((r) => {
+        (menuRevRes.data || []).forEach((r: any) => {
           revCounts.set(r.menu_item_id, (revCounts.get(r.menu_item_id) || 0) + 1);
           reviewIdToMenuItem.set(r.id, r.menu_item_id);
         });
-        setMenuReviewCounts(revCounts);
 
-        // Fetch most-liked user photos per menu item
-        const reviewIds = (menuRevRes.data || []).map((r) => r.id);
+        // Top photos
+        const reviewIds = (menuRevRes.data || []).map((r: any) => r.id);
         if (reviewIds.length > 0) {
-          const { data: postImages } = await supabase
-            .from("post_images")
-            .select("image_url, post_id, menu_review_id")
-            .in("menu_review_id", reviewIds);
-
+          const { data: postImages } = await supabase.from("post_images").select("image_url, post_id, menu_review_id").in("menu_review_id", reviewIds);
           if (postImages && postImages.length > 0) {
             const postIds = [...new Set(postImages.map((pi) => pi.post_id))];
-            const { data: likes } = await supabase
-              .from("post_likes")
-              .select("ref_id")
-              .in("ref_id", postIds);
-
+            const { data: likes } = await supabase.from("post_likes").select("ref_id").in("ref_id", postIds);
             const likesMap = new Map<string, number>();
             (likes || []).forEach((l) => likesMap.set(l.ref_id, (likesMap.get(l.ref_id) || 0) + 1));
-
-            // Group images by menu_item_id, sorted by likes desc
             const itemPhotos = new Map<string, { url: string; likes: number }[]>();
             postImages.forEach((pi) => {
               if (!pi.menu_review_id) return;
               const menuItemId = reviewIdToMenuItem.get(pi.menu_review_id);
               if (!menuItemId) return;
-              const lc = likesMap.get(pi.post_id) || 0;
               if (!itemPhotos.has(menuItemId)) itemPhotos.set(menuItemId, []);
-              itemPhotos.get(menuItemId)!.push({ url: pi.image_url, likes: lc });
+              itemPhotos.get(menuItemId)!.push({ url: pi.image_url, likes: likesMap.get(pi.post_id) || 0 });
             });
-
-            const photoMap = new Map<string, string[]>();
             itemPhotos.forEach((photos, k) => {
               photos.sort((a, b) => b.likes - a.likes);
               photoMap.set(k, photos.slice(0, 4).map((p) => p.url));
             });
-            setTopPhotoByItem(photoMap);
           }
         }
 
-        // DNA counts per item
-        const dnaCountMap = new Map<string, number>();
+        // DNA
         const dnaRows = dnaRes.data || [];
-        dnaRows.forEach((r) => {
-          dnaCountMap.set(r.menu_item_id, (dnaCountMap.get(r.menu_item_id) || 0) + 1);
-        });
-        setDnaCounts(dnaCountMap);
-
-        // Aggregate DNA tags
+        dnaRows.forEach((r: any) => dnaCountMap.set(r.menu_item_id, (dnaCountMap.get(r.menu_item_id) || 0) + 1));
         if (dnaRows.length > 0) {
           const tagMap = new Map<string, Map<string, DnaTag>>();
-          dnaRows.forEach((r) => {
+          dnaRows.forEach((r: any) => {
             if (!tagMap.has(r.menu_item_id)) tagMap.set(r.menu_item_id, new Map());
             const itemMap = tagMap.get(r.menu_item_id)!;
             const key = `${r.component_name}::${r.selected_tag}`;
             if (!itemMap.has(key)) {
-              itemMap.set(key, {
-                component_icon: r.component_icon,
-                component_name: r.component_name,
-                selected_tag: r.selected_tag,
-                selected_score: 0, // will hold sum, then averaged
-                count: 0,
-              });
+              itemMap.set(key, { component_icon: r.component_icon, component_name: r.component_name, selected_tag: r.selected_tag, selected_score: 0, count: 0 });
             }
             const entry = itemMap.get(key)!;
             entry.selected_score += r.selected_score;
             entry.count++;
           });
-
-          const result = new Map<string, DnaTag[]>();
           tagMap.forEach((itemMap, menuItemId) => {
-            const tags = Array.from(itemMap.values()).map((t) => ({
-              ...t,
-              selected_score: t.count > 0 ? t.selected_score / t.count : 0, // average
-            }))
-              .sort((a, b) => b.count - a.count)
-              .slice(0, 3);
-            result.set(menuItemId, tags);
+            const tags = Array.from(itemMap.values()).map((t) => ({ ...t, selected_score: t.count > 0 ? t.selected_score / t.count : 0 })).sort((a, b) => b.count - a.count).slice(0, 3);
+            dnaMap.set(menuItemId, tags);
           });
-          setDnaByItem(result);
+        }
+
+        // Translations
+        if (transRes?.data) {
+          (transRes.data as any[]).forEach((row: any) => {
+            tMap.set(row.menu_item_id, { name: row.name, description: row.description || undefined });
+          });
         }
       }
-    } catch (err) {
-      console.error("Failed to fetch:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Fetch translations when language changes (or after menu loads)
+      return {
+        storeName: store?.name || "",
+        storeCategoryId: store?.category_id || null,
+        menuItems: menuData,
+        itemAddOns: addOnsMap,
+        dnaByItem: dnaMap,
+        menuReviewCounts: revCounts,
+        dnaCounts: dnaCountMap,
+        topPhotoByItem: photoMap,
+        translationMap: tMap,
+      };
+    },
+    enabled: !!storeId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // Extract data from query result
+  const storeName = storeData?.storeName || "";
+  const storeCategoryId = storeData?.storeCategoryId || null;
+  const menuItems = storeData?.menuItems || [];
+  const itemAddOns = storeData?.itemAddOns || new Map();
+  const dnaByItem = storeData?.dnaByItem || new Map();
+  const menuReviewCounts = storeData?.menuReviewCounts || new Map();
+  const dnaCounts = storeData?.dnaCounts || new Map();
+  const topPhotoByItem = storeData?.topPhotoByItem || new Map();
+  const translationMap = storeData?.translationMap || new Map();
+
+  // Set order store when data loads
   useEffect(() => {
-    if (language === "th" || menuItems.length === 0) {
-      setTranslationMap(new Map());
-      return;
+    if (storeData && storeId) {
+      setOrderStore(storeId, storeData.storeName);
     }
-    const fetchTranslations = async () => {
-      try {
-        const { data: transData } = await supabase
-          .from("menu_translations")
-          .select("menu_item_id, name, description")
-          .eq("language", language)
-          .in("menu_item_id", menuItems.map((m) => m.id));
-        const tMap = new Map<string, { name: string; description?: string }>();
-        (transData || []).forEach((row: any) => {
-          tMap.set(row.menu_item_id, { name: row.name, description: row.description || undefined });
-        });
-        setTranslationMap(tMap);
-      } catch {}
-    };
-    fetchTranslations();
-  }, [language, menuItems]);
+  }, [storeData, storeId]);
 
   const fetchStorePosts = async () => {
     if (!storeId) return;
