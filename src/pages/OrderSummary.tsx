@@ -16,10 +16,11 @@ const OrderSummary = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const { guestId } = useGuestSession();
-  const { items, storeName, storeId, updateQuantity, removeItem, clearOrder, totalItems, totalPrice } = useOrder();
+  const { items, storeName, storeId, updateQuantity, removeItem, updateItemNote, clearOrder, totalItems, totalPrice } = useOrder();
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState("");
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
   const handleConfirm = async () => {
     if (!storeId || items.length === 0) return;
