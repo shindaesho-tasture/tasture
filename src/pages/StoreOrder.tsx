@@ -59,6 +59,7 @@ const StoreOrder = () => {
   const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice } = useOrder();
   const [menuItems, setMenuItems] = useState<MenuItemRow[]>([]);
   const [storeName, setStoreName] = useState("");
+  const [storeCategoryId, setStoreCategoryId] = useState<string | null>(null);
   const [storeLat, setStoreLat] = useState<number | null>(null);
   const [storeLng, setStoreLng] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
