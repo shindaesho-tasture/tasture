@@ -90,6 +90,7 @@ const AnimatedRoutes = () => {
         <Route path="/m/menu" element={<MerchantMenu />} />
         <Route path="/m/queue" element={<MerchantQueue />} />
         <Route path="/m/claim" element={<MerchantClaimStore />} />
+        <Route path="/m/sales" element={<MerchantSalesReport />} />
         <Route path="/m/profile" element={<MerchantProfile />} />
 
         <Route path="*" element={<NotFound />} />
