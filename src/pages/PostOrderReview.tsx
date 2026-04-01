@@ -27,6 +27,7 @@ import MetricRater from "@/components/MetricRater";
 import DishDnaCard from "@/components/menu/DishDnaCard";
 import SensorySliderCard from "@/components/menu/SensorySliderCard";
 import BalanceSpiderChart from "@/components/menu/BalanceSpiderChart";
+import { useGuestSession } from "@/hooks/use-guest-session";
 import type { DishComponent, DishDnaSelection } from "@/lib/dish-dna-types";
 import type { SensoryAxis } from "@/lib/sensory-types";
 
