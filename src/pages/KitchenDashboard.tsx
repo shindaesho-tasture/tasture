@@ -187,6 +187,18 @@ const KitchenDashboard = () => {
           navigator.vibrate?.([200, 100, 200]);
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "bill_requests", filter: `store_id=eq.${storeId}` },
+        (payload) => {
+          const bill = payload.new as any;
+          if (bill.status === "pending") {
+            setBillRequests((prev) => [...prev, { id: bill.id, table_number: bill.table_number, total_amount: bill.total_amount, created_at: bill.created_at }]);
+            if (soundEnabled) playOrderBeep();
+            navigator.vibrate?.([150, 80, 150]);
+          }
+        }
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -195,6 +207,11 @@ const KitchenDashboard = () => {
   const acknowledgeWaiterCall = async (callId: string) => {
     await supabase.from("waiter_calls" as any).update({ status: "acknowledged" } as any).eq("id", callId);
     setWaiterCalls((prev) => prev.filter((c) => c.id !== callId));
+  };
+
+  const markBillPaid = async (billId: string) => {
+    await supabase.from("bill_requests" as any).update({ status: "paid", paid_at: new Date().toISOString() } as any).eq("id", billId);
+    setBillRequests((prev) => prev.filter((b) => b.id !== billId));
   };
 
   // Mark initial load done after first fetch
