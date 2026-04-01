@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import type { MenuItem } from "@/lib/menu-types";
 import MenuRatingButtons from "./MenuRatingButtons";
 import SensoryPills from "./SensoryPills";
 import { useLanguage } from "@/lib/language-context";
+import { useTagTranslations } from "@/hooks/use-tag-translations";
 
 interface NoodleCardProps {
   item: MenuItem;
