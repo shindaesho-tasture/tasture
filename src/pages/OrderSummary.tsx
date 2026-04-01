@@ -71,15 +71,7 @@ const OrderSummary = () => {
   }, [storeCategory]);
 
   const handleConfirm = async () => {
-    console.log("🛒 [OrderSummary] handleConfirm called");
-    console.log("🛒 storeId:", storeId);
-    console.log("🛒 items:", JSON.stringify(items, null, 2));
-    console.log("🛒 user:", user?.id || "guest");
-    console.log("🛒 totalPrice:", totalPrice);
-    if (!storeId || items.length === 0) {
-      console.warn("🛒 ❌ BLOCKED: storeId=", storeId, "items.length=", items.length);
-      return;
-    }
+    if (!storeId || items.length === 0) return;
     setSubmitting(true);
     try {
       const orderItems = items.map((i) => ({
