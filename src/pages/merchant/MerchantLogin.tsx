@@ -26,11 +26,11 @@ const MerchantLogin = () => {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const { count } = await supabase
-          .from("stores")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", session.user.id);
-        if ((count ?? 0) > 0) {
+        const [{ count: ownedCount }, { count: memberCount }] = await Promise.all([
+          supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", session.user.id),
+          supabase.from("store_members").select("id", { count: "exact", head: true }).eq("user_id", session.user.id),
+        ]);
+        if ((ownedCount ?? 0) > 0 || (memberCount ?? 0) > 0) {
           navigate(redirectTo || "/m", { replace: true });
           return;
         }
@@ -54,19 +54,23 @@ const MerchantLogin = () => {
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) throw signInErr;
         // Check if user has stores
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { count } = await supabase
-            .from("stores")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id);
-          if ((count ?? 0) === 0) {
-            // No stores yet, go to registration
-            navigate("/register");
-            return;
+        if (redirectTo) {
+          navigate(redirectTo, { replace: true });
+        } else {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            // Check owned stores or memberships
+            const [{ count: ownedCount }, { count: memberCount }] = await Promise.all([
+              supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+              supabase.from("store_members").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+            ]);
+            if ((ownedCount ?? 0) === 0 && (memberCount ?? 0) === 0) {
+              navigate("/register");
+              return;
+            }
           }
+          navigate("/m");
         }
-        navigate(redirectTo || "/m");
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong");
