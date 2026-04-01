@@ -51,6 +51,7 @@ const OrderSummary = () => {
   const [billRequested, setBillRequested] = useState(false);
   const [requestingBill, setRequestingBill] = useState(false);
   const [billPaid, setBillPaid] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
 
   // Fetch store category for context-aware quick tags
   const { data: storeCategory } = useQuery({
