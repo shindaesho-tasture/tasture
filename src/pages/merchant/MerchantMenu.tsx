@@ -248,6 +248,9 @@ const MerchantMenu = () => {
 
   const loading = authLoading || storeLoading;
 
+  // Auth guard (after all hooks)
+  if (!authLoading && !user) { navigate("/m/login", { replace: true }); return null; }
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-background pb-24">
