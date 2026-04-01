@@ -396,8 +396,19 @@ const KitchenDashboard = () => {
               <p className="text-xs text-zinc-500 truncate">{storeName}</p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Notification permission */}
-              {notifPermission !== "granted" && (
+              {/* Push notification toggle */}
+              {pushSupported && (
+                <button
+                  onClick={() => pushSubscribed ? pushUnsubscribe() : pushSubscribe()}
+                  disabled={pushLoading}
+                  className={`p-2 rounded-xl transition-colors ${pushSubscribed ? "bg-score-emerald/20" : "bg-zinc-800 hover:bg-zinc-700"}`}
+                  title={pushSubscribed ? "ปิด Push แจ้งเตือน" : "เปิด Push แจ้งเตือน"}
+                >
+                  {pushSubscribed ? <BellRing size={18} className="text-score-emerald" /> : <Bell size={18} className="text-zinc-400" />}
+                </button>
+              )}
+              {/* Browser notification permission */}
+              {!pushSupported && notifPermission !== "granted" && (
                 <button
                   onClick={requestNotifPermission}
                   className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
