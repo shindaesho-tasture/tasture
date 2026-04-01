@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns";
 import { th } from "date-fns/locale";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import LazyImage from "@/components/ui/lazy-image";
 import LiveQueueCard from "@/components/queue/LiveQueueCard";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
 import StoreDetailsTab from "@/components/store/StoreDetailsTab";
