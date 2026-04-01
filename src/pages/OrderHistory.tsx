@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/language-context";
+import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
-import { ClipboardList, ChevronRight, Store, LogIn, Star } from "lucide-react";
-import { motion } from "framer-motion";
+import { ClipboardList, ChevronRight, Store, LogIn, Star, RefreshCw, ShoppingBag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "@/hooks/use-toast";
 
 interface MenuItem {
   id: string;
