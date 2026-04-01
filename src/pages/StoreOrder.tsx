@@ -364,10 +364,13 @@ const StoreOrder = () => {
     const styleExtra = selectedNoodleStyle && optionsItem.noodle_style_prices
       ? (optionsItem.noodle_style_prices[selectedNoodleStyle] || 0)
       : 0;
+    const toppingExtra = selectedToppings.reduce((s, tp) => {
+      return s + (optionsItem.topping_prices?.[tp] || 0);
+    }, 0);
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
-      price: basePrice + addOnTotal + noodleExtra + styleExtra,
+      price: basePrice + addOnTotal + noodleExtra + styleExtra + toppingExtra,
       quantity: 1,
       type: optionsItem.type,
       selectedOptions: {
