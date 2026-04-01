@@ -346,6 +346,35 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
                 />
               </div>
 
+              {/* Cover Photo */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  🖼️ {isTh ? "รูปหน้าปกร้าน" : "Cover Photo"}
+                </label>
+                <input ref={coverFileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleCoverFileChange} />
+
+                {(coverPreviewUrl || coverPhoto) ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border/50">
+                    <img src={coverPreviewUrl || coverPhoto!} alt="Cover" className="w-full h-44 object-cover" />
+                    {uploadingCover && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 size={24} className="animate-spin text-white" />
+                      </div>
+                    )}
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => coverFileRef.current?.click()} disabled={uploadingCover}
+                      className="absolute bottom-2 right-2 px-3 py-1.5 rounded-lg bg-black/60 text-white text-[10px] font-semibold flex items-center gap-1">
+                      <Camera size={12} /> {isTh ? "เปลี่ยน" : "Change"}
+                    </motion.button>
+                  </div>
+                ) : (
+                  <motion.button whileTap={{ scale: 0.97 }} onClick={() => coverFileRef.current?.click()} disabled={uploadingCover}
+                    className="w-full py-8 rounded-xl border-2 border-dashed border-border/50 bg-secondary/50 flex flex-col items-center gap-2 text-muted-foreground hover:bg-secondary transition-colors">
+                    <ImageIcon size={24} />
+                    <span className="text-xs font-medium">{isTh ? "อัปโหลดรูปหน้าปก" : "Upload Cover Photo"}</span>
+                  </motion.button>
+                )}
+              </div>
+
               {/* Menu Photo */}
               <div>
                 <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
