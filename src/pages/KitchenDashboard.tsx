@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import PageTransition from "@/components/PageTransition";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 // Generate a notification beep using Web Audio API
 const playOrderBeep = () => {
