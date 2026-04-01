@@ -422,6 +422,32 @@ const OrderHistory = () => {
         )}
 
         <BottomNav />
+
+        {/* Confirmation dialog for reorder all */}
+        <AlertDialog open={!!confirmVisit} onOpenChange={(open) => !open && setConfirmVisit(null)}>
+          <AlertDialogContent className="max-w-[340px] rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-base">
+                <AlertTriangle size={18} className="text-amber-500" />
+                {language === "th" ? "มีเมนูในตะกร้าอยู่แล้ว" : "Cart is not empty"}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-xs">
+                {language === "th"
+                  ? `ตะกร้ามี ${cartItems.length} รายการอยู่แล้ว ต้องการเพิ่มเมนูจาก "${confirmVisit?.storeName}" เข้าไปด้วยหรือไม่?`
+                  : `Your cart has ${cartItems.length} item(s). Add items from "${confirmVisit?.storeName}"?`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel className="text-xs">{language === "th" ? "ยกเลิก" : "Cancel"}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => { if (confirmVisit) executeReorderAll(confirmVisit); setConfirmVisit(null); }}
+                className="bg-score-emerald hover:bg-score-emerald/90 text-xs"
+              >
+                {language === "th" ? "เพิ่มเลย" : "Add anyway"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageTransition>
   );
