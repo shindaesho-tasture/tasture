@@ -495,9 +495,22 @@ const StoreOrder = () => {
             })()}
             <div className="px-4 pt-4 space-y-2">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <div className="w-10 h-10 rounded-full border-2 border-score-emerald border-t-transparent animate-spin" />
-                  <span className="text-xs text-muted-foreground">{t("order.loadingMenu", language)}</span>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="rounded-2xl border border-border/40 bg-surface-elevated p-3">
+                      <div className="flex gap-3.5">
+                        <Skeleton className="w-[88px] h-[88px] rounded-xl flex-shrink-0" />
+                        <div className="flex-1 space-y-2 py-1">
+                          <Skeleton className="h-4 w-3/4 rounded" />
+                          <Skeleton className="h-3 w-16 rounded" />
+                          <div className="flex gap-1.5 mt-2">
+                            <Skeleton className="h-5 w-14 rounded-full" />
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : menuItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
