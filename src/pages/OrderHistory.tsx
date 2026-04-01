@@ -158,6 +158,7 @@ const OrderHistory = () => {
             name: mi.name,
             score: rev ? rev.score : null,
             hasReview: !!rev,
+            note: itemNoteMap.get(mi.id),
           };
         });
 
