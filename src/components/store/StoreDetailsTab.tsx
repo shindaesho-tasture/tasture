@@ -83,7 +83,17 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
 
   useEffect(() => {
     fetchReviews();
+    fetchStoreInfo();
   }, [storeId]);
+
+  const fetchStoreInfo = async () => {
+    const { data } = await supabase
+      .from("stores")
+      .select("description, opening_hours, phone, line_id, address")
+      .eq("id", storeId)
+      .single();
+    if (data) setStoreInfo(data as any);
+  };
 
   const fetchReviews = async () => {
     setLoading(true);
