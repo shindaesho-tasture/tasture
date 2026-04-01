@@ -739,6 +739,50 @@ export type Database = {
         }
         Relationships: []
       }
+      store_claims: {
+        Row: {
+          admin_note: string | null
+          claimant_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          reviewed_by: string | null
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          claimant_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reviewed_by?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          claimant_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reviewed_by?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_claims_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           category_id: string | null
