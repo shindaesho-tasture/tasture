@@ -705,6 +705,10 @@ const StoreOrder = () => {
               )}
             </div>
           </TabsContent>
+
+          <TabsContent value="details" className="mt-0">
+            {storeId && <StoreDetailsTab storeId={storeId} storeName={storeName} categoryId={storeCategoryId} />}
+          </TabsContent>
         </Tabs>
 
         {/* Options Popup */}
