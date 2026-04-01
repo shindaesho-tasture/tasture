@@ -37,6 +37,7 @@ import MerchantHub from "./pages/MerchantHub.tsx";
 import MyStores from "./pages/MyStores.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import QrRedirect from "./pages/QrRedirect.tsx";
+import GuestOrderTracker from "./pages/GuestOrderTracker.tsx";
 
 // Merchant sub-app
 import MerchantLogin from "./pages/merchant/MerchantLogin.tsx";
@@ -86,6 +87,7 @@ const AnimatedRoutes = () => {
         <Route path="/merchant/:storeId" element={<MerchantHub />} />
         <Route path="/my-stores" element={<MyStores />} />
         <Route path="/qr/:storeId/:tableNumber" element={<QrRedirect />} />
+        <Route path="/guest-orders" element={<GuestOrderTracker />} />
 
         {/* ── Merchant sub-app (/m/*) ── */}
         <Route path="/m/login" element={<MerchantLogin />} />
