@@ -1266,8 +1266,11 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
               {" "}{t("feed.at")}{" "}
               <button
                 onClick={() => navigate(`/store/${post.storeId}/order`)}
-                className="font-semibold text-score-emerald hover:underline"
+                className="inline-flex items-center gap-1 font-semibold text-score-emerald hover:underline align-middle"
               >
+                {post.storeLogo && (
+                  <img src={post.storeLogo} alt="" className="w-4 h-4 rounded-full object-cover inline-block" />
+                )}
                 {post.storeName}
                 {translateTag(post.storeName) !== post.storeName && (
                   <span className="font-normal text-muted-foreground ml-1 text-[10px]">({translateTag(post.storeName)})</span>
