@@ -136,7 +136,16 @@ const KitchenDashboard = () => {
     })();
   }, [storeId]);
 
-  // Real-time subscription
+  // Fetch pending waiter calls
+  useEffect(() => {
+    if (!storeId) return;
+    (async () => {
+      const { data } = await supabase.from("waiter_calls" as any).select("id, table_number, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true });
+      setWaiterCalls((data as any) || []);
+    })();
+  }, [storeId]);
+
+  // Real-time subscription (orders + waiter calls)
   useEffect(() => {
     if (!storeId) return;
     const channel = supabase
@@ -148,7 +157,6 @@ const KitchenDashboard = () => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as any as OrderRow;
             setOrders((prev) => [...prev, newOrder]);
-            // Sound + notification for new orders
             if (initialLoadDone.current && newOrder.status === "pending") {
               if (soundEnabled) playOrderBeep();
               sendBrowserNotification(newOrder.order_number, (newOrder.items || []).length);
@@ -164,10 +172,25 @@ const KitchenDashboard = () => {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "waiter_calls", filter: `store_id=eq.${storeId}` },
+        (payload) => {
+          const call = payload.new as any;
+          setWaiterCalls((prev) => [...prev, { id: call.id, table_number: call.table_number, created_at: call.created_at }]);
+          if (soundEnabled) playOrderBeep();
+          navigator.vibrate?.([200, 100, 200]);
+        }
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [storeId, soundEnabled]);
+
+  const acknowledgeWaiterCall = async (callId: string) => {
+    await supabase.from("waiter_calls" as any).update({ status: "acknowledged" } as any).eq("id", callId);
+    setWaiterCalls((prev) => prev.filter((c) => c.id !== callId));
+  };
 
   // Mark initial load done after first fetch
   useEffect(() => {
