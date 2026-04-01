@@ -623,11 +623,13 @@ const StoreOrder = () => {
                     >
                       {/* Post image */}
                       <div className="aspect-[4/3] overflow-hidden">
-                        <img
+                        <LazyImage
                           src={post.image_url}
                           alt={post.caption || t("order.customerPost", language)}
+                          transformWidth={400}
+                          quality={80}
                           className="w-full h-full object-cover"
-                          loading="lazy"
+                          containerClassName="w-full h-full"
                         />
                       </div>
 
