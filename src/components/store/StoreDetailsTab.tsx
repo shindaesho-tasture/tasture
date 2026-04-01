@@ -179,6 +179,22 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
         </div>
       ) : (
         <>
+          {/* Cover Photo */}
+          {storeInfo.cover_photo && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl overflow-hidden border border-border/40 -mx-0"
+            >
+              <img
+                src={storeInfo.cover_photo}
+                alt={`${storeName} cover`}
+                className="w-full h-48 object-cover"
+                loading="lazy"
+              />
+            </motion.div>
+          )}
+
           {/* Store Info */}
           {(storeInfo.description || storeInfo.opening_hours || storeInfo.phone || storeInfo.line_id || storeInfo.address) && (
             <motion.div
