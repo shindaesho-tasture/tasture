@@ -214,6 +214,38 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
             </div>
 
             <div className="px-5 pb-8 space-y-5">
+              {/* Store Logo */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  🏪 {isTh ? "โลโก้ร้าน" : "Store Logo"}
+                </label>
+                <input ref={logoFileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleLogoFileChange} />
+
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-border/50 bg-secondary shrink-0">
+                    {(logoPreviewUrl || logoUrl) ? (
+                      <>
+                        <img src={logoPreviewUrl || logoUrl!} alt="Logo" className="w-full h-full object-cover" />
+                        {uploadingLogo && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <Loader2 size={20} className="animate-spin text-white" />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground">
+                        {name.charAt(0).toUpperCase() || "?"}
+                      </div>
+                    )}
+                  </div>
+                  <motion.button whileTap={{ scale: 0.97 }} onClick={() => logoFileRef.current?.click()} disabled={uploadingLogo}
+                    className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 disabled:opacity-50">
+                    <Camera size={14} />
+                    {logoUrl ? (isTh ? "เปลี่ยนโลโก้" : "Change Logo") : (isTh ? "อัปโหลดโลโก้" : "Upload Logo")}
+                  </motion.button>
+                </div>
+              </div>
+
               {/* Store Name */}
               <div>
                 <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
