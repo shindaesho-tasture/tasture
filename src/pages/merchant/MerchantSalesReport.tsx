@@ -154,16 +154,23 @@ const MerchantSalesReport = () => {
                 {activeStore?.name || ""}
               </p>
             </div>
-            {/* Range toggle */}
-            <div className="flex bg-secondary rounded-lg p-0.5 gap-0.5">
-              {(["7d", "30d"] as const).map((r) => (
-                <button key={r} onClick={() => setRange(r)}
-                  className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
-                    range === r ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-                  }`}>
-                  {r === "7d" ? (isTh ? "7 วัน" : "7 Days") : (isTh ? "30 วัน" : "30 Days")}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              {/* Export */}
+              <motion.button whileTap={{ scale: 0.9 }} onClick={handleExportCSV} disabled={isPageLoading || !dayData.length}
+                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center disabled:opacity-40">
+                <Download size={15} className="text-muted-foreground" />
+              </motion.button>
+              {/* Range toggle */}
+              <div className="flex bg-secondary rounded-lg p-0.5 gap-0.5">
+                {(["7d", "30d"] as const).map((r) => (
+                  <button key={r} onClick={() => setRange(r)}
+                    className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
+                      range === r ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                    }`}>
+                    {r === "7d" ? (isTh ? "7 วัน" : "7 Days") : (isTh ? "30 วัน" : "30 Days")}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
