@@ -253,6 +253,16 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
                         src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyCMtKoObZNxS68VfSbMsbyP9KKruLU346w&q=${storeInfo.pin_lat},${storeInfo.pin_lng}&zoom=16`}
                       />
                     </div>
+                    <motion.a
+                      whileTap={{ scale: 0.97 }}
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${storeInfo.pin_lat},${storeInfo.pin_lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-colors"
+                    >
+                      <MapPin size={14} />
+                      {language === "th" ? "นำทางไปร้านนี้" : "Navigate to this store"}
+                    </motion.a>
                   </div>
                 )}
               </div>
