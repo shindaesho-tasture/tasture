@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe, Volume2, VolumeX, Bell } from "lucide-react";
+import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe, Volume2, VolumeX, Bell, BellRing } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import PageTransition from "@/components/PageTransition";
@@ -91,6 +91,7 @@ const KitchenDashboard = () => {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const alertTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [waiterCalls, setWaiterCalls] = useState<{ id: string; table_number: number; created_at: string }[]>([]);
 
   const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
 
@@ -135,7 +136,16 @@ const KitchenDashboard = () => {
     })();
   }, [storeId]);
 
-  // Real-time subscription
+  // Fetch pending waiter calls
+  useEffect(() => {
+    if (!storeId) return;
+    (async () => {
+      const { data } = await supabase.from("waiter_calls" as any).select("id, table_number, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true });
+      setWaiterCalls((data as any) || []);
+    })();
+  }, [storeId]);
+
+  // Real-time subscription (orders + waiter calls)
   useEffect(() => {
     if (!storeId) return;
     const channel = supabase
@@ -147,7 +157,6 @@ const KitchenDashboard = () => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as any as OrderRow;
             setOrders((prev) => [...prev, newOrder]);
-            // Sound + notification for new orders
             if (initialLoadDone.current && newOrder.status === "pending") {
               if (soundEnabled) playOrderBeep();
               sendBrowserNotification(newOrder.order_number, (newOrder.items || []).length);
@@ -163,10 +172,25 @@ const KitchenDashboard = () => {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "waiter_calls", filter: `store_id=eq.${storeId}` },
+        (payload) => {
+          const call = payload.new as any;
+          setWaiterCalls((prev) => [...prev, { id: call.id, table_number: call.table_number, created_at: call.created_at }]);
+          if (soundEnabled) playOrderBeep();
+          navigator.vibrate?.([200, 100, 200]);
+        }
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [storeId, soundEnabled]);
+
+  const acknowledgeWaiterCall = async (callId: string) => {
+    await supabase.from("waiter_calls" as any).update({ status: "acknowledged" } as any).eq("id", callId);
+    setWaiterCalls((prev) => prev.filter((c) => c.id !== callId));
+  };
 
   // Mark initial load done after first fetch
   useEffect(() => {
@@ -392,6 +416,38 @@ const KitchenDashboard = () => {
             ))}
           </div>
         </div>
+
+        {/* Waiter Calls */}
+        <AnimatePresence>
+          {waiterCalls.length > 0 && (
+            <div className="px-3 pt-3 space-y-2">
+              {waiterCalls.map((call) => (
+                <motion.div
+                  key={call.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="flex items-center justify-between px-4 py-3 rounded-2xl bg-amber-500/20 border-2 border-amber-500/40 animate-pulse"
+                >
+                  <div className="flex items-center gap-3">
+                    <BellRing size={20} className="text-amber-400" />
+                    <div>
+                      <p className="text-sm font-bold text-white">🪑 โต๊ะ {call.table_number} เรียกพนักงาน</p>
+                      <p className="text-[10px] text-zinc-400">{timeSince(call.created_at)}</p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => acknowledgeWaiterCall(call.id)}
+                    className="px-4 py-2 rounded-xl bg-amber-500 text-zinc-900 text-xs font-bold"
+                  >
+                    รับทราบ
+                  </motion.button>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Orders */}
         <div className="px-3 py-3 space-y-3">

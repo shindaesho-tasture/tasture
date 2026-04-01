@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle, Users } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Plus, Minus, X, Check, Heart, MessageCircle, Users, BellRing } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import KaraokeName from "@/components/KaraokeName";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +77,23 @@ const StoreOrder = () => {
 
   // Detail sheet state
   const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
+  const [callingWaiter, setCallingWaiter] = useState(false);
+  const [waiterCalled, setWaiterCalled] = useState(false);
+
+  const handleCallWaiter = useCallback(async () => {
+    if (!storeId || !tableNumber || callingWaiter) return;
+    setCallingWaiter(true);
+    if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+    try {
+      await supabase.from("waiter_calls" as any).insert({ store_id: storeId, table_number: tableNumber, guest_id: null });
+      setWaiterCalled(true);
+      setTimeout(() => setWaiterCalled(false), 30000); // cooldown 30s
+    } catch (e) {
+      console.error("Call waiter error:", e);
+    } finally {
+      setCallingWaiter(false);
+    }
+  }, [storeId, tableNumber, callingWaiter]);
 
   const {
     data: storeData,
@@ -430,6 +447,21 @@ const StoreOrder = () => {
                 </div>
               )}
             </div>
+            {tableNumber && (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={handleCallWaiter}
+                disabled={callingWaiter || waiterCalled}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                  waiterCalled
+                    ? "bg-score-emerald/20 text-score-emerald"
+                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400 active:bg-amber-500/30"
+                } disabled:opacity-60`}
+              >
+                <BellRing size={14} />
+                {waiterCalled ? "เรียกแล้ว ✓" : "เรียกพนักงาน"}
+              </motion.button>
+            )}
           </div>
         </div>
 

@@ -885,6 +885,41 @@ export type Database = {
         }
         Relationships: []
       }
+      waiter_calls: {
+        Row: {
+          created_at: string
+          guest_id: string | null
+          id: string
+          status: string
+          store_id: string
+          table_number: number
+        }
+        Insert: {
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+          status?: string
+          store_id: string
+          table_number: number
+        }
+        Update: {
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+          status?: string
+          store_id?: string
+          table_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waiter_calls_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
