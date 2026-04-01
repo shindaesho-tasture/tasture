@@ -33,10 +33,11 @@ const scoreEmoji = (s: number | null) =>
 const OrderHistory = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { addItem, setOrderStore } = useOrder();
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [reorderToast, setReorderToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
