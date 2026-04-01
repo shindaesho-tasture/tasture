@@ -24,6 +24,12 @@ interface Invite {
   created_at: string;
 }
 
+const SHAREABLE_APP_ORIGIN = window.location.hostname.includes("id-preview--")
+  ? "https://hello-heart-whispers-72.lovable.app"
+  : window.location.origin;
+
+const buildInviteUrl = (token: string) => `${SHAREABLE_APP_ORIGIN}/m/invite/${token}`;
+
 const ROLE_CONFIG = {
   owner: { icon: Shield, color: "text-yellow-500", labelTh: "เจ้าของ", labelEn: "Owner" },
   manager: { icon: Users, color: "text-blue-500", labelTh: "ผู้จัดการ", labelEn: "Manager" },
@@ -110,7 +116,7 @@ const StoreTeamManager = () => {
 
       setInvites((prev) => [data as Invite, ...prev]);
 
-      const inviteUrl = `${window.location.origin}/m/invite/${(data as any).token}`;
+      const inviteUrl = buildInviteUrl((data as any).token);
       await navigator.clipboard.writeText(inviteUrl);
       setCopiedToken((data as any).token);
       setTimeout(() => setCopiedToken(null), 3000);
@@ -141,7 +147,7 @@ const StoreTeamManager = () => {
   };
 
   const handleCopyInvite = async (token: string) => {
-    const url = `${window.location.origin}/m/invite/${token}`;
+    const url = buildInviteUrl(token);
     await navigator.clipboard.writeText(url);
     setCopiedToken(token);
     setTimeout(() => setCopiedToken(null), 3000);
