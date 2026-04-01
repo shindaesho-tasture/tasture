@@ -834,7 +834,12 @@ const StoreOrder = () => {
                                 : "bg-surface-elevated text-foreground border-border/50"
                             }`}
                           >
-                            {translateTag(ns)}
+                            <span className="flex flex-col items-start leading-tight">
+                              <span>{translateTag(ns)}</span>
+                              {language !== "th" && translateTag(ns) !== ns && (
+                                <span className="text-[8px] opacity-60">{ns}</span>
+                              )}
+                            </span>
                             {extraPrice > 0 && <span className="ml-1 opacity-80">(+฿{extraPrice})</span>}
                           </motion.button>
                           );
