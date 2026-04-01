@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag, MessageSquare, ChevronDown, Receipt } from "lucide-react";
+import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag, MessageSquare, ChevronDown, Receipt, Split } from "lucide-react";
 import { useOrder } from "@/lib/order-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
@@ -10,6 +10,7 @@ import { useGuestSession } from "@/hooks/use-guest-session";
 import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import { useState, useMemo, useEffect } from "react";
+import SplitBillSheet from "@/components/SplitBillSheet";
 import { useQuery } from "@tanstack/react-query";
 
 /* ── Category-specific quick tags ── */
@@ -50,6 +51,7 @@ const OrderSummary = () => {
   const [billRequested, setBillRequested] = useState(false);
   const [requestingBill, setRequestingBill] = useState(false);
   const [billPaid, setBillPaid] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
 
   // Fetch store category for context-aware quick tags
   const { data: storeCategory } = useQuery({
@@ -210,11 +212,18 @@ const OrderSummary = () => {
                 </p>
               </motion.div>
             ) : (
-              <motion.button whileTap={{ scale: 0.97 }} onClick={handleRequestBill} disabled={requestingBill}
-                className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 mt-2">
-                <Receipt size={18} />
-                {language === "th" ? "💰 เรียกเก็บเงิน" : "💰 Request Bill"}
-              </motion.button>
+              <div className="flex gap-2 w-full max-w-xs mt-2">
+                <motion.button whileTap={{ scale: 0.97 }} onClick={handleRequestBill} disabled={requestingBill}
+                  className="flex-1 px-4 py-3.5 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                  <Receipt size={16} />
+                  {language === "th" ? "เก็บเงิน" : "Bill"}
+                </motion.button>
+                <motion.button whileTap={{ scale: 0.97 }} onClick={() => setSplitOpen(true)}
+                  className="px-4 py-3.5 rounded-2xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center gap-2 border-2 border-primary/30">
+                  <Split size={16} />
+                  {language === "th" ? "แยกบิล" : "Split"}
+                </motion.button>
+              </div>
             )}
 
             <motion.button whileTap={{ scale: 0.97 }} onClick={handleReview}
@@ -226,6 +235,13 @@ const OrderSummary = () => {
               {t("orderSum.skipBtn", language)}
             </motion.button>
           </motion.div>
+
+          <SplitBillSheet
+            open={splitOpen}
+            onOpenChange={setSplitOpen}
+            items={items}
+            totalPrice={totalPrice}
+          />
         </div>
       </PageTransition>
     );
