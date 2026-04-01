@@ -27,6 +27,7 @@ import MetricRater from "@/components/MetricRater";
 import DishDnaCard from "@/components/menu/DishDnaCard";
 import SensorySliderCard from "@/components/menu/SensorySliderCard";
 import BalanceSpiderChart from "@/components/menu/BalanceSpiderChart";
+import { useGuestSession } from "@/hooks/use-guest-session";
 import type { DishComponent, DishDnaSelection } from "@/lib/dish-dna-types";
 import type { SensoryAxis } from "@/lib/sensory-types";
 
@@ -53,6 +54,7 @@ const PostOrderReview = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { items, storeId, storeName, clearOrder } = useOrder();
+  const { saveGuestReview, markReviewed, saveGuestOrder } = useGuestSession();
   const { t } = useLanguage();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -143,22 +145,24 @@ const PostOrderReview = () => {
 
   // Load store category + check previous reviews
   useEffect(() => {
-    if (!storeId || !user) return;
+    if (!storeId) return;
     (async () => {
       setLoading(true);
-      const [{ data: storeData }, { data: prevReviews }] = await Promise.all([
-        supabase.from("stores").select("category_id").eq("id", storeId).single(),
-        supabase.from("reviews").select("metric_id, score").eq("store_id", storeId).eq("user_id", user.id),
-      ]);
+      const { data: storeData } = await supabase.from("stores").select("category_id").eq("id", storeId).single();
       if (storeData?.category_id) {
         const cat = categories.find((c) => c.id === storeData.category_id);
         setCategory(cat || categories[0]);
       } else {
         setCategory(categories[0]);
       }
-      if (prevReviews && prevReviews.length > 0) {
-        setHasPreviousReview(true);
-        setPreviousReviewRows(prevReviews);
+      // Check previous reviews only if logged in
+      if (user) {
+        const { data: prevReviews } = await supabase
+          .from("reviews").select("metric_id, score").eq("store_id", storeId).eq("user_id", user.id);
+        if (prevReviews && prevReviews.length > 0) {
+          setHasPreviousReview(true);
+          setPreviousReviewRows(prevReviews);
+        }
       }
       setLoading(false);
     })();
@@ -365,8 +369,38 @@ const PostOrderReview = () => {
 
   // ─── Save All ───
   const handleSaveAll = async () => {
-    if (!user || !storeId) { navigate("/auth"); return; }
+    if (!storeId) return;
     setSaving(true);
+
+    // Guest mode: save to localStorage
+    if (!user) {
+      try {
+        // Save guest order
+        saveGuestOrder({
+          storeId,
+          storeName: storeName || "",
+          items: items.map((i) => ({ menuItemId: i.menuItemId, name: i.name, quantity: i.quantity, price: i.price })),
+          timestamp: Date.now(),
+        });
+        // Mark all items as reviewed
+        items.forEach((item) => {
+          const sel = dnaSelections[item.menuItemId] || {};
+          const dnaVals = Object.values(sel).map((s) => s.selected_score);
+          const score = dnaVals.length > 0 ? Math.round(dnaVals.reduce((a, b) => a + b, 0) / dnaVals.length) : 0;
+          saveGuestReview({ storeId, menuItemId: item.menuItemId, score, timestamp: Date.now() });
+          markReviewed(item.menuItemId);
+        });
+        toast({ title: t("por.saveSuccess") });
+      } catch (err: any) {
+        console.error("Guest save error:", err);
+        toast({ title: t("por.saveFailed"), variant: "destructive" });
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // Authenticated mode: save to database
     try {
       // Save store reviews
       if (storeReviewChoice === "same" && previousReviewRows.length > 0 && storeId) {
@@ -518,7 +552,7 @@ const PostOrderReview = () => {
     }
   };
 
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <PageTransition>
         <div className="min-h-screen bg-background flex items-center justify-center">

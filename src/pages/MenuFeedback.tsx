@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, Check, Loader2, Sparkles, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useGuestSession } from "@/hooks/use-guest-session";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-context";
 import PageTransition from "@/components/PageTransition";
@@ -71,6 +72,7 @@ const MenuFeedback = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
   const { user, loading: authLoading } = useAuth();
+  const { saveGuestReview, markReviewed, hasReviewed: guestHasReviewed } = useGuestSession();
   const [items, setItems] = useState<MenuItemWithAvg[]>([]);
   const [loading, setLoading] = useState(true);
   const [storeName, setStoreName] = useState("");
@@ -163,7 +165,20 @@ const MenuFeedback = () => {
   const progress = items.length > 0 ? (ratedCount / items.length) * 100 : 0;
 
   const handleSubmit = async () => {
-    if (!user) { navigate("/auth"); return; }
+    // Guest mode: save to localStorage
+    if (!user) {
+      items.forEach((item) => {
+        const score = userScores[item.id];
+        if (score !== null && score !== undefined && storeId) {
+          saveGuestReview({ storeId, menuItemId: item.id, score, timestamp: Date.now() });
+          markReviewed(item.id);
+        }
+      });
+      toast({ title: `✅ ${t("feedback.saved")}`, description: t("feedback.savedDesc", { count: ratedCount }) });
+      setSaving(false);
+      return;
+    }
+
     setSaving(true);
     try {
       const upsertRows: { menu_item_id: string; user_id: string; score: number }[] = [];
@@ -224,7 +239,10 @@ const MenuFeedback = () => {
   };
 
   const handleSameReview = async () => {
-    if (!user) { navigate("/auth"); return; }
+    if (!user) { 
+      toast({ title: `✅ ${t("feedback.saved")}` });
+      return;
+    }
     setSaving(true);
     try {
       const reRows = items
