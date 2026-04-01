@@ -331,17 +331,40 @@ const OrderHistory = () => {
                     <ChevronRight size={16} className="text-muted-foreground shrink-0" />
                   </button>
 
-                  {/* Menu items always visible */}
+                  {/* Menu items */}
                   <div className="border-t border-border/50">
                     {visit.items.map((item, idx) => (
                       <div key={item.id}>
-                        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/30 last:border-b-0">
+                        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/30 last:border-b-0">
                           <span className="text-[11px] font-bold text-muted-foreground/50 w-5 text-center shrink-0">
                             {idx + 1}
                           </span>
-                          <span className="text-[13px] text-foreground truncate flex-1">
+                          <span className="text-[13px] text-foreground truncate flex-1 min-w-0">
                             {item.name}
                           </span>
+                          {/* Reorder button */}
+                          <motion.button
+                            whileTap={{ scale: 0.85 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReorderItem(visit, item);
+                            }}
+                            className="shrink-0 p-1.5 rounded-lg bg-score-emerald/10 text-score-emerald hover:bg-score-emerald/20 transition-colors relative"
+                          >
+                            <RefreshCw size={12} />
+                            <AnimatePresence>
+                              {reorderToast === item.id && (
+                                <motion.span
+                                  initial={{ opacity: 0, y: 4, scale: 0.8 }}
+                                  animate={{ opacity: 1, y: -24, scale: 1 }}
+                                  exit={{ opacity: 0, y: -30 }}
+                                  className="absolute -top-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-score-emerald whitespace-nowrap"
+                                >
+                                  ✓ {language === "th" ? "เพิ่มแล้ว" : "Added"}
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                          </motion.button>
                           {item.hasReview ? (
                             <span className="text-base shrink-0">
                               {scoreEmoji(item.score)}
@@ -367,6 +390,20 @@ const OrderHistory = () => {
                       </div>
                     ))}
                   </div>
+
+                  {/* Reorder all button */}
+                  {visit.items.length > 1 && (
+                    <div className="px-4 py-2.5 border-t border-border/50">
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => handleReorderAll(visit)}
+                        className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-score-emerald/10 text-score-emerald text-[12px] font-semibold hover:bg-score-emerald/20 transition-colors"
+                      >
+                        <ShoppingBag size={14} />
+                        {language === "th" ? "สั่งซ้ำทั้งหมด" : "Reorder all"}
+                      </motion.button>
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
