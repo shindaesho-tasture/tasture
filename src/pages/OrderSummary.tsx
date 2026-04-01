@@ -47,6 +47,9 @@ const OrderSummary = () => {
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState("");
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [billRequested, setBillRequested] = useState(false);
+  const [requestingBill, setRequestingBill] = useState(false);
+  const [billPaid, setBillPaid] = useState(false);
 
   // Fetch store category for context-aware quick tags
   const { data: storeCategory } = useQuery({
