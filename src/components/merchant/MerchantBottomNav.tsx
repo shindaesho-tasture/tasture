@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { LayoutDashboard, ChefHat, UtensilsCrossed, Users, User } from "lucide-react";
+import { LayoutDashboard, ChefHat, UtensilsCrossed, BarChart3, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/lib/language-context";
 
@@ -7,7 +7,7 @@ const merchantNav = [
   { id: "dashboard", labelTh: "แดชบอร์ด", labelEn: "Dashboard", icon: LayoutDashboard, path: "/m" },
   { id: "kitchen", labelTh: "ครัว", labelEn: "Kitchen", icon: ChefHat, path: "/m/kitchen" },
   { id: "menu", labelTh: "เมนู", labelEn: "Menu", icon: UtensilsCrossed, path: "/m/menu" },
-  { id: "queue", labelTh: "คิว", labelEn: "Queue", icon: Users, path: "/m/queue" },
+  { id: "sales", labelTh: "ยอดขาย", labelEn: "Sales", icon: BarChart3, path: "/m/sales" },
   { id: "profile", labelTh: "โปรไฟล์", labelEn: "Profile", icon: User, path: "/m/profile" },
 ];
 
