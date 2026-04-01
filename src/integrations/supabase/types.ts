@@ -788,33 +788,48 @@ export type Database = {
       }
       stores: {
         Row: {
+          address: string | null
           category_id: string | null
           created_at: string
+          description: string | null
           id: string
+          line_id: string | null
           menu_photo: string | null
           name: string
+          opening_hours: string | null
+          phone: string | null
           pin_lat: number | null
           pin_lng: number | null
           user_id: string
           verified: boolean
         }
         Insert: {
+          address?: string | null
           category_id?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          line_id?: string | null
           menu_photo?: string | null
           name: string
+          opening_hours?: string | null
+          phone?: string | null
           pin_lat?: number | null
           pin_lng?: number | null
           user_id: string
           verified?: boolean
         }
         Update: {
+          address?: string | null
           category_id?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          line_id?: string | null
           menu_photo?: string | null
           name?: string
+          opening_hours?: string | null
+          phone?: string | null
           pin_lat?: number | null
           pin_lng?: number | null
           user_id?: string
