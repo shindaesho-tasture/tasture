@@ -202,6 +202,42 @@ const OrderHistory = () => {
     return `${date} · ${time}`;
   };
 
+  const handleReorderItem = (visit: VisitRecord, item: MenuItem) => {
+    setOrderStore(visit.storeId, visit.storeName);
+    addItem({
+      menuItemId: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1,
+      type: item.type,
+      note: item.note,
+    });
+    navigator.vibrate?.(10);
+    setReorderToast(item.id);
+    setTimeout(() => setReorderToast(null), 1500);
+  };
+
+  const handleReorderAll = (visit: VisitRecord) => {
+    setOrderStore(visit.storeId, visit.storeName);
+    visit.items.forEach((item) => {
+      addItem({
+        menuItemId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+        type: item.type,
+        note: item.note,
+      });
+    });
+    navigator.vibrate?.(15);
+    toast({
+      title: language === "th" ? "🛒 เพิ่มทั้งหมดแล้ว" : "🛒 All items added",
+      description: language === "th"
+        ? `${visit.items.length} รายการจาก ${visit.storeName}`
+        : `${visit.items.length} items from ${visit.storeName}`,
+    });
+  };
+
   if (authLoading || loading) {
     return (
       <PageTransition>
