@@ -229,6 +229,18 @@ const SplitBillSheet = ({ open, onOpenChange, items, totalPrice }: SplitBillShee
                     : `฿${totalPrice.toLocaleString()} ÷ ${numPeople} people`}
                 </p>
               </div>
+
+              {/* Share button */}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleShare()}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm"
+              >
+                {copied ? <CheckCircle size={16} /> : <Share2 size={16} />}
+                {copied
+                  ? (language === "th" ? "คัดลอกแล้ว!" : "Copied!")
+                  : (language === "th" ? "แชร์ให้เพื่อน" : "Share with friends")}
+              </motion.button>
             </motion.div>
           )}
 
