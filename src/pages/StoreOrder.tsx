@@ -126,6 +126,7 @@ const StoreOrder = () => {
         ...m,
         noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {},
         noodle_style_prices: (m.noodle_style_prices as Record<string, number>) || {},
+        topping_prices: (m.topping_prices as Record<string, number>) || {},
       })) as MenuItemRow[];
 
       // Fetch add-ons, DNA, reviews, photos in parallel
