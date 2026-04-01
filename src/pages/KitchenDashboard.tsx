@@ -67,8 +67,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   pending: { label: "รอรับ", color: "text-amber-700", bg: "bg-amber-100" },
   accepted: { label: "กำลังทำ", color: "text-blue-700", bg: "bg-blue-100" },
   served: { label: "เสิร์ฟแล้ว", color: "text-emerald-700", bg: "bg-emerald-100" },
+  rejected: { label: "ปฏิเสธ", color: "text-red-700", bg: "bg-red-100" },
 };
-
 const KitchenDashboard = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
