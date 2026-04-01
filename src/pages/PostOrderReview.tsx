@@ -54,6 +54,7 @@ const PostOrderReview = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { items, storeId, storeName, clearOrder } = useOrder();
+  const { saveGuestReview, markReviewed, saveGuestOrder } = useGuestSession();
   const { t } = useLanguage();
 
   const [currentStep, setCurrentStep] = useState(0);
