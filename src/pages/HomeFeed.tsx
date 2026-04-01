@@ -562,10 +562,12 @@ const HomeFeed = () => {
           allPosts.push({
             id: `photo-${pp.id}`, type: "photo_post",
             userId: pp.user_id, userName: profile?.name || t("feed.user"), userAvatar: profile?.avatar || null,
-            storeName: ppStoreId ? (storeMap.get(ppStoreId) || t("feed.store")) : "", storeId: ppStoreId,
+            storeName: ppStoreId ? (storeMap.get(ppStoreId)?.name || t("feed.store")) : "",
+            storeLogo: ppStoreId ? (storeMap.get(ppStoreId)?.logo || null) : null,
+            storeId: ppStoreId,
             menuItemName: "", menuItemId: "", menuItemImage: null, score: null, satisfaction: null,
             caption: pp.caption, photoUrl: pp.image_url,
-            slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }],
+            slides: [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeLogo: null, storeId: null }],
             createdAt: pp.created_at,
           });
         });
