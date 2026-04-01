@@ -212,11 +212,18 @@ const OrderSummary = () => {
                 </p>
               </motion.div>
             ) : (
-              <motion.button whileTap={{ scale: 0.97 }} onClick={handleRequestBill} disabled={requestingBill}
-                className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 mt-2">
-                <Receipt size={18} />
-                {language === "th" ? "💰 เรียกเก็บเงิน" : "💰 Request Bill"}
-              </motion.button>
+              <div className="flex gap-2 w-full max-w-xs mt-2">
+                <motion.button whileTap={{ scale: 0.97 }} onClick={handleRequestBill} disabled={requestingBill}
+                  className="flex-1 px-4 py-3.5 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                  <Receipt size={16} />
+                  {language === "th" ? "เก็บเงิน" : "Bill"}
+                </motion.button>
+                <motion.button whileTap={{ scale: 0.97 }} onClick={() => setSplitOpen(true)}
+                  className="px-4 py-3.5 rounded-2xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center gap-2 border-2 border-primary/30">
+                  <Split size={16} />
+                  {language === "th" ? "แยกบิล" : "Split"}
+                </motion.button>
+              </div>
             )}
 
             <motion.button whileTap={{ scale: 0.97 }} onClick={handleReview}
