@@ -1,10 +1,7 @@
 import { motion } from "framer-motion";
-import { Home, Compass, PlusCircle, ClipboardList, User, Store } from "lucide-react";
+import { Home, Compass, PlusCircle, ClipboardList, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/lib/language-context";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 const BottomNav = () => {
   const navigate = useNavigate();
