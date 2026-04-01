@@ -27,12 +27,14 @@ import MetricRater from "@/components/MetricRater";
 import DishDnaCard from "@/components/menu/DishDnaCard";
 import SensorySliderCard from "@/components/menu/SensorySliderCard";
 import BalanceSpiderChart from "@/components/menu/BalanceSpiderChart";
+import TextureStageSlider, { type TextureStageValues } from "@/components/menu/TextureStageSlider";
+import RewardCoupon from "@/components/menu/RewardCoupon";
 import { useGuestSession } from "@/hooks/use-guest-session";
 import type { DishComponent, DishDnaSelection } from "@/lib/dish-dna-types";
 import type { SensoryAxis } from "@/lib/sensory-types";
 
 /* ─── Step Types ─── */
-type StepType = "store-review" | "dish-dna" | "sensory" | "results";
+type StepType = "store-review" | "dish-dna" | "sensory" | "texture" | "results";
 
 interface Step {
   type: StepType;
@@ -91,6 +93,10 @@ const PostOrderReview = () => {
 
   const [saving, setSaving] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(true);
+  const [showRewardCoupon, setShowRewardCoupon] = useState(false);
+
+  // Texture 3-stage state per menu item
+  const [textureStages, setTextureStages] = useState<Record<string, TextureStageValues>>({});
 
   // Collect all translatable texts from DNA components + sensory axes
   const allTranslatableTexts = useMemo(() => {
@@ -126,6 +132,9 @@ const PostOrderReview = () => {
     });
     items.forEach((item) => {
       s.push({ type: "sensory", label: item.name, icon: "🎯", menuItemId: item.menuItemId, menuItemName: item.name });
+    });
+    items.forEach((item) => {
+      s.push({ type: "texture", label: item.name, icon: "🦷", menuItemId: item.menuItemId, menuItemName: item.name });
     });
     s.push({ type: "results", label: t("por.summary"), icon: "🏆" });
     return s;
@@ -575,7 +584,7 @@ const PostOrderReview = () => {
             </motion.button>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
-                {step?.icon} {step?.type === "store-review" ? t("por.headerStoreReview") : step?.type === "dish-dna" ? t("por.headerDna", { name: step.menuItemName || "" }) : step?.type === "sensory" ? t("por.headerSensory", { name: step.menuItemName || "" }) : t("por.headerResults")}
+                {step?.icon} {step?.type === "store-review" ? t("por.headerStoreReview") : step?.type === "dish-dna" ? t("por.headerDna", { name: step.menuItemName || "" }) : step?.type === "sensory" ? t("por.headerSensory", { name: step.menuItemName || "" }) : step?.type === "texture" ? `Texture · ${step.menuItemName || ""}` : t("por.headerResults")}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
                 {storeName} · {currentStep + 1}/{totalSteps}
@@ -1014,6 +1023,25 @@ const PostOrderReview = () => {
               </div>
             )}
 
+            {/* Texture 3-Stage */}
+            {step?.type === "texture" && step.menuItemId && (
+              <div className="px-4 pt-4 space-y-4">
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-score-emerald/5 border border-score-emerald/10">
+                  <span className="text-lg mt-0.5">🦷</span>
+                  <div>
+                    <p className="text-[11px] font-medium text-foreground">Texture Timeline</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">ให้คะแนนความรู้สึกเนื้อสัมผัส 3 ช่วง</p>
+                  </div>
+                </div>
+                <TextureStageSlider
+                  dishName={step.menuItemName || ""}
+                  values={textureStages[step.menuItemId] || { initial: 0, mastication: 0, residual: 0 }}
+                  onChange={(vals) => setTextureStages((prev) => ({ ...prev, [step.menuItemId!]: vals }))}
+                  translateTag={translateTag}
+                />
+              </div>
+            )}
+
             {/* Results */}
             {step?.type === "results" && results && (
               <div className="px-4 pt-4 space-y-4">
@@ -1140,6 +1168,21 @@ const PostOrderReview = () => {
                       />
                     </div>
                   </button>
+                </motion.div>
+
+                {/* Reward Coupon */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <RewardCoupon
+                    dishName={items[0]?.name || storeName || ""}
+                    onStaffConfirm={() => {
+                      setShowRewardCoupon(true);
+                      if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+                    }}
+                  />
                 </motion.div>
               </div>
             )}
