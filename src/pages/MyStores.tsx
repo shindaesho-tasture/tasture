@@ -303,6 +303,13 @@ const MyStores = () => {
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/kitchen/${store.id}`)}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[11px] font-medium uppercase tracking-wider hover:bg-emerald-200 dark:hover:bg-emerald-900/30 transition-colors"
+                      >
+                        <ChefHat size={14} strokeWidth={1.5} />
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => navigate(`/menu-manager/${store.id}`)}
                         className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary/10 text-primary text-[11px] font-medium uppercase tracking-wider hover:bg-primary/20 transition-colors"
                       >
