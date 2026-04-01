@@ -13,6 +13,8 @@ import { toast } from "@/hooks/use-toast";
 interface MenuItem {
   id: string;
   name: string;
+  price: number;
+  type: string;
   score: number | null;
   hasReview: boolean;
   note?: string;
