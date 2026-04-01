@@ -879,7 +879,6 @@ const StoreOrder = () => {
                                 )}
                               </span>
                             </motion.button>
-                            </motion.button>
                           );
                         })}
                       </div>
