@@ -1164,7 +1164,8 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           className="w-10 h-10 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/30 cursor-pointer active:scale-95 transition-transform"
         >
           {post.userAvatar ? (
-            <img src={post.userAvatar} alt="" className="w-full h-full object-cover" />
+            <LazyImage src={post.userAvatar} alt="" className="w-full h-full object-cover" transformWidth={80} quality={80}
+              fallback={<div className="w-full h-full flex items-center justify-center text-sm">{post.userName.charAt(0)}</div>} />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-sm">
               {post.userName.charAt(0)}
