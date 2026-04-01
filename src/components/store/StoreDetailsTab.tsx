@@ -91,7 +91,7 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
   const fetchStoreInfo = async () => {
     const { data } = await supabase
       .from("stores")
-      .select("description, opening_hours, phone, line_id, address")
+      .select("description, opening_hours, phone, line_id, address, pin_lat, pin_lng")
       .eq("id", storeId)
       .single();
     if (data) setStoreInfo(data as any);
