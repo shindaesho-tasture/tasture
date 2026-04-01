@@ -136,19 +136,18 @@ const StoreOrder = () => {
       if (menuData.length > 0) {
         const menuIds = menuData.map((m) => m.id);
 
-        const fetches: Promise<any>[] = [
+        const baseFetches = [
           supabase.from("menu_addons").select("id, menu_item_id, name, price, category").in("menu_item_id", menuIds).order("category").order("sort_order"),
           supabase.from("dish_dna").select("menu_item_id, component_icon, component_name, selected_tag, selected_score").in("menu_item_id", menuIds),
           supabase.from("menu_reviews").select("id, menu_item_id").in("menu_item_id", menuIds),
-        ];
-        // Fetch translations if not Thai
-        if (language !== "th") {
-          fetches.push(
-            supabase.from("menu_translations").select("menu_item_id, name, description").eq("language", language).in("menu_item_id", menuIds)
-          );
-        }
+        ] as const;
 
-        const [addOnsRes, dnaRes, menuRevRes, transRes] = await Promise.all(fetches);
+        const transFetch = language !== "th"
+          ? supabase.from("menu_translations").select("menu_item_id, name, description").eq("language", language).in("menu_item_id", menuIds)
+          : null;
+
+        const [addOnsRes, dnaRes, menuRevRes] = await Promise.all(baseFetches);
+        const transRes = transFetch ? await transFetch : null;
 
         // Add-ons
         (addOnsRes.data || []).forEach((a: any) => {
