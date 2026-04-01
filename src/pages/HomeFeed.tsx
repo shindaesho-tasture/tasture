@@ -14,6 +14,7 @@ import BottomNav from "@/components/BottomNav";
 import HomeFeedTabs, { type FeedTab } from "@/components/HomeFeedTabs";
 import { useGeolocation, haversineKm } from "@/hooks/use-geolocation";
 import { Skeleton } from "@/components/ui/skeleton";
+import LazyImage from "@/components/ui/lazy-image";
 import FeedRadarChart, { type SatisfactionAxes } from "@/components/FeedRadarChart";
 import SuggestedUsers from "@/components/SuggestedUsers";
 /* ─── Types ─── */
@@ -1163,7 +1164,8 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
           className="w-10 h-10 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/30 cursor-pointer active:scale-95 transition-transform"
         >
           {post.userAvatar ? (
-            <img src={post.userAvatar} alt="" className="w-full h-full object-cover" />
+            <LazyImage src={post.userAvatar} alt="" className="w-full h-full object-cover" transformWidth={80} quality={80}
+              fallback={<div className="w-full h-full flex items-center justify-center text-sm">{post.userName.charAt(0)}</div>} />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-sm">
               {post.userName.charAt(0)}
@@ -1428,11 +1430,12 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
             className="relative rounded-xl overflow-hidden cursor-pointer aspect-[16/10] select-none"
             onClick={handleDoubleTap}
           >
-            <img
+            <LazyImage
               src={post.menuItemImage}
               alt={post.menuItemName}
               className="w-full h-full object-cover"
-              loading="lazy"
+              transformWidth={400}
+              quality={80}
               draggable={false}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
@@ -1626,7 +1629,8 @@ const PostCard = ({ post, index, navigate, user, isNew, initialLikeCount, initia
                     >
                       <div className="w-7 h-7 rounded-full bg-secondary overflow-hidden shrink-0">
                         {c.userAvatar ? (
-                          <img src={c.userAvatar} alt="" className="w-full h-full object-cover" />
+                          <LazyImage src={c.userAvatar} alt="" className="w-full h-full object-cover" transformWidth={56} quality={75}
+                            fallback={<div className="w-full h-full flex items-center justify-center text-[9px]">{c.userName.charAt(0)}</div>} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[9px]">
                             {c.userName.charAt(0)}

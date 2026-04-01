@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, UserCheck, Sparkles } from "lucide-react";
+import LazyImage from "@/components/ui/lazy-image";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -190,7 +191,8 @@ const SuggestedUsers = ({ userId, followingIds, onFollowChange }: SuggestedUsers
                 className="w-12 h-12 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-border/20 cursor-pointer active:scale-95 transition-transform"
               >
                 {u.avatar_url ? (
-                  <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                  <LazyImage src={u.avatar_url} alt="" className="w-full h-full object-cover" transformWidth={96} quality={80}
+                    fallback={<div className="w-full h-full flex items-center justify-center text-base font-semibold text-muted-foreground">{(u.display_name || "?").charAt(0)}</div>} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-base font-semibold text-muted-foreground">
                     {(u.display_name || "?").charAt(0)}
