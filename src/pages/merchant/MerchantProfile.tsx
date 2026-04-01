@@ -172,6 +172,11 @@ const MerchantProfile = () => {
                       <p className="text-[10px] text-muted-foreground">
                         {isTh ? cat?.labelTh : cat?.label ?? "Store"}
                         {s.verified && <span className="ml-1 text-score-emerald">✓</span>}
+                        {s.role !== "owner" && (
+                          <span className="ml-1 text-primary">
+                            ({s.role === "manager" ? (isTh ? "ผู้จัดการ" : "Manager") : (isTh ? "พนักงาน" : "Staff")})
+                          </span>
+                        )}
                       </p>
                     </div>
                     {isActive && (
