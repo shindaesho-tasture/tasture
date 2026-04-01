@@ -544,6 +544,24 @@ const PostOrderReview = () => {
     }
   };
 
+  // Skip current menu item entirely (both DNA + sensory steps)
+  const goSkipItem = () => {
+    if (!step?.menuItemId) return;
+    haptic();
+    setDirection(1);
+    const itemId = step.menuItemId;
+    // Find the next step that either belongs to a different item or is "results"
+    let target = currentStep + 1;
+    while (target < totalSteps) {
+      const s = steps[target];
+      if (s.menuItemId !== itemId) break;
+      target++;
+    }
+    if (target >= totalSteps) target = totalSteps - 1;
+    if (steps[target].type === "results") handleSaveAll();
+    setCurrentStep(target);
+  };
+
   const goBack = () => {
     haptic();
     if (currentStep > 0) {
