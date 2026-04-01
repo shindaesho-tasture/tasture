@@ -23,6 +23,26 @@ const MerchantQrCodes = () => {
   const getQrImageUrl = (text: string, size = 200) =>
     `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&margin=8`;
 
+  const downloadSingleQr = useCallback(async (table: number) => {
+    if (!activeStore) return;
+    const qrData = getQrUrl(activeStore.id, table);
+    const qrSrc = getQrImageUrl(qrData, 400);
+    try {
+      const res = await fetch(qrSrc);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${activeStore.name}_table_${table}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(qrSrc, "_blank");
+    }
+  }, [activeStore]);
+
   const handlePrint = () => {
     if (printRef.current) {
       const w = window.open("", "_blank");
