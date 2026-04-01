@@ -31,7 +31,7 @@ const MerchantLogin = () => {
           .select("id", { count: "exact", head: true })
           .eq("user_id", session.user.id);
         if ((count ?? 0) > 0) {
-          navigate("/m", { replace: true });
+          navigate(redirectTo || "/m", { replace: true });
           return;
         }
       }
