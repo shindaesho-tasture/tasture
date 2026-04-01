@@ -7,6 +7,7 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "nav.discover": { th: "ค้นหา", en: "Discover", ja: "発見", zh: "发现", ko: "탐색" },
   "nav.post": { th: "โพส", en: "Post", ja: "投稿", zh: "发布", ko: "포스트" },
   "nav.orders": { th: "รายการ", en: "Orders", ja: "注文", zh: "订单", ko: "주문" },
+  "nav.myStore": { th: "ร้านฉัน", en: "My Store", ja: "マイ店", zh: "我的店", ko: "내 가게" },
   "nav.profile": { th: "โปรไฟล์", en: "Profile", ja: "プロフ", zh: "我的", ko: "프로필" },
 
   // ─── Menu Feedback ───
