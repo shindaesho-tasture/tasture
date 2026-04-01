@@ -206,6 +206,13 @@ const MerchantProfile = () => {
           </div>
         </div>
 
+        {/* Team Management */}
+        {activeStore && (
+          <div className="px-4 mb-5">
+            <StoreTeamManager />
+          </div>
+        )}
+
         {/* Logout */}
         <div className="px-4 pt-2">
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleLogout}
