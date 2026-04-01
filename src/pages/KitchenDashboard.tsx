@@ -186,7 +186,79 @@ const KitchenDashboard = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-zinc-950 text-white">
-        {/* Header */}
+        {/* Full-screen new order alert */}
+        <AnimatePresence>
+          {newOrderAlert && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+              onClick={dismissAlert}
+            >
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                className="mx-6 w-full max-w-sm rounded-3xl bg-zinc-900 border-2 border-amber-500 shadow-[0_0_60px_rgba(245,158,11,0.3)] overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Pulsing header */}
+                <div className="bg-amber-500 px-6 py-5 text-center animate-pulse">
+                  <span className="text-5xl">🔔</span>
+                  <h2 className="text-3xl font-black text-zinc-900 mt-2">ออเดอร์ใหม่!</h2>
+                </div>
+
+                {/* Order info */}
+                <div className="px-6 py-5 text-center space-y-3">
+                  <p className="text-6xl font-black text-white">#{newOrderAlert.order_number}</p>
+                  <p className="text-xl text-zinc-400">
+                    {(newOrderAlert.items || []).length} รายการ · ฿{Number(newOrderAlert.total_price).toLocaleString()}
+                  </p>
+                  {/* Item names */}
+                  <div className="space-y-1 pt-2">
+                    {(newOrderAlert.items || []).slice(0, 5).map((item: any, i: number) => (
+                      <p key={i} className="text-lg font-bold text-white">
+                        {item.name} × {item.quantity}
+                      </p>
+                    ))}
+                    {(newOrderAlert.items || []).length > 5 && (
+                      <p className="text-sm text-zinc-500">+{(newOrderAlert.items || []).length - 5} รายการ</p>
+                    )}
+                  </div>
+                  {newOrderAlert.notes && (
+                    <div className="mt-3 px-3 py-2 rounded-xl bg-teal-900/40 border border-teal-700/50">
+                      <p className="text-base font-bold text-teal-300">📝 {newOrderAlert.notes}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action buttons */}
+                <div className="px-6 pb-6 flex gap-3">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      updateStatus(newOrderAlert.id, "accepted");
+                      dismissAlert();
+                    }}
+                    className="flex-1 py-4 rounded-2xl bg-amber-500 text-zinc-900 text-xl font-black shadow-lg"
+                  >
+                    ✅ รับออเดอร์
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={dismissAlert}
+                    className="px-5 py-4 rounded-2xl bg-zinc-800 text-zinc-400 text-sm font-medium"
+                  >
+                    ปิด
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="sticky top-0 z-20 bg-zinc-900 border-b border-zinc-800">
           <div className="flex items-center gap-3 px-4 py-3">
             <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-xl hover:bg-zinc-800 transition-colors">
