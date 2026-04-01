@@ -10,6 +10,7 @@ import { useGuestSession } from "@/hooks/use-guest-session";
 import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import { useState, useMemo, useEffect } from "react";
+import SplitBillSheet from "@/components/SplitBillSheet";
 import { useQuery } from "@tanstack/react-query";
 
 /* ── Category-specific quick tags ── */
