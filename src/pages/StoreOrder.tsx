@@ -462,9 +462,6 @@ const StoreOrder = () => {
                 {waiterCalled ? "เรียกแล้ว ✓" : "เรียกพนักงาน"}
               </motion.button>
             )}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
