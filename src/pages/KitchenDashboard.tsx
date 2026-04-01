@@ -146,10 +146,32 @@ const KitchenDashboard = () => {
     (async () => {
       const [waiterRes, billRes] = await Promise.all([
         supabase.from("waiter_calls" as any).select("id, table_number, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
-        supabase.from("bill_requests" as any).select("id, table_number, total_amount, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
+        supabase.from("bill_requests" as any).select("id, table_number, total_amount, order_ids, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
       ]);
       setWaiterCalls((waiterRes.data as any) || []);
-      setBillRequests((billRes.data as any) || []);
+      const bills = ((billRes.data as any) || []).map((b: any) => ({ ...b, order_ids: Array.isArray(b.order_ids) ? b.order_ids : [] }));
+      setBillRequests(bills);
+      // Fetch order items for all bills
+      const allOrderIds = bills.flatMap((b: any) => b.order_ids);
+      if (allOrderIds.length > 0) {
+        const { data: ordersData } = await supabase.from("orders").select("id, items").in("id", allOrderIds);
+        const itemsMap = new Map<string, { name: string; qty: number }[]>();
+        bills.forEach((bill: any) => {
+          const items: { name: string; qty: number }[] = [];
+          bill.order_ids.forEach((oid: string) => {
+            const order = (ordersData || []).find((o: any) => o.id === oid);
+            if (order?.items && Array.isArray(order.items)) {
+              (order.items as any[]).forEach((item: any) => {
+                const existing = items.find((i) => i.name === item.name);
+                if (existing) existing.qty += (item.quantity || 1);
+                else items.push({ name: item.name, qty: item.quantity || 1 });
+              });
+            }
+          });
+          itemsMap.set(bill.id, items);
+        });
+        setBillOrderItems(itemsMap);
+      }
     })();
   }, [storeId]);
 
