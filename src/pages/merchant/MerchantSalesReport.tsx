@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { TrendingUp, CalendarDays, ShoppingBag, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, CalendarDays, ShoppingBag, ArrowUpRight, ArrowDownRight, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useMerchant } from "@/lib/merchant-context";
@@ -123,6 +123,21 @@ const MerchantSalesReport = () => {
     return { totalRevenue, totalOrders, avg, trendUp };
   }, [dayData]);
 
+  const handleExportCSV = () => {
+    if (!dayData.length) return;
+    const header = isTh ? "วันที่,รายได้ (฿),จำนวนออเดอร์" : "Date,Revenue (฿),Orders";
+    const rows = dayData.map((d) => `${d.date},${d.revenue},${d.orders}`);
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sales-${activeStore?.name || "report"}-${range}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (navigator.vibrate) navigator.vibrate(8);
+  };
+
   const isPageLoading = authLoading || storesLoading || loading;
 
   return (
@@ -139,16 +154,23 @@ const MerchantSalesReport = () => {
                 {activeStore?.name || ""}
               </p>
             </div>
-            {/* Range toggle */}
-            <div className="flex bg-secondary rounded-lg p-0.5 gap-0.5">
-              {(["7d", "30d"] as const).map((r) => (
-                <button key={r} onClick={() => setRange(r)}
-                  className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
-                    range === r ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-                  }`}>
-                  {r === "7d" ? (isTh ? "7 วัน" : "7 Days") : (isTh ? "30 วัน" : "30 Days")}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              {/* Export */}
+              <motion.button whileTap={{ scale: 0.9 }} onClick={handleExportCSV} disabled={isPageLoading || !dayData.length}
+                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center disabled:opacity-40">
+                <Download size={15} className="text-muted-foreground" />
+              </motion.button>
+              {/* Range toggle */}
+              <div className="flex bg-secondary rounded-lg p-0.5 gap-0.5">
+                {(["7d", "30d"] as const).map((r) => (
+                  <button key={r} onClick={() => setRange(r)}
+                    className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
+                      range === r ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                    }`}>
+                    {r === "7d" ? (isTh ? "7 วัน" : "7 Days") : (isTh ? "30 วัน" : "30 Days")}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
