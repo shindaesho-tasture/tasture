@@ -110,6 +110,16 @@ const OrderSummary = () => {
       } as any);
       if (error) throw error;
       setConfirmed(true);
+      // Send push notification to merchant
+      supabase.functions.invoke("send-push", {
+        body: {
+          store_id: storeId,
+          title: `🔔 ออเดอร์ใหม่${tableNumber ? ` โต๊ะ ${tableNumber}` : ""}`,
+          body: `${orderItems.length} รายการ · ฿${totalPrice.toLocaleString()}`,
+          url: `/kitchen/${storeId}`,
+          tag: `new-order-${Date.now()}`,
+        },
+      }).catch(() => {});
     } catch (err: any) {
       console.error("Order submit error:", err);
       toast({ title: "ส่งออเดอร์ไม่สำเร็จ", description: err.message, variant: "destructive" });
