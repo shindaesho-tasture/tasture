@@ -15,8 +15,28 @@ const MerchantLogin = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
+
+  // Auto-redirect if already logged in with stores
+  useEffect(() => {
+    const check = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { count } = await supabase
+          .from("stores")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", session.user.id);
+        if ((count ?? 0) > 0) {
+          navigate("/m", { replace: true });
+          return;
+        }
+      }
+      setChecking(false);
+    };
+    check();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
