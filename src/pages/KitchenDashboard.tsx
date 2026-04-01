@@ -155,16 +155,16 @@ const KitchenDashboard = () => {
       const allOrderIds = bills.flatMap((b: any) => b.order_ids);
       if (allOrderIds.length > 0) {
         const { data: ordersData } = await supabase.from("orders").select("id, items").in("id", allOrderIds);
-        const itemsMap = new Map<string, { name: string; qty: number }[]>();
+        const itemsMap = new Map<string, { name: string; qty: number; price: number }[]>();
         bills.forEach((bill: any) => {
-          const items: { name: string; qty: number }[] = [];
+          const items: { name: string; qty: number; price: number }[] = [];
           bill.order_ids.forEach((oid: string) => {
             const order = (ordersData || []).find((o: any) => o.id === oid);
             if (order?.items && Array.isArray(order.items)) {
               (order.items as any[]).forEach((item: any) => {
-                const existing = items.find((i) => i.name === item.name);
+                const existing = items.find((i) => i.name === item.name && i.price === (item.price || 0));
                 if (existing) existing.qty += (item.quantity || 1);
-                else items.push({ name: item.name, qty: item.quantity || 1 });
+                else items.push({ name: item.name, qty: item.quantity || 1, price: item.price || 0 });
               });
             }
           });
