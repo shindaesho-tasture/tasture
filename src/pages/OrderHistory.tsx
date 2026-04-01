@@ -291,38 +291,37 @@ const OrderHistory = () => {
                   {/* Menu items always visible */}
                   <div className="border-t border-border/50">
                     {visit.items.map((item, idx) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-3 px-4 py-2.5 border-b border-border/30 last:border-b-0"
-                      >
-                        <span className="text-[11px] font-bold text-muted-foreground/50 w-5 text-center shrink-0">
-                          {idx + 1}
-                        </span>
-                        <span className="text-[13px] text-foreground truncate flex-1">
-                          {item.name}
-                        </span>
-                         {item.hasReview ? (
-                          <span className="text-base shrink-0">
-                            {scoreEmoji(item.score)}
+                      <div key={item.id}>
+                        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/30 last:border-b-0">
+                          <span className="text-[11px] font-bold text-muted-foreground/50 w-5 text-center shrink-0">
+                            {idx + 1}
                           </span>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/menu-feedback/${visit.storeId}`);
-                            }}
-                            className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
-                          >
-                             <Star size={12} />
-                             {t("history.rate")}
-                          </button>
+                          <span className="text-[13px] text-foreground truncate flex-1">
+                            {item.name}
+                          </span>
+                          {item.hasReview ? (
+                            <span className="text-base shrink-0">
+                              {scoreEmoji(item.score)}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/menu-feedback/${visit.storeId}`);
+                              }}
+                              className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
+                            >
+                              <Star size={12} />
+                              {t("history.rate")}
+                            </button>
+                          )}
+                        </div>
+                        {item.note && (
+                          <div className="ml-9 mr-4 mb-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                            <span className="text-[11px] text-amber-700 dark:text-amber-400">📝 {item.note}</span>
+                          </div>
                         )}
                       </div>
-                      {item.note && (
-                        <div className="ml-9 mr-4 -mt-1 mb-2 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                          <span className="text-[11px] text-amber-700 dark:text-amber-400">📝 {item.note}</span>
-                        </div>
-                      )}
                     ))}
                   </div>
                 </motion.div>
