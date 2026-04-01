@@ -3,14 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/language-context";
+import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
-import { ClipboardList, ChevronRight, Store, LogIn, Star } from "lucide-react";
-import { motion } from "framer-motion";
+import { ClipboardList, ChevronRight, Store, LogIn, Star, RefreshCw, ShoppingBag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "@/hooks/use-toast";
 
 interface MenuItem {
   id: string;
   name: string;
+  price: number;
+  type: string;
   score: number | null;
   hasReview: boolean;
   note?: string;
@@ -29,10 +33,11 @@ const scoreEmoji = (s: number | null) =>
 const OrderHistory = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { addItem, setOrderStore } = useOrder();
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [reorderToast, setReorderToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -94,11 +99,11 @@ const OrderHistory = () => {
       }
 
       // 4. Get menu item info for ordered items only
-      let allItems: { id: string; name: string; store_id: string }[] = [];
+      let allItems: { id: string; name: string; store_id: string; price: number; type: string }[] = [];
       if (orderedItemIds.length > 0) {
         const { data: items } = await supabase
           .from("menu_items")
-          .select("id, name, store_id")
+          .select("id, name, store_id, price, type")
           .in("id", orderedItemIds);
         if (items) allItems = items;
       }
@@ -156,6 +161,8 @@ const OrderHistory = () => {
           return {
             id: mi.id,
             name: mi.name,
+            price: Number(mi.price) || 0,
+            type: mi.type || "standard",
             score: rev ? rev.score : null,
             hasReview: !!rev,
             note: itemNoteMap.get(mi.id),
@@ -193,6 +200,42 @@ const OrderHistory = () => {
       minute: "2-digit",
     });
     return `${date} · ${time}`;
+  };
+
+  const handleReorderItem = (visit: VisitRecord, item: MenuItem) => {
+    setOrderStore(visit.storeId, visit.storeName);
+    addItem({
+      menuItemId: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1,
+      type: item.type,
+      note: item.note,
+    });
+    navigator.vibrate?.(10);
+    setReorderToast(item.id);
+    setTimeout(() => setReorderToast(null), 1500);
+  };
+
+  const handleReorderAll = (visit: VisitRecord) => {
+    setOrderStore(visit.storeId, visit.storeName);
+    visit.items.forEach((item) => {
+      addItem({
+        menuItemId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+        type: item.type,
+        note: item.note,
+      });
+    });
+    navigator.vibrate?.(15);
+    toast({
+      title: language === "th" ? "🛒 เพิ่มทั้งหมดแล้ว" : "🛒 All items added",
+      description: language === "th"
+        ? `${visit.items.length} รายการจาก ${visit.storeName}`
+        : `${visit.items.length} items from ${visit.storeName}`,
+    });
   };
 
   if (authLoading || loading) {
@@ -288,17 +331,40 @@ const OrderHistory = () => {
                     <ChevronRight size={16} className="text-muted-foreground shrink-0" />
                   </button>
 
-                  {/* Menu items always visible */}
+                  {/* Menu items */}
                   <div className="border-t border-border/50">
                     {visit.items.map((item, idx) => (
                       <div key={item.id}>
-                        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/30 last:border-b-0">
+                        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/30 last:border-b-0">
                           <span className="text-[11px] font-bold text-muted-foreground/50 w-5 text-center shrink-0">
                             {idx + 1}
                           </span>
-                          <span className="text-[13px] text-foreground truncate flex-1">
+                          <span className="text-[13px] text-foreground truncate flex-1 min-w-0">
                             {item.name}
                           </span>
+                          {/* Reorder button */}
+                          <motion.button
+                            whileTap={{ scale: 0.85 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReorderItem(visit, item);
+                            }}
+                            className="shrink-0 p-1.5 rounded-lg bg-score-emerald/10 text-score-emerald hover:bg-score-emerald/20 transition-colors relative"
+                          >
+                            <RefreshCw size={12} />
+                            <AnimatePresence>
+                              {reorderToast === item.id && (
+                                <motion.span
+                                  initial={{ opacity: 0, y: 4, scale: 0.8 }}
+                                  animate={{ opacity: 1, y: -24, scale: 1 }}
+                                  exit={{ opacity: 0, y: -30 }}
+                                  className="absolute -top-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-score-emerald whitespace-nowrap"
+                                >
+                                  ✓ {language === "th" ? "เพิ่มแล้ว" : "Added"}
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                          </motion.button>
                           {item.hasReview ? (
                             <span className="text-base shrink-0">
                               {scoreEmoji(item.score)}
@@ -324,6 +390,20 @@ const OrderHistory = () => {
                       </div>
                     ))}
                   </div>
+
+                  {/* Reorder all button */}
+                  {visit.items.length > 1 && (
+                    <div className="px-4 py-2.5 border-t border-border/50">
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => handleReorderAll(visit)}
+                        className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-score-emerald/10 text-score-emerald text-[12px] font-semibold hover:bg-score-emerald/20 transition-colors"
+                      >
+                        <ShoppingBag size={14} />
+                        {language === "th" ? "สั่งซ้ำทั้งหมด" : "Reorder all"}
+                      </motion.button>
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
