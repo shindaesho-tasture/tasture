@@ -1087,6 +1087,10 @@ export type Database = {
     }
     Functions: {
       accept_store_invite: { Args: { _token: string }; Returns: Json }
+      add_store_member_by_email: {
+        Args: { _email: string; _role?: string; _store_id: string }
+        Returns: Json
+      }
       get_store_role: {
         Args: { _store_id: string; _user_id: string }
         Returns: string
