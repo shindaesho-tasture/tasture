@@ -7,6 +7,7 @@ interface MerchantStore {
   name: string;
   category_id: string | null;
   verified: boolean;
+  logo_url: string | null;
 }
 
 interface MerchantContextType {
