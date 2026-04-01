@@ -133,6 +133,7 @@ const StoreOrder = () => {
 
       if (storeRes.data) {
         setStoreName(storeRes.data.name);
+        setStoreCategoryId(storeRes.data.category_id || null);
         setOrderStore(storeId!, storeRes.data.name);
         // Fetch lat/lng separately to avoid type issues
         const { data: locData } = await (supabase as any).from("stores").select("lat, lng").eq("id", storeId!).single();
