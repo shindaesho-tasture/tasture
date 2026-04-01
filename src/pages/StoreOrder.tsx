@@ -58,17 +58,6 @@ const StoreOrder = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
   const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice } = useOrder();
-  const [menuItems, setMenuItems] = useState<MenuItemRow[]>([]);
-  const [storeName, setStoreName] = useState("");
-  const [storeCategoryId, setStoreCategoryId] = useState<string | null>(null);
-  const [storeLat, setStoreLat] = useState<number | null>(null);
-  const [storeLng, setStoreLng] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [dnaByItem, setDnaByItem] = useState<Map<string, DnaTag[]>>(new Map());
-  const [menuReviewCounts, setMenuReviewCounts] = useState<Map<string, number>>(new Map());
-  const [dnaCounts, setDnaCounts] = useState<Map<string, number>>(new Map());
-  const [topPhotoByItem, setTopPhotoByItem] = useState<Map<string, string[]>>(new Map());
-  const [translationMap, setTranslationMap] = useState<Map<string, { name: string; description?: string }>>(new Map());
 
   // Store posts state
   const [storePosts, setStorePosts] = useState<StorePost[]>([]);
