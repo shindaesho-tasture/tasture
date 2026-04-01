@@ -16,6 +16,7 @@ import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import LiveQueueCard from "@/components/queue/LiveQueueCard";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
+import StoreDetailsTab from "@/components/store/StoreDetailsTab";
 
 interface MenuItemRow {
   id: string;
@@ -58,6 +59,7 @@ const StoreOrder = () => {
   const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice } = useOrder();
   const [menuItems, setMenuItems] = useState<MenuItemRow[]>([]);
   const [storeName, setStoreName] = useState("");
+  const [storeCategoryId, setStoreCategoryId] = useState<string | null>(null);
   const [storeLat, setStoreLat] = useState<number | null>(null);
   const [storeLng, setStoreLng] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,7 +123,7 @@ const StoreOrder = () => {
     setLoading(true);
     try {
       const [storeRes, menuRes] = await Promise.all([
-        supabase.from("stores").select("name").eq("id", storeId!).single(),
+        supabase.from("stores").select("name, category_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
           .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices, menu_category")
@@ -131,6 +133,7 @@ const StoreOrder = () => {
 
       if (storeRes.data) {
         setStoreName(storeRes.data.name);
+        setStoreCategoryId(storeRes.data.category_id || null);
         setOrderStore(storeId!, storeRes.data.name);
         // Fetch lat/lng separately to avoid type issues
         const { data: locData } = await (supabase as any).from("stores").select("lat, lng").eq("id", storeId!).single();
@@ -489,6 +492,12 @@ const StoreOrder = () => {
               🎫 {t("queue.title", language)}
             </TabsTrigger>
             <TabsTrigger
+              value="details"
+              className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
+            >
+              📋 {t("storeDetail.details", language)}
+            </TabsTrigger>
+            <TabsTrigger
               value="posts"
               className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
             >
@@ -695,6 +704,10 @@ const StoreOrder = () => {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="details" className="mt-0">
+            {storeId && <StoreDetailsTab storeId={storeId} storeName={storeName} categoryId={storeCategoryId} />}
           </TabsContent>
         </Tabs>
 

@@ -572,6 +572,15 @@ const translations: Record<string, Record<AppLanguage, string>> = {
   "myStores.noFeedback": { th: "ยังไม่มีฟีดแบค", en: "No feedback yet", ja: "まだフィードバックがありません", zh: "暂无反馈", ko: "아직 피드백이 없습니다" },
   "myStores.storeFeedback": { th: "ฟีดแบคร้าน", en: "Store Feedback", ja: "店舗フィードバック", zh: "店铺反馈", ko: "매장 피드백" },
   "myStores.menuFeedback": { th: "ฟีดแบคเมนู", en: "Menu Feedback", ja: "メニューフィードバック", zh: "菜单反馈", ko: "메뉴 피드백" },
+
+  // ─── Store Details Tab ───
+  "storeDetail.details": { th: "รายละเอียด", en: "Details", ja: "詳細", zh: "详情", ko: "상세" },
+  "storeDetail.overallScore": { th: "คะแนนรวมร้าน", en: "Overall Score", ja: "総合スコア", zh: "综合评分", ko: "종합 점수" },
+  "storeDetail.reviewers": { th: "คนให้คะแนน", en: "reviewers", ja: "人が評価", zh: "人评价", ko: "명 평가" },
+  "storeDetail.feedbackSummary": { th: "สรุปฟีดแบค", en: "Feedback Summary", ja: "フィードバック概要", zh: "反馈摘要", ko: "피드백 요약" },
+  "storeDetail.noReviews": { th: "ยังไม่มีรีวิวจากลูกค้า", en: "No customer reviews yet", ja: "まだレビューがありません", zh: "暂无客户评价", ko: "아직 리뷰가 없습니다" },
+  "storeDetail.sensoryLegend": { th: "ตำนานแท็กเซนเซอรี่", en: "Sensory Tag Legend", ja: "感覚タグの凡例", zh: "感官标签图例", ko: "감각 태그 범례" },
+  "storeDetail.scoreLegend": { th: "ระดับคะแนน", en: "Score Levels", ja: "スコアレベル", zh: "评分等级", ko: "점수 등급" },
 };
 
 /**
