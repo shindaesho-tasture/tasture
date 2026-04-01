@@ -872,7 +872,13 @@ const StoreOrder = () => {
                               }`}
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
-                              {translateTag(tp)}
+                              <span className="flex flex-col items-start leading-tight">
+                                <span>{translateTag(tp)}</span>
+                                {language !== "th" && translateTag(tp) !== tp && (
+                                  <span className="text-[8px] opacity-60">{tp}</span>
+                                )}
+                              </span>
+                            </motion.button>
                             </motion.button>
                           );
                         })}
