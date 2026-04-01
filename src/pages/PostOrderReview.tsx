@@ -584,7 +584,7 @@ const PostOrderReview = () => {
             </motion.button>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
-                {step?.icon} {step?.type === "store-review" ? t("por.headerStoreReview") : step?.type === "dish-dna" ? t("por.headerDna", { name: step.menuItemName || "" }) : step?.type === "sensory" ? t("por.headerSensory", { name: step.menuItemName || "" }) : t("por.headerResults")}
+                {step?.icon} {step?.type === "store-review" ? t("por.headerStoreReview") : step?.type === "dish-dna" ? t("por.headerDna", { name: step.menuItemName || "" }) : step?.type === "sensory" ? t("por.headerSensory", { name: step.menuItemName || "" }) : step?.type === "texture" ? `Texture · ${step.menuItemName || ""}` : t("por.headerResults")}
               </h1>
               <p className="text-[9px] text-muted-foreground uppercase tracking-[0.2em] mt-0.5">
                 {storeName} · {currentStep + 1}/{totalSteps}
