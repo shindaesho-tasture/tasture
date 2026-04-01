@@ -204,6 +204,34 @@ const OrderHistory = () => {
     load();
   }, [user, authLoading]);
 
+  // Realtime order status updates
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`my-orders-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const updated = payload.new as any;
+          setRecentOrders((prev) =>
+            prev.map((o) => (o.id === updated.id ? { ...o, status: updated.status } : o))
+          );
+          const labels: Record<string, string> = {
+            accepted: language === "th" ? "🍳 ออเดอร์กำลังทำ" : "🍳 Order cooking",
+            served: language === "th" ? "✅ เสิร์ฟแล้ว" : "✅ Order served",
+            rejected: language === "th" ? "❌ ออเดอร์ถูกปฏิเสธ" : "❌ Order rejected",
+          };
+          if (labels[updated.status]) {
+            if (navigator.vibrate) navigator.vibrate(updated.status === "rejected" ? [100, 50, 100] : [80]);
+            toast({ title: `#${updated.order_number} ${labels[updated.status]}` });
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, language]);
+
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     const date = d.toLocaleDateString("th-TH", {
