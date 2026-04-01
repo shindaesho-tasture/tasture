@@ -26,6 +26,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
   const [lng, setLng] = useState<number | null>(null);
   const [menuPhoto, setMenuPhoto] = useState<string | null>(null);
   const [coverPhoto, setCoverPhoto] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [openingHours, setOpeningHours] = useState("");
   const [phone, setPhone] = useState("");
@@ -33,10 +34,13 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
   const [address, setAddress] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
+  const logoFileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
   const [loadingGeo, setLoadingGeo] = useState(true);
@@ -46,12 +50,13 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     if (!open) return;
     setName(store.name);
     setCategoryId(store.category_id || "");
-    supabase.from("stores").select("pin_lat, pin_lng, menu_photo, cover_photo, description, opening_hours, phone, line_id, address").eq("id", store.id).single()
+    supabase.from("stores").select("pin_lat, pin_lng, menu_photo, cover_photo, logo_url, description, opening_hours, phone, line_id, address").eq("id", store.id).single()
       .then(({ data }) => {
         setLat(data?.pin_lat ?? null);
         setLng(data?.pin_lng ?? null);
         setMenuPhoto(data?.menu_photo ?? null);
         setCoverPhoto((data as any)?.cover_photo ?? null);
+        setLogoUrl((data as any)?.logo_url ?? null);
         setDescription((data as any)?.description ?? "");
         setOpeningHours((data as any)?.opening_hours ?? "");
         setPhone((data as any)?.phone ?? "");
@@ -59,6 +64,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
         setAddress((data as any)?.address ?? "");
         setPreviewUrl(null);
         setCoverPreviewUrl(null);
+        setLogoPreviewUrl(null);
         setLoadingGeo(false);
       });
   }, [open, store.id]);
@@ -105,6 +111,27 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     }
   };
 
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoPreviewUrl(URL.createObjectURL(file));
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${store.id}/logo-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
+      setLogoUrl(urlData.publicUrl);
+      toast({ title: isTh ? "🏪 อัปโหลดโลโก้สำเร็จ" : "🏪 Logo uploaded" });
+    } catch (err: any) {
+      toast({ title: isTh ? "อัปโหลดล้มเหลว" : "Upload failed", description: err.message, variant: "destructive" });
+      setLogoPreviewUrl(null);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const handleLocate = () => {
     if (!navigator.geolocation) return;
     setLocating(true);
@@ -138,6 +165,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
           pin_lng: lng,
           menu_photo: menuPhoto,
           cover_photo: coverPhoto,
+          logo_url: logoUrl,
           description: description.trim() || null,
           opening_hours: openingHours.trim() || null,
           phone: phone.trim() || null,
@@ -186,6 +214,38 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
             </div>
 
             <div className="px-5 pb-8 space-y-5">
+              {/* Store Logo */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  🏪 {isTh ? "โลโก้ร้าน" : "Store Logo"}
+                </label>
+                <input ref={logoFileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleLogoFileChange} />
+
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-border/50 bg-secondary shrink-0">
+                    {(logoPreviewUrl || logoUrl) ? (
+                      <>
+                        <img src={logoPreviewUrl || logoUrl!} alt="Logo" className="w-full h-full object-cover" />
+                        {uploadingLogo && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <Loader2 size={20} className="animate-spin text-white" />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground">
+                        {name.charAt(0).toUpperCase() || "?"}
+                      </div>
+                    )}
+                  </div>
+                  <motion.button whileTap={{ scale: 0.97 }} onClick={() => logoFileRef.current?.click()} disabled={uploadingLogo}
+                    className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 disabled:opacity-50">
+                    <Camera size={14} />
+                    {logoUrl ? (isTh ? "เปลี่ยนโลโก้" : "Change Logo") : (isTh ? "อัปโหลดโลโก้" : "Upload Logo")}
+                  </motion.button>
+                </div>
+              </div>
+
               {/* Store Name */}
               <div>
                 <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
