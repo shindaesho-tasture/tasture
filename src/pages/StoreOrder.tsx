@@ -64,7 +64,7 @@ const StoreOrder = () => {
   // Store posts state
   const [storePosts, setStorePosts] = useState<StorePost[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("menu");
+  const [activeTab, setActiveTab] = useState("details");
   const [activeCat, setActiveCat] = useState("ทั้งหมด");
 
   // Noodle options popup state
@@ -438,6 +438,12 @@ const StoreOrder = () => {
         >
           <TabsList className="w-full rounded-none bg-secondary/50 h-11 p-0 border-b border-border/30">
             <TabsTrigger
+              value="details"
+              className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
+            >
+              📋 {t("storeDetail.details", language)}
+            </TabsTrigger>
+            <TabsTrigger
               value="menu"
               className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
             >
@@ -448,12 +454,6 @@ const StoreOrder = () => {
               className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
             >
               🎫 {t("queue.title", language)}
-            </TabsTrigger>
-            <TabsTrigger
-              value="details"
-              className="flex-1 rounded-none h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-score-emerald data-[state=active]:text-foreground text-muted-foreground text-sm font-medium"
-            >
-              📋 {t("storeDetail.details", language)}
             </TabsTrigger>
             <TabsTrigger
               value="posts"
