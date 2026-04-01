@@ -177,10 +177,11 @@ const MerchantDashboard = () => {
                 </div>
                 <p className="text-xl font-bold text-foreground">฿{stats.todayRevenue.toLocaleString()}</p>
               </div>
-              <div className="rounded-xl bg-surface-elevated border border-border/50 p-3">
+              <div className={`rounded-xl border p-3 transition-all duration-500 ${newOrderPulse ? "bg-score-emerald/15 border-score-emerald/40 ring-2 ring-score-emerald/30" : "bg-surface-elevated border-border/50"}`}>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <ShoppingBag size={14} className="text-primary" />
-                  <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">{isTh ? "ออเดอร์วันนี้" : "Today Orders"}</span>
+                  <ShoppingBag size={14} className={newOrderPulse ? "text-score-emerald" : "text-primary"} />
+                  <span className={`text-[9px] uppercase tracking-wider font-semibold ${newOrderPulse ? "text-score-emerald" : "text-muted-foreground"}`}>{isTh ? "ออเดอร์วันนี้" : "Today Orders"}</span>
+                  {newOrderPulse && <span className="relative flex h-2 w-2 ml-auto"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-score-emerald opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-score-emerald"></span></span>}
                 </div>
                 <p className="text-xl font-bold text-foreground">{stats.todayOrders}</p>
               </div>
