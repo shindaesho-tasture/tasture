@@ -180,6 +180,27 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
         </div>
       ) : (
         <>
+          {/* Store Header with Logo */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-secondary border border-border/40 overflow-hidden flex items-center justify-center flex-shrink-0">
+              {storeInfo.logo_url ? (
+                <img src={storeInfo.logo_url} alt={storeName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xl font-bold text-muted-foreground">{storeName[0]}</span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold text-foreground truncate">{storeName}</h2>
+              {storeCategory && (
+                <p className="text-xs text-muted-foreground">{translateTag(storeCategory.labelTh)}</p>
+              )}
+            </div>
+          </motion.div>
+
           {/* Cover Photo */}
           {storeInfo.cover_photo && (
             <motion.div
