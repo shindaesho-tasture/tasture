@@ -37,6 +37,7 @@ const OrderHistory = () => {
   const { t, language } = useLanguage();
   const { items: cartItems, addItem, setOrderStore, clearOrder } = useOrder();
   const [visits, setVisits] = useState<VisitRecord[]>([]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [reorderToast, setReorderToast] = useState<string | null>(null);
 
