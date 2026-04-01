@@ -77,6 +77,23 @@ const StoreOrder = () => {
 
   // Detail sheet state
   const [detailItem, setDetailItem] = useState<MenuItemRow | null>(null);
+  const [callingWaiter, setCallingWaiter] = useState(false);
+  const [waiterCalled, setWaiterCalled] = useState(false);
+
+  const handleCallWaiter = useCallback(async () => {
+    if (!storeId || !tableNumber || callingWaiter) return;
+    setCallingWaiter(true);
+    if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+    try {
+      await supabase.from("waiter_calls" as any).insert({ store_id: storeId, table_number: tableNumber, guest_id: null });
+      setWaiterCalled(true);
+      setTimeout(() => setWaiterCalled(false), 30000); // cooldown 30s
+    } catch (e) {
+      console.error("Call waiter error:", e);
+    } finally {
+      setCallingWaiter(false);
+    }
+  }, [storeId, tableNumber, callingWaiter]);
 
   const {
     data: storeData,
