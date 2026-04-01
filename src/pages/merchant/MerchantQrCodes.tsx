@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, Download, Plus, Minus, QrCode } from "lucide-react";
+import { ChevronLeft, Download, Plus, Minus, QrCode, ImageDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMerchant } from "@/lib/merchant-context";
 import { useLanguage } from "@/lib/language-context";
