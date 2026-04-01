@@ -382,11 +382,12 @@ const Index = () => {
           "bg-gradient-to-br from-muted to-secondary"
         )}>
           {store.imageUrl ? (
-            <img
+            <LazyImage
               src={store.imageUrl}
               alt={store.name}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              loading="lazy"
+              transformWidth={400}
+              quality={75}
             />
           ) : (
             <span className={cn("transition-transform duration-300 group-hover:scale-110", isLarge ? "text-5xl" : "text-4xl")}>
