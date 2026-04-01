@@ -59,7 +59,7 @@ const StoreOrder = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
-  const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice } = useOrder();
+  const { items, addItem, updateQuantity, removeItem, setOrderStore, totalItems, totalPrice, tableNumber } = useOrder();
 
   // Store posts state
   const [storePosts, setStorePosts] = useState<StorePost[]>([]);
