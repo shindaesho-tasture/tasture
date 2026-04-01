@@ -36,6 +36,7 @@ interface FeedPost {
   userName: string;
   userAvatar: string | null;
   storeName: string;
+  storeLogo: string | null;
   storeId: string;
   menuItemName: string;
   menuItemId: string;
