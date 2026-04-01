@@ -1169,6 +1169,21 @@ const PostOrderReview = () => {
                     </div>
                   </button>
                 </motion.div>
+
+                {/* Reward Coupon */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <RewardCoupon
+                    dishName={items[0]?.name || storeName || ""}
+                    onStaffConfirm={() => {
+                      setShowRewardCoupon(true);
+                      if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+                    }}
+                  />
+                </motion.div>
               </div>
             )}
           </motion.div>
