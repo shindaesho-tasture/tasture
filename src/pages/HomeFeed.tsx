@@ -521,17 +521,19 @@ const HomeFeed = () => {
                 const review = pi.menu_review_id ? slideReviewMap.get(pi.menu_review_id) : null;
                 const menuItem = review ? menuMap.get(review.menu_item_id) : null;
                 const slideKey = review ? `${pp.user_id}-${review.menu_item_id}` : null;
+                const storeInfo = menuItem?.storeId ? storeMap.get(menuItem.storeId) : null;
                 return {
                   imageUrl: pi.image_url,
                   reviewScore: review?.score ?? null,
                   menuItemName: menuItem?.name || (review ? t("feed.menu") : null),
-                  storeName: menuItem?.storeId ? (storeMap.get(menuItem.storeId) || null) : null,
+                  storeName: storeInfo?.name || null,
+                  storeLogo: storeInfo?.logo || null,
                   storeId: menuItem?.storeId || null,
                   dnaComponents: slideKey ? slideDnaMap.get(slideKey) : undefined,
                   satisfaction: slideKey ? slideSatMap.get(slideKey) : undefined,
                 };
               })
-            : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeId: null }];
+            : [{ imageUrl: pp.image_url, reviewScore: null, menuItemName: null, storeName: null, storeLogo: null, storeId: null }];
 
           allPosts.push({
             id: `photo-${pp.id}`,
