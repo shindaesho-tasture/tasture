@@ -48,6 +48,8 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
     phone?: string | null;
     line_id?: string | null;
     address?: string | null;
+    pin_lat?: number | null;
+    pin_lng?: number | null;
   }>({});
 
   // Find matching category for metrics
