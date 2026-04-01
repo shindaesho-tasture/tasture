@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Save, Loader2, Navigation } from "lucide-react";
+import { X, MapPin, Save, Loader2, Navigation, Camera, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/use-categories";
 import { useLanguage } from "@/lib/language-context";
