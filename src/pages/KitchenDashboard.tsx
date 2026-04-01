@@ -53,6 +53,7 @@ interface OrderRow {
   total_price: number;
   created_at: string;
   notes: string | null;
+  table_number: number | null;
 }
 
 const LANG_FLAGS: Record<string, string> = {
