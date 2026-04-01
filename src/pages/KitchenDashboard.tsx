@@ -185,6 +185,24 @@ const KitchenDashboard = () => {
               <p className="text-xs text-zinc-500 truncate">{storeName}</p>
             </div>
             <div className="flex items-center gap-2">
+              {/* Notification permission */}
+              {notifPermission !== "granted" && (
+                <button
+                  onClick={requestNotifPermission}
+                  className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                  title="เปิดแจ้งเตือน"
+                >
+                  <Bell size={18} className="text-zinc-400" />
+                </button>
+              )}
+              {/* Sound toggle */}
+              <button
+                onClick={() => setSoundEnabled((p) => !p)}
+                className={`p-2 rounded-xl transition-colors ${soundEnabled ? "bg-amber-500/20" : "bg-zinc-800"}`}
+                title={soundEnabled ? "ปิดเสียง" : "เปิดเสียง"}
+              >
+                {soundEnabled ? <Volume2 size={18} className="text-amber-400" /> : <VolumeX size={18} className="text-zinc-500" />}
+              </button>
               {pendingCount > 0 && (
                 <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 animate-pulse">
                   <Flame size={14} className="text-amber-400" />
