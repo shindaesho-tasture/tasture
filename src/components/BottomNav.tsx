@@ -10,31 +10,11 @@ const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const { user } = useAuth();
-
-  // Check if user owns any stores (cached, lightweight)
-  const { data: hasStores } = useQuery({
-    queryKey: ["has-stores", user?.id],
-    queryFn: async () => {
-      if (!user) return false;
-      const { count } = await supabase
-        .from("stores")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
-      return (count ?? 0) > 0;
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000,
-  });
-
   const navItems = [
     { id: "home", labelKey: "nav.home", icon: Home, path: "/" },
     { id: "discover", labelKey: "nav.discover", icon: Compass, path: "/discover" },
     { id: "post", labelKey: "nav.post", icon: PlusCircle, path: "/post", isCenter: true },
     { id: "orders", labelKey: "nav.orders", icon: ClipboardList, path: "/orders" },
-    ...(hasStores
-      ? [{ id: "mystore", labelKey: "nav.myStore", icon: Store, path: "/my-stores" }]
-      : []),
     { id: "profile", labelKey: "nav.profile", icon: User, path: "/profile" },
   ];
 
