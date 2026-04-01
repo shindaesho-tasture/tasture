@@ -161,6 +161,8 @@ const OrderHistory = () => {
           return {
             id: mi.id,
             name: mi.name,
+            price: Number(mi.price) || 0,
+            type: mi.type || "standard",
             score: rev ? rev.score : null,
             hasReview: !!rev,
             note: itemNoteMap.get(mi.id),
