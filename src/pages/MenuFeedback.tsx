@@ -165,7 +165,20 @@ const MenuFeedback = () => {
   const progress = items.length > 0 ? (ratedCount / items.length) * 100 : 0;
 
   const handleSubmit = async () => {
-    if (!user) { navigate("/auth"); return; }
+    // Guest mode: save to localStorage
+    if (!user) {
+      items.forEach((item) => {
+        const score = userScores[item.id];
+        if (score !== null && score !== undefined && storeId) {
+          saveGuestReview({ storeId, menuItemId: item.id, score, timestamp: Date.now() });
+          markReviewed(item.id);
+        }
+      });
+      toast({ title: `✅ ${t("feedback.saved")}`, description: t("feedback.savedDesc", { count: ratedCount }) });
+      setSaving(false);
+      return;
+    }
+
     setSaving(true);
     try {
       const upsertRows: { menu_item_id: string; user_id: string; score: number }[] = [];
@@ -226,7 +239,10 @@ const MenuFeedback = () => {
   };
 
   const handleSameReview = async () => {
-    if (!user) { navigate("/auth"); return; }
+    if (!user) { 
+      toast({ title: `✅ ${t("feedback.saved")}` });
+      return;
+    }
     setSaving(true);
     try {
       const reRows = items
