@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, UtensilsCrossed, BarChart3, ChefHat, Users, Settings, Camera, TrendingUp, Store, ChevronRight } from "lucide-react";
+import { ShoppingBag, UtensilsCrossed, BarChart3, ChefHat, Users, Settings, Camera, TrendingUp, Store, ChevronRight, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useMerchant } from "@/lib/merchant-context";
@@ -10,6 +10,7 @@ import { categories } from "@/lib/categories";
 import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const MerchantDashboard = () => {
   const navigate = useNavigate();
@@ -20,18 +21,14 @@ const MerchantDashboard = () => {
 
   const [stats, setStats] = useState({ todayOrders: 0, totalOrders: 0, menuItems: 0, reviews: 0, todayRevenue: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [newOrderPulse, setNewOrderPulse] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/m/login"); return; }
   }, [user, authLoading]);
 
-  useEffect(() => {
-    if (!activeStore) return;
-    fetchStats();
-  }, [activeStore]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!activeStore) return;
     setStatsLoading(true);
     const today = new Date().toISOString().split("T")[0];
@@ -55,7 +52,62 @@ const MerchantDashboard = () => {
       todayRevenue,
     });
     setStatsLoading(false);
-  };
+  }, [activeStore]);
+
+  useEffect(() => {
+    if (!activeStore) return;
+    fetchStats();
+  }, [activeStore, fetchStats]);
+
+  // Realtime: listen for new orders
+  useEffect(() => {
+    if (!activeStore) return;
+
+    const channel = supabase
+      .channel(`merchant-orders-${activeStore.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `store_id=eq.${activeStore.id}`,
+        },
+        (payload) => {
+          const newOrder = payload.new as any;
+          const price = Number(newOrder.total_price || 0);
+
+          // Update stats in-place
+          setStats((prev) => ({
+            ...prev,
+            todayOrders: prev.todayOrders + 1,
+            totalOrders: prev.totalOrders + 1,
+            todayRevenue: prev.todayRevenue + price,
+          }));
+
+          // Pulse animation
+          setNewOrderPulse(true);
+          setTimeout(() => setNewOrderPulse(false), 3000);
+
+          // Toast notification
+          toast(isTh ? "🔔 ออเดอร์ใหม่!" : "🔔 New order!", {
+            description: isTh
+              ? `ออเดอร์ #${newOrder.order_number} — ฿${price.toLocaleString()}`
+              : `Order #${newOrder.order_number} — ฿${price.toLocaleString()}`,
+            action: {
+              label: isTh ? "ดูครัว" : "Kitchen",
+              onClick: () => navigate("/m/kitchen"),
+            },
+            duration: 8000,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeStore, isTh, navigate]);
 
   const cat = activeStore ? categories.find((c) => c.id === activeStore.category_id) : null;
   const loading = authLoading || storesLoading;
@@ -125,10 +177,11 @@ const MerchantDashboard = () => {
                 </div>
                 <p className="text-xl font-bold text-foreground">฿{stats.todayRevenue.toLocaleString()}</p>
               </div>
-              <div className="rounded-xl bg-surface-elevated border border-border/50 p-3">
+              <div className={`rounded-xl border p-3 transition-all duration-500 ${newOrderPulse ? "bg-score-emerald/15 border-score-emerald/40 ring-2 ring-score-emerald/30" : "bg-surface-elevated border-border/50"}`}>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <ShoppingBag size={14} className="text-primary" />
-                  <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">{isTh ? "ออเดอร์วันนี้" : "Today Orders"}</span>
+                  <ShoppingBag size={14} className={newOrderPulse ? "text-score-emerald" : "text-primary"} />
+                  <span className={`text-[9px] uppercase tracking-wider font-semibold ${newOrderPulse ? "text-score-emerald" : "text-muted-foreground"}`}>{isTh ? "ออเดอร์วันนี้" : "Today Orders"}</span>
+                  {newOrderPulse && <span className="relative flex h-2 w-2 ml-auto"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-score-emerald opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-score-emerald"></span></span>}
                 </div>
                 <p className="text-xl font-bold text-foreground">{stats.todayOrders}</p>
               </div>
