@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Clock, ChefHat, CheckCircle2, XCircle, Receipt, Utensils } from "lucide-react";
+import { ChevronLeft, Clock, ChefHat, CheckCircle2, XCircle, Receipt, Utensils, Volume2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGuestSession } from "@/hooks/use-guest-session";
 import { useLanguage } from "@/lib/language-context";
