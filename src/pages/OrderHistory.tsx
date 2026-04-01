@@ -6,7 +6,7 @@ import { useLanguage } from "@/lib/language-context";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
-import { ClipboardList, ChevronRight, Store, LogIn, Star, RefreshCw, ShoppingBag, AlertTriangle } from "lucide-react";
+import { ClipboardList, ChevronRight, Store, LogIn, Star, RefreshCw, ShoppingBag, AlertTriangle, XCircle, Clock, ChefHat, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -37,6 +37,7 @@ const OrderHistory = () => {
   const { t, language } = useLanguage();
   const { items: cartItems, addItem, setOrderStore, clearOrder } = useOrder();
   const [visits, setVisits] = useState<VisitRecord[]>([]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [reorderToast, setReorderToast] = useState<string | null>(null);
 
@@ -48,6 +49,20 @@ const OrderHistory = () => {
     }
 
     const load = async () => {
+      // 0. Fetch recent orders with status
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("id, order_number, items, total_price, status, created_at, store_id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (orders && orders.length > 0) {
+        const storeIds = [...new Set(orders.map((o: any) => o.store_id))];
+        const { data: storeData } = await supabase.from("stores").select("id, name").in("id", storeIds);
+        const storeNames = Object.fromEntries((storeData || []).map((s: any) => [s.id, s.name]));
+        setRecentOrders(orders.map((o: any) => ({ ...o, storeName: storeNames[o.store_id] || "—" })));
+      }
       // 1. Get stores user reviewed (store-level reviews)
       const { data: storeReviews } = await supabase
         .from("reviews")
@@ -302,7 +317,70 @@ const OrderHistory = () => {
            </p>
         </header>
 
-        {visits.length === 0 ? (
+        {/* Recent Orders with Status */}
+        {recentOrders.length > 0 && (
+          <div className="px-4 pt-3 space-y-2">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold px-1">
+              {language === "th" ? "ออเดอร์ล่าสุด" : "Recent Orders"}
+            </p>
+            {recentOrders.map((order) => {
+              const statusCfg: Record<string, { label: string; icon: any; color: string; bg: string }> = {
+                pending: { label: language === "th" ? "รอรับ" : "Pending", icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
+                accepted: { label: language === "th" ? "กำลังทำ" : "Cooking", icon: ChefHat, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
+                served: { label: language === "th" ? "เสิร์ฟแล้ว" : "Served", icon: Check, color: "text-score-emerald", bg: "bg-score-emerald/10" },
+                rejected: { label: language === "th" ? "ถูกปฏิเสธ" : "Rejected", icon: XCircle, color: "text-destructive", bg: "bg-destructive/10" },
+              };
+              const cfg = statusCfg[order.status] || statusCfg.pending;
+              const StatusIcon = cfg.icon;
+              const items = (order.items || []) as any[];
+
+              return (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`rounded-2xl border overflow-hidden bg-card ${
+                    order.status === "rejected" ? "border-destructive/30" : "border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <div className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center shrink-0`}>
+                      <StatusIcon size={14} className={cfg.color} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground">#{order.order_number}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${cfg.bg} ${cfg.color}`}>
+                          {cfg.label}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {order.storeName} · {items.length} {language === "th" ? "รายการ" : "items"} · ฿{Number(order.total_price).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {new Date(order.created_at).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+
+                  {/* Rejected message */}
+                  {order.status === "rejected" && (
+                    <div className="mx-4 mb-3 px-3 py-2 rounded-xl bg-destructive/5 border border-destructive/20">
+                      <p className="text-[11px] text-destructive font-medium flex items-center gap-1.5">
+                        <XCircle size={12} />
+                        {language === "th"
+                          ? "ร้านค้าปฏิเสธออเดอร์นี้ กรุณาสั่งใหม่หรือติดต่อร้านค้า"
+                          : "This order was rejected by the store. Please reorder or contact the store."}
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {visits.length === 0 && recentOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[55vh] gap-4 px-6">
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
               <ClipboardList size={28} strokeWidth={1.5} className="text-muted-foreground" />
