@@ -120,7 +120,10 @@ const NoodleCard = ({ item, onChange }: NoodleCardProps) => {
                   : "bg-secondary text-foreground"
               }`}
             >
-              {style}
+              <span className="block">{translateTag(style)}</span>
+              {language !== "th" && translateTag(style) !== style && (
+                <span className="block text-[8px] opacity-60 leading-tight">{style}</span>
+              )}
             </motion.button>
           ))}
         </div>
