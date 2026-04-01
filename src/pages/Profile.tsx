@@ -477,14 +477,28 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Badge */}
-          <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4"
-            style={{ background: "linear-gradient(135deg, hsl(43,74%,49%), hsl(43,74%,65%))", boxShadow: "0 2px 12px hsla(43,74%,49%,0.3)" }}>
-            <Crown size={11} className="text-white" />
-            <span className="text-[10px] font-semibold text-white tracking-wide">{t("profile.foundingSovereign", language)}</span>
-          </motion.div>
+          {/* My Store + Badge row */}
+          <div className="flex items-center gap-2 mb-4">
+            <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full"
+              style={{ background: "linear-gradient(135deg, hsl(43,74%,49%), hsl(43,74%,65%))", boxShadow: "0 2px 12px hsla(43,74%,49%,0.3)" }}>
+              <Crown size={11} className="text-white" />
+              <span className="text-[10px] font-semibold text-white tracking-wide">{t("profile.foundingSovereign", language)}</span>
+            </motion.div>
+
+            <motion.button
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/my-stores")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-score-emerald/15 text-score-emerald text-[11px] font-semibold hover:bg-score-emerald/25 transition-colors"
+            >
+              <Store size={13} />
+              {language === "th" ? "ร้านของฉัน" : "My Stores"}
+            </motion.button>
+          </div>
         </div>
 
         {/* ── Tab Bar (Grid / Saved / Stats) ── */}
