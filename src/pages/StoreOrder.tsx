@@ -898,7 +898,7 @@ const StoreOrder = () => {
                   {optionsItem.toppings && optionsItem.toppings.length > 0 && (
                     <div>
                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span>
+                        🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span> {Object.values(optionsItem.topping_prices || {}).some(v => v > 0) && <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>}
                        </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.toppings.map((tp) => {
