@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import PageTransition from "@/components/PageTransition";
+import LazyImage from "@/components/ui/lazy-image";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import AchievementDetailSheet from "@/components/AchievementDetailSheet";
 import FeedRadarChart from "@/components/FeedRadarChart";
