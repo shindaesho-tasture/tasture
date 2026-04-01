@@ -217,6 +217,31 @@ const StoreOrder = () => {
   const topPhotoByItem = storeData?.topPhotoByItem || new Map();
   const translationMap = storeData?.translationMap || new Map();
 
+  // Collect all DNA tag texts for translation
+  const allTagTexts = useMemo(() => {
+    const tags = new Set<string>();
+    dnaByItem.forEach((dnaTags: DnaTag[]) => {
+      dnaTags.forEach((t) => {
+        tags.add(t.selected_tag);
+        tags.add(t.component_name);
+      });
+    });
+    menuItems.forEach((m: MenuItemRow) => {
+      m.noodle_types?.forEach((nt) => tags.add(nt));
+      m.noodle_styles?.forEach((ns) => tags.add(ns));
+      m.toppings?.forEach((tp) => tags.add(tp));
+      if (m.menu_category) tags.add(m.menu_category);
+    });
+    if (storeName) tags.add(storeName);
+    itemAddOns.forEach((addOns: any[]) => {
+      addOns.forEach((a: any) => tags.add(a.category));
+    });
+    return Array.from(tags);
+  }, [dnaByItem, menuItems, itemAddOns, storeName]);
+
+  const { translateTag } = useTagTranslations(allTagTexts);
+
+
   // Set order store when data loads
   useEffect(() => {
     if (storeData && storeId) {
