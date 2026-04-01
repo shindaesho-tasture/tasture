@@ -22,12 +22,14 @@ interface OrderContextType {
   items: OrderItem[];
   storeId: string | null;
   storeName: string | null;
+  tableNumber: number | null;
   addItem: (item: OrderItem) => void;
   removeItem: (menuItemId: string) => void;
   updateQuantity: (menuItemId: string, quantity: number) => void;
   updateItemNote: (menuItemId: string, note: string) => void;
   clearOrder: () => void;
   setOrderStore: (id: string, name: string) => void;
+  setTableNumber: (n: number | null) => void;
   totalItems: number;
   totalPrice: number;
 }
