@@ -301,7 +301,7 @@ const OrderHistory = () => {
                         <span className="text-[13px] text-foreground truncate flex-1">
                           {item.name}
                         </span>
-                        {item.hasReview ? (
+                         {item.hasReview ? (
                           <span className="text-base shrink-0">
                             {scoreEmoji(item.score)}
                           </span>
@@ -318,6 +318,11 @@ const OrderHistory = () => {
                           </button>
                         )}
                       </div>
+                      {item.note && (
+                        <div className="ml-9 mr-4 -mt-1 mb-2 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                          <span className="text-[11px] text-amber-700 dark:text-amber-400">📝 {item.note}</span>
+                        </div>
+                      )}
                     ))}
                   </div>
                 </motion.div>
