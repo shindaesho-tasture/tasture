@@ -72,6 +72,9 @@ const MerchantLogin = () => {
       setLoading(false);
     }
   };
+  if (checking) {
+    return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" /></div>;
+  }
 
   return (
     <PageTransition>
