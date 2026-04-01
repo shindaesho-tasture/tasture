@@ -223,10 +223,7 @@ const OrderSummary = () => {
                       >
                         {/* Quick tags */}
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          {(language === "th"
-                            ? ["ไม่เผ็ด", "ไม่ใส่ผัก", "ไม่ใส่ผักชี", "เผ็ดน้อย", "เผ็ดมาก", "ไม่ใส่ถั่ว", "ไม่ใส่น้ำตาล", "แยกน้ำ"]
-                            : ["Not spicy", "No veggies", "No cilantro", "Less spicy", "Extra spicy", "No peanuts", "No sugar", "Soup separate"]
-                          ).map((tag) => {
+                          {(language === "th" ? quickTags.th : quickTags.en).map((tag) => {
                             const currentNote = item.note || "";
                             const isActive = currentNote.includes(tag);
                             return (
