@@ -72,6 +72,7 @@ const MenuFeedback = () => {
   const navigate = useNavigate();
   const { storeId } = useParams<{ storeId: string }>();
   const { user, loading: authLoading } = useAuth();
+  const { saveGuestReview, markReviewed, hasReviewed: guestHasReviewed } = useGuestSession();
   const [items, setItems] = useState<MenuItemWithAvg[]>([]);
   const [loading, setLoading] = useState(true);
   const [storeName, setStoreName] = useState("");
