@@ -102,13 +102,13 @@ const App = () => (
         <CategoriesProvider>
           <StoreProvider>
             <OrderProvider>
-              <MerchantProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <MerchantProvider>
                   <AnimatedRoutes />
-                </BrowserRouter>
-              </MerchantProvider>
+                </MerchantProvider>
+              </BrowserRouter>
             </OrderProvider>
           </StoreProvider>
         </CategoriesProvider>
