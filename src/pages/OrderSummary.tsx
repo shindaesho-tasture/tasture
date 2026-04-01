@@ -173,10 +173,42 @@ const OrderSummary = () => {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
+                        {/* Quick tags */}
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {(language === "th"
+                            ? ["ไม่เผ็ด", "ไม่ใส่ผัก", "ไม่ใส่ผักชี", "เผ็ดน้อย", "เผ็ดมาก", "ไม่ใส่ถั่ว", "ไม่ใส่น้ำตาล", "แยกน้ำ"]
+                            : ["Not spicy", "No veggies", "No cilantro", "Less spicy", "Extra spicy", "No peanuts", "No sugar", "Soup separate"]
+                          ).map((tag) => {
+                            const currentNote = item.note || "";
+                            const isActive = currentNote.includes(tag);
+                            return (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={() => {
+                                  if (isActive) {
+                                    const updated = currentNote.replace(tag, "").replace(/,\s*,/g, ",").replace(/^,\s*|,\s*$/g, "").trim();
+                                    updateItemNote(item.menuItemId, updated);
+                                  } else {
+                                    const updated = currentNote ? `${currentNote}, ${tag}` : tag;
+                                    updateItemNote(item.menuItemId, updated);
+                                  }
+                                }}
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all ${
+                                  isActive
+                                    ? "bg-score-emerald/20 text-score-emerald border border-score-emerald/40"
+                                    : "bg-secondary text-muted-foreground border border-border/50 active:scale-95"
+                                }`}
+                              >
+                                {isActive ? "✓ " : ""}{tag}
+                              </button>
+                            );
+                          })}
+                        </div>
                         <textarea
                           value={item.note || ""}
                           onChange={(e) => updateItemNote(item.menuItemId, e.target.value)}
-                          placeholder={language === "th" ? "เช่น ไม่ใส่ผัก, เผ็ดน้อย..." : "e.g. No veggies, less spicy..."}
+                          placeholder={language === "th" ? "พิมพ์เพิ่มเติม..." : "Type more..."}
                           rows={1}
                           maxLength={100}
                           className="w-full mt-2 bg-secondary/60 rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 border-0 outline-none resize-none focus:ring-1 focus:ring-score-emerald/30"
