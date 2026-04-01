@@ -378,6 +378,59 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          created_at: string
+          customer_language: string
+          guest_id: string | null
+          id: string
+          items: Json
+          notes: string | null
+          order_number: number
+          status: string
+          store_id: string
+          total_price: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_language?: string
+          guest_id?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_number?: number
+          status?: string
+          store_id: string
+          total_price?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_language?: string
+          guest_id?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_number?: number
+          status?: string
+          store_id?: string
+          total_price?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_images: {
         Row: {
           created_at: string
