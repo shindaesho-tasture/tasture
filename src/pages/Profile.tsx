@@ -322,8 +322,36 @@ const Profile = () => {
   if (loading) {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-screen bg-background pb-24">
+          <div className="px-5 pt-safe-top">
+            <div className="flex items-center justify-between py-3">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-8 w-20 rounded-lg" />
+            </div>
+            <div className="flex items-center gap-5 pb-4">
+              <Skeleton className="w-20 h-20 rounded-full flex-shrink-0" />
+              <div className="flex-1 flex justify-around">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex flex-col items-center gap-1">
+                    <Skeleton className="h-5 w-8" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <Skeleton className="h-4 w-48 mb-4" />
+            <div className="flex gap-2 mb-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-9 w-20 rounded-xl" />
+              ))}
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="aspect-square rounded-lg" />
+              ))}
+            </div>
+          </div>
+          <BottomNav />
         </div>
       </PageTransition>
     );
