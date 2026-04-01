@@ -35,7 +35,7 @@ export const MerchantProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       const { data } = await supabase
         .from("stores")
-        .select("id, name, category_id, verified")
+        .select("id, name, category_id, verified, logo_url")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       const list = data || [];

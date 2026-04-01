@@ -50,12 +50,13 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     if (!open) return;
     setName(store.name);
     setCategoryId(store.category_id || "");
-    supabase.from("stores").select("pin_lat, pin_lng, menu_photo, cover_photo, description, opening_hours, phone, line_id, address").eq("id", store.id).single()
+    supabase.from("stores").select("pin_lat, pin_lng, menu_photo, cover_photo, logo_url, description, opening_hours, phone, line_id, address").eq("id", store.id).single()
       .then(({ data }) => {
         setLat(data?.pin_lat ?? null);
         setLng(data?.pin_lng ?? null);
         setMenuPhoto(data?.menu_photo ?? null);
         setCoverPhoto((data as any)?.cover_photo ?? null);
+        setLogoUrl((data as any)?.logo_url ?? null);
         setDescription((data as any)?.description ?? "");
         setOpeningHours((data as any)?.opening_hours ?? "");
         setPhone((data as any)?.phone ?? "");
@@ -63,6 +64,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
         setAddress((data as any)?.address ?? "");
         setPreviewUrl(null);
         setCoverPreviewUrl(null);
+        setLogoPreviewUrl(null);
         setLoadingGeo(false);
       });
   }, [open, store.id]);
