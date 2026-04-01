@@ -101,6 +101,7 @@ const OrderSummary = () => {
         customer_language: language,
         total_price: totalPrice,
         notes: notes.trim() || null,
+        table_number: tableNumber || null,
       } as any);
       if (error) throw error;
       setConfirmed(true);
