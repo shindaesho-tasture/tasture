@@ -314,6 +314,12 @@ const KitchenDashboard = () => {
                                 )}
                               </div>
                             )}
+                            {/* Per-item note */}
+                            {item.note && (
+                              <div className="mt-1.5 px-2 py-1 rounded-lg bg-yellow-900/40 border border-yellow-700/50">
+                                <span className="text-sm text-yellow-300 font-medium">📝 {item.note}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
