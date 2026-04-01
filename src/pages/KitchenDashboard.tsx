@@ -223,13 +223,13 @@ const KitchenDashboard = () => {
             // Fetch items for this bill
             if (orderIds.length > 0) {
               supabase.from("orders").select("id, items").in("id", orderIds).then(({ data }) => {
-                const items: { name: string; qty: number }[] = [];
+                const items: { name: string; qty: number; price: number }[] = [];
                 (data || []).forEach((o: any) => {
                   if (Array.isArray(o.items)) {
                     (o.items as any[]).forEach((item: any) => {
-                      const existing = items.find((i) => i.name === item.name);
+                      const existing = items.find((i) => i.name === item.name && i.price === (item.price || 0));
                       if (existing) existing.qty += (item.quantity || 1);
-                      else items.push({ name: item.name, qty: item.quantity || 1 });
+                      else items.push({ name: item.name, qty: item.quantity || 1, price: item.price || 0 });
                     });
                   }
                 });
