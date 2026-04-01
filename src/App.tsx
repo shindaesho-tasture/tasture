@@ -65,6 +65,7 @@ const AnimatedRoutes = () => {
         <Route path="/follows" element={<FollowList />} />
         <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="/queue-manager/:storeId" element={<QueueManager />} />
+        <Route path="/kitchen/:storeId" element={<KitchenDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
