@@ -84,7 +84,28 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     }
   };
 
-  const handleLocate = () => {
+  const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverPreviewUrl(URL.createObjectURL(file));
+    setUploadingCover(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${store.id}/cover-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("menu-images").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("menu-images").getPublicUrl(path);
+      setCoverPhoto(urlData.publicUrl);
+      toast({ title: isTh ? "🖼️ อัปโหลดหน้าปกสำเร็จ" : "🖼️ Cover uploaded" });
+    } catch (err: any) {
+      toast({ title: isTh ? "อัปโหลดล้มเหลว" : "Upload failed", description: err.message, variant: "destructive" });
+      setCoverPreviewUrl(null);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+
     if (!navigator.geolocation) return;
     setLocating(true);
     if (navigator.vibrate) navigator.vibrate(8);
