@@ -48,6 +48,28 @@ const OrderSummary = () => {
   const [notes, setNotes] = useState("");
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
+  // Fetch store category for context-aware quick tags
+  const { data: storeCategory } = useQuery({
+    queryKey: ["store-category", storeId],
+    queryFn: async () => {
+      if (!storeId) return null;
+      const { data } = await supabase.from("stores").select("category_id").eq("id", storeId).single();
+      return data?.category_id || null;
+    },
+    enabled: !!storeId,
+    staleTime: Infinity,
+  });
+
+  const quickTags = useMemo(() => {
+    const catId = storeCategory?.toLowerCase() || "";
+    for (const key of Object.keys(CATEGORY_TAGS)) {
+      if (catId.includes(key)) {
+        return CATEGORY_TAGS[key];
+      }
+    }
+    return DEFAULT_TAGS;
+  }, [storeCategory]);
+
   const handleConfirm = async () => {
     if (!storeId || items.length === 0) return;
     setSubmitting(true);
