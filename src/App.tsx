@@ -48,6 +48,7 @@ import MerchantProfile from "./pages/merchant/MerchantProfile.tsx";
 import MerchantClaimStore from "./pages/merchant/MerchantClaimStore.tsx";
 import MerchantSalesReport from "./pages/merchant/MerchantSalesReport.tsx";
 import MerchantQrCodes from "./pages/merchant/MerchantQrCodes.tsx";
+import AcceptInvite from "./pages/merchant/AcceptInvite.tsx";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const AnimatedRoutes = () => {
         <Route path="/m/claim" element={<MerchantClaimStore />} />
         <Route path="/m/sales" element={<MerchantSalesReport />} />
         <Route path="/m/qr" element={<MerchantQrCodes />} />
+        <Route path="/m/invite/:token" element={<AcceptInvite />} />
         <Route path="/m/profile" element={<MerchantProfile />} />
 
         <Route path="*" element={<NotFound />} />

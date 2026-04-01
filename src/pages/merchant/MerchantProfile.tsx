@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import StoreSettingsSheet from "@/components/merchant/StoreSettingsSheet";
+import StoreTeamManager from "@/components/merchant/StoreTeamManager";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const MerchantProfile = () => {
@@ -171,6 +172,11 @@ const MerchantProfile = () => {
                       <p className="text-[10px] text-muted-foreground">
                         {isTh ? cat?.labelTh : cat?.label ?? "Store"}
                         {s.verified && <span className="ml-1 text-score-emerald">✓</span>}
+                        {s.role !== "owner" && (
+                          <span className="ml-1 text-primary">
+                            ({s.role === "manager" ? (isTh ? "ผู้จัดการ" : "Manager") : (isTh ? "พนักงาน" : "Staff")})
+                          </span>
+                        )}
                       </p>
                     </div>
                     {isActive && (
@@ -199,6 +205,13 @@ const MerchantProfile = () => {
             )}
           </div>
         </div>
+
+        {/* Team Management */}
+        {activeStore && (
+          <div className="px-4 mb-5">
+            <StoreTeamManager />
+          </div>
+        )}
 
         {/* Logout */}
         <div className="px-4 pt-2">

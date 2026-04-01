@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Store, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,8 @@ import PageTransition from "@/components/PageTransition";
 
 const MerchantLogin = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { language } = useLanguage();
   const isTh = language === "th";
 
@@ -29,7 +31,7 @@ const MerchantLogin = () => {
           .select("id", { count: "exact", head: true })
           .eq("user_id", session.user.id);
         if ((count ?? 0) > 0) {
-          navigate("/m", { replace: true });
+          navigate(redirectTo || "/m", { replace: true });
           return;
         }
       }
@@ -64,7 +66,7 @@ const MerchantLogin = () => {
             return;
           }
         }
-        navigate("/m");
+        navigate(redirectTo || "/m");
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong");
