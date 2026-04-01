@@ -129,12 +129,8 @@ const PostOrderReview = () => {
     const s: Step[] = [{ type: "store-review", label: t("por.storeReview"), icon: "🏪" }];
     items.forEach((item) => {
       s.push({ type: "dish-dna", label: item.name, icon: "🧬", menuItemId: item.menuItemId, menuItemName: item.name });
-    });
-    items.forEach((item) => {
-      s.push({ type: "sensory", label: item.name, icon: "🎯", menuItemId: item.menuItemId, menuItemName: item.name });
-    });
-    items.forEach((item) => {
       s.push({ type: "texture", label: item.name, icon: "🦷", menuItemId: item.menuItemId, menuItemName: item.name });
+      s.push({ type: "sensory", label: item.name, icon: "🎯", menuItemId: item.menuItemId, menuItemName: item.name });
     });
     s.push({ type: "results", label: t("por.summary"), icon: "🏆" });
     return s;
