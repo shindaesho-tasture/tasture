@@ -904,6 +904,7 @@ const StoreOrder = () => {
                         {optionsItem.toppings.map((tp) => {
                           const selected = selectedToppings.includes(tp);
                           const disabled = !selected && selectedToppings.length >= MAX_TOPPINGS;
+                          const tpPrice = optionsItem.topping_prices?.[tp] || 0;
                           return (
                             <motion.button
                               key={tp}
@@ -919,7 +920,7 @@ const StoreOrder = () => {
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
                               <span className="flex flex-col items-start leading-tight">
-                                <span>{translateTag(tp)}</span>
+                                <span>{translateTag(tp)}{tpPrice > 0 && <span className="ml-1 opacity-70">+฿{tpPrice}</span>}</span>
                                 {language !== "th" && translateTag(tp) !== tp && (
                                   <span className="text-[8px] opacity-60">{tp}</span>
                                 )}
