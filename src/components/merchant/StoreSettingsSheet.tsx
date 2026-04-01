@@ -248,6 +248,76 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
                 )}
               </div>
 
+              {/* Description */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  📝 {isTh ? "คำอธิบายร้าน" : "Description"}
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={isTh ? "เช่น ก๋วยเตี๋ยวต้นตำรับ 30 ปี" : "e.g. Traditional noodles for 30 years"}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl bg-secondary text-foreground text-sm border border-border/50 outline-none focus:ring-2 focus:ring-score-emerald/30 resize-none"
+                />
+              </div>
+
+              {/* Opening Hours */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  🕐 {isTh ? "เวลาเปิด-ปิด" : "Opening Hours"}
+                </label>
+                <input
+                  type="text"
+                  value={openingHours}
+                  onChange={(e) => setOpeningHours(e.target.value)}
+                  placeholder={isTh ? "เช่น 08:00 - 20:00 (หยุดวันจันทร์)" : "e.g. 08:00 - 20:00 (Closed Monday)"}
+                  className="w-full px-4 py-3 rounded-xl bg-secondary text-foreground text-sm border border-border/50 outline-none focus:ring-2 focus:ring-score-emerald/30"
+                />
+              </div>
+
+              {/* Phone & Line */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                    📞 {isTh ? "เบอร์โทร" : "Phone"}
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="08X-XXX-XXXX"
+                    className="w-full px-4 py-3 rounded-xl bg-secondary text-foreground text-sm border border-border/50 outline-none focus:ring-2 focus:ring-score-emerald/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                    💬 Line ID
+                  </label>
+                  <input
+                    type="text"
+                    value={lineId}
+                    onChange={(e) => setLineId(e.target.value)}
+                    placeholder="@storename"
+                    className="w-full px-4 py-3 rounded-xl bg-secondary text-foreground text-sm border border-border/50 outline-none focus:ring-2 focus:ring-score-emerald/30"
+                  />
+                </div>
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
+                  📍 {isTh ? "ที่อยู่ร้าน" : "Address"}
+                </label>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder={isTh ? "เช่น ซอยอารีย์ 1 ใกล้ BTS อารีย์" : "e.g. Soi Ari 1, near BTS Ari"}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl bg-secondary text-foreground text-sm border border-border/50 outline-none focus:ring-2 focus:ring-score-emerald/30 resize-none"
+                />
+              </div>
+
               {/* Menu Photo */}
               <div>
                 <label className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider block mb-1.5">
