@@ -6,7 +6,7 @@ import { useLanguage } from "@/lib/language-context";
 import { useOrder } from "@/lib/order-context";
 import PageTransition from "@/components/PageTransition";
 import BottomNav from "@/components/BottomNav";
-import { ClipboardList, ChevronRight, Store, LogIn, Star, RefreshCw, ShoppingBag, AlertTriangle } from "lucide-react";
+import { ClipboardList, ChevronRight, Store, LogIn, Star, RefreshCw, ShoppingBag, AlertTriangle, XCircle, Clock, ChefHat, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
