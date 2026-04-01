@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_items ADD COLUMN IF NOT EXISTS topping_prices jsonb NOT NULL DEFAULT '{}'::jsonb;

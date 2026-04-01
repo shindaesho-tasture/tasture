@@ -33,6 +33,7 @@ interface MenuItemRow {
   image_url: string | null;
   noodle_type_prices: Record<string, number> | null;
   noodle_style_prices: Record<string, number> | null;
+  topping_prices: Record<string, number> | null;
   menu_category: string | null;
 }
 
@@ -115,7 +116,7 @@ const StoreOrder = () => {
         supabase.from("stores").select("name, category_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices, menu_category")
+          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices, topping_prices, menu_category")
           .eq("store_id", storeId!)
           .order("sort_order", { ascending: true }),
       ]);
@@ -125,6 +126,7 @@ const StoreOrder = () => {
         ...m,
         noodle_type_prices: (m.noodle_type_prices as Record<string, number>) || {},
         noodle_style_prices: (m.noodle_style_prices as Record<string, number>) || {},
+        topping_prices: (m.topping_prices as Record<string, number>) || {},
       })) as MenuItemRow[];
 
       // Fetch add-ons, DNA, reviews, photos in parallel
@@ -362,10 +364,13 @@ const StoreOrder = () => {
     const styleExtra = selectedNoodleStyle && optionsItem.noodle_style_prices
       ? (optionsItem.noodle_style_prices[selectedNoodleStyle] || 0)
       : 0;
+    const toppingExtra = selectedToppings.reduce((s, tp) => {
+      return s + (optionsItem.topping_prices?.[tp] || 0);
+    }, 0);
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
-      price: basePrice + addOnTotal + noodleExtra + styleExtra,
+      price: basePrice + addOnTotal + noodleExtra + styleExtra + toppingExtra,
       quantity: 1,
       type: optionsItem.type,
       selectedOptions: {
@@ -893,12 +898,13 @@ const StoreOrder = () => {
                   {optionsItem.toppings && optionsItem.toppings.length > 0 && (
                     <div>
                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span>
+                        🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span> {Object.values(optionsItem.topping_prices || {}).some(v => v > 0) && <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>}
                        </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.toppings.map((tp) => {
                           const selected = selectedToppings.includes(tp);
                           const disabled = !selected && selectedToppings.length >= MAX_TOPPINGS;
+                          const tpPrice = optionsItem.topping_prices?.[tp] || 0;
                           return (
                             <motion.button
                               key={tp}
@@ -914,7 +920,7 @@ const StoreOrder = () => {
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
                               <span className="flex flex-col items-start leading-tight">
-                                <span>{translateTag(tp)}</span>
+                                <span>{translateTag(tp)}{tpPrice > 0 && <span className="ml-1 opacity-70">+฿{tpPrice}</span>}</span>
                                 {language !== "th" && translateTag(tp) !== tp && (
                                   <span className="text-[8px] opacity-60">{tp}</span>
                                 )}

@@ -33,6 +33,7 @@ type MenuItemRow = {
   image_url: string | null;
   noodle_type_prices: Record<string, number> | null;
   noodle_style_prices: Record<string, number> | null;
+  topping_prices: Record<string, number> | null;
   menu_category: string | null;
 };
 
@@ -51,6 +52,7 @@ const emptyForm = {
   textures: [] as string[],
   noodle_type_prices: {} as Record<string, number>,
   noodle_style_prices: {} as Record<string, number>,
+  topping_prices: {} as Record<string, number>,
   menu_category: "" as string,
 };
 
@@ -106,7 +108,7 @@ const MenuManager = () => {
         supabase.from("stores").select("name, user_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url, noodle_type_prices, noodle_style_prices, menu_category")
+          .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url, noodle_type_prices, noodle_style_prices, topping_prices, menu_category")
           .eq("store_id", storeId!)
           .order("sort_order", { ascending: true })
           .order("created_at", { ascending: true }),
@@ -245,6 +247,7 @@ const MenuManager = () => {
       textures: item.textures || [],
       noodle_type_prices: (item.noodle_type_prices as Record<string, number>) || {},
       noodle_style_prices: (item.noodle_style_prices as Record<string, number>) || {},
+      topping_prices: (item.topping_prices as Record<string, number>) || {},
       menu_category: item.menu_category || "",
     });
   };
@@ -265,6 +268,7 @@ const MenuManager = () => {
       textures: form.textures,
       noodle_type_prices: form.noodle_type_prices,
       noodle_style_prices: form.noodle_style_prices,
+      topping_prices: form.topping_prices,
       menu_category: form.menu_category || null,
     };
 
@@ -690,7 +694,42 @@ const MenuManager = () => {
                         </div>
                       )}
 
-                      <TagInput label={t("menuMgr.toppings")} tags={form.toppings} onChange={(v) => setForm((f) => ({ ...f, toppings: v }))} placeholder="พิมพ์ท็อปปิ้ง" suggestions={["ลูกชิ้น", "เนื้อ", "หมู", "ไก่", "หมูกรอบ", "หมูสับ", "เครื่องใน"]} />
+                      <TagInput label={t("menuMgr.toppings")} tags={form.toppings} onChange={(v) => {
+                        setForm((f) => {
+                          const newPrices = { ...f.topping_prices };
+                          Object.keys(newPrices).forEach((k) => { if (!v.includes(k)) delete newPrices[k]; });
+                          return { ...f, toppings: v, topping_prices: newPrices };
+                        });
+                      }} placeholder="พิมพ์ท็อปปิ้ง" suggestions={["ลูกชิ้น", "เนื้อ", "หมู", "ไก่", "หมูกรอบ", "หมูสับ", "เครื่องใน"]} />
+
+                      {/* Topping price overrides */}
+                      {form.toppings.length > 0 && (
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">💰 ราคาเพิ่มต่อท็อปปิ้ง</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {form.toppings.map((tp) => (
+                              <div key={tp} className="flex items-center gap-2 rounded-xl bg-surface-elevated border border-border/50 px-3 py-2">
+                                <span className="text-xs text-foreground flex-1 truncate">{tp}</span>
+                                <span className="text-[10px] text-muted-foreground">+฿</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="5"
+                                  value={form.topping_prices[tp] || 0}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 0;
+                                    setForm((f) => ({
+                                      ...f,
+                                      topping_prices: { ...f.topping_prices, [tp]: val },
+                                    }));
+                                  }}
+                                  className="w-14 text-right text-xs font-bold bg-transparent text-foreground outline-none border-b border-border/50 focus:border-score-emerald transition-colors"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
 
