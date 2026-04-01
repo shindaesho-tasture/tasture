@@ -47,6 +47,7 @@ import MerchantQueue from "./pages/merchant/MerchantQueue.tsx";
 import MerchantProfile from "./pages/merchant/MerchantProfile.tsx";
 import MerchantClaimStore from "./pages/merchant/MerchantClaimStore.tsx";
 import MerchantSalesReport from "./pages/merchant/MerchantSalesReport.tsx";
+import MerchantQrCodes from "./pages/merchant/MerchantQrCodes.tsx";
 
 const queryClient = new QueryClient();
 
