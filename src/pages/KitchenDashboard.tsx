@@ -11,21 +11,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 const playOrderBeep = () => {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const playTone = (freq: number, start: number, dur: number) => {
+    const playTone = (freq: number, start: number, dur: number, vol = 0.7) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
+      gain.gain.setValueAtTime(vol, ctx.currentTime + start);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + dur);
       osc.connect(gain).connect(ctx.destination);
       osc.start(ctx.currentTime + start);
       osc.stop(ctx.currentTime + start + dur);
     };
-    // Three ascending tones
-    playTone(880, 0, 0.15);
-    playTone(1100, 0.18, 0.15);
-    playTone(1320, 0.36, 0.25);
+    // First burst — 3 ascending tones
+    playTone(880, 0, 0.18, 0.7);
+    playTone(1100, 0.2, 0.18, 0.8);
+    playTone(1320, 0.4, 0.25, 0.9);
+    // Pause then repeat louder
+    playTone(880, 0.8, 0.18, 0.8);
+    playTone(1100, 1.0, 0.18, 0.9);
+    playTone(1320, 1.2, 0.3, 1.0);
   } catch (e) {
     console.warn("Audio not supported", e);
   }
