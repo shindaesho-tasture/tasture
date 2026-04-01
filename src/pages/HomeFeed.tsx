@@ -23,6 +23,7 @@ interface PostImageSlide {
   reviewScore: number | null;
   menuItemName: string | null;
   storeName: string | null;
+  storeLogo: string | null;
   storeId: string | null;
   dnaComponents?: { name: string; icon: string; tag: string; score: number }[];
   satisfaction?: SatisfactionAxes | null;
