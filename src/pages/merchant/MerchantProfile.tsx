@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import StoreSettingsSheet from "@/components/merchant/StoreSettingsSheet";
+import StoreTeamManager from "@/components/merchant/StoreTeamManager";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const MerchantProfile = () => {
