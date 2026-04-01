@@ -105,7 +105,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
     }
   };
 
-
+  const handleLocate = () => {
     if (!navigator.geolocation) return;
     setLocating(true);
     if (navigator.vibrate) navigator.vibrate(8);
