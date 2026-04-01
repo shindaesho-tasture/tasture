@@ -18,6 +18,12 @@ interface DayData {
   orders: number;
 }
 
+interface TopMenuItem {
+  name: string;
+  qty: number;
+  revenue: number;
+}
+
 const MerchantSalesReport = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
