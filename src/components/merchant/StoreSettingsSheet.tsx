@@ -99,6 +99,7 @@ const StoreSettingsSheet = ({ open, onClose, store, onUpdated }: StoreSettingsSh
           category_id: categoryId || null,
           pin_lat: lat,
           pin_lng: lng,
+          menu_photo: menuPhoto,
         })
         .eq("id", store.id);
       if (error) throw error;
