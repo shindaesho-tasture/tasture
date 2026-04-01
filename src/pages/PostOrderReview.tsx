@@ -32,7 +32,7 @@ import type { DishComponent, DishDnaSelection } from "@/lib/dish-dna-types";
 import type { SensoryAxis } from "@/lib/sensory-types";
 
 /* ─── Step Types ─── */
-type StepType = "store-review" | "dish-dna" | "sensory" | "results";
+type StepType = "store-review" | "dish-dna" | "sensory" | "texture" | "results";
 
 interface Step {
   type: StepType;
