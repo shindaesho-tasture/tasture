@@ -218,7 +218,24 @@ const KitchenDashboard = () => {
         (payload) => {
           const bill = payload.new as any;
           if (bill.status === "pending") {
-            setBillRequests((prev) => [...prev, { id: bill.id, table_number: bill.table_number, total_amount: bill.total_amount, created_at: bill.created_at }]);
+            const orderIds = Array.isArray(bill.order_ids) ? bill.order_ids : [];
+            setBillRequests((prev) => [...prev, { id: bill.id, table_number: bill.table_number, total_amount: bill.total_amount, order_ids: orderIds, created_at: bill.created_at }]);
+            // Fetch items for this bill
+            if (orderIds.length > 0) {
+              supabase.from("orders").select("id, items").in("id", orderIds).then(({ data }) => {
+                const items: { name: string; qty: number }[] = [];
+                (data || []).forEach((o: any) => {
+                  if (Array.isArray(o.items)) {
+                    (o.items as any[]).forEach((item: any) => {
+                      const existing = items.find((i) => i.name === item.name);
+                      if (existing) existing.qty += (item.quantity || 1);
+                      else items.push({ name: item.name, qty: item.quantity || 1 });
+                    });
+                  }
+                });
+                setBillOrderItems((prev) => new Map(prev).set(bill.id, items));
+              });
+            }
             if (soundEnabled) playOrderBeep();
             navigator.vibrate?.([150, 80, 150]);
           }
