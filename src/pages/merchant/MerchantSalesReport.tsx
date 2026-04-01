@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { TrendingUp, CalendarDays, ShoppingBag, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, CalendarDays, ShoppingBag, ArrowUpRight, ArrowDownRight, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useMerchant } from "@/lib/merchant-context";
