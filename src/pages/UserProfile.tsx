@@ -260,7 +260,7 @@ const UserProfile = () => {
             {/* Avatar */}
             <div className="w-20 h-20 rounded-full bg-secondary overflow-hidden ring-2 ring-border/20 flex-shrink-0">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                <LazyImage src={profile.avatar_url} alt="" className="w-full h-full object-cover" transformWidth={160} quality={80} />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground">
                   {(profile.display_name || "?").charAt(0)}
