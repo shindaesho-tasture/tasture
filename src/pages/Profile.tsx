@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import LazyImage from "@/components/ui/lazy-image";
 import { useLanguage, LANGUAGES, type AppLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 
