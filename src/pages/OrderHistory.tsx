@@ -13,6 +13,7 @@ interface MenuItem {
   name: string;
   score: number | null;
   hasReview: boolean;
+  note?: string;
 }
 
 interface VisitRecord {
@@ -58,6 +59,22 @@ const OrderHistory = () => {
         .from("dish_dna")
         .select("menu_item_id, created_at")
         .eq("user_id", user.id);
+
+      // 3b. Get orders by user to extract per-item notes
+      const { data: userOrders } = await supabase
+        .from("orders")
+        .select("items")
+        .eq("user_id", user.id);
+
+      // Build a map: menuItemId → note (last order wins)
+      const itemNoteMap = new Map<string, string>();
+      (userOrders || []).forEach((order: any) => {
+        ((order.items as any[]) || []).forEach((item: any) => {
+          if (item.note && item.menuItemId) {
+            itemNoteMap.set(item.menuItemId, item.note);
+          }
+        });
+      });
 
       const menuReviewMap = new Map(
         (menuReviews || []).map((r) => [r.menu_item_id, r])
@@ -141,6 +158,7 @@ const OrderHistory = () => {
             name: mi.name,
             score: rev ? rev.score : null,
             hasReview: !!rev,
+            note: itemNoteMap.get(mi.id),
           };
         });
 
@@ -273,31 +291,35 @@ const OrderHistory = () => {
                   {/* Menu items always visible */}
                   <div className="border-t border-border/50">
                     {visit.items.map((item, idx) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-3 px-4 py-2.5 border-b border-border/30 last:border-b-0"
-                      >
-                        <span className="text-[11px] font-bold text-muted-foreground/50 w-5 text-center shrink-0">
-                          {idx + 1}
-                        </span>
-                        <span className="text-[13px] text-foreground truncate flex-1">
-                          {item.name}
-                        </span>
-                        {item.hasReview ? (
-                          <span className="text-base shrink-0">
-                            {scoreEmoji(item.score)}
+                      <div key={item.id}>
+                        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/30 last:border-b-0">
+                          <span className="text-[11px] font-bold text-muted-foreground/50 w-5 text-center shrink-0">
+                            {idx + 1}
                           </span>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/menu-feedback/${visit.storeId}`);
-                            }}
-                            className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
-                          >
-                             <Star size={12} />
-                             {t("history.rate")}
-                          </button>
+                          <span className="text-[13px] text-foreground truncate flex-1">
+                            {item.name}
+                          </span>
+                          {item.hasReview ? (
+                            <span className="text-base shrink-0">
+                              {scoreEmoji(item.score)}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/menu-feedback/${visit.storeId}`);
+                              }}
+                              className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-[11px] font-medium"
+                            >
+                              <Star size={12} />
+                              {t("history.rate")}
+                            </button>
+                          )}
+                        </div>
+                        {item.note && (
+                          <div className="ml-9 mr-4 mb-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                            <span className="text-[11px] text-amber-700 dark:text-amber-400">📝 {item.note}</span>
+                          </div>
                         )}
                       </div>
                     ))}
