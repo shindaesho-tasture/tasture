@@ -19,6 +19,7 @@ const OrderSummary = () => {
   const { items, storeName, storeId, updateQuantity, removeItem, clearOrder, totalItems, totalPrice } = useOrder();
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [notes, setNotes] = useState("");
 
   const handleConfirm = async () => {
     if (!storeId || items.length === 0) return;
