@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import PageTransition from "@/components/PageTransition";
+import LazyImage from "@/components/ui/lazy-image";
 
 interface FollowUser {
   id: string;
