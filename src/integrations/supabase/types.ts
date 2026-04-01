@@ -798,6 +798,7 @@ export type Database = {
           description: string | null
           id: string
           line_id: string | null
+          logo_url: string | null
           menu_photo: string | null
           name: string
           opening_hours: string | null
@@ -815,6 +816,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_id?: string | null
+          logo_url?: string | null
           menu_photo?: string | null
           name: string
           opening_hours?: string | null
@@ -832,6 +834,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_id?: string | null
+          logo_url?: string | null
           menu_photo?: string | null
           name?: string
           opening_hours?: string | null
