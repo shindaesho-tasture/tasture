@@ -33,6 +33,7 @@ const MerchantSalesReport = () => {
 
   const [range, setRange] = useState<"7d" | "30d">("7d");
   const [dayData, setDayData] = useState<DayData[]>([]);
+  const [topMenus, setTopMenus] = useState<TopMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
