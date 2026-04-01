@@ -51,7 +51,7 @@ const MerchantSalesReport = () => {
 
       const { data } = await supabase
         .from("orders")
-        .select("total_price, created_at")
+        .select("total_price, created_at, items")
         .eq("store_id", activeStore.id)
         .gte("created_at", since.toISOString())
         .neq("status", "rejected");
