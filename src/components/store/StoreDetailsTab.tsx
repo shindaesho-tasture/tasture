@@ -48,6 +48,8 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
     phone?: string | null;
     line_id?: string | null;
     address?: string | null;
+    pin_lat?: number | null;
+    pin_lng?: number | null;
   }>({});
 
   // Find matching category for metrics
@@ -89,7 +91,7 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
   const fetchStoreInfo = async () => {
     const { data } = await supabase
       .from("stores")
-      .select("description, opening_hours, phone, line_id, address")
+      .select("description, opening_hours, phone, line_id, address, pin_lat, pin_lng")
       .eq("id", storeId)
       .single();
     if (data) setStoreInfo(data as any);
@@ -217,6 +219,22 @@ const StoreDetailsTab = ({ storeId, storeName, categoryId }: StoreDetailsTabProp
                       {storeInfo.line_id && (
                         <span className="text-sm text-score-emerald font-medium">Line: {storeInfo.line_id}</span>
                       )}
+                    </div>
+                  </div>
+                )}
+                {storeInfo.pin_lat && storeInfo.pin_lng && (
+                  <div className="p-3 border-t border-border/20">
+                    <p className="text-[10px] text-muted-foreground font-medium mb-2">📍 แผนที่</p>
+                    <div className="rounded-xl overflow-hidden border border-border/30">
+                      <iframe
+                        title="Store location"
+                        width="100%"
+                        height="200"
+                        style={{ border: 0 }}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyCMtKoObZNxS68VfSbMsbyP9KKruLU346w&q=${storeInfo.pin_lat},${storeInfo.pin_lng}&zoom=16`}
+                      />
                     </div>
                   </div>
                 )}
