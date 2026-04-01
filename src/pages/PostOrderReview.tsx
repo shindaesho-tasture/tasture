@@ -145,22 +145,24 @@ const PostOrderReview = () => {
 
   // Load store category + check previous reviews
   useEffect(() => {
-    if (!storeId || !user) return;
+    if (!storeId) return;
     (async () => {
       setLoading(true);
-      const [{ data: storeData }, { data: prevReviews }] = await Promise.all([
-        supabase.from("stores").select("category_id").eq("id", storeId).single(),
-        supabase.from("reviews").select("metric_id, score").eq("store_id", storeId).eq("user_id", user.id),
-      ]);
+      const { data: storeData } = await supabase.from("stores").select("category_id").eq("id", storeId).single();
       if (storeData?.category_id) {
         const cat = categories.find((c) => c.id === storeData.category_id);
         setCategory(cat || categories[0]);
       } else {
         setCategory(categories[0]);
       }
-      if (prevReviews && prevReviews.length > 0) {
-        setHasPreviousReview(true);
-        setPreviousReviewRows(prevReviews);
+      // Check previous reviews only if logged in
+      if (user) {
+        const { data: prevReviews } = await supabase
+          .from("reviews").select("metric_id, score").eq("store_id", storeId).eq("user_id", user.id);
+        if (prevReviews && prevReviews.length > 0) {
+          setHasPreviousReview(true);
+          setPreviousReviewRows(prevReviews);
+        }
       }
       setLoading(false);
     })();
