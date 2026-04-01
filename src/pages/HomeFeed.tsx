@@ -283,11 +283,11 @@ const HomeFeed = () => {
         if (pp.store_id) storeIds.add(pp.store_id);
       });
 
-      const { data: storesData } = await supabase.from("stores").select("id, name, pin_lat, pin_lng").in("id", [...storeIds]);
-      const storeMap = new Map<string, string>();
+      const { data: storesData } = await supabase.from("stores").select("id, name, pin_lat, pin_lng, logo_url").in("id", [...storeIds]);
+      const storeMap = new Map<string, { name: string; logo: string | null }>();
       const locMap = new Map<string, { lat: number; lng: number }>();
       (storesData || []).forEach((s) => {
-        storeMap.set(s.id, s.name);
+        storeMap.set(s.id, { name: s.name, logo: s.logo_url });
         if (s.pin_lat != null && s.pin_lng != null) locMap.set(s.id, { lat: s.pin_lat, lng: s.pin_lng });
       });
       setStoreLocations(locMap);
