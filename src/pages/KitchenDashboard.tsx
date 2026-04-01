@@ -1,10 +1,47 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe } from "lucide-react";
+import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe, Volume2, VolumeX, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import PageTransition from "@/components/PageTransition";
+
+// Generate a notification beep using Web Audio API
+const playOrderBeep = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const playTone = (freq: number, start: number, dur: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur);
+    };
+    // Three ascending tones
+    playTone(880, 0, 0.15);
+    playTone(1100, 0.18, 0.15);
+    playTone(1320, 0.36, 0.25);
+  } catch (e) {
+    console.warn("Audio not supported", e);
+  }
+};
+
+const sendBrowserNotification = (orderNumber: number, itemCount: number) => {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  try {
+    new Notification(`🔔 ออเดอร์ใหม่ #${orderNumber}`, {
+      body: `${itemCount} รายการ`,
+      icon: "/placeholder.svg",
+      tag: `order-${orderNumber}`,
+    });
+  } catch (e) {
+    console.warn("Notification failed", e);
+  }
+};
 
 interface OrderRow {
   id: string;
@@ -39,6 +76,17 @@ const KitchenDashboard = () => {
   const [storeName, setStoreName] = useState("");
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "accepted" | "all">("pending");
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
+    "Notification" in window ? Notification.permission : "denied"
+  );
+  const initialLoadDone = useRef(false);
+
+  const requestNotifPermission = useCallback(async () => {
+    if (!("Notification" in window)) return;
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+  }, []);
 
   // Fetch orders
   useEffect(() => {
@@ -72,7 +120,14 @@ const KitchenDashboard = () => {
         { event: "*", schema: "public", table: "orders", filter: `store_id=eq.${storeId}` },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setOrders((prev) => [...prev, payload.new as any as OrderRow]);
+            const newOrder = payload.new as any as OrderRow;
+            setOrders((prev) => [...prev, newOrder]);
+            // Sound + notification for new orders
+            if (initialLoadDone.current && newOrder.status === "pending") {
+              if (soundEnabled) playOrderBeep();
+              sendBrowserNotification(newOrder.order_number, (newOrder.items || []).length);
+              navigator.vibrate?.([100, 50, 100, 50, 200]);
+            }
           } else if (payload.eventType === "UPDATE") {
             setOrders((prev) =>
               prev.map((o) => (o.id === (payload.new as any).id ? (payload.new as any as OrderRow) : o))
@@ -85,7 +140,14 @@ const KitchenDashboard = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [storeId]);
+  }, [storeId, soundEnabled]);
+
+  // Mark initial load done after first fetch
+  useEffect(() => {
+    if (!loading && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+    }
+  }, [loading]);
 
   const updateStatus = async (orderId: string, status: string) => {
     await supabase.from("orders").update({ status, updated_at: new Date().toISOString() } as any).eq("id", orderId);
@@ -123,6 +185,24 @@ const KitchenDashboard = () => {
               <p className="text-xs text-zinc-500 truncate">{storeName}</p>
             </div>
             <div className="flex items-center gap-2">
+              {/* Notification permission */}
+              {notifPermission !== "granted" && (
+                <button
+                  onClick={requestNotifPermission}
+                  className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                  title="เปิดแจ้งเตือน"
+                >
+                  <Bell size={18} className="text-zinc-400" />
+                </button>
+              )}
+              {/* Sound toggle */}
+              <button
+                onClick={() => setSoundEnabled((p) => !p)}
+                className={`p-2 rounded-xl transition-colors ${soundEnabled ? "bg-amber-500/20" : "bg-zinc-800"}`}
+                title={soundEnabled ? "ปิดเสียง" : "เปิดเสียง"}
+              >
+                {soundEnabled ? <Volume2 size={18} className="text-amber-400" /> : <VolumeX size={18} className="text-zinc-500" />}
+              </button>
               {pendingCount > 0 && (
                 <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 animate-pulse">
                   <Flame size={14} className="text-amber-400" />
