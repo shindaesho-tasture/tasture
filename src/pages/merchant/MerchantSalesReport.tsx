@@ -253,6 +253,34 @@ const MerchantSalesReport = () => {
               </motion.div>
             </div>
 
+            {/* Top 5 Menu Items */}
+            {topMenus.length > 0 && (
+              <div className="px-4 pt-5">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">
+                  🏆 {isTh ? "เมนูยอดนิยม Top 5" : "Top 5 Menu Items"}
+                </p>
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  className="rounded-xl bg-surface-elevated border border-border/50 p-3">
+                  <ResponsiveContainer width="100%" height={topMenus.length * 44 + 16}>
+                    <BarChart data={topMenus} layout="vertical" margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false}
+                        tickFormatter={(v) => `฿${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} axisLine={false} tickLine={false} width={90} />
+                      <Tooltip
+                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+                        formatter={(value: number, _name: string, props: any) => {
+                          const item = props.payload as TopMenuItem;
+                          return [`฿${value.toLocaleString()} (${item.qty} ${isTh ? "ชิ้น" : "pcs"})`, isTh ? "รายได้" : "Revenue"];
+                        }}
+                      />
+                      <Bar dataKey="revenue" fill="hsl(var(--score-amber))" radius={[0, 6, 6, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </motion.div>
+              </div>
+            )}
+
             {/* Daily breakdown table */}
             <div className="px-4 pt-5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-3">
