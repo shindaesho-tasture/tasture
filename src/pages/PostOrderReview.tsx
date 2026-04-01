@@ -369,8 +369,38 @@ const PostOrderReview = () => {
 
   // ─── Save All ───
   const handleSaveAll = async () => {
-    if (!user || !storeId) { navigate("/auth"); return; }
+    if (!storeId) return;
     setSaving(true);
+
+    // Guest mode: save to localStorage
+    if (!user) {
+      try {
+        // Save guest order
+        saveGuestOrder({
+          storeId,
+          storeName: storeName || "",
+          items: items.map((i) => ({ menuItemId: i.menuItemId, name: i.name, quantity: i.quantity, price: i.price })),
+          timestamp: Date.now(),
+        });
+        // Mark all items as reviewed
+        items.forEach((item) => {
+          const sel = dnaSelections[item.menuItemId] || {};
+          const dnaVals = Object.values(sel).map((s) => s.selected_score);
+          const score = dnaVals.length > 0 ? Math.round(dnaVals.reduce((a, b) => a + b, 0) / dnaVals.length) : 0;
+          saveGuestReview({ storeId, menuItemId: item.menuItemId, score, timestamp: Date.now() });
+          markReviewed(item.menuItemId);
+        });
+        toast({ title: t("por.saveSuccess") });
+      } catch (err: any) {
+        console.error("Guest save error:", err);
+        toast({ title: t("por.saveFailed"), variant: "destructive" });
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // Authenticated mode: save to database
     try {
       // Save store reviews
       if (storeReviewChoice === "same" && previousReviewRows.length > 0 && storeId) {
