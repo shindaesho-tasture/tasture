@@ -242,7 +242,7 @@ const OrderHistory = () => {
   };
 
   const handleReorderAll = (visit: VisitRecord) => {
-    if (items.length > 0) {
+    if (cartItems.length > 0) {
       setConfirmVisit(visit);
     } else {
       executeReorderAll(visit);
