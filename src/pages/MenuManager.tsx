@@ -52,6 +52,7 @@ const emptyForm = {
   textures: [] as string[],
   noodle_type_prices: {} as Record<string, number>,
   noodle_style_prices: {} as Record<string, number>,
+  topping_prices: {} as Record<string, number>,
   menu_category: "" as string,
 };
 
