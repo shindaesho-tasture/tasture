@@ -13,6 +13,7 @@ import AdminMenuCategoryEditor from "@/components/admin/AdminMenuCategoryEditor"
 import AdminTagTranslationEditor from "@/components/admin/AdminTagTranslationEditor";
 import AdminDishDescriptionEditor from "@/components/admin/AdminDishDescriptionEditor";
 import AdminNameTranslationEditor from "@/components/admin/AdminNameTranslationEditor";
+import AdminClaimReview from "@/components/admin/AdminClaimReview";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { categories, getScoreTier, type ScoreTier } from "@/lib/categories";
