@@ -163,6 +163,14 @@ const MerchantQrCodes = () => {
                 <p className="text-[9px] text-muted-foreground break-all text-center leading-tight max-w-full">
                   {isTh ? "สแกนเพื่อสั่งอาหาร" : "Scan to order"}
                 </p>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => downloadSingleQr(table)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-[10px] font-medium text-foreground transition-colors mt-1"
+                >
+                  <ImageDown size={12} />
+                  {isTh ? "ดาวน์โหลด" : "Download"}
+                </motion.button>
               </motion.div>
             );
           })}
