@@ -177,8 +177,48 @@ const OrderSummary = () => {
               </p>
               <p className="text-xs text-muted-foreground mt-1">{storeName}</p>
             </div>
+
+            {/* Bill request section */}
+            {billPaid ? (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-full max-w-xs text-center space-y-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-score-emerald/15 flex items-center justify-center mx-auto">
+                  <CheckCircle2 size={32} className="text-score-emerald" />
+                </div>
+                <p className="text-lg font-bold text-score-emerald">
+                  {language === "th" ? "✅ ชำระเงินเรียบร้อย!" : "✅ Payment complete!"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {language === "th" ? "กำลังพาไปให้ฟีดแบค..." : "Redirecting to feedback..."}
+                </p>
+              </motion.div>
+            ) : billRequested ? (
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-full max-w-xs px-6 py-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border-2 border-amber-300 dark:border-amber-500/30 text-center space-y-2"
+              >
+                <div className="text-3xl animate-bounce">💰</div>
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                  {language === "th" ? "รอพนักงานมาเก็บเงิน..." : "Waiting for staff to collect payment..."}
+                </p>
+                <p className="text-xs text-amber-600/70 dark:text-amber-400/60">
+                  {language === "th" ? "พนักงานได้รับแจ้งเตือนแล้ว" : "Staff has been notified"}
+                </p>
+              </motion.div>
+            ) : (
+              <motion.button whileTap={{ scale: 0.97 }} onClick={handleRequestBill} disabled={requestingBill}
+                className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 mt-2">
+                <Receipt size={18} />
+                {language === "th" ? "💰 เรียกเก็บเงิน" : "💰 Request Bill"}
+              </motion.button>
+            )}
+
             <motion.button whileTap={{ scale: 0.97 }} onClick={handleReview}
-              className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury mt-4">
+              className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury mt-2">
               {t("orderSum.reviewBtn", language)}
             </motion.button>
             <motion.button whileTap={{ scale: 0.97 }} onClick={handleDone}
