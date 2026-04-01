@@ -6,6 +6,7 @@ export interface OrderItem {
   price: number;
   quantity: number;
   type: string;
+  note?: string;
   selectedOptions?: {
     noodleType?: string;
     noodleTypePrice?: number;
