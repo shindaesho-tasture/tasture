@@ -4,16 +4,52 @@ import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag } from "luc
 import { useOrder } from "@/lib/order-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useGuestSession } from "@/hooks/use-guest-session";
+import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import { useState } from "react";
 
 const OrderSummary = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { user } = useAuth();
+  const { guestId } = useGuestSession();
   const { items, storeName, storeId, updateQuantity, removeItem, clearOrder, totalItems, totalPrice } = useOrder();
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleConfirm = () => setConfirmed(true);
+  const handleConfirm = async () => {
+    if (!storeId || items.length === 0) return;
+    setSubmitting(true);
+    try {
+      const orderItems = items.map((i) => ({
+        menuItemId: i.menuItemId,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+        type: i.type,
+        selectedOptions: i.selectedOptions,
+      }));
+      const { error } = await supabase.from("orders").insert({
+        store_id: storeId,
+        user_id: user?.id || null,
+        guest_id: user ? null : guestId,
+        items: orderItems,
+        status: "pending",
+        customer_language: language,
+        total_price: totalPrice,
+      } as any);
+      if (error) throw error;
+      setConfirmed(true);
+    } catch (err: any) {
+      console.error("Order submit error:", err);
+      toast({ title: "ส่งออเดอร์ไม่สำเร็จ", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
   const handleReview = () => navigate("/post-review");
   const handleDone = () => { clearOrder(); navigate("/store-list"); };
 
