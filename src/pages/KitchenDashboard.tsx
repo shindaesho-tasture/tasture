@@ -120,7 +120,14 @@ const KitchenDashboard = () => {
         { event: "*", schema: "public", table: "orders", filter: `store_id=eq.${storeId}` },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setOrders((prev) => [...prev, payload.new as any as OrderRow]);
+            const newOrder = payload.new as any as OrderRow;
+            setOrders((prev) => [...prev, newOrder]);
+            // Sound + notification for new orders
+            if (initialLoadDone.current && newOrder.status === "pending") {
+              if (soundEnabled) playOrderBeep();
+              sendBrowserNotification(newOrder.order_number, (newOrder.items || []).length);
+              navigator.vibrate?.([100, 50, 100, 50, 200]);
+            }
           } else if (payload.eventType === "UPDATE") {
             setOrders((prev) =>
               prev.map((o) => (o.id === (payload.new as any).id ? (payload.new as any as OrderRow) : o))
