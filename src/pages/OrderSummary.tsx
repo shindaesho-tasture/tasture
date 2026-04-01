@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag, MessageSquare, ChevronDown } from "lucide-react";
+import { ChevronLeft, Minus, Plus, Trash2, CheckCircle2, ShoppingBag, MessageSquare, ChevronDown, Receipt } from "lucide-react";
 import { useOrder } from "@/lib/order-context";
 import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useGuestSession } from "@/hooks/use-guest-session";
 import { toast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 /* ── Category-specific quick tags ── */
@@ -47,6 +47,9 @@ const OrderSummary = () => {
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState("");
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [billRequested, setBillRequested] = useState(false);
+  const [requestingBill, setRequestingBill] = useState(false);
+  const [billPaid, setBillPaid] = useState(false);
 
   // Fetch store category for context-aware quick tags
   const { data: storeCategory } = useQuery({
@@ -115,6 +118,50 @@ const OrderSummary = () => {
   const handleReview = () => navigate("/post-review");
   const handleDone = () => { clearOrder(); navigate("/store-list"); };
 
+  const handleRequestBill = async () => {
+    if (!storeId || requestingBill) return;
+    setRequestingBill(true);
+    if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
+    try {
+      await supabase.from("bill_requests" as any).insert({
+        store_id: storeId,
+        table_number: tableNumber || 0,
+        guest_id: user ? null : guestId,
+        total_amount: totalPrice,
+      } as any);
+      setBillRequested(true);
+      toast({ title: language === "th" ? "💰 เรียกเก็บเงินแล้ว" : "💰 Bill requested" });
+    } catch (err: any) {
+      toast({ title: language === "th" ? "เกิดข้อผิดพลาด" : "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setRequestingBill(false);
+    }
+  };
+
+  // Listen for bill paid status via realtime
+  useEffect(() => {
+    if (!billRequested || !storeId) return;
+    const channel = supabase
+      .channel("bill-status")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "bill_requests", filter: `store_id=eq.${storeId}` },
+        (payload) => {
+          const updated = payload.new as any;
+          if (updated.status === "paid" && updated.table_number === (tableNumber || 0)) {
+            setBillPaid(true);
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            // Auto redirect to feedback after 2s
+            setTimeout(() => {
+              navigate(`/menu-feedback/${storeId}`);
+            }, 2000);
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [billRequested, storeId, tableNumber]);
+
   if (confirmed) {
     return (
       <PageTransition>
@@ -130,8 +177,48 @@ const OrderSummary = () => {
               </p>
               <p className="text-xs text-muted-foreground mt-1">{storeName}</p>
             </div>
+
+            {/* Bill request section */}
+            {billPaid ? (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-full max-w-xs text-center space-y-3"
+              >
+                <div className="w-16 h-16 rounded-full bg-score-emerald/15 flex items-center justify-center mx-auto">
+                  <CheckCircle2 size={32} className="text-score-emerald" />
+                </div>
+                <p className="text-lg font-bold text-score-emerald">
+                  {language === "th" ? "✅ ชำระเงินเรียบร้อย!" : "✅ Payment complete!"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {language === "th" ? "กำลังพาไปให้ฟีดแบค..." : "Redirecting to feedback..."}
+                </p>
+              </motion.div>
+            ) : billRequested ? (
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-full max-w-xs px-6 py-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border-2 border-amber-300 dark:border-amber-500/30 text-center space-y-2"
+              >
+                <div className="text-3xl animate-bounce">💰</div>
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                  {language === "th" ? "รอพนักงานมาเก็บเงิน..." : "Waiting for staff to collect payment..."}
+                </p>
+                <p className="text-xs text-amber-600/70 dark:text-amber-400/60">
+                  {language === "th" ? "พนักงานได้รับแจ้งเตือนแล้ว" : "Staff has been notified"}
+                </p>
+              </motion.div>
+            ) : (
+              <motion.button whileTap={{ scale: 0.97 }} onClick={handleRequestBill} disabled={requestingBill}
+                className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 mt-2">
+                <Receipt size={18} />
+                {language === "th" ? "💰 เรียกเก็บเงิน" : "💰 Request Bill"}
+              </motion.button>
+            )}
+
             <motion.button whileTap={{ scale: 0.97 }} onClick={handleReview}
-              className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury mt-4">
+              className="w-full max-w-xs px-8 py-3.5 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury mt-2">
               {t("orderSum.reviewBtn", language)}
             </motion.button>
             <motion.button whileTap={{ scale: 0.97 }} onClick={handleDone}

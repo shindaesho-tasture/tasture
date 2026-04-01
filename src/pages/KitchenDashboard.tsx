@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe, Volume2, VolumeX, Bell, BellRing } from "lucide-react";
+import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe, Volume2, VolumeX, Bell, BellRing, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import PageTransition from "@/components/PageTransition";
@@ -92,6 +92,7 @@ const KitchenDashboard = () => {
   const [rejectReason, setRejectReason] = useState("");
   const alertTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [waiterCalls, setWaiterCalls] = useState<{ id: string; table_number: number; created_at: string }[]>([]);
+  const [billRequests, setBillRequests] = useState<{ id: string; table_number: number; total_amount: number; created_at: string }[]>([]);
 
   const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
 
@@ -136,12 +137,16 @@ const KitchenDashboard = () => {
     })();
   }, [storeId]);
 
-  // Fetch pending waiter calls
+  // Fetch pending waiter calls & bill requests
   useEffect(() => {
     if (!storeId) return;
     (async () => {
-      const { data } = await supabase.from("waiter_calls" as any).select("id, table_number, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true });
-      setWaiterCalls((data as any) || []);
+      const [waiterRes, billRes] = await Promise.all([
+        supabase.from("waiter_calls" as any).select("id, table_number, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
+        supabase.from("bill_requests" as any).select("id, table_number, total_amount, created_at").eq("store_id", storeId).eq("status", "pending").order("created_at", { ascending: true }),
+      ]);
+      setWaiterCalls((waiterRes.data as any) || []);
+      setBillRequests((billRes.data as any) || []);
     })();
   }, [storeId]);
 
@@ -182,6 +187,18 @@ const KitchenDashboard = () => {
           navigator.vibrate?.([200, 100, 200]);
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "bill_requests", filter: `store_id=eq.${storeId}` },
+        (payload) => {
+          const bill = payload.new as any;
+          if (bill.status === "pending") {
+            setBillRequests((prev) => [...prev, { id: bill.id, table_number: bill.table_number, total_amount: bill.total_amount, created_at: bill.created_at }]);
+            if (soundEnabled) playOrderBeep();
+            navigator.vibrate?.([150, 80, 150]);
+          }
+        }
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -190,6 +207,11 @@ const KitchenDashboard = () => {
   const acknowledgeWaiterCall = async (callId: string) => {
     await supabase.from("waiter_calls" as any).update({ status: "acknowledged" } as any).eq("id", callId);
     setWaiterCalls((prev) => prev.filter((c) => c.id !== callId));
+  };
+
+  const markBillPaid = async (billId: string) => {
+    await supabase.from("bill_requests" as any).update({ status: "paid", paid_at: new Date().toISOString() } as any).eq("id", billId);
+    setBillRequests((prev) => prev.filter((b) => b.id !== billId));
   };
 
   // Mark initial load done after first fetch
@@ -442,6 +464,38 @@ const KitchenDashboard = () => {
                     className="px-4 py-2 rounded-xl bg-amber-500 text-zinc-900 text-xs font-bold"
                   >
                     รับทราบ
+                  </motion.button>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Bill Requests */}
+        <AnimatePresence>
+          {billRequests.length > 0 && (
+            <div className="px-3 pt-2 space-y-2">
+              {billRequests.map((bill) => (
+                <motion.div
+                  key={bill.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500/40 animate-pulse"
+                >
+                  <div className="flex items-center gap-3">
+                    <Receipt size={20} className="text-emerald-400" />
+                    <div>
+                      <p className="text-sm font-bold text-white">💰 โต๊ะ {bill.table_number} เรียกเก็บเงิน</p>
+                      <p className="text-[10px] text-zinc-400">฿{Number(bill.total_amount).toLocaleString()} · {timeSince(bill.created_at)}</p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => markBillPaid(bill.id)}
+                    className="px-4 py-2 rounded-xl bg-emerald-500 text-zinc-900 text-xs font-bold"
+                  >
+                    ✅ เก็บแล้ว
                   </motion.button>
                 </motion.div>
               ))}
