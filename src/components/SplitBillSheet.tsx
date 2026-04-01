@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Users, ListChecks, Divide, Minus, Plus, Check } from "lucide-react";
+import { Users, ListChecks, Divide, Minus, Plus, Check, Share2, Copy, CheckCircle } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import type { OrderItem } from "@/lib/order-context";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 type SplitMode = "by-item" | "equal";
 
@@ -57,6 +58,59 @@ const SplitBillSheet = ({ open, onOpenChange, items, totalPrice }: SplitBillShee
   const assignedTotal = personTotals.reduce((s, v) => s + v, 0);
 
   const personColors = ["bg-blue-500", "bg-pink-500", "bg-amber-500", "bg-purple-500", "bg-teal-500", "bg-orange-500"];
+  const [copied, setCopied] = useState(false);
+
+  const buildShareUrl = useCallback((personIndex?: number) => {
+    const base = window.location.origin + "/split-view";
+    const params = new URLSearchParams();
+    params.set("total", totalPrice.toString());
+
+    if (mode === "equal") {
+      params.set("mode", "equal");
+      params.set("n", numPeople.toString());
+      params.set("pp", perPerson.toString());
+    } else if (mode === "by-item") {
+      params.set("mode", "by-item");
+      params.set("n", personCount.toString());
+      // Encode each person's items
+      for (let i = 0; i < personCount; i++) {
+        const ids = assignments.get(i);
+        if (!ids || ids.size === 0) continue;
+        const personItems = items.filter((item) => ids.has(item.menuItemId));
+        const encoded = personItems.map((item) => `${item.name}:${item.quantity}:${item.price}`).join("|");
+        params.set(`p${i}`, encoded);
+      }
+      if (personIndex !== undefined) params.set("highlight", personIndex.toString());
+    }
+    return `${base}?${params.toString()}`;
+  }, [mode, totalPrice, numPeople, perPerson, personCount, assignments, items]);
+
+  const handleShare = useCallback(async (personIndex?: number) => {
+    const url = buildShareUrl(personIndex);
+    const title = language === "th" ? "💸 แยกบิล" : "💸 Split Bill";
+    const text = mode === "equal"
+      ? (language === "th" ? `คนละ ฿${perPerson.toLocaleString()} (${numPeople} คน)` : `฿${perPerson.toLocaleString()} per person (${numPeople} people)`)
+      : personIndex !== undefined
+      ? (language === "th" ? `คนที่ ${personIndex + 1}: ฿${personTotals[personIndex].toLocaleString()}` : `Person ${personIndex + 1}: ฿${personTotals[personIndex].toLocaleString()}`)
+      : (language === "th" ? `ยอดรวม ฿${totalPrice.toLocaleString()}` : `Total ฿${totalPrice.toLocaleString()}`);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch {}
+    }
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast({ title: language === "th" ? "📋 คัดลอกลิงก์แล้ว" : "📋 Link copied" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: language === "th" ? "ไม่สามารถคัดลอกได้" : "Cannot copy", variant: "destructive" });
+    }
+    navigator.vibrate?.(8);
+  }, [buildShareUrl, language, mode, perPerson, numPeople, personTotals, totalPrice]);
 
   const resetState = () => {
     setMode(null);
@@ -64,6 +118,7 @@ const SplitBillSheet = ({ open, onOpenChange, items, totalPrice }: SplitBillShee
     setPersonCount(2);
     setAssignments(new Map());
     setActivePerson(0);
+    setCopied(false);
   };
 
   const handleClose = (o: boolean) => {
@@ -174,6 +229,18 @@ const SplitBillSheet = ({ open, onOpenChange, items, totalPrice }: SplitBillShee
                     : `฿${totalPrice.toLocaleString()} ÷ ${numPeople} people`}
                 </p>
               </div>
+
+              {/* Share button */}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleShare()}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm"
+              >
+                {copied ? <CheckCircle size={16} /> : <Share2 size={16} />}
+                {copied
+                  ? (language === "th" ? "คัดลอกแล้ว!" : "Copied!")
+                  : (language === "th" ? "แชร์ให้เพื่อน" : "Share with friends")}
+              </motion.button>
             </motion.div>
           )}
 
@@ -306,11 +373,33 @@ const SplitBillSheet = ({ open, onOpenChange, items, totalPrice }: SplitBillShee
                         {language === "th" ? `คนที่ ${i + 1}` : `Person ${i + 1}`}
                       </span>
                     </div>
-                    <span className="text-xs font-bold text-foreground">
-                      ฿{personTotals[i].toLocaleString()}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-foreground">
+                        ฿{personTotals[i].toLocaleString()}
+                      </span>
+                      <motion.button
+                        whileTap={{ scale: 0.85 }}
+                        onClick={(e) => { e.stopPropagation(); handleShare(i); }}
+                        className="w-6 h-6 rounded-md bg-secondary flex items-center justify-center"
+                      >
+                        <Share2 size={11} className="text-muted-foreground" />
+                      </motion.button>
+                    </div>
                   </div>
                 ))}
+                {/* Share all button */}
+                <div className="pt-1">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleShare()}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs"
+                  >
+                    {copied ? <CheckCircle size={14} /> : <Share2 size={14} />}
+                    {copied
+                      ? (language === "th" ? "คัดลอกแล้ว!" : "Copied!")
+                      : (language === "th" ? "แชร์ทั้งหมด" : "Share all")}
+                  </motion.button>
+                </div>
                 <div className="border-t border-border/30 pt-2 flex items-center justify-between">
                   <span className="text-[10px] text-muted-foreground">
                     {language === "th" ? "รวมที่แบ่งแล้ว" : "Assigned total"}
