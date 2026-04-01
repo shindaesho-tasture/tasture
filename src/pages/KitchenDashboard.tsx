@@ -5,6 +5,7 @@ import { ChevronLeft, ChefHat, Check, Clock, Flame, Globe, Volume2, VolumeX, Bel
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import PageTransition from "@/components/PageTransition";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Generate a notification beep using Web Audio API
 const playOrderBeep = () => {

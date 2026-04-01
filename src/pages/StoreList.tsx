@@ -11,6 +11,7 @@ import { useLanguage } from "@/lib/language-context";
 import { t } from "@/lib/i18n";
 import KaraokeName from "@/components/KaraokeName";
 import PageTransition from "@/components/PageTransition";
+import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
 
 interface StoreItem {
