@@ -20,10 +20,35 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Shared AudioContext to avoid autoplay blocks on new order sounds
+let sharedAudioCtx: AudioContext | null = null;
+
+const getAudioCtx = (): AudioContext => {
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  return sharedAudioCtx;
+};
+
+const unlockAudio = () => {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === "suspended") {
+      void ctx.resume();
+    }
+  } catch (e) {
+    console.warn("Audio unlock failed", e);
+  }
+};
+
 // Notification beep via Web Audio API
 const playOrderBeep = () => {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioCtx();
+    if (ctx.state === "suspended") {
+      void ctx.resume();
+    }
+
     const playTone = (freq: number, start: number, dur: number) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -35,6 +60,7 @@ const playOrderBeep = () => {
       osc.start(ctx.currentTime + start);
       osc.stop(ctx.currentTime + start + dur);
     };
+
     playTone(880, 0, 0.15);
     playTone(1100, 0.18, 0.15);
     playTone(1320, 0.36, 0.25);
@@ -87,6 +113,17 @@ const MerchantKitchen = () => {
   );
   const [rejectTarget, setRejectTarget] = useState<OrderRow | null>(null);
   const initialLoadDone = useRef(false);
+
+  useEffect(() => {
+    const handleFirstInteraction = () => unlockAudio();
+    document.addEventListener("pointerdown", handleFirstInteraction, { once: true });
+    document.addEventListener("keydown", handleFirstInteraction, { once: true });
+
+    return () => {
+      document.removeEventListener("pointerdown", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -153,6 +190,7 @@ const MerchantKitchen = () => {
   }, [activeStore, soundEnabled]);
 
   const requestNotifPermission = useCallback(async () => {
+    unlockAudio();
     if (!("Notification" in window)) return;
     const perm = await Notification.requestPermission();
     setNotifPermission(perm);
@@ -219,7 +257,10 @@ const MerchantKitchen = () => {
                 </button>
               )}
               <button
-                onClick={() => setSoundEnabled((p) => !p)}
+                onClick={() => {
+                  unlockAudio();
+                  setSoundEnabled((p) => !p);
+                }}
                 className={`p-2 rounded-xl transition-colors ${soundEnabled ? "bg-amber-500/15" : "bg-secondary"}`}
               >
                 {soundEnabled
