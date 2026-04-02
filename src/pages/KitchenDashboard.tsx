@@ -8,10 +8,27 @@ import PageTransition from "@/components/PageTransition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
+// Shared AudioContext — created once to avoid browser autoplay blocks
+let sharedAudioCtx: AudioContext | null = null;
+
+const getAudioCtx = (): AudioContext => {
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  return sharedAudioCtx;
+};
+
+/** Call on any user click/tap to unlock audio playback */
+const unlockAudio = () => {
+  const ctx = getAudioCtx();
+  if (ctx.state === "suspended") ctx.resume();
+};
+
 // Generate a notification beep using Web Audio API
 const playOrderBeep = () => {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioCtx();
+    if (ctx.state === "suspended") ctx.resume();
     const playTone = (freq: number, start: number, dur: number, vol = 0.7) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -96,6 +113,17 @@ const KitchenDashboard = () => {
   const [billRequests, setBillRequests] = useState<{ id: string; table_number: number; total_amount: number; order_ids: string[]; created_at: string }[]>([]);
   const [billOrderItems, setBillOrderItems] = useState<Map<string, { name: string; qty: number; price: number }[]>>(new Map());
   const { isSubscribed: pushSubscribed, isSupported: pushSupported, loading: pushLoading, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications(storeId || null, user?.id || null);
+
+  // Unlock AudioContext on first user interaction
+  useEffect(() => {
+    const handler = () => unlockAudio();
+    document.addEventListener("click", handler, { once: true });
+    document.addEventListener("touchstart", handler, { once: true });
+    return () => {
+      document.removeEventListener("click", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, []);
 
   const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
 
@@ -459,7 +487,7 @@ const KitchenDashboard = () => {
               )}
               {/* Sound toggle */}
               <button
-                onClick={() => setSoundEnabled((p) => !p)}
+                onClick={() => { unlockAudio(); setSoundEnabled((p) => !p); }}
                 className={`p-2 rounded-xl transition-colors ${soundEnabled ? "bg-amber-500/20" : "bg-zinc-800"}`}
                 title={soundEnabled ? "ปิดเสียง" : "เปิดเสียง"}
               >
