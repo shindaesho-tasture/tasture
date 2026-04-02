@@ -265,7 +265,10 @@ const StoreOrder = () => {
     });
     if (storeName) tags.add(storeName);
     itemAddOns.forEach((addOns: any[]) => {
-      addOns.forEach((a: any) => tags.add(a.category));
+      addOns.forEach((a: any) => {
+        tags.add(a.category);
+        tags.add(a.name);
+      });
     });
     return Array.from(tags);
   }, [dnaByItem, menuItems, itemAddOns, storeName]);
