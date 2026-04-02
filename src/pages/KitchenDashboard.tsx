@@ -476,7 +476,7 @@ const KitchenDashboard = () => {
               )}
               {/* Sound toggle */}
               <button
-                onClick={() => setSoundEnabled((p) => !p)}
+                onClick={() => { unlockAudio(); setSoundEnabled((p) => !p); }}
                 className={`p-2 rounded-xl transition-colors ${soundEnabled ? "bg-amber-500/20" : "bg-zinc-800"}`}
                 title={soundEnabled ? "ปิดเสียง" : "เปิดเสียง"}
               >
