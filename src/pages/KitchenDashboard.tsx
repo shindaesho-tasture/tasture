@@ -114,6 +114,17 @@ const KitchenDashboard = () => {
   const [billOrderItems, setBillOrderItems] = useState<Map<string, { name: string; qty: number; price: number }[]>>(new Map());
   const { isSubscribed: pushSubscribed, isSupported: pushSupported, loading: pushLoading, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications(storeId || null, user?.id || null);
 
+  // Unlock AudioContext on first user interaction
+  useEffect(() => {
+    const handler = () => unlockAudio();
+    document.addEventListener("click", handler, { once: true });
+    document.addEventListener("touchstart", handler, { once: true });
+    return () => {
+      document.removeEventListener("click", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, []);
+
   const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านกำลังจะปิด", "ออเดอร์เยอะเกินไป"];
 
   const dismissAlert = useCallback(() => {
