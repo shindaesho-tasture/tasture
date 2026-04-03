@@ -24,6 +24,13 @@ const MerchantDashboard = () => {
   const [statsLoading, setStatsLoading] = useState(true);
   const [newOrderPulse, setNewOrderPulse] = useState(false);
 
+  // Global merchant notifications — sound + push on all events
+  const { pushSubscribed, pushSupported, requestPermissionAndSubscribe } = useMerchantNotifications({
+    storeId: activeStore?.id || null,
+    userId: user?.id || null,
+    language,
+  });
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/m/login"); return; }
