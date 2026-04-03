@@ -14,6 +14,7 @@ import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import StoreSettingsSheet from "@/components/merchant/StoreSettingsSheet";
 import StoreTeamManager from "@/components/merchant/StoreTeamManager";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 
 const MerchantProfile = () => {
   const navigate = useNavigate();
@@ -24,6 +25,11 @@ const MerchantProfile = () => {
   const { toast } = useToast();
   const isTh = language === "th";
 
+  useMerchantNotifications({
+    storeId: activeStore?.id || null,
+    userId: user?.id || null,
+    language,
+  });
   const [profile, setProfile] = useState<{ display_name: string | null; email: string | null; avatar_url: string | null } | null>(null);
   const [editingStore, setEditingStore] = useState<typeof stores[0] | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);
