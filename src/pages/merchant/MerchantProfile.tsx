@@ -25,6 +25,11 @@ const MerchantProfile = () => {
   const { toast } = useToast();
   const isTh = language === "th";
 
+  useMerchantNotifications({
+    storeId: activeStore?.id || null,
+    userId: user?.id || null,
+    language,
+  });
   const [profile, setProfile] = useState<{ display_name: string | null; email: string | null; avatar_url: string | null } | null>(null);
   const [editingStore, setEditingStore] = useState<typeof stores[0] | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);

@@ -32,6 +32,11 @@ const MerchantSalesReport = () => {
   const { activeStore, loading: storesLoading } = useMerchant();
   const isTh = language === "th";
 
+  useMerchantNotifications({
+    storeId: activeStore?.id || null,
+    userId: user?.id || null,
+    language,
+  });
   const [range, setRange] = useState<"7d" | "30d">("7d");
   const [dayData, setDayData] = useState<DayData[]>([]);
   const [topMenus, setTopMenus] = useState<TopMenuItem[]>([]);
