@@ -160,7 +160,7 @@ const MenuImageManager = () => {
           </div>
         </div>
 
-        <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-28 gap-4">
