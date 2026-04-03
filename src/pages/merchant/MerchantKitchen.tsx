@@ -196,7 +196,18 @@ const MerchantKitchen = () => {
     if (!("Notification" in window)) return;
     const perm = await Notification.requestPermission();
     setNotifPermission(perm);
-  }, []);
+    // Also subscribe to push notifications
+    if (perm === "granted" && pushSupported && !pushSubscribed) {
+      await pushSubscribe();
+    }
+  }, [pushSupported, pushSubscribed, pushSubscribe]);
+
+  // Auto-subscribe to push when permission is already granted
+  useEffect(() => {
+    if (notifPermission === "granted" && pushSupported && !pushSubscribed && !pushLoading && activeStore && user) {
+      pushSubscribe();
+    }
+  }, [notifPermission, pushSupported, pushSubscribed, pushLoading, activeStore, user]);
 
   const updateStatus = async (orderId: string, status: string) => {
     await supabase.from("orders").update({ status, updated_at: new Date().toISOString() } as any).eq("id", orderId);
