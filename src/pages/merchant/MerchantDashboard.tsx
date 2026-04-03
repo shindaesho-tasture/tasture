@@ -156,18 +156,34 @@ const MerchantDashboard = () => {
                 </>
               )}
             </div>
-            {/* Store switcher */}
-            {stores.length > 1 && (
-              <select
-                value={activeStore?.id || ""}
-                onChange={(e) => setActiveStoreId(e.target.value)}
-                className="text-[11px] bg-secondary border border-border/50 rounded-lg px-2 py-1.5 text-foreground outline-none"
-              >
-                {stores.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            )}
+            <div className="flex items-center gap-1.5">
+              {/* Push notification toggle */}
+              {pushSupported && !pushSubscribed && (
+                <button
+                  onClick={requestPermissionAndSubscribe}
+                  className="p-2 rounded-xl bg-secondary hover:bg-accent transition-colors"
+                >
+                  <BellRing size={16} className="text-muted-foreground" />
+                </button>
+              )}
+              {pushSubscribed && (
+                <span className="p-2 rounded-xl bg-score-emerald/10">
+                  <Bell size={16} className="text-score-emerald" />
+                </span>
+              )}
+              {/* Store switcher */}
+              {stores.length > 1 && (
+                <select
+                  value={activeStore?.id || ""}
+                  onChange={(e) => setActiveStoreId(e.target.value)}
+                  className="text-[11px] bg-secondary border border-border/50 rounded-lg px-2 py-1.5 text-foreground outline-none"
+                >
+                  {stores.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
         </div>
 
