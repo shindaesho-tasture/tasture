@@ -114,6 +114,7 @@ const MerchantKitchen = () => {
   );
   const [rejectTarget, setRejectTarget] = useState<OrderRow | null>(null);
   const initialLoadDone = useRef(false);
+  const { isSubscribed: pushSubscribed, isSupported: pushSupported, loading: pushLoading, subscribe: pushSubscribe } = usePushNotifications(activeStore?.id || null, user?.id || null);
 
   useEffect(() => {
     const handleFirstInteraction = () => unlockAudio();
