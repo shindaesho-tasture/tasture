@@ -65,6 +65,13 @@ const MerchantMenu = () => {
   const queryClient = useQueryClient();
   const storeId = activeStore?.id;
 
+  // Global merchant notifications
+  useMerchantNotifications({
+    storeId: storeId || null,
+    userId: user?.id || null,
+    language,
+  });
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
