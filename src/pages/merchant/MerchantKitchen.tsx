@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChefHat, Check, Clock, Flame, Volume2, VolumeX, Bell, X, ShoppingBag, TrendingUp } from "lucide-react";
+import { ChefHat, Check, Clock, Flame, Volume2, VolumeX, Bell, BellRing, X, ShoppingBag, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useMerchant } from "@/lib/merchant-context";
@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/language-context";
 import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import {
   AlertDialog,
   AlertDialogAction,
