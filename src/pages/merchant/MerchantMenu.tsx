@@ -21,7 +21,7 @@ import TagInput from "@/components/menu/TagInput";
 import AddOnManager from "@/components/menu/AddOnManager";
 import MenuTranslationSheet from "@/components/menu/MenuTranslationSheet";
 import { preTranslateTags } from "@/lib/pre-translate";
-
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 type MenuItemRow = {
   id: string;
   name: string;
