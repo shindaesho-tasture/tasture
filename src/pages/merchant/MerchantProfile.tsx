@@ -14,6 +14,7 @@ import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import StoreSettingsSheet from "@/components/merchant/StoreSettingsSheet";
 import StoreTeamManager from "@/components/merchant/StoreTeamManager";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 
 const MerchantProfile = () => {
   const navigate = useNavigate();

@@ -10,6 +10,7 @@ import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 
 interface DayData {
   date: string;
