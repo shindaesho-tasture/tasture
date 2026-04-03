@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 
 interface QueueEntry {
   id: string;
@@ -44,6 +45,13 @@ const MerchantQueue = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [filter, setFilter] = useState<"active" | "all">("active");
   const [soundOn, setSoundOn] = useState(true);
+
+  // Global merchant notifications
+  useMerchantNotifications({
+    storeId: activeStore?.id || null,
+    userId: user?.id || null,
+    language,
+  });
 
   // Auth guard
   useEffect(() => {
