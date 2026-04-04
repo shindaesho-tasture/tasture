@@ -1,20 +1,51 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Gift, Clock, CheckCircle2, Sparkles } from "lucide-react";
+import { Gift, Clock, CheckCircle2, Sparkles, UtensilsCrossed } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-interface RewardCouponProps {
-  dishName: string;
-  onStaffConfirm: () => void;
-  durationSeconds?: number;
+interface PromoConfig {
+  enabled: boolean;
+  promo_type: "discount" | "special_item";
+  discount_percent: number;
+  special_item_name: string;
+  special_item_description: string;
+  coupon_title: string;
+  coupon_subtitle: string;
+  duration_seconds: number;
 }
 
-const RewardCoupon = ({ dishName, onStaffConfirm, durationSeconds = 300 }: RewardCouponProps) => {
-  const [timeLeft, setTimeLeft] = useState(durationSeconds);
+interface RewardCouponProps {
+  storeId: string;
+  dishName: string;
+  onStaffConfirm: () => void;
+}
+
+const RewardCoupon = ({ storeId, dishName, onStaffConfirm }: RewardCouponProps) => {
+  const [promo, setPromo] = useState<PromoConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(300);
   const [confirmed, setConfirmed] = useState(false);
   const [expired, setExpired] = useState(false);
 
   useEffect(() => {
-    if (confirmed || expired) return;
+    (async () => {
+      const { data } = await supabase
+        .from("store_promotions")
+        .select("*")
+        .eq("store_id", storeId)
+        .eq("enabled", true)
+        .single();
+
+      if (data) {
+        setPromo(data as unknown as PromoConfig);
+        setTimeLeft(data.duration_seconds ?? 300);
+      }
+      setLoading(false);
+    })();
+  }, [storeId]);
+
+  useEffect(() => {
+    if (!promo || confirmed || expired) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -26,7 +57,7 @@ const RewardCoupon = ({ dishName, onStaffConfirm, durationSeconds = 300 }: Rewar
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [confirmed, expired]);
+  }, [promo, confirmed, expired]);
 
   const handleConfirm = useCallback(() => {
     if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
@@ -34,9 +65,13 @@ const RewardCoupon = ({ dishName, onStaffConfirm, durationSeconds = 300 }: Rewar
     onStaffConfirm();
   }, [onStaffConfirm]);
 
+  // Don't render anything if no promo or still loading
+  if (loading) return null;
+  if (!promo) return null;
+
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
-  const progress = timeLeft / durationSeconds;
+  const progress = timeLeft / promo.duration_seconds;
 
   if (confirmed) {
     return (
@@ -78,11 +113,15 @@ const RewardCoupon = ({ dishName, onStaffConfirm, durationSeconds = 300 }: Rewar
       <div className="relative px-5 pt-5 pb-3">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-10 h-10 rounded-2xl bg-amber-400 flex items-center justify-center">
-            <Gift size={20} className="text-amber-900" />
+            {promo.promo_type === "special_item" ? (
+              <UtensilsCrossed size={20} className="text-amber-900" />
+            ) : (
+              <Gift size={20} className="text-amber-900" />
+            )}
           </div>
           <div>
-            <h3 className="text-base font-bold text-amber-900 dark:text-amber-300">🎉 รางวัลรีวิวเวอร์!</h3>
-            <p className="text-[10px] text-amber-700/70 dark:text-amber-400/70">ขอบคุณที่ให้ feedback</p>
+            <h3 className="text-base font-bold text-amber-900 dark:text-amber-300">{promo.coupon_title}</h3>
+            <p className="text-[10px] text-amber-700/70 dark:text-amber-400/70">{promo.coupon_subtitle}</p>
           </div>
         </div>
         <Sparkles size={16} className="absolute top-4 right-5 text-amber-400 animate-pulse" />
@@ -91,9 +130,22 @@ const RewardCoupon = ({ dishName, onStaffConfirm, durationSeconds = 300 }: Rewar
       {/* Coupon content */}
       <div className="px-5 pb-3">
         <div className="bg-white/60 dark:bg-zinc-900/40 rounded-2xl p-4 text-center border border-amber-200/50 dark:border-amber-700/30">
-          <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mb-1">ส่วนลดสำหรับ</p>
-          <p className="text-lg font-extrabold text-amber-900 dark:text-amber-200 truncate">{dishName}</p>
-          <p className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">10% OFF</p>
+          {promo.promo_type === "discount" ? (
+            <>
+              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mb-1">ส่วนลดสำหรับ</p>
+              <p className="text-lg font-extrabold text-amber-900 dark:text-amber-200 truncate">{dishName}</p>
+              <p className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">{promo.discount_percent}% OFF</p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mb-1">ของรางวัล</p>
+              <p className="text-lg font-extrabold text-amber-900 dark:text-amber-200">{promo.special_item_name}</p>
+              {promo.special_item_description && (
+                <p className="text-xs text-amber-700/60 dark:text-amber-400/50 mt-1">{promo.special_item_description}</p>
+              )}
+              <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">🎁 FREE</p>
+            </>
+          )}
         </div>
       </div>
 
