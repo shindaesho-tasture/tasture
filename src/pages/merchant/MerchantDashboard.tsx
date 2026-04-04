@@ -121,7 +121,6 @@ const MerchantDashboard = () => {
   const loading = authLoading || storesLoading;
 
   const quickActions = [
-    { icon: ChefHat, labelTh: "ครัว / ออเดอร์", labelEn: "Kitchen", path: "/m/kitchen", color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-500/20" },
     { icon: UtensilsCrossed, labelTh: "จัดการเมนู", labelEn: "Menu", path: "/m/menu", color: "bg-primary/10 text-primary", iconBg: "bg-primary/20" },
     { icon: Users, labelTh: "จัดการคิว", labelEn: "Queue", path: "/m/queue", color: "bg-amber-500/15 text-amber-600 dark:text-amber-400", iconBg: "bg-amber-500/20" },
     { icon: Camera, labelTh: "รูปเมนู", labelEn: "Images", path: `/menu-images/${activeStore?.id}`, color: "bg-violet-500/15 text-violet-600 dark:text-violet-400", iconBg: "bg-violet-500/20" },
