@@ -50,6 +50,7 @@ import MerchantProfile from "./pages/merchant/MerchantProfile.tsx";
 import MerchantClaimStore from "./pages/merchant/MerchantClaimStore.tsx";
 import MerchantSalesReport from "./pages/merchant/MerchantSalesReport.tsx";
 import MerchantQrCodes from "./pages/merchant/MerchantQrCodes.tsx";
+import MerchantPromotions from "./pages/merchant/MerchantPromotions.tsx";
 import AcceptInvite from "./pages/merchant/AcceptInvite.tsx";
 
 const queryClient = new QueryClient();
