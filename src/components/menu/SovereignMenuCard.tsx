@@ -48,6 +48,7 @@ interface SovereignMenuCardProps {
   popularityRank?: number;
   avgSatisfaction?: number;
   userPhotos?: string[];
+  description?: string;
 }
 
 /** Format compact review count */
@@ -66,6 +67,7 @@ const SovereignMenuCard = ({
   popularityRank,
   avgSatisfaction,
   userPhotos,
+  description,
 }: SovereignMenuCardProps) => {
   const { t } = useLanguage();
   // Build enriched tags: score tags first, then auto-generated meta tags
@@ -157,6 +159,13 @@ const SovereignMenuCard = ({
               )}
             </div>
           </div>
+
+          {/* Expert description */}
+          {description && (
+            <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2 mt-1">
+              {description}
+            </p>
+          )}
 
           {/* Intensity Tags */}
           {enrichedTags.length > 0 && (

@@ -30,6 +30,7 @@ interface DishDetailSheetProps {
   imageUrl?: string;
   dnaTags: DnaTag[];
   totalReviews: number;
+  description?: string;
 }
 
 /** Compute a simple emerald seal: avg score ≥ 1.0 and reviews ≥ 5 */
@@ -61,6 +62,7 @@ const DishDetailSheet = ({
   imageUrl,
   dnaTags,
   totalReviews,
+  description,
 }: DishDetailSheetProps) => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
@@ -325,6 +327,11 @@ const DishDetailSheet = ({
                     {totalReviews} {t("detail.reviews")}
                   </span>
                 </div>
+                {description && (
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-3 pl-3 border-l-2 border-score-emerald/40 italic">
+                    {description}
+                  </p>
+                )}
               </div>
 
               {/* Balance Spider Chart */}

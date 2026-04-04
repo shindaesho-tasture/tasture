@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import {
   UtensilsCrossed, Plus, Pencil, Trash2, Save, X, Camera, ImageIcon, Loader2,
-  Search, Globe, ChevronUp, ChevronDown, ArrowUpDown,
+  Search, Globe, ChevronUp, ChevronDown, ArrowUpDown, Sparkles,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,6 +83,7 @@ const MerchantMenu = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [translateItem, setTranslateItem] = useState<{ id: string; name: string; description?: string | null } | null>(null);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inlineFileRef = useRef<HTMLInputElement>(null);
   const inlineTargetId = useRef<string | null>(null);
@@ -126,6 +127,23 @@ const MerchantMenu = () => {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const handleGenerateDescription = async (item: MenuItemRow) => {
+    if (generatingId) return;
+    setGeneratingId(item.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-dish-intro", {
+        body: { menu_item_id: item.id, dish_name: item.name },
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["merchant-menu", storeId] });
+      toast.success(isTh ? "สร้างคำอธิบายสำเร็จ ✨" : "Description generated ✨");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate description");
+    } finally {
+      setGeneratingId(null);
+    }
+  };
 
   const resetForm = () => {
     setForm(emptyForm); setEditingId(null); setShowAdd(false);
@@ -383,6 +401,16 @@ const MerchantMenu = () => {
 
                       {/* Actions */}
                       <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => handleGenerateDescription(item)}
+                          disabled={generatingId === item.id}
+                          className="p-1.5 rounded-lg hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                          title={isTh ? "สร้างคำอธิบาย AI" : "Generate AI description"}
+                        >
+                          {generatingId === item.id
+                            ? <Loader2 size={14} className="text-violet-500 animate-spin" />
+                            : <Sparkles size={14} className="text-violet-500" />}
+                        </button>
                         <button onClick={() => setTranslateItem({ id: item.id, name: item.name, description: item.description })}
                           className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
                           <Globe size={14} className="text-primary" />

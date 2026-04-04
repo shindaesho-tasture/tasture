@@ -24,6 +24,7 @@ import StoreDetailsTab from "@/components/store/StoreDetailsTab";
 interface MenuItemRow {
   id: string;
   name: string;
+  description: string | null;
   price: number;
   price_special: number | null;
   type: string;
@@ -116,7 +117,7 @@ const StoreOrder = () => {
         supabase.from("stores").select("name, category_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices, topping_prices, menu_category")
+          .select("id, name, description, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices, topping_prices, menu_category")
           .eq("store_id", storeId!)
           .order("sort_order", { ascending: true }),
       ]);
@@ -620,6 +621,7 @@ const StoreOrder = () => {
                           onPress={() => setDetailItem(item)}
                           index={i}
                           userPhotos={topPhotoByItem.get(item.id)}
+                          description={tr?.description || item.description || undefined}
                         />
 
                         {/* Quantity overlay */}
@@ -1041,6 +1043,7 @@ const StoreOrder = () => {
             priceSpecial={detailItem.price_special}
             dnaTags={dnaByItem.get(detailItem.id) || []}
             totalReviews={(menuReviewCounts.get(detailItem.id) || 0) + (dnaCounts.get(detailItem.id) || 0)}
+            description={translationMap.get(detailItem.id)?.description || detailItem.description || undefined}
           />
         )}
       </div>
