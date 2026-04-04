@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, UtensilsCrossed, BarChart3, ChefHat, Users, Settings, Camera, TrendingUp, Store, ChevronRight, Bell, BellRing, QrCode } from "lucide-react";
+import { ShoppingBag, UtensilsCrossed, BarChart3, ChefHat, Users, Settings, Camera, TrendingUp, Store, ChevronRight, Bell, BellRing, QrCode, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useMerchant } from "@/lib/merchant-context";
