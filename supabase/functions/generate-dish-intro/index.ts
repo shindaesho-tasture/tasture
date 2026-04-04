@@ -136,37 +136,33 @@ Deno.serve(async (req) => {
 
     if (!descriptions["th"]) throw new Error("Failed to generate Thai description");
 
-    // Save Thai to menu_items.description
+    // Save Thai to menu_items.description (backward compat)
     const { error: updateErr } = await supabase
       .from("menu_items")
       .update({ description: descriptions["th"] })
       .eq("id", menu_item_id);
     if (updateErr) throw updateErr;
 
-    // Save en/ja/zh/ko to menu_translations
-    const translationRows = (["en", "ja", "zh", "ko"] as const)
-      .filter((lang) => descriptions[lang])
-      .map((lang) => ({
-        menu_item_id,
-        language: lang,
-        name: null, // preserve existing translated name — upsert only updates description
-        description: descriptions[lang],
-      }));
+    // Save ALL 5 languages to menu_translations for consistent per-language lookup
+    const allLangs = ["th", "en", "ja", "zh", "ko"] as const;
+    const translationRows = allLangs.filter((lang) => descriptions[lang]);
 
     if (translationRows.length > 0) {
-      // Fetch existing names first so we don't overwrite them
+      // Fetch existing names so we don't overwrite them
       const { data: existing } = await supabase
         .from("menu_translations")
         .select("language, name")
         .eq("menu_item_id", menu_item_id)
-        .in("language", ["en", "ja", "zh", "ko"]);
+        .in("language", allLangs);
 
-      const nameMap: Record<string, string | null> = {};
-      (existing || []).forEach((r: any) => { nameMap[r.language] = r.name; });
+      const nameMap: Record<string, string> = {};
+      (existing || []).forEach((r: any) => { nameMap[r.language] = r.name || ""; });
 
-      const rowsWithNames = translationRows.map((r) => ({
-        ...r,
-        name: nameMap[r.language] ?? "",
+      const rowsWithNames = translationRows.map((lang) => ({
+        menu_item_id,
+        language: lang,
+        name: nameMap[lang] ?? "",
+        description: descriptions[lang],
       }));
 
       const { error: upsertErr } = await supabase

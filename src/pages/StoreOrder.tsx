@@ -147,12 +147,13 @@ const StoreOrder = () => {
           supabase.from("menu_reviews").select("id, menu_item_id").in("menu_item_id", menuIds),
         ] as const;
 
-        const transFetch = language !== "th"
-          ? supabase.from("menu_translations").select("menu_item_id, name, description").eq("language", language).in("menu_item_id", menuIds)
-          : null;
+        const transFetch = supabase
+          .from("menu_translations")
+          .select("menu_item_id, name, description")
+          .eq("language", language)
+          .in("menu_item_id", menuIds);
 
-        const [addOnsRes, dnaRes, menuRevRes] = await Promise.all(baseFetches);
-        const transRes = transFetch ? await transFetch : null;
+        const [addOnsRes, dnaRes, menuRevRes, transRes] = await Promise.all([...baseFetches, transFetch]);
 
         // Add-ons
         (addOnsRes.data || []).forEach((a: any) => {
