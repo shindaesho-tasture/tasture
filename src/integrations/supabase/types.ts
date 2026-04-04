@@ -950,6 +950,59 @@ export type Database = {
           },
         ]
       }
+      store_promotions: {
+        Row: {
+          coupon_subtitle: string | null
+          coupon_title: string | null
+          created_at: string
+          discount_percent: number | null
+          duration_seconds: number
+          enabled: boolean
+          id: string
+          promo_type: string
+          special_item_description: string | null
+          special_item_name: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          coupon_subtitle?: string | null
+          coupon_title?: string | null
+          created_at?: string
+          discount_percent?: number | null
+          duration_seconds?: number
+          enabled?: boolean
+          id?: string
+          promo_type?: string
+          special_item_description?: string | null
+          special_item_name?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          coupon_subtitle?: string | null
+          coupon_title?: string | null
+          created_at?: string
+          discount_percent?: number | null
+          duration_seconds?: number
+          enabled?: boolean
+          id?: string
+          promo_type?: string
+          special_item_description?: string | null
+          special_item_name?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_promotions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           address: string | null
