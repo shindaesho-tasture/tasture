@@ -1192,6 +1192,7 @@ const PostOrderReview = () => {
                   transition={{ delay: 0.6 }}
                 >
                   <RewardCoupon
+                    storeId={storeId || ""}
                     dishName={items[0]?.name || storeName || ""}
                     onStaffConfirm={() => {
                       setShowRewardCoupon(true);
