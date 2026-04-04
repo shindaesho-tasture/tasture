@@ -94,6 +94,14 @@ interface OrderRow {
   notes: string | null;
 }
 
+interface BillRequestRow {
+  id: string;
+  table_number: number;
+  total_amount: number;
+  created_at: string;
+  status: string;
+}
+
 const LANG_FLAGS: Record<string, string> = {
   th: "🇹🇭", en: "🇬🇧", zh: "🇨🇳", ja: "🇯🇵", ko: "🇰🇷",
 };
@@ -106,6 +114,7 @@ const MerchantKitchen = () => {
   const isTh = language === "th";
 
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [billRequests, setBillRequests] = useState<BillRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "accepted" | "all">("pending");
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -139,13 +148,22 @@ const MerchantKitchen = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("store_id", activeStore.id)
-      .gte("created_at", today.toISOString())
-      .order("created_at", { ascending: true });
-    setOrders((data as any as OrderRow[]) || []);
+    const [ordersRes, billRes] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("*")
+        .eq("store_id", activeStore.id)
+        .gte("created_at", today.toISOString())
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("bill_requests" as any)
+        .select("*")
+        .eq("store_id", activeStore.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: true }),
+    ]);
+    setOrders((ordersRes.data as any as OrderRow[]) || []);
+    setBillRequests((billRes.data as any as BillRequestRow[]) || []);
     setLoading(false);
   }, [activeStore]);
 
@@ -193,6 +211,7 @@ const MerchantKitchen = () => {
           const bill = payload.new as any;
           if (!initialLoadDone.current || bill.status !== "pending") return;
 
+          setBillRequests((prev) => [...prev, bill as BillRequestRow]);
           if (soundEnabled) playOrderBeep();
           if ("Notification" in window && Notification.permission === "granted") {
             try {
@@ -239,6 +258,12 @@ const MerchantKitchen = () => {
     if (!rejectTarget) return;
     await updateStatus(rejectTarget.id, "rejected");
     setRejectTarget(null);
+  };
+
+  const markBillPaid = async (billId: string) => {
+    await supabase.from("bill_requests" as any).update({ status: "paid" } as any).eq("id", billId);
+    setBillRequests((prev) => prev.filter((b) => b.id !== billId));
+    navigator.vibrate?.(50);
   };
 
   const filtered = orders.filter((o) => {
@@ -350,6 +375,45 @@ const MerchantKitchen = () => {
             ))}
           </div>
         </div>
+
+        {/* Bill Requests */}
+        {billRequests.length > 0 && (
+          <div className="px-3 pt-3 space-y-2">
+            <AnimatePresence>
+              {billRequests.map((bill) => (
+                <motion.div
+                  key={bill.id}
+                  initial={{ opacity: 0, y: -12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  layout
+                  className="rounded-2xl border-2 border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 flex items-center justify-between gap-3 shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl animate-bounce">💰</span>
+                    <div>
+                      <p className="text-sm font-extrabold text-amber-800 dark:text-amber-300">
+                        {isTh ? "เรียกเก็บเงิน" : "Bill request"}
+                        {bill.table_number ? ` — ${isTh ? "โต๊ะ" : "Table"} ${bill.table_number}` : ""}
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">
+                        ฿{Number(bill.total_amount || 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.93 }}
+                    onClick={() => markBillPaid(bill.id)}
+                    className="px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-extrabold shadow-lg flex-shrink-0"
+                  >
+                    <Check size={14} className="inline mr-1" />
+                    {isTh ? "รับเงินแล้ว" : "Paid"}
+                  </motion.button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
         {/* Orders List */}
         <div className="px-3 py-3 space-y-3">
