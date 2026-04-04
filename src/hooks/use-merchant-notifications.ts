@@ -35,16 +35,22 @@ const playAlertSound = () => {
       const gain = ctx.createGain();
       osc.type = "sine";
       osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
+      gain.gain.setValueAtTime(1.0, ctx.currentTime + start);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + dur);
       osc.connect(gain).connect(ctx.destination);
       osc.start(ctx.currentTime + start);
       osc.stop(ctx.currentTime + start + dur);
     };
 
-    playTone(880, 0, 0.15);
-    playTone(1100, 0.18, 0.15);
-    playTone(1320, 0.36, 0.25);
+    // Play 3 rounds of the alert for better attention
+    for (let round = 0; round < 3; round++) {
+      const offset = round * 0.65;
+      playTone(880,  offset + 0,    0.15);
+      playTone(1100, offset + 0.18, 0.15);
+      playTone(1320, offset + 0.36, 0.20);
+    }
+
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
   } catch {}
 };
 
@@ -131,11 +137,10 @@ export const useMerchantNotifications = ({
           if (!initialLoadDone.current) return;
           const order = payload.new as any;
           if (soundEnabled) playAlertSound();
-          sendBrowserNotification(
-            `🔔 ${isTh ? "ออเดอร์ใหม่" : "New order"} #${order.order_number}`,
-            `฿${Number(order.total_price || 0).toLocaleString()}`,
-            `order-${order.order_number}`
-          );
+          const orderTitle = `🔔 ${isTh ? "ออเดอร์ใหม่" : "New order"} #${order.order_number}`;
+          const orderBody = `฿${Number(order.total_price || 0).toLocaleString()}`;
+          sendBrowserNotification(orderTitle, orderBody, `order-${order.order_number}`);
+          toast(orderTitle, { description: orderBody, duration: Infinity });
           onNewOrder?.(order);
         }
       )
@@ -146,11 +151,10 @@ export const useMerchantNotifications = ({
           if (!initialLoadDone.current) return;
           const call = payload.new as any;
           if (soundEnabled) playAlertSound();
-          sendBrowserNotification(
-            `🙋 ${isTh ? "เรียกพนักงาน" : "Waiter call"}`,
-            `${isTh ? "โต๊ะ" : "Table"} ${call.table_number}`,
-            `waiter-${call.id}`
-          );
+          const waiterTitle = `🙋 ${isTh ? "เรียกพนักงาน" : "Waiter call"}`;
+          const waiterBody = `${isTh ? "โต๊ะ" : "Table"} ${call.table_number}`;
+          sendBrowserNotification(waiterTitle, waiterBody, `waiter-${call.id}`);
+          toast(waiterTitle, { description: waiterBody, duration: Infinity });
         }
       )
       .on(
@@ -160,11 +164,10 @@ export const useMerchantNotifications = ({
           if (!initialLoadDone.current) return;
           const bill = payload.new as any;
           if (soundEnabled) playAlertSound();
-          sendBrowserNotification(
-            `💰 ${isTh ? "เรียกเก็บเงิน" : "Bill request"}`,
-            `${isTh ? "โต๊ะ" : "Table"} ${bill.table_number} — ฿${Number(bill.total_amount || 0).toLocaleString()}`,
-            `bill-${bill.id}`
-          );
+          const billTitle = `💰 ${isTh ? "เรียกเก็บเงิน" : "Bill request"}`;
+          const billBody = `${isTh ? "โต๊ะ" : "Table"} ${bill.table_number} — ฿${Number(bill.total_amount || 0).toLocaleString()}`;
+          sendBrowserNotification(billTitle, billBody, `bill-${bill.id}`);
+          toast(billTitle, { description: billBody, duration: Infinity });
         }
       )
       .subscribe();
