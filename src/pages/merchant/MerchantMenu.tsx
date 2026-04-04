@@ -565,7 +565,7 @@ const MerchantMenu = () => {
                         <Camera size={14} />
                         {imagePreview ? (isTh ? "เปลี่ยนรูป" : "Change") : (isTh ? "เลือกรูป" : "Choose")}
                       </button>
-                      <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFormImagePick} className="hidden" />
+                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFormImagePick} className="hidden" />
                     </div>
                   </div>
                 </div>
@@ -584,7 +584,7 @@ const MerchantMenu = () => {
         </AnimatePresence>
 
         {/* Hidden file input for inline uploads */}
-        <input ref={inlineFileRef} type="file" accept="image/*" capture="environment" className="hidden"
+        <input ref={inlineFileRef} type="file" accept="image/*" className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file && inlineTargetId.current) handleInlineUpload(file, inlineTargetId.current);
