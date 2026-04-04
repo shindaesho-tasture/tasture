@@ -186,10 +186,32 @@ const MerchantKitchen = () => {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "bill_requests", filter: `store_id=eq.${activeStore.id}` },
+        (payload) => {
+          const bill = payload.new as any;
+          if (!initialLoadDone.current || bill.status !== "pending") return;
+
+          if (soundEnabled) playOrderBeep();
+          if ("Notification" in window && Notification.permission === "granted") {
+            try {
+              new Notification(`💰 ${isTh ? "เรียกเก็บเงิน" : "Bill request"}`, {
+                body: `${isTh ? "โต๊ะ" : "Table"} ${bill.table_number} — ฿${Number(bill.total_amount || 0).toLocaleString()}`,
+                icon: "/placeholder.svg",
+                tag: `bill-${bill.id}`,
+              });
+            } catch (e) {
+              console.warn("Bill notification failed", e);
+            }
+          }
+          navigator.vibrate?.([150, 80, 150]);
+        }
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [activeStore, soundEnabled]);
+  }, [activeStore, soundEnabled, isTh]);
 
   const requestNotifPermission = useCallback(async () => {
     unlockAudio();
