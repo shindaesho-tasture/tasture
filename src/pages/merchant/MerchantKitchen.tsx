@@ -116,7 +116,7 @@ const MerchantKitchen = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [billRequests, setBillRequests] = useState<BillRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"pending" | "accepted" | "all">("pending");
+  const [filter, setFilter] = useState<"pending" | "accepted" | "bill">("pending");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
@@ -267,7 +267,7 @@ const MerchantKitchen = () => {
   };
 
   const filtered = orders.filter((o) => {
-    if (filter === "all") return o.status !== "rejected";
+    if (filter === "bill") return false;
     return o.status === filter;
   });
 
@@ -356,67 +356,97 @@ const MerchantKitchen = () => {
 
           {/* Filter tabs */}
           <div className="flex gap-1 px-4 pb-3">
-            {(["pending", "accepted", "all"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  filter === f
-                    ? "bg-foreground text-background"
-                    : "bg-secondary text-muted-foreground hover:bg-accent"
-                }`}
-              >
-                {f === "pending"
-                  ? `${isTh ? "รอรับ" : "Pending"} (${pendingCount})`
-                  : f === "accepted"
-                  ? `${isTh ? "กำลังทำ" : "Cooking"} (${acceptedCount})`
-                  : isTh ? "ทั้งหมด" : "All"}
-              </button>
-            ))}
+            <button
+              onClick={() => setFilter("pending")}
+              className={`flex-1 relative px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                filter === "pending" ? "bg-amber-500 text-white shadow-md" : "bg-secondary text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {isTh ? "รอรับ" : "Pending"}
+              {pendingCount > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${filter === "pending" ? "bg-white/30 text-white" : "bg-amber-500/20 text-amber-600"}`}>
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setFilter("accepted")}
+              className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                filter === "accepted" ? "bg-blue-500 text-white shadow-md" : "bg-secondary text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {isTh ? "กำลังทำ" : "Cooking"}
+              {acceptedCount > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${filter === "accepted" ? "bg-white/30 text-white" : "bg-blue-500/20 text-blue-600"}`}>
+                  {acceptedCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setFilter("bill")}
+              className={`flex-1 relative px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                filter === "bill" ? "bg-score-emerald text-white shadow-md" : "bg-secondary text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {isTh ? "เก็บเงิน" : "Bill"}
+              {billRequests.length > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${filter === "bill" ? "bg-white/30 text-white" : "bg-score-emerald/20 text-score-emerald"}`}>
+                  {billRequests.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Bill Requests */}
-        {billRequests.length > 0 && (
-          <div className="px-3 pt-3 space-y-2">
-            <AnimatePresence>
-              {billRequests.map((bill) => (
-                <motion.div
-                  key={bill.id}
-                  initial={{ opacity: 0, y: -12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  layout
-                  className="rounded-2xl border-2 border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 flex items-center justify-between gap-3 shadow-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl animate-bounce">💰</span>
-                    <div>
-                      <p className="text-sm font-extrabold text-amber-800 dark:text-amber-300">
-                        {isTh ? "เรียกเก็บเงิน" : "Bill request"}
-                        {bill.table_number ? ` — ${isTh ? "โต๊ะ" : "Table"} ${bill.table_number}` : ""}
-                      </p>
-                      <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">
-                        ฿{Number(bill.total_amount || 0).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <motion.button
-                    whileTap={{ scale: 0.93 }}
-                    onClick={() => markBillPaid(bill.id)}
-                    className="px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-extrabold shadow-lg flex-shrink-0"
+        {/* Bill Tab Content */}
+        {filter === "bill" && (
+          <div className="px-3 py-3 space-y-2">
+            {billRequests.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3">
+                <span className="text-4xl">💰</span>
+                <p className="text-muted-foreground text-sm font-medium">
+                  {isTh ? "ยังไม่มีคนเรียกเก็บเงิน" : "No bill requests"}
+                </p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                {billRequests.map((bill) => (
+                  <motion.div
+                    key={bill.id}
+                    initial={{ opacity: 0, y: -12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    layout
+                    className="rounded-2xl border-2 border-score-emerald/50 bg-score-emerald/5 px-4 py-4 flex items-center justify-between gap-3 shadow-md"
                   >
-                    <Check size={14} className="inline mr-1" />
-                    {isTh ? "รับเงินแล้ว" : "Paid"}
-                  </motion.button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">💰</span>
+                      <div>
+                        <p className="text-base font-extrabold text-foreground">
+                          {bill.table_number ? `${isTh ? "โต๊ะ" : "Table"} ${bill.table_number}` : isTh ? "เรียกเก็บเงิน" : "Bill"}
+                        </p>
+                        <p className="text-sm text-score-emerald font-bold">
+                          ฿{Number(bill.total_amount || 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.93 }}
+                      onClick={() => markBillPaid(bill.id)}
+                      className="px-4 py-2.5 rounded-xl bg-score-emerald text-white text-sm font-extrabold shadow-lg flex-shrink-0"
+                    >
+                      <Check size={14} className="inline mr-1" />
+                      {isTh ? "รับเงินแล้ว" : "Paid"}
+                    </motion.button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
           </div>
         )}
 
         {/* Orders List */}
-        <div className="px-3 py-3 space-y-3">
+        <div className={`px-3 py-3 space-y-3 ${filter === "bill" ? "hidden" : ""}`}>
           {!isReady || loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
