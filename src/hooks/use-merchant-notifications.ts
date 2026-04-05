@@ -34,10 +34,10 @@ const unlockAudio = () => {
   } catch {}
 };
 
-const playAlertSound = () => {
+const playAlertSound = async () => {
   try {
     const ctx = getAudioCtx();
-    if (ctx.state === "suspended") ctx.resume();
+    if (ctx.state === "suspended") await ctx.resume();
 
     const playTone = (freq: number, start: number, dur: number) => {
       const osc = ctx.createOscillator();
