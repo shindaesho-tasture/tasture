@@ -11,6 +11,15 @@ import { toast } from "sonner";
  */
 
 let sharedAudioCtx: AudioContext | null = null;
+
+// Module-level dedup: tracks recently-notified event IDs to prevent double-firing
+// when both the global provider and a page-level subscription receive the same INSERT.
+const notifiedIds = new Set<string>();
+const markNotified = (id: string) => {
+  notifiedIds.add(id);
+  setTimeout(() => notifiedIds.delete(id), 5000);
+};
+const alreadyNotified = (id: string) => notifiedIds.has(id);
 const getAudioCtx = (): AudioContext => {
   if (!sharedAudioCtx) {
     sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -136,6 +145,9 @@ export const useMerchantNotifications = ({
         (payload) => {
           if (!initialLoadDone.current) return;
           const order = payload.new as any;
+          const dedupKey = `order-${order.id}`;
+          if (alreadyNotified(dedupKey)) return;
+          markNotified(dedupKey);
           if (soundEnabled) playAlertSound();
           const orderTitle = `🔔 ${isTh ? "ออเดอร์ใหม่" : "New order"} #${order.order_number}`;
           const orderBody = `฿${Number(order.total_price || 0).toLocaleString()}`;
@@ -150,6 +162,9 @@ export const useMerchantNotifications = ({
         (payload) => {
           if (!initialLoadDone.current) return;
           const call = payload.new as any;
+          const dedupKey = `waiter-${call.id}`;
+          if (alreadyNotified(dedupKey)) return;
+          markNotified(dedupKey);
           if (soundEnabled) playAlertSound();
           const waiterTitle = `🙋 ${isTh ? "เรียกพนักงาน" : "Waiter call"}`;
           const waiterBody = `${isTh ? "โต๊ะ" : "Table"} ${call.table_number}`;
@@ -163,6 +178,9 @@ export const useMerchantNotifications = ({
         (payload) => {
           if (!initialLoadDone.current) return;
           const bill = payload.new as any;
+          const dedupKey = `bill-${bill.id}`;
+          if (alreadyNotified(dedupKey)) return;
+          markNotified(dedupKey);
           if (soundEnabled) playAlertSound();
           const billTitle = `💰 ${isTh ? "เรียกเก็บเงิน" : "Bill request"}`;
           const billBody = `${isTh ? "โต๊ะ" : "Table"} ${bill.table_number} — ฿${Number(bill.total_amount || 0).toLocaleString()}`;

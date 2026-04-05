@@ -191,9 +191,7 @@ const MerchantKitchen = () => {
             const newOrder = payload.new as any as OrderRow;
             setOrders((prev) => [...prev, newOrder]);
             if (initialLoadDone.current && newOrder.status === "pending") {
-              if (soundEnabled) playOrderBeep();
               sendBrowserNotification(newOrder.order_number, (newOrder.items || []).length);
-              navigator.vibrate?.([100, 50, 100, 50, 200]);
             }
           } else if (payload.eventType === "UPDATE") {
             setOrders((prev) =>
@@ -212,7 +210,6 @@ const MerchantKitchen = () => {
           if (!initialLoadDone.current || bill.status !== "pending") return;
 
           setBillRequests((prev) => [...prev, bill as BillRequestRow]);
-          if (soundEnabled) playOrderBeep();
           if ("Notification" in window && Notification.permission === "granted") {
             try {
               new Notification(`💰 ${isTh ? "เรียกเก็บเงิน" : "Bill request"}`, {

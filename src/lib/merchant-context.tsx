@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
+import { useLanguage } from "@/lib/language-context";
 
 export interface MerchantStore {
   id: string;
@@ -23,6 +25,7 @@ const MerchantContext = createContext<MerchantContextType | null>(null);
 
 export const MerchantProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const { language } = useLanguage();
   const [stores, setStores] = useState<MerchantStore[]>([]);
   const [activeStoreId, setActiveStoreId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,6 +88,13 @@ export const MerchantProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0] || null;
+
+  // Global sound + notification listener — fires on every merchant page
+  useMerchantNotifications({
+    storeId: activeStore?.id ?? null,
+    userId: user?.id ?? null,
+    language,
+  });
 
   return (
     <MerchantContext.Provider value={{ stores, activeStore, setActiveStoreId, loading, refetch: fetchStores }}>
