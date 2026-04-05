@@ -84,6 +84,7 @@ const MerchantMenu = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [translateItem, setTranslateItem] = useState<{ id: string; name: string; description?: string | null } | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [translatingDesc, setTranslatingDesc] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inlineFileRef = useRef<HTMLInputElement>(null);
   const inlineTargetId = useRef<string | null>(null);
@@ -127,6 +128,24 @@ const MerchantMenu = () => {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const handleTranslateDescription = async (itemId: string, description: string) => {
+    if (!description.trim() || translatingDesc) return;
+    setTranslatingDesc(true);
+    try {
+      await supabase.from("menu_items").update({ description: description.trim() } as any).eq("id", itemId);
+      const { error } = await supabase.functions.invoke("translate-menu", {
+        body: { menu_item_ids: [itemId], target_languages: ["en", "ja", "zh", "ko"] },
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["merchant-menu", storeId] });
+      toast.success(isTh ? "แปลคำอธิบายสำเร็จ ✨" : "Description translated ✨");
+    } catch (e: any) {
+      toast.error(e.message || "Translation failed");
+    } finally {
+      setTranslatingDesc(false);
+    }
+  };
 
   const handleGenerateDescription = async (item: MenuItemRow) => {
     if (generatingId) return;
@@ -261,6 +280,13 @@ const MerchantMenu = () => {
 
       queryClient.invalidateQueries({ queryKey: ["merchant-menu", storeId] });
       toast.success(isTh ? "บันทึกแล้ว ✓" : "Saved ✓");
+
+      // Auto-translate description to all languages in background
+      if (form.description.trim() && itemId) {
+        supabase.functions.invoke("translate-menu", {
+          body: { menu_item_ids: [itemId], target_languages: ["en", "ja", "zh", "ko"] },
+        }).catch(() => {});
+      }
 
       const allTexts = [form.name.trim(), ...(form.noodle_types || []), ...(form.noodle_styles || []),
         ...(form.toppings || []), ...(form.textures || []), ...(form.menu_category ? [form.menu_category] : [])].filter(Boolean);
@@ -504,7 +530,22 @@ const MerchantMenu = () => {
                     </div>
                   </div>
 
-                  <Field label={isTh ? "คำอธิบาย" : "Description"} value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} multiline />
+                  <div>
+                    <Field label={isTh ? "คำอธิบาย (ภาษาไทย)" : "Description (Thai)"} value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} multiline />
+                    {editingId && form.description.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => handleTranslateDescription(editingId, form.description)}
+                        disabled={translatingDesc}
+                        className="mt-1.5 flex items-center gap-1.5 text-[11px] text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
+                      >
+                        {translatingDesc
+                          ? <Loader2 size={12} className="animate-spin" />
+                          : <Globe size={12} />}
+                        {isTh ? "🌐 AI แปลทุกภาษา" : "🌐 AI translate all languages"}
+                      </button>
+                    )}
+                  </div>
 
                   {/* Noodle-specific fields */}
                   {form.type === "noodle" && (
