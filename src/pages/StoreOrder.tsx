@@ -622,7 +622,7 @@ const StoreOrder = () => {
                           onPress={() => setDetailItem(item)}
                           index={i}
                           userPhotos={topPhotoByItem.get(item.id)}
-                          description={tr?.description || item.description || undefined}
+                          description={tr?.description || undefined}
                         />
 
                         {/* Quantity overlay */}
@@ -1044,7 +1044,7 @@ const StoreOrder = () => {
             priceSpecial={detailItem.price_special}
             dnaTags={dnaByItem.get(detailItem.id) || []}
             totalReviews={(menuReviewCounts.get(detailItem.id) || 0) + (dnaCounts.get(detailItem.id) || 0)}
-            description={translationMap.get(detailItem.id)?.description || detailItem.description || undefined}
+            description={translationMap.get(detailItem.id)?.description || undefined}
           />
         )}
       </div>
