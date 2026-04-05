@@ -148,60 +148,58 @@ const Index = () => {
     setPullDistance(0);
   }, [pullDistance, isRefreshing, queryClient]);
 
-  // ─── Phase 1: FAST essential query (stores + menu counts + images) ───
+  // ─── Phase 1: FAST essential query — stores only, no heavy joins ───
   const { data: essentialData, isLoading: essentialLoading } = useQuery({
     queryKey: ["discover-essential"],
     queryFn: async () => {
-      const [storesRes, menuRes] = await Promise.all([
-        supabase.from("stores")
-          .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
-          .order("created_at", { ascending: false })
-          .limit(100),
-        supabase.from("menu_items").select("id, store_id, image_url").limit(2000),
-      ]);
-
-      const allStores = storesRes.data || [];
-      const storeIdSet = new Set(allStores.map((s) => s.id));
-      const storeMenus = (menuRes.data || []).filter((m: any) => storeIdSet.has(m.store_id));
-
-      const menuCountMap = new Map<string, number>();
-      const storeImageMap = new Map<string, string>();
-      const menuToStore = new Map<string, string>();
-      storeMenus.forEach((m: any) => {
-        menuToStore.set(m.id, m.store_id);
-        menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
-        if (m.image_url && !storeImageMap.has(m.store_id)) {
-          storeImageMap.set(m.store_id, m.image_url);
-        }
-      });
-
-      return { allStores, menuCountMap, storeImageMap, menuToStore, menuIds: storeMenus.map((m: any) => m.id), storeIds: allStores.map((s) => s.id) };
+      const { data, error } = await supabase.from("stores")
+        .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      const allStores = data || [];
+      return { allStores, storeIds: allStores.map((s) => s.id) };
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  // ─── Phase 2: DEFERRED enrichment (reviews, DNA, match) — only after essential loads ───
+  // ─── Phase 2: DEFERRED enrichment — two parallel batches ───
+  // Batch A: queries that need storeIds only
+  // Batch B: queries that need menuIds (run after Batch A)
   const { data: enrichData } = useQuery({
     queryKey: ["discover-enrich", user?.id ?? "anon"],
     queryFn: async () => {
-      const { menuIds, storeIds, menuToStore } = essentialData!;
+      const { storeIds } = essentialData!;
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      const [reviewsData, recentReviewsData, recentDnaData, userDnaData, allDnaData, allMenuRevData] = await Promise.all([
+      // ── Batch A (parallel): things we can fetch with storeIds ──
+      const [reviewsData, menuItemsRes, userDnaData] = await Promise.all([
         chunkedIn("reviews", "store_id", storeIds, "store_id, metric_id, score"),
-        chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id, created_at",
-          (q: any) => q.gte("created_at", sevenDaysAgo)),
-        chunkedIn("dish_dna", "menu_item_id", menuIds, "menu_item_id, created_at",
-          (q: any) => q.gte("created_at", sevenDaysAgo)),
+        supabase.from("menu_items").select("id, store_id").in("store_id", storeIds).limit(3000),
         user
           ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id).limit(1000).then((r: any) => r.data || [])
           : Promise.resolve([] as any[]),
-        chunkedIn("dish_dna", "menu_item_id", menuIds, "menu_item_id, component_name, selected_score"),
-        chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id"),
       ]);
 
+      const menuItems = menuItemsRes.data || [];
+      const menuToStore = new Map<string, string>();
+      const menuCountMap = new Map<string, number>();
+      menuItems.forEach((m: any) => {
+        menuToStore.set(m.id, m.store_id);
+        menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
+      });
+      const menuIds = menuItems.map((m: any) => m.id);
+
+      // ── Batch B (parallel): things that need menuIds ──
+      // Fetch with created_at so we can compute recent activity client-side (no duplicate queries)
+      const [allDnaData, allMenuRevData] = await Promise.all([
+        chunkedIn("dish_dna", "menu_item_id", menuIds, "menu_item_id, created_at, component_name, selected_score"),
+        chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id, created_at"),
+      ]);
+
+      // ── Compute maps ──
       const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
       reviewsData.forEach((r: any) => {
         if (!metricMap.has(r.store_id)) metricMap.set(r.store_id, new Map());
@@ -213,17 +211,21 @@ const Index = () => {
       });
 
       const recentActivityMap = new Map<string, number>();
-      recentReviewsData.forEach((r: any) => {
-        const sid = menuToStore.get(r.menu_item_id);
-        if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
+      allMenuRevData.forEach((r: any) => {
+        if (r.created_at >= sevenDaysAgo) {
+          const sid = menuToStore.get(r.menu_item_id);
+          if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
+        }
       });
-      recentDnaData.forEach((d: any) => {
-        const sid = menuToStore.get(d.menu_item_id);
-        if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
+      allDnaData.forEach((d: any) => {
+        if (d.created_at >= sevenDaysAgo) {
+          const sid = menuToStore.get(d.menu_item_id);
+          if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
+        }
       });
 
       const userPrefs = new Map<string, number>();
-      userDnaData.forEach((d: any) => {
+      (userDnaData as any[]).forEach((d: any) => {
         if (d.selected_score !== 0) userPrefs.set(d.component_name, (userPrefs.get(d.component_name) || 0) + d.selected_score);
       });
 
@@ -247,9 +249,9 @@ const Index = () => {
         if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
       });
 
-      return { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs };
+      return { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs, menuCountMap };
     },
-    enabled: !!essentialData && essentialData.allStores.length > 0,
+    enabled: !!essentialData && essentialData.storeIds.length > 0,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -258,7 +260,7 @@ const Index = () => {
   // ─── Derive store cards ───
   const stores = useMemo(() => {
     if (!essentialData || essentialData.allStores.length === 0) return [];
-    const { allStores, menuCountMap, storeImageMap } = essentialData;
+    const { allStores } = essentialData;
 
     return allStores.map((s) => {
       const cat = dynamicCategories.find((c) => c.id === s.category_id) || defaultCategories.find((c) => c.id === s.category_id);
@@ -273,7 +275,7 @@ const Index = () => {
 
       // Enrichment data (available after phase 2)
       if (enrichData) {
-        const { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs } = enrichData;
+        const { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs, menuCountMap } = enrichData;
         const sm = metricMap.get(s.id);
 
         if (sm && cat) {
@@ -330,14 +332,14 @@ const Index = () => {
         verified: s.verified ?? false,
         avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
         reviewCount: totalCount,
-        menuCount: menuCountMap.get(s.id) || 0,
+        menuCount: enrichData?.menuCountMap?.get(s.id) || 0,
         metrics,
         dnaCount,
         menuReviewCount,
         distanceKm,
         recentActivityCount,
         matchPercent,
-        imageUrl: s.menu_photo || storeImageMap.get(s.id) || null,
+        imageUrl: s.menu_photo || null,
       } as StoreCard;
     });
   }, [essentialData, enrichData, activePosition, dynamicCategories]);
