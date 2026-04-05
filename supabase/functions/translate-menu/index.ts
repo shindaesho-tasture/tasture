@@ -53,8 +53,43 @@ Deno.serve(async (req) => {
     if (fetchErr) throw fetchErr;
     if (!items?.length) throw new Error("No menu items found");
 
-    const langNames: Record<string, string> = {
-      en: "English", ja: "Japanese", zh: "Chinese (Simplified)", ko: "Korean",
+    const langContexts: Record<string, { systemPrompt: string }> = {
+      en: {
+        systemPrompt: `You are a Michelin-star food writer fluent in both Thai cuisine and English-speaking food culture.
+For each Thai dish, provide:
+1. A natural English name (transliterate if no direct translation, keep it appetizing)
+2. An original 1-2 sentence description in English — NOT a literal translation. Make the reader viscerally imagine the dish using familiar Western flavor/texture references (e.g. "like a clean herbaceous broth brightened with lime and galangal"). Evoke feeling and sensory memory, not a menu listing.
+
+Return ONLY a JSON array: [{"index": 1, "name": "name", "description": "description"}]
+No markdown, no extra text.`,
+      },
+      ja: {
+        systemPrompt: `あなたはタイ料理と日本の食文化に精通したミシュランレベルの食文化ライターです。
+各タイ料理について以下を提供してください:
+1. 自然な日本語の料理名（直訳できない場合はカタカナ表記も可）
+2. 1〜2文の日本語描写 — 直訳ではなく、日本人が直感的に想像できる味・香り・食感の表現で書いてください（例:「だしのような透明感の中に、ライムとガランガルの爽やかな香りが広がる」）
+
+JSON配列のみを返してください: [{"index": 1, "name": "名前", "description": "説明"}]
+マークダウンや余計なテキストは不要。`,
+      },
+      zh: {
+        systemPrompt: `你是一位精通泰国菜与中华饮食文化的米其林级别美食作家。
+对于每道泰国菜，请提供：
+1. 自然流畅的中文菜名（无法直译时保留音译）
+2. 1-2句中文描述 — 不要直译，用中国读者熟悉的风味词汇让人立刻想象出味道（例如："像清爽的酸汤底，南姜与香茅的辛香在口中慢慢散开"）
+
+只返回JSON数组: [{"index": 1, "name": "菜名", "description": "描述"}]
+不要markdown，不要多余文字。`,
+      },
+      ko: {
+        systemPrompt: `당신은 태국 요리와 한국 음식 문화에 정통한 미슐랭 수준의 음식 작가입니다.
+각 태국 요리에 대해 다음을 제공해 주세요:
+1. 자연스러운 한국어 요리명（직역이 어려운 경우 음역 가능）
+2. 1-2문장의 한국어 묘사 — 직역이 아닌, 한국인이 직관적으로 상상할 수 있는 맛·향·질감 표현（예: "갈랑갈과 레몬그라스 향이 은은하게 올라오는, 깔끔하면서도 깊은 육수 같은 맛"）
+
+JSON 배열만 반환: [{"index": 1, "name": "이름", "description": "설명"}]
+마크다운이나 추가 텍스트 없이.`,
+      },
     };
 
     const results: { menu_item_id: string; language: string; name: string; description: string | null }[] = [];
@@ -62,17 +97,14 @@ Deno.serve(async (req) => {
     for (const lang of target_languages) {
       if (lang === "th") continue;
 
+      const ctx = langContexts[lang];
+      if (!ctx) continue;
+
       const prompt = items.map((item, i) =>
         `${i + 1}. name: "${item.name}"${item.description ? ` | description: "${item.description}"` : ""}`
       ).join("\n");
 
-      const systemPrompt = `You are a Thai food expert translator. Translate Thai menu items to ${langNames[lang] || lang}.
-For each item, provide:
-- A natural, appetizing translated name
-- A brief description explaining the dish for someone unfamiliar with Thai food (use cross-cultural comparisons when helpful)
-
-Return ONLY a JSON array with objects: [{"index": 1, "name": "translated name", "description": "translated description"}]
-No markdown, no extra text.`;
+      const systemPrompt = ctx.systemPrompt;
 
       try {
         const aiRes = await fetchWithRetry("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -87,7 +119,7 @@ No markdown, no extra text.`;
               { role: "system", content: systemPrompt },
               { role: "user", content: prompt },
             ],
-            temperature: 0.3,
+            temperature: 0.65,
           }),
         });
 
