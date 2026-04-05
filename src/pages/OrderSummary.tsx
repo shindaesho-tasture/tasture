@@ -78,10 +78,10 @@ const OrderSummary = () => {
   const handleConfirm = async () => {
     if (!storeId || items.length === 0) {
       toast({
-        title: language === "th" ? "ไม่สามารถส่งออเดอร์ได้" : "Cannot submit order",
+        title: t("orderSum.submitError", language),
         description: !storeId
-          ? (language === "th" ? "ไม่พบข้อมูลร้านค้า กรุณาเลือกร้านใหม่" : "Store not found. Please select a store again.")
-          : (language === "th" ? "ยังไม่มีรายการอาหาร กรุณาเลือกเมนู" : "No items in order. Please add menu items."),
+          ? t("orderSum.noStoreError", language)
+          : t("orderSum.noItemsError", language),
         variant: "destructive",
       });
       return;
@@ -142,7 +142,7 @@ const OrderSummary = () => {
         total_amount: totalPrice,
       } as any);
       setBillRequested(true);
-      toast({ title: language === "th" ? "💰 เรียกเก็บเงินแล้ว" : "💰 Bill requested" });
+      toast({ title: t("orderSum.billRequested", language) });
       // Send push notification to merchant
       supabase.functions.invoke("send-push", {
         body: {
@@ -154,7 +154,7 @@ const OrderSummary = () => {
         },
       }).catch(() => {});
     } catch (err: any) {
-      toast({ title: language === "th" ? "เกิดข้อผิดพลาด" : "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("orderSum.billError", language), description: err.message, variant: "destructive" });
     } finally {
       setRequestingBill(false);
     }
@@ -211,10 +211,10 @@ const OrderSummary = () => {
                   <CheckCircle2 size={32} className="text-score-emerald" />
                 </div>
                 <p className="text-lg font-bold text-score-emerald">
-                  {language === "th" ? "✅ ชำระเงินเรียบร้อย!" : "✅ Payment complete!"}
+                  {t("orderSum.paymentComplete", language)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {language === "th" ? "กำลังพาไปให้ฟีดแบค..." : "Redirecting to feedback..."}
+                  {t("orderSum.redirectingFeedback", language)}
                 </p>
               </motion.div>
             ) : billRequested ? (
@@ -225,10 +225,10 @@ const OrderSummary = () => {
               >
                 <div className="text-3xl animate-bounce">💰</div>
                 <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                  {language === "th" ? "รอพนักงานมาเก็บเงิน..." : "Waiting for staff to collect payment..."}
+                  {t("orderSum.waitingPayment", language)}
                 </p>
                 <p className="text-xs text-amber-600/70 dark:text-amber-400/60">
-                  {language === "th" ? "พนักงานได้รับแจ้งเตือนแล้ว" : "Staff has been notified"}
+                  {t("orderSum.staffNotified", language)}
                 </p>
               </motion.div>
             ) : (
@@ -236,12 +236,12 @@ const OrderSummary = () => {
                 <motion.button whileTap={{ scale: 0.97 }} onClick={handleRequestBill} disabled={requestingBill}
                   className="flex-1 px-4 py-3.5 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
                   <Receipt size={16} />
-                  {language === "th" ? "เก็บเงิน" : "Bill"}
+                  {t("orderSum.billBtn", language)}
                 </motion.button>
                 <motion.button whileTap={{ scale: 0.97 }} onClick={() => setSplitOpen(true)}
                   className="px-4 py-3.5 rounded-2xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center gap-2 border-2 border-primary/30">
                   <Split size={16} />
-                  {language === "th" ? "แยกบิล" : "Split"}
+                  {t("orderSum.splitBtn", language)}
                 </motion.button>
               </div>
             )}
@@ -342,7 +342,7 @@ const OrderSummary = () => {
                     className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <MessageSquare size={10} />
-                    <span>{item.note ? item.note.slice(0, 30) + (item.note.length > 30 ? "…" : "") : (language === "th" ? "เพิ่มโน้ตเฉพาะจาน" : "Add item note")}</span>
+                    <span>{item.note ? item.note.slice(0, 30) + (item.note.length > 30 ? "…" : "") : t("orderSum.addItemNote", language)}</span>
                     <ChevronDown size={10} className={`transition-transform ${expandedNotes.has(item.menuItemId) ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence>
@@ -386,7 +386,7 @@ const OrderSummary = () => {
                         <textarea
                           value={item.note || ""}
                           onChange={(e) => updateItemNote(item.menuItemId, e.target.value)}
-                          placeholder={language === "th" ? "พิมพ์เพิ่มเติม..." : "Type more..."}
+                          placeholder={t("orderSum.typeMore", language)}
                           rows={1}
                           maxLength={100}
                           className="w-full mt-2 bg-secondary/60 rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 border-0 outline-none resize-none focus:ring-1 focus:ring-score-emerald/30"
@@ -406,7 +406,7 @@ const OrderSummary = () => {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder={language === "th" ? "เช่น ไม่ใส่ผัก, ไม่เผ็ด, แพ้ถั่ว..." : "e.g. No vegetables, not spicy, nut allergy..."}
+                placeholder={t("orderSum.notesPlaceholder", language)}
                 rows={2}
                 maxLength={200}
                 className="w-full bg-secondary/60 rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 border-0 outline-none resize-none focus:ring-1 focus:ring-score-emerald/30"
