@@ -128,7 +128,11 @@ const MerchantDashboard = () => {
     { icon: Gift, labelTh: "โปรโมชั่น", labelEn: "Promotions", path: "/m/promotions", color: "bg-pink-500/15 text-pink-600 dark:text-pink-400", iconBg: "bg-pink-500/20" },
   ];
 
-  if (!user && !authLoading) return null;
+  if (!user && !authLoading) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-score-emerald border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
   return (
     <PageTransition>
