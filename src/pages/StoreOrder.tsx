@@ -26,6 +26,7 @@ type TranslationMap = Record<string, { en?: string; zh?: string; ja?: string; ko
 interface MenuItemRow {
   id: string;
   name: string;
+  description: string | null;
   price: number;
   price_special: number | null;
   type: string;
@@ -166,12 +167,13 @@ const StoreOrder = () => {
           supabase.from("menu_reviews").select("id, menu_item_id").in("menu_item_id", menuIds),
         ] as const;
 
-        const transFetch = language !== "th"
-          ? supabase.from("menu_translations").select("menu_item_id, name, description").eq("language", language).in("menu_item_id", menuIds)
-          : null;
+        const transFetch = supabase
+          .from("menu_translations")
+          .select("menu_item_id, name, description")
+          .eq("language", language)
+          .in("menu_item_id", menuIds);
 
-        const [addOnsRes, dnaRes, menuRevRes] = await Promise.all(baseFetches);
-        const transRes = transFetch ? await transFetch : null;
+        const [addOnsRes, dnaRes, menuRevRes, transRes] = await Promise.all([...baseFetches, transFetch]);
 
         // Add-ons
         (addOnsRes.data || []).forEach((a: any) => {
@@ -285,7 +287,10 @@ const StoreOrder = () => {
     });
     if (storeName) tags.add(storeName);
     itemAddOns.forEach((addOns: any[]) => {
-      addOns.forEach((a: any) => tags.add(a.category));
+      addOns.forEach((a: any) => {
+        tags.add(a.category);
+        tags.add(a.name);
+      });
     });
     return Array.from(tags);
   }, [dnaByItem, menuItems, itemAddOns, storeName]);
@@ -646,6 +651,7 @@ const StoreOrder = () => {
                           onPress={() => setDetailItem(item)}
                           index={i}
                           userPhotos={topPhotoByItem.get(item.id)}
+                          description={tr?.description || undefined}
                         />
 
                         {/* Quantity overlay */}
@@ -927,7 +933,7 @@ const StoreOrder = () => {
                   {optionsItem.toppings && optionsItem.toppings.length > 0 && (
                     <div>
                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span> {Object.values(optionsItem.topping_prices || {}).some(v => v > 0) && <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>}
+                        🥩 {t("order.selectToppings", language)} <span className="text-muted-foreground/60">({selectedToppings.length}/{MAX_TOPPINGS})</span> {Object.values(optionsItem.topping_prices || {}).some(v => v > 0) && <span className="text-muted-foreground/60">{t("order.extraCost", language)}</span>}
                        </p>
                       <div className="flex flex-wrap gap-2">
                         {optionsItem.toppings.map((tp) => {
@@ -973,7 +979,7 @@ const StoreOrder = () => {
                     return Object.entries(grouped).map(([cat, catItems]) => (
                       <div key={cat}>
                         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                          {catEmoji[cat] || "📦"} {translateTag(cat)} <span className="text-muted-foreground/60">(เพิ่มเงิน)</span>
+                          {catEmoji[cat] || "📦"} {translateTag(cat)} <span className="text-muted-foreground/60">{t("order.extraCost", language)}</span>
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {catItems.map((a) => {
@@ -1067,6 +1073,7 @@ const StoreOrder = () => {
             priceSpecial={detailItem.price_special}
             dnaTags={dnaByItem.get(detailItem.id) || []}
             totalReviews={(menuReviewCounts.get(detailItem.id) || 0) + (dnaCounts.get(detailItem.id) || 0)}
+            description={translationMap.get(detailItem.id)?.description || undefined}
           />
         )}
       </div>

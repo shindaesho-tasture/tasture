@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, UtensilsCrossed, BarChart3, ChefHat, Users, Settings, Camera, TrendingUp, Store, ChevronRight, Bell, QrCode } from "lucide-react";
+import { ShoppingBag, UtensilsCrossed, BarChart3, ChefHat, Users, Settings, Camera, TrendingUp, Store, ChevronRight, Bell, BellRing, QrCode, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useMerchant } from "@/lib/merchant-context";
@@ -11,6 +11,7 @@ import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 
 const MerchantDashboard = () => {
   const navigate = useNavigate();
@@ -22,6 +23,13 @@ const MerchantDashboard = () => {
   const [stats, setStats] = useState({ todayOrders: 0, totalOrders: 0, menuItems: 0, reviews: 0, todayRevenue: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [newOrderPulse, setNewOrderPulse] = useState(false);
+
+  // Global merchant notifications — sound + push on all events
+  const { pushSubscribed, pushSupported, requestPermissionAndSubscribe } = useMerchantNotifications({
+    storeId: activeStore?.id || null,
+    userId: user?.id || null,
+    language,
+  });
 
   useEffect(() => {
     if (authLoading) return;
@@ -137,11 +145,11 @@ const MerchantDashboard = () => {
   const loading = authLoading || storesLoading;
 
   const quickActions = [
-    { icon: ChefHat, labelTh: "ครัว / ออเดอร์", labelEn: "Kitchen", path: "/m/kitchen", color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-500/20" },
     { icon: UtensilsCrossed, labelTh: "จัดการเมนู", labelEn: "Menu", path: "/m/menu", color: "bg-primary/10 text-primary", iconBg: "bg-primary/20" },
     { icon: Users, labelTh: "จัดการคิว", labelEn: "Queue", path: "/m/queue", color: "bg-amber-500/15 text-amber-600 dark:text-amber-400", iconBg: "bg-amber-500/20" },
     { icon: Camera, labelTh: "รูปเมนู", labelEn: "Images", path: `/menu-images/${activeStore?.id}`, color: "bg-violet-500/15 text-violet-600 dark:text-violet-400", iconBg: "bg-violet-500/20" },
     { icon: QrCode, labelTh: "QR โต๊ะ", labelEn: "Table QR", path: "/m/qr", color: "bg-blue-500/15 text-blue-600 dark:text-blue-400", iconBg: "bg-blue-500/20" },
+    { icon: Gift, labelTh: "โปรโมชั่น", labelEn: "Promotions", path: "/m/promotions", color: "bg-pink-500/15 text-pink-600 dark:text-pink-400", iconBg: "bg-pink-500/20" },
   ];
 
   if (!user && !authLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -172,18 +180,34 @@ const MerchantDashboard = () => {
                 </>
               )}
             </div>
-            {/* Store switcher */}
-            {stores.length > 1 && (
-              <select
-                value={activeStore?.id || ""}
-                onChange={(e) => setActiveStoreId(e.target.value)}
-                className="text-[11px] bg-secondary border border-border/50 rounded-lg px-2 py-1.5 text-foreground outline-none"
-              >
-                {stores.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            )}
+            <div className="flex items-center gap-1.5">
+              {/* Push notification toggle */}
+              {pushSupported && !pushSubscribed && (
+                <button
+                  onClick={requestPermissionAndSubscribe}
+                  className="p-2 rounded-xl bg-secondary hover:bg-accent transition-colors"
+                >
+                  <BellRing size={16} className="text-muted-foreground" />
+                </button>
+              )}
+              {pushSubscribed && (
+                <span className="p-2 rounded-xl bg-score-emerald/10">
+                  <Bell size={16} className="text-score-emerald" />
+                </span>
+              )}
+              {/* Store switcher */}
+              {stores.length > 1 && (
+                <select
+                  value={activeStore?.id || ""}
+                  onChange={(e) => setActiveStoreId(e.target.value)}
+                  className="text-[11px] bg-secondary border border-border/50 rounded-lg px-2 py-1.5 text-foreground outline-none"
+                >
+                  {stores.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
         </div>
 

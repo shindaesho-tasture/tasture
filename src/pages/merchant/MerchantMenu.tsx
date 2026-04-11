@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import {
   UtensilsCrossed, Plus, Pencil, Trash2, Save, X, Camera, ImageIcon, Loader2,
-  Search, Globe, ChevronUp, ChevronDown, ArrowUpDown,
+  Search, Globe, ChevronUp, ChevronDown, ArrowUpDown, Sparkles,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,7 @@ import TagInput from "@/components/menu/TagInput";
 import AddOnManager from "@/components/menu/AddOnManager";
 import MenuTranslationSheet from "@/components/menu/MenuTranslationSheet";
 import { preTranslateTags } from "@/lib/pre-translate";
-
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 type MenuItemRow = {
   id: string;
   name: string;
@@ -67,6 +67,13 @@ const MerchantMenu = () => {
   const queryClient = useQueryClient();
   const storeId = activeStore?.id;
 
+  // Global merchant notifications
+  useMerchantNotifications({
+    storeId: storeId || null,
+    userId: user?.id || null,
+    language,
+  });
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -78,6 +85,8 @@ const MerchantMenu = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [translateItem, setTranslateItem] = useState<{ id: string; name: string; description?: string | null } | null>(null);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [translatingDesc, setTranslatingDesc] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inlineFileRef = useRef<HTMLInputElement>(null);
   const inlineTargetId = useRef<string | null>(null);
@@ -121,6 +130,41 @@ const MerchantMenu = () => {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const handleTranslateDescription = async (itemId: string, description: string) => {
+    if (!description.trim() || translatingDesc) return;
+    setTranslatingDesc(true);
+    try {
+      await supabase.from("menu_items").update({ description: description.trim() } as any).eq("id", itemId);
+      const { error } = await supabase.functions.invoke("translate-menu", {
+        body: { menu_item_ids: [itemId], target_languages: ["en", "ja", "zh", "ko"] },
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["merchant-menu", storeId] });
+      toast.success(isTh ? "แปลคำอธิบายสำเร็จ ✨" : "Description translated ✨");
+    } catch (e: any) {
+      toast.error(e.message || "Translation failed");
+    } finally {
+      setTranslatingDesc(false);
+    }
+  };
+
+  const handleGenerateDescription = async (item: MenuItemRow) => {
+    if (generatingId) return;
+    setGeneratingId(item.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-dish-intro", {
+        body: { menu_item_id: item.id, dish_name: item.name },
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["merchant-menu", storeId] });
+      toast.success(isTh ? "สร้างคำอธิบายสำเร็จ ✨" : "Description generated ✨");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate description");
+    } finally {
+      setGeneratingId(null);
+    }
+  };
 
   const resetForm = () => {
     setForm(emptyForm); setEditingId(null); setShowAdd(false);
@@ -240,6 +284,13 @@ const MerchantMenu = () => {
 
       queryClient.invalidateQueries({ queryKey: ["merchant-menu", storeId] });
       toast.success(isTh ? "บันทึกแล้ว ✓" : "Saved ✓");
+
+      // Auto-translate description to all languages in background
+      if (form.description.trim() && itemId) {
+        supabase.functions.invoke("translate-menu", {
+          body: { menu_item_ids: [itemId], target_languages: ["en", "ja", "zh", "ko"] },
+        }).catch(() => {});
+      }
 
       const allTexts = [form.name.trim(), ...(form.noodle_types || []), ...(form.noodle_styles || []),
         ...(form.toppings || []), ...(form.textures || []), ...(form.menu_category ? [form.menu_category] : [])].filter(Boolean);
@@ -380,6 +431,16 @@ const MerchantMenu = () => {
 
                       {/* Actions */}
                       <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => handleGenerateDescription(item)}
+                          disabled={generatingId === item.id}
+                          className="p-1.5 rounded-lg hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                          title={isTh ? "สร้างคำอธิบาย AI" : "Generate AI description"}
+                        >
+                          {generatingId === item.id
+                            ? <Loader2 size={14} className="text-violet-500 animate-spin" />
+                            : <Sparkles size={14} className="text-violet-500" />}
+                        </button>
                         <button onClick={() => setTranslateItem({ id: item.id, name: item.name, description: item.description })}
                           className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
                           <Globe size={14} className="text-primary" />
@@ -474,7 +535,22 @@ const MerchantMenu = () => {
                     </div>
                   </div>
 
-                  <Field label={isTh ? "คำอธิบาย" : "Description"} value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} multiline />
+                  <div>
+                    <Field label={isTh ? "คำอธิบาย (ภาษาไทย)" : "Description (Thai)"} value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} multiline />
+                    {editingId && form.description.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => handleTranslateDescription(editingId, form.description)}
+                        disabled={translatingDesc}
+                        className="mt-1.5 flex items-center gap-1.5 text-[11px] text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
+                      >
+                        {translatingDesc
+                          ? <Loader2 size={12} className="animate-spin" />
+                          : <Globe size={12} />}
+                        {isTh ? "🌐 AI แปลทุกภาษา" : "🌐 AI translate all languages"}
+                      </button>
+                    )}
+                  </div>
 
                   {/* Noodle-specific fields */}
                   {form.type === "noodle" && (
@@ -586,7 +662,7 @@ const MerchantMenu = () => {
                         <Camera size={14} />
                         {imagePreview ? (isTh ? "เปลี่ยนรูป" : "Change") : (isTh ? "เลือกรูป" : "Choose")}
                       </button>
-                      <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFormImagePick} className="hidden" />
+                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFormImagePick} className="hidden" />
                     </div>
                   </div>
                 </div>
@@ -605,7 +681,7 @@ const MerchantMenu = () => {
         </AnimatePresence>
 
         {/* Hidden file input for inline uploads */}
-        <input ref={inlineFileRef} type="file" accept="image/*" capture="environment" className="hidden"
+        <input ref={inlineFileRef} type="file" accept="image/*" className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file && inlineTargetId.current) handleInlineUpload(file, inlineTargetId.current);

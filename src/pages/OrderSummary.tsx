@@ -168,7 +168,7 @@ const OrderSummary = () => {
         total_amount: totalPrice,
       } as any);
       setBillRequested(true);
-      toast({ title: language === "th" ? "💰 เรียกเก็บเงินแล้ว" : "💰 Bill requested" });
+      toast({ title: t("orderSum.billRequested", language) });
       // Send push notification to merchant
       supabase.functions.invoke("send-push", {
         body: {
@@ -180,7 +180,7 @@ const OrderSummary = () => {
         },
       }).catch(() => {});
     } catch (err: any) {
-      toast({ title: language === "th" ? "เกิดข้อผิดพลาด" : "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("orderSum.billError", language), description: err.message, variant: "destructive" });
     } finally {
       setRequestingBill(false);
     }

@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 
 interface QueueEntry {
   id: string;

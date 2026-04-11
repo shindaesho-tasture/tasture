@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ChefHat, Check, Clock, Flame, Volume2, VolumeX, Bell, X, ShoppingBag, TrendingUp } from "lucide-react";
+import { ChefHat, Check, Clock, Flame, Volume2, VolumeX, Bell, BellRing, X, ShoppingBag, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useMerchant } from "@/lib/merchant-context";
@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/language-context";
 import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +46,14 @@ interface OrderRow {
   notes: string | null;
 }
 
+interface BillRequestRow {
+  id: string;
+  table_number: number;
+  total_amount: number;
+  created_at: string;
+  status: string;
+}
+
 const LANG_FLAGS: Record<string, string> = {
   th: "🇹🇭", en: "🇬🇧", zh: "🇨🇳", ja: "🇯🇵", ko: "🇰🇷",
 };
@@ -57,6 +66,7 @@ const MerchantKitchen = () => {
   const isTh = language === "th";
 
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [billRequests, setBillRequests] = useState<BillRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "accepted" | "all">("pending");
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
@@ -64,6 +74,18 @@ const MerchantKitchen = () => {
   );
   const [rejectTarget, setRejectTarget] = useState<OrderRow | null>(null);
   const initialLoadDone = useRef(false);
+  const { isSubscribed: pushSubscribed, isSupported: pushSupported, loading: pushLoading, subscribe: pushSubscribe } = usePushNotifications(activeStore?.id || null, user?.id || null);
+
+  useEffect(() => {
+    const handleFirstInteraction = () => unlockAudio();
+    document.addEventListener("pointerdown", handleFirstInteraction, { once: true });
+    document.addEventListener("keydown", handleFirstInteraction, { once: true });
+
+    return () => {
+      document.removeEventListener("pointerdown", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -77,13 +99,22 @@ const MerchantKitchen = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("store_id", activeStore.id)
-      .gte("created_at", today.toISOString())
-      .order("created_at", { ascending: true });
-    setOrders((data as any as OrderRow[]) || []);
+    const [ordersRes, billRes] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("*")
+        .eq("store_id", activeStore.id)
+        .gte("created_at", today.toISOString())
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("bill_requests" as any)
+        .select("*")
+        .eq("store_id", activeStore.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: true }),
+    ]);
+    setOrders((ordersRes.data as any as OrderRow[]) || []);
+    setBillRequests((billRes.data as any as BillRequestRow[]) || []);
     setLoading(false);
   }, [activeStore]);
 
@@ -138,16 +169,50 @@ const MerchantKitchen = () => {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "bill_requests", filter: `store_id=eq.${activeStore.id}` },
+        (payload) => {
+          const bill = payload.new as any;
+          if (!initialLoadDone.current || bill.status !== "pending") return;
+
+          setBillRequests((prev) => [...prev, bill as BillRequestRow]);
+          if ("Notification" in window && Notification.permission === "granted") {
+            try {
+              new Notification(`💰 ${isTh ? "เรียกเก็บเงิน" : "Bill request"}`, {
+                body: `${isTh ? "โต๊ะ" : "Table"} ${bill.table_number} — ฿${Number(bill.total_amount || 0).toLocaleString()}`,
+                icon: "/placeholder.svg",
+                tag: `bill-${bill.id}`,
+              });
+            } catch (e) {
+              console.warn("Bill notification failed", e);
+            }
+          }
+          navigator.vibrate?.([150, 80, 150]);
+        }
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [activeStore]);
 
   const requestNotifPermission = useCallback(async () => {
+    unlockAudio();
     if (!("Notification" in window)) return;
     const perm = await Notification.requestPermission();
     setNotifPermission(perm);
-  }, []);
+    // Also subscribe to push notifications
+    if (perm === "granted" && pushSupported && !pushSubscribed) {
+      await pushSubscribe();
+    }
+  }, [pushSupported, pushSubscribed, pushSubscribe]);
+
+  // Auto-subscribe to push when permission is already granted
+  useEffect(() => {
+    if (notifPermission === "granted" && pushSupported && !pushSubscribed && !pushLoading && activeStore && user) {
+      pushSubscribe();
+    }
+  }, [notifPermission, pushSupported, pushSubscribed, pushLoading, activeStore, user]);
 
   const updateStatus = async (orderId: string, status: string) => {
     await supabase.from("orders").update({ status, updated_at: new Date().toISOString() } as any).eq("id", orderId);
@@ -159,8 +224,14 @@ const MerchantKitchen = () => {
     setRejectTarget(null);
   };
 
+  const markBillPaid = async (billId: string) => {
+    await supabase.from("bill_requests" as any).update({ status: "paid" } as any).eq("id", billId);
+    setBillRequests((prev) => prev.filter((b) => b.id !== billId));
+    navigator.vibrate?.(50);
+  };
+
   const filtered = orders.filter((o) => {
-    if (filter === "all") return o.status !== "rejected";
+    if (filter === "bill") return false;
     return o.status === filter;
   });
 
@@ -246,28 +317,97 @@ const MerchantKitchen = () => {
 
           {/* Filter tabs */}
           <div className="flex gap-1 px-4 pb-3">
-            {(["pending", "accepted", "all"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  filter === f
-                    ? "bg-foreground text-background"
-                    : "bg-secondary text-muted-foreground hover:bg-accent"
-                }`}
-              >
-                {f === "pending"
-                  ? `${isTh ? "รอรับ" : "Pending"} (${pendingCount})`
-                  : f === "accepted"
-                  ? `${isTh ? "กำลังทำ" : "Cooking"} (${acceptedCount})`
-                  : isTh ? "ทั้งหมด" : "All"}
-              </button>
-            ))}
+            <button
+              onClick={() => setFilter("pending")}
+              className={`flex-1 relative px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                filter === "pending" ? "bg-amber-500 text-white shadow-md" : "bg-secondary text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {isTh ? "รอรับ" : "Pending"}
+              {pendingCount > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${filter === "pending" ? "bg-white/30 text-white" : "bg-amber-500/20 text-amber-600"}`}>
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setFilter("accepted")}
+              className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                filter === "accepted" ? "bg-blue-500 text-white shadow-md" : "bg-secondary text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {isTh ? "กำลังทำ" : "Cooking"}
+              {acceptedCount > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${filter === "accepted" ? "bg-white/30 text-white" : "bg-blue-500/20 text-blue-600"}`}>
+                  {acceptedCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setFilter("bill")}
+              className={`flex-1 relative px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                filter === "bill" ? "bg-score-emerald text-white shadow-md" : "bg-secondary text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {isTh ? "เก็บเงิน" : "Bill"}
+              {billRequests.length > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${filter === "bill" ? "bg-white/30 text-white" : "bg-score-emerald/20 text-score-emerald"}`}>
+                  {billRequests.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
+        {/* Bill Tab Content */}
+        {filter === "bill" && (
+          <div className="px-3 py-3 space-y-2">
+            {billRequests.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3">
+                <span className="text-4xl">💰</span>
+                <p className="text-muted-foreground text-sm font-medium">
+                  {isTh ? "ยังไม่มีคนเรียกเก็บเงิน" : "No bill requests"}
+                </p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                {billRequests.map((bill) => (
+                  <motion.div
+                    key={bill.id}
+                    initial={{ opacity: 0, y: -12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    layout
+                    className="rounded-2xl border-2 border-score-emerald/50 bg-score-emerald/5 px-4 py-4 flex items-center justify-between gap-3 shadow-md"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">💰</span>
+                      <div>
+                        <p className="text-base font-extrabold text-foreground">
+                          {bill.table_number ? `${isTh ? "โต๊ะ" : "Table"} ${bill.table_number}` : isTh ? "เรียกเก็บเงิน" : "Bill"}
+                        </p>
+                        <p className="text-sm text-score-emerald font-bold">
+                          ฿{Number(bill.total_amount || 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.93 }}
+                      onClick={() => markBillPaid(bill.id)}
+                      className="px-4 py-2.5 rounded-xl bg-score-emerald text-white text-sm font-extrabold shadow-lg flex-shrink-0"
+                    >
+                      <Check size={14} className="inline mr-1" />
+                      {isTh ? "รับเงินแล้ว" : "Paid"}
+                    </motion.button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
+        )}
+
         {/* Orders List */}
-        <div className="px-3 py-3 space-y-3">
+        <div className={`px-3 py-3 space-y-3 ${filter === "bill" ? "hidden" : ""}`}>
           {!isReady || loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (

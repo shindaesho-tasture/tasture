@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { LayoutDashboard, ChefHat, UtensilsCrossed, BarChart3, User } from "lucide-react";
+import { LayoutDashboard, ChefHat, BarChart3, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/lib/language-context";
 

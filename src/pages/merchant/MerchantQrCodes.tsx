@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, Download, Plus, Minus, QrCode, ImageDown } from "lucide-react";
+import { ChevronLeft, Download, Plus, Minus, QrCode, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMerchant } from "@/lib/merchant-context";
 import { useLanguage } from "@/lib/language-context";
 import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
+import { StyledQrCode } from "@/components/ui/StyledQrCode";
 
 const MerchantQrCodes = () => {
   const navigate = useNavigate();
@@ -20,51 +21,117 @@ const MerchantQrCodes = () => {
   const getQrUrl = (storeId: string, table: number) =>
     `${baseUrl}/qr/${storeId}/${table}`;
 
-  const getQrImageUrl = (text: string, size = 200) =>
-    `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&margin=8`;
-
+  // Export single card as PNG via canvas
   const downloadSingleQr = useCallback(async (table: number) => {
     if (!activeStore) return;
-    const qrData = getQrUrl(activeStore.id, table);
-    const qrSrc = getQrImageUrl(qrData, 400);
-    try {
-      const res = await fetch(qrSrc);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${activeStore.name}_table_${table}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    const svgEl = document.getElementById(`qr-svg-${table}`);
+    if (!svgEl) return;
+
+    const svgString = new XMLSerializer().serializeToString(svgEl);
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 600;
+      canvas.height = 720;
+      const ctx = canvas.getContext("2d")!;
+
+      // Card background gradient
+      const bg = ctx.createLinearGradient(0, 0, 0, 720);
+      bg.addColorStop(0, "#0f1a14");
+      bg.addColorStop(1, "#0a1410");
+      ctx.fillStyle = bg;
+      ctx.roundRect(0, 0, 600, 720, 32);
+      ctx.fill();
+
+      // Accent line top
+      const accent = ctx.createLinearGradient(0, 0, 600, 0);
+      accent.addColorStop(0, "#059669");
+      accent.addColorStop(1, "#34d399");
+      ctx.fillStyle = accent;
+      ctx.roundRect(60, 0, 480, 4, 2);
+      ctx.fill();
+
+      // QR image centered
+      const qrSize = 320;
+      const qrX = (600 - qrSize) / 2;
+      const qrY = 80;
+      ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+
+      // Table text
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 64px system-ui, -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`โต๊ะ ${table}`, 300, 460);
+
+      // Store name
+      ctx.fillStyle = "#6ee7b7";
+      ctx.font = "500 28px system-ui, -apple-system, sans-serif";
+      ctx.fillText(activeStore.name, 300, 510);
+
+      // Scan prompt
+      ctx.fillStyle = "#4b5563";
+      ctx.font = "22px system-ui, -apple-system, sans-serif";
+      ctx.fillText(isTh ? "สแกนเพื่อสั่งอาหาร" : "Scan to order", 300, 568);
+
+      // Tasture branding
+      ctx.fillStyle = "#374151";
+      ctx.font = "18px system-ui, -apple-system, sans-serif";
+      ctx.fillText("powered by Tasture", 300, 650);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${activeStore.name}_table_${table}.png`;
+        a.click();
+      }, "image/png");
       URL.revokeObjectURL(url);
-    } catch {
-      window.open(qrSrc, "_blank");
-    }
-  }, [activeStore]);
+    };
+    img.src = url;
+  }, [activeStore, isTh]);
 
   const handlePrint = () => {
-    if (printRef.current) {
-      const w = window.open("", "_blank");
-      if (!w) return;
-      w.document.write(`
-        <html><head><title>QR Codes - ${activeStore?.name}</title>
-        <style>
-          body { font-family: sans-serif; margin: 0; padding: 20px; }
-          .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-          .card { border: 2px solid #e5e7eb; border-radius: 16px; padding: 20px; text-align: center; page-break-inside: avoid; }
-          .card img { width: 160px; height: 160px; margin: 0 auto 12px; }
-          .store-name { font-size: 14px; color: #6b7280; margin-bottom: 4px; }
-          .table-num { font-size: 28px; font-weight: 800; color: #111; }
-          .table-label { font-size: 12px; color: #9ca3af; }
-          @media print { body { padding: 10px; } .grid { gap: 16px; } }
-        </style></head><body>
-        ${printRef.current.innerHTML}
-        <script>setTimeout(()=>window.print(),500)<\/script>
-        </body></html>
-      `);
-      w.document.close();
-    }
+    if (!printRef.current || !activeStore) return;
+    const w = window.open("", "_blank");
+    if (!w) return;
+
+    // Collect all SVG strings for each table
+    const cards = Array.from({ length: tableCount }, (_, i) => i + 1).map((table) => {
+      const svgEl = document.getElementById(`qr-svg-${table}`);
+      const svgStr = svgEl ? new XMLSerializer().serializeToString(svgEl) : "";
+      return { table, svgStr };
+    });
+
+    const cardsHtml = cards.map(({ table, svgStr }) => `
+      <div class="card">
+        <div class="qr-wrap">${svgStr}</div>
+        <p class="store">${activeStore.name}</p>
+        <p class="table">โต๊ะ ${table}</p>
+        <p class="scan">${isTh ? "สแกนเพื่อสั่งอาหาร" : "Scan to order"}</p>
+      </div>
+    `).join("");
+
+    w.document.write(`
+      <html><head><title>QR Codes – ${activeStore.name}</title>
+      <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding: 16px; background: #f3f4f6; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .card { background: #0f1a14; border-radius: 20px; padding: 24px 20px 20px; text-align: center; page-break-inside: avoid; border-top: 3px solid #059669; }
+        .qr-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+        .qr-wrap svg { border-radius: 12px; }
+        .store { color: #6ee7b7; font-size: 13px; margin: 0 0 4px; font-weight: 500; }
+        .table { color: #fff; font-size: 32px; font-weight: 900; margin: 0 0 4px; }
+        .scan { color: #6b7280; font-size: 11px; margin: 0; }
+        @media print { body { background: white; padding: 8px; } .grid { gap: 12px; } }
+      </style></head><body>
+      <div class="grid">${cardsHtml}</div>
+      <script>setTimeout(()=>window.print(),600)<\/script>
+      </body></html>
+    `);
+    w.document.close();
   };
 
   if (!activeStore) {
@@ -99,7 +166,7 @@ const MerchantQrCodes = () => {
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-score-emerald text-primary-foreground text-xs font-bold"
             >
-              <Download size={14} />
+              <Printer size={14} />
               {isTh ? "พิมพ์ทั้งหมด" : "Print All"}
             </motion.button>
           </div>
@@ -134,47 +201,68 @@ const MerchantQrCodes = () => {
         {/* QR Cards Grid */}
         <div ref={printRef} className="grid grid-cols-2 gap-3 px-4">
           {Array.from({ length: tableCount }, (_, i) => i + 1).map((table) => {
-            const qrData = getQrUrl(activeStore.id, table);
+            const qrUrl = getQrUrl(activeStore.id, table);
             return (
               <motion.div
                 key={table}
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: table * 0.02 }}
-                className="rounded-2xl border border-border/40 bg-card p-4 flex flex-col items-center gap-2"
+                transition={{ delay: Math.min(table * 0.03, 0.4), duration: 0.25 }}
+                className="rounded-2xl overflow-hidden border border-score-emerald/20"
+                style={{ background: "linear-gradient(160deg, #0f1a14 0%, #0a1410 100%)" }}
               >
-                <div className="relative w-32 h-32">
-                  <img
-                    src={getQrImageUrl(qrData)}
-                    alt={`Table ${table} QR`}
-                    className="w-32 h-32 rounded-lg"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-white border-2 border-score-emerald flex items-center justify-center shadow-sm overflow-hidden">
-                      {activeStore.logo_url ? (
-                        <img src={activeStore.logo_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xs font-black text-score-emerald leading-none">
-                          {activeStore.name.charAt(0).toUpperCase()}
-                        </span>
-                      )}
+                {/* Top accent bar */}
+                <div
+                  className="h-[3px] w-full"
+                  style={{ background: "linear-gradient(90deg, #059669, #34d399)" }}
+                />
+
+                <div className="p-4 flex flex-col items-center gap-2">
+                  {/* Styled QR code */}
+                  <div className="rounded-xl overflow-hidden bg-white p-2 shadow-lg">
+                    <div id={`qr-svg-${table}`}>
+                      <StyledQrCode
+                        data={qrUrl}
+                        size={140}
+                        color="#059669"
+                        colorSecondary="#34d399"
+                        logo={activeStore.logo_url ?? undefined}
+                        logoLetter={activeStore.name.charAt(0).toUpperCase()}
+                      />
                     </div>
                   </div>
+
+                  {/* Store name */}
+                  <p className="text-[10px] font-medium text-emerald-400/80 mt-1 text-center leading-tight">
+                    {activeStore.name}
+                  </p>
+
+                  {/* Table number */}
+                  <p className="text-2xl font-black text-white leading-none">
+                    โต๊ะ {table}
+                  </p>
+
+                  {/* Scan prompt */}
+                  <p className="text-[9px] text-gray-500 text-center">
+                    {isTh ? "สแกนเพื่อสั่งอาหาร" : "Scan to order"}
+                  </p>
+
+                  {/* Branding */}
+                  <p className="text-[8px] text-gray-600 tracking-wider uppercase mt-0.5">
+                    Tasture
+                  </p>
+
+                  {/* Download button */}
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => downloadSingleQr(table)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold mt-1 transition-colors"
+                    style={{ background: "rgba(5,150,105,0.15)", color: "#34d399" }}
+                  >
+                    <Download size={11} />
+                    {isTh ? "ดาวน์โหลด" : "Download"}
+                  </motion.button>
                 </div>
-                <p className="text-[10px] text-muted-foreground">{activeStore.name}</p>
-                <p className="text-2xl font-black text-foreground">โต๊ะ {table}</p>
-                <p className="text-[9px] text-muted-foreground break-all text-center leading-tight max-w-full">
-                  {isTh ? "สแกนเพื่อสั่งอาหาร" : "Scan to order"}
-                </p>
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => downloadSingleQr(table)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-[10px] font-medium text-foreground transition-colors mt-1"
-                >
-                  <ImageDown size={12} />
-                  {isTh ? "ดาวน์โหลด" : "Download"}
-                </motion.button>
               </motion.div>
             );
           })}

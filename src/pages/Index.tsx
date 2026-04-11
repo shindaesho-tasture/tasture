@@ -247,9 +247,9 @@ const Index = () => {
         userPrefs.set(r.component_name, Number(r.pref_score));
       });
 
-      return { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs };
+      return { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs, menuCountMap };
     },
-    enabled: !!essentialData && essentialData.allStores.length > 0,
+    enabled: !!essentialData && essentialData.storeIds.length > 0,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -258,7 +258,7 @@ const Index = () => {
   // ─── Derive store cards ───
   const stores = useMemo(() => {
     if (!essentialData || essentialData.allStores.length === 0) return [];
-    const { allStores, menuCountMap, storeImageMap } = essentialData;
+    const { allStores } = essentialData;
 
     return allStores.map((s) => {
       const cat = dynamicCategories.find((c) => c.id === s.category_id) || defaultCategories.find((c) => c.id === s.category_id);
@@ -273,7 +273,7 @@ const Index = () => {
 
       // Enrichment data (available after phase 2)
       if (enrichData) {
-        const { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs } = enrichData;
+        const { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs, menuCountMap } = enrichData;
         const sm = metricMap.get(s.id);
 
         if (sm && cat) {
@@ -330,14 +330,14 @@ const Index = () => {
         verified: s.verified ?? false,
         avgScore: totalCount > 0 ? Math.round((totalScore / totalCount) * 10) / 10 : null,
         reviewCount: totalCount,
-        menuCount: menuCountMap.get(s.id) || 0,
+        menuCount: enrichData?.menuCountMap?.get(s.id) || 0,
         metrics,
         dnaCount,
         menuReviewCount,
         distanceKm,
         recentActivityCount,
         matchPercent,
-        imageUrl: s.menu_photo || storeImageMap.get(s.id) || null,
+        imageUrl: s.menu_photo || null,
       } as StoreCard;
     });
   }, [essentialData, enrichData, activePosition, dynamicCategories]);
