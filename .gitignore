@@ -26,3 +26,7 @@ dist-ssr
 # Environment variables
 .env
 .env.*
+.env*.local
+.vercel
+.claude/
+supabase/.temp/
