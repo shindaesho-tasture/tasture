@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500, headers: corsHeaders });
   }
 });
 
@@ -142,7 +142,7 @@ async function createVapidJwt(header: object, claims: object, privateKeyBase64: 
   ).catch(async () => {
     // Fallback: import as PKCS8
     const pkcs8 = buildPkcs8FromRaw(privateKeyRaw);
-    return crypto.subtle.importKey("pkcs8", pkcs8, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+    return crypto.subtle.importKey("pkcs8", pkcs8.buffer as ArrayBuffer, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
   });
 
   const signature = await crypto.subtle.sign(
@@ -212,7 +212,7 @@ async function encryptPayload(
   const localPublicKeyRaw = new Uint8Array(await crypto.subtle.exportKey("raw", localKeyPair.publicKey));
 
   // Import user public key
-  const userKey = await crypto.subtle.importKey("raw", userPublicKey, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const userKey = await crypto.subtle.importKey("raw", userPublicKey.buffer as ArrayBuffer, { name: "ECDH", namedCurve: "P-256" }, false, []);
 
   // ECDH shared secret
   const sharedSecret = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: userKey }, localKeyPair.privateKey, 256));
@@ -249,8 +249,8 @@ async function encryptPayload(
 
   // Encrypt
   const paddedPayload = concatBuffers(new TextEncoder().encode(payload), new Uint8Array([2])); // delimiter
-  const key = await crypto.subtle.importKey("raw", contentKey, { name: "AES-GCM" }, false, ["encrypt"]);
-  const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: contentNonce }, key, paddedPayload));
+  const key = await crypto.subtle.importKey("raw", contentKey.buffer as ArrayBuffer, { name: "AES-GCM" }, false, ["encrypt"]);
+  const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: contentNonce as ArrayBufferView }, key, paddedPayload));
 
   return concatBuffers(header, encrypted);
 }
@@ -261,14 +261,15 @@ async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, length:
 }
 
 async function hkdfExtract(salt: Uint8Array, ikm: Uint8Array): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey("raw", salt.length > 0 ? salt : new Uint8Array(32), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", key, ikm));
+  const rawKey = salt.length > 0 ? salt : new Uint8Array(32);
+  const key = await crypto.subtle.importKey("raw", rawKey.buffer as ArrayBuffer, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", key, ikm.buffer as ArrayBuffer));
 }
 
 async function hkdfExpand(prk: Uint8Array, info: Uint8Array, length: number): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey("raw", prk, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const key = await crypto.subtle.importKey("raw", prk.buffer as ArrayBuffer, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const input = concatBuffers(info, new Uint8Array([1]));
-  const output = new Uint8Array(await crypto.subtle.sign("HMAC", key, input));
+  const output = new Uint8Array(await crypto.subtle.sign("HMAC", key, input.buffer as ArrayBuffer));
   return output.slice(0, length);
 }
 
