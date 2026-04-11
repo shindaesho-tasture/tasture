@@ -21,6 +21,8 @@ import LiveQueueCard from "@/components/queue/LiveQueueCard";
 import { useTagTranslations } from "@/hooks/use-tag-translations";
 import StoreDetailsTab from "@/components/store/StoreDetailsTab";
 
+type TranslationMap = Record<string, { en?: string; zh?: string; ja?: string; ko?: string }>;
+
 interface MenuItemRow {
   id: string;
   name: string;
@@ -35,6 +37,24 @@ interface MenuItemRow {
   noodle_style_prices: Record<string, number> | null;
   topping_prices: Record<string, number> | null;
   menu_category: string | null;
+  name_translations: { en?: string; zh?: string; ja?: string; ko?: string } | null;
+  topping_translations: TranslationMap | null;
+  noodle_type_translations: TranslationMap | null;
+  noodle_style_translations: TranslationMap | null;
+}
+
+function getTranslatedName(item: MenuItemRow, lang: string): string {
+  if (lang === "th") return item.name;
+  return (item.name_translations as Record<string, string> | null)?.[lang] || item.name;
+}
+
+function getTranslatedOption(
+  map: TranslationMap | null | undefined,
+  key: string,
+  lang: string
+): string {
+  if (!map || lang === "th") return key;
+  return (map[key] as Record<string, string> | undefined)?.[lang] || key;
 }
 
 interface DnaTag {
@@ -116,7 +136,7 @@ const StoreOrder = () => {
         supabase.from("stores").select("name, category_id").eq("id", storeId!).single(),
         supabase
           .from("menu_items")
-          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices, topping_prices, menu_category")
+          .select("id, name, price, price_special, type, noodle_types, noodle_styles, toppings, image_url, noodle_type_prices, noodle_style_prices, topping_prices, menu_category, name_translations, topping_translations, noodle_type_translations, noodle_style_translations")
           .eq("store_id", storeId!)
           .order("sort_order", { ascending: true }),
       ]);
@@ -370,6 +390,7 @@ const StoreOrder = () => {
     addItem({
       menuItemId: optionsItem.id,
       name: optionsItem.name,
+      nameTranslations: optionsItem.name_translations as Record<string, string> | null,
       price: basePrice + addOnTotal + noodleExtra + styleExtra + toppingExtra,
       quantity: 1,
       type: optionsItem.type,
@@ -381,6 +402,11 @@ const StoreOrder = () => {
         noodleStylePrice: styleExtra > 0 ? styleExtra : undefined,
         toppings: selectedToppings.length > 0 ? selectedToppings : undefined,
         addOns: selectedAddOns.length > 0 ? selectedAddOns.map(a => a.name) : undefined,
+      },
+      optionTranslations: {
+        noodleTypeTranslations: optionsItem.noodle_type_translations as Record<string, Record<string, string>> | undefined ?? undefined,
+        noodleStyleTranslations: optionsItem.noodle_style_translations as Record<string, Record<string, string>> | undefined ?? undefined,
+        toppingTranslations: optionsItem.topping_translations as Record<string, Record<string, string>> | undefined ?? undefined,
       },
     });
     setOptionsItem(null);
@@ -404,6 +430,7 @@ const StoreOrder = () => {
     addItem({
       menuItemId: item.id,
       name: item.name,
+      nameTranslations: item.name_translations as Record<string, string> | null,
       price: item.price,
       quantity: 1,
       type: item.type,
@@ -601,8 +628,10 @@ const StoreOrder = () => {
                       }));
                     const totalRevs = (menuReviewCounts.get(item.id) || 0) + (dnaCounts.get(item.id) || 0);
                     const tr = translationMap.get(item.id);
-                    const displayName = tr?.name || item.name;
-                    const originalName = tr ? item.name : undefined;
+                    const displayName = language !== "th"
+                      ? getTranslatedName(item, language)
+                      : (tr?.name || item.name);
+                    const originalName = (language !== "th" && displayName !== item.name) ? item.name : (tr ? item.name : undefined);
 
                     return (
                       <div key={item.id} className="relative">
@@ -778,7 +807,7 @@ const StoreOrder = () => {
                 {/* Popup Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3">
                   <div>
-                    <h3 className="text-base font-bold text-foreground">{optionsItem.name}</h3>
+                    <h3 className="text-base font-bold text-foreground">{getTranslatedName(optionsItem, language)}</h3>
                     <p className="text-xs text-score-emerald font-semibold mt-0.5">
                       ฿{selectedSize === "พิเศษ" && optionsItem.price_special ? optionsItem.price_special : optionsItem.price}
                     </p>
@@ -847,8 +876,8 @@ const StoreOrder = () => {
                             }`}
                           >
                             <span className="flex flex-col items-start leading-tight">
-                              <span>{translateTag(nt)}</span>
-                              {language !== "th" && translateTag(nt) !== nt && (
+                              <span>{getTranslatedOption(optionsItem.noodle_type_translations, nt, language) !== nt ? getTranslatedOption(optionsItem.noodle_type_translations, nt, language) : translateTag(nt)}</span>
+                              {language !== "th" && (
                                 <span className="text-[8px] opacity-60">{nt}</span>
                               )}
                             </span>
@@ -920,8 +949,8 @@ const StoreOrder = () => {
                             >
                               {selected && <Check size={12} strokeWidth={2.5} />}
                               <span className="flex flex-col items-start leading-tight">
-                                <span>{translateTag(tp)}{tpPrice > 0 && <span className="ml-1 opacity-70">+฿{tpPrice}</span>}</span>
-                                {language !== "th" && translateTag(tp) !== tp && (
+                                <span>{getTranslatedOption(optionsItem.topping_translations, tp, language) !== tp ? getTranslatedOption(optionsItem.topping_translations, tp, language) : translateTag(tp)}{tpPrice > 0 && <span className="ml-1 opacity-70">+฿{tpPrice}</span>}</span>
+                                {language !== "th" && (
                                   <span className="text-[8px] opacity-60">{tp}</span>
                                 )}
                               </span>

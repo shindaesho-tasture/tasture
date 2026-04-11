@@ -193,7 +193,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { navigate("/auth"); return; }
+    if (!user) { navigate("/m/login?redirect=/admin"); return; }
     checkAdmin();
   }, [user, authLoading]);
 

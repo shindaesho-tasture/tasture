@@ -37,6 +37,7 @@ type MenuItemRow = {
   image_url: string | null;
   noodle_type_prices: Record<string, number> | null;
   noodle_style_prices: Record<string, number> | null;
+  topping_prices: Record<string, number> | null;
   menu_category: string | null;
 };
 
@@ -49,6 +50,7 @@ const emptyForm = {
   toppings: [] as string[], textures: [] as string[],
   noodle_type_prices: {} as Record<string, number>,
   noodle_style_prices: {} as Record<string, number>,
+  topping_prices: {} as Record<string, number>,
   menu_category: "" as string,
 };
 
@@ -95,7 +97,7 @@ const MerchantMenu = () => {
     queryFn: async () => {
       const { data: menuRes } = await supabase
         .from("menu_items")
-        .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url, noodle_type_prices, noodle_style_prices, menu_category")
+        .select("id, name, original_name, description, type, price, price_special, noodle_types, noodle_styles, toppings, textures, sort_order, image_url, noodle_type_prices, noodle_style_prices, topping_prices, menu_category")
         .eq("store_id", storeId!)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });
@@ -204,6 +206,7 @@ const MerchantMenu = () => {
       toppings: item.toppings || [], textures: item.textures || [],
       noodle_type_prices: (item.noodle_type_prices as Record<string, number>) || {},
       noodle_style_prices: (item.noodle_style_prices as Record<string, number>) || {},
+      topping_prices: (item.topping_prices as Record<string, number>) || {},
       menu_category: item.menu_category || "",
     });
   };
@@ -217,6 +220,7 @@ const MerchantMenu = () => {
       noodle_types: form.noodle_types, noodle_styles: form.noodle_styles,
       toppings: form.toppings, textures: form.textures,
       noodle_type_prices: form.noodle_type_prices, noodle_style_prices: form.noodle_style_prices,
+      topping_prices: form.topping_prices,
       menu_category: form.menu_category || null,
     };
 
@@ -249,7 +253,7 @@ const MerchantMenu = () => {
   const loading = authLoading || storeLoading;
 
   // Auth guard (after all hooks)
-  if (!authLoading && !user) { navigate("/m/login", { replace: true }); return null; }
+  if (!authLoading && !user) { navigate("/m/login", { replace: true }); return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>; }
 
   return (
     <PageTransition>
@@ -443,11 +447,12 @@ const MerchantMenu = () => {
                         onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) || 0 }))}
                         className="w-full mt-1 px-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald transition-all" />
                     </div>
-                    {form.type === "dual_price" && (
+                    {(form.type === "dual_price" || form.type === "noodle") && (
                       <div className="flex-1">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{isTh ? "ราคาพิเศษ" : "Special"}</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{isTh ? "ราคาพิเศษ (ไซส์ใหญ่)" : "Special Price (Large)"}</label>
                         <input type="number" value={form.price_special ?? ""}
                           onChange={(e) => setForm((f) => ({ ...f, price_special: e.target.value ? Number(e.target.value) : null }))}
+                          placeholder={isTh ? "ว่างไว้ถ้าไม่มี" : "Leave blank if none"}
                           className="w-full mt-1 px-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald transition-all" />
                       </div>
                     )}
@@ -527,9 +532,32 @@ const MerchantMenu = () => {
                       )}
 
                       <TagInput label={isTh ? "ท็อปปิ้ง" : "Toppings"} tags={form.toppings}
-                        onChange={(v) => setForm((f) => ({ ...f, toppings: v }))}
+                        onChange={(v) => {
+                          setForm((f) => {
+                            const newPrices = { ...f.topping_prices };
+                            Object.keys(newPrices).forEach((k) => { if (!v.includes(k)) delete newPrices[k]; });
+                            return { ...f, toppings: v, topping_prices: newPrices };
+                          });
+                        }}
                         placeholder={isTh ? "พิมพ์ท็อปปิ้ง" : "Type topping"}
                         suggestions={["ลูกชิ้น", "เนื้อ", "หมู", "ไก่", "หมูกรอบ", "หมูสับ", "เครื่องใน"]} />
+
+                      {form.toppings.length > 0 && (
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">💰 {isTh ? "ราคาเพิ่มต่อท็อปปิ้ง" : "Price per topping"}</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {form.toppings.map((tp) => (
+                              <div key={tp} className="flex items-center gap-2 rounded-xl bg-card border border-border px-3 py-2">
+                                <span className="text-xs text-foreground flex-1 truncate">{tp}</span>
+                                <span className="text-[10px] text-muted-foreground">+฿</span>
+                                <input type="number" min="0" step="5" value={form.topping_prices[tp] || 0}
+                                  onChange={(e) => setForm((f) => ({ ...f, topping_prices: { ...f.topping_prices, [tp]: parseInt(e.target.value) || 0 } }))}
+                                  className="w-14 text-right text-xs font-bold bg-transparent text-foreground outline-none border-b border-border focus:border-score-emerald transition-colors" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
 

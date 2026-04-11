@@ -21,17 +21,28 @@ const MerchantLogin = () => {
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
 
-  // Auto-redirect if already logged in with stores
+  // Auto-redirect if already logged in
   useEffect(() => {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        if (redirectTo) {
+          navigate(redirectTo, { replace: true });
+          return;
+        }
+        // Check admin role
+        const { data: adminRole } = await supabase
+          .from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin").maybeSingle();
+        if (adminRole) {
+          navigate("/admin", { replace: true });
+          return;
+        }
         const [{ count: ownedCount }, { count: memberCount }] = await Promise.all([
           supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", session.user.id),
           supabase.from("store_members").select("id", { count: "exact", head: true }).eq("user_id", session.user.id),
         ]);
         if ((ownedCount ?? 0) > 0 || (memberCount ?? 0) > 0) {
-          navigate(redirectTo || "/m", { replace: true });
+          navigate("/m", { replace: true });
           return;
         }
       }
@@ -53,12 +64,18 @@ const MerchantLogin = () => {
       } else {
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) throw signInErr;
-        // Check if user has stores
         if (redirectTo) {
           navigate(redirectTo, { replace: true });
         } else {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            // Check admin role first
+            const { data: adminRole } = await supabase
+              .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+            if (adminRole) {
+              navigate("/admin", { replace: true });
+              return;
+            }
             // Check owned stores or memberships
             const [{ count: ownedCount }, { count: memberCount }] = await Promise.all([
               supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", user.id),

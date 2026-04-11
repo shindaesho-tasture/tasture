@@ -20,28 +20,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Notification beep via Web Audio API
-const playOrderBeep = () => {
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const playTone = (freq: number, start: number, dur: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + start);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + dur);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + dur);
-    };
-    playTone(880, 0, 0.15);
-    playTone(1100, 0.18, 0.15);
-    playTone(1320, 0.36, 0.25);
-  } catch (e) {
-    console.warn("Audio not supported", e);
-  }
-};
 
 const sendBrowserNotification = (orderNumber: number, itemCount: number) => {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
@@ -75,13 +53,12 @@ const MerchantKitchen = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
-  const { activeStore, loading: storeLoading } = useMerchant();
+  const { activeStore, loading: storeLoading, soundEnabled, setSoundEnabled } = useMerchant();
   const isTh = language === "th";
 
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "accepted" | "all">("pending");
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
   );
@@ -134,9 +111,23 @@ const MerchantKitchen = () => {
             const newOrder = payload.new as any as OrderRow;
             setOrders((prev) => [...prev, newOrder]);
             if (initialLoadDone.current && newOrder.status === "pending") {
-              if (soundEnabled) playOrderBeep();
+              if (soundEnabled) {
+                try {
+                  const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+                  ac.resume().then(() => {
+                    [[880,0,0.15],[1100,0.18,0.15],[1320,0.36,0.25]].forEach(([f,s,d]) => {
+                      const o = ac.createOscillator(), g = ac.createGain();
+                      o.type = "sine"; o.frequency.value = f;
+                      g.gain.setValueAtTime(0.5, ac.currentTime+s);
+                      g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime+s+d);
+                      o.connect(g).connect(ac.destination);
+                      o.start(ac.currentTime+s); o.stop(ac.currentTime+s+d);
+                    });
+                  });
+                } catch {}
+                navigator.vibrate?.([100,50,100,50,200]);
+              }
               sendBrowserNotification(newOrder.order_number, (newOrder.items || []).length);
-              navigator.vibrate?.([100, 50, 100, 50, 200]);
             }
           } else if (payload.eventType === "UPDATE") {
             setOrders((prev) =>
@@ -150,7 +141,7 @@ const MerchantKitchen = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [activeStore, soundEnabled]);
+  }, [activeStore]);
 
   const requestNotifPermission = useCallback(async () => {
     if (!("Notification" in window)) return;
@@ -219,7 +210,7 @@ const MerchantKitchen = () => {
                 </button>
               )}
               <button
-                onClick={() => setSoundEnabled((p) => !p)}
+                onClick={() => setSoundEnabled(!soundEnabled)}
                 className={`p-2 rounded-xl transition-colors ${soundEnabled ? "bg-amber-500/15" : "bg-secondary"}`}
               >
                 {soundEnabled

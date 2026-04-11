@@ -80,26 +80,6 @@ const sectionGradients = [
   "from-orange-900/40 to-transparent",
 ];
 
-const chunkedIn = async (
-  table: string,
-  column: string,
-  ids: string[],
-  selectStr: string,
-  extra?: (q: any) => any,
-): Promise<any[]> => {
-  if (ids.length === 0) return [];
-  const CHUNK = 200;
-  const chunks: string[][] = [];
-  for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
-  const results = await Promise.all(
-    chunks.map((chunk) => {
-      let q = (supabase.from(table as any) as any).select(selectStr).in(column, chunk).limit(1000);
-      if (extra) q = extra(q);
-      return q;
-    }),
-  );
-  return results.flatMap((r: any) => r.data || []);
-};
 
 const PULL_THRESHOLD = 80;
 
@@ -148,103 +128,123 @@ const Index = () => {
     setPullDistance(0);
   }, [pullDistance, isRefreshing, queryClient]);
 
-  // ─── Phase 1: FAST essential query (stores + menu counts + images) ───
+  // ─── Phase 1: FAST essential query — single RPC (stores + menu summary) ───
+  // Replaces: 2 queries fetching 100 stores + 2000 menu rows
+  // Now:      1 RPC returning ~200 rows total (server-side aggregation)
   const { data: essentialData, isLoading: essentialLoading } = useQuery({
     queryKey: ["discover-essential"],
     queryFn: async () => {
-      const [storesRes, menuRes] = await Promise.all([
-        supabase.from("stores")
+      let allStores: any[] = [];
+      let menuSummary: any[] = [];
+
+      // Try RPC first, fallback to direct query if not available
+      const { data, error } = await (supabase as any).rpc("get_stores_with_menu_summary");
+      if (!error && data) {
+        allStores = data?.stores || [];
+        menuSummary = data?.menu_summary || [];
+      } else {
+        // Fallback: direct query
+        const { data: storesData } = await supabase
+          .from("stores")
           .select("id, name, category_id, verified, pin_lat, pin_lng, menu_photo")
           .order("created_at", { ascending: false })
-          .limit(100),
-        supabase.from("menu_items").select("id, store_id, image_url").limit(2000),
-      ]);
+          .limit(100);
+        allStores = storesData || [];
 
-      const allStores = storesRes.data || [];
-      const storeIdSet = new Set(allStores.map((s) => s.id));
-      const storeMenus = (menuRes.data || []).filter((m: any) => storeIdSet.has(m.store_id));
+        if (allStores.length > 0) {
+          const storeIds = allStores.map((s: any) => s.id);
+          const { data: menuData } = await supabase
+            .from("menu_items")
+            .select("store_id, image_url")
+            .in("store_id", storeIds);
+          const countMap = new Map<string, number>();
+          const imgMap = new Map<string, string>();
+          (menuData || []).forEach((m: any) => {
+            countMap.set(m.store_id, (countMap.get(m.store_id) || 0) + 1);
+            if (m.image_url && !imgMap.has(m.store_id)) imgMap.set(m.store_id, m.image_url);
+          });
+          menuSummary = Array.from(countMap.entries()).map(([store_id, menu_count]) => ({
+            store_id, menu_count, first_image: imgMap.get(store_id) || null
+          }));
+        }
+      }
 
       const menuCountMap = new Map<string, number>();
       const storeImageMap = new Map<string, string>();
-      const menuToStore = new Map<string, string>();
-      storeMenus.forEach((m: any) => {
-        menuToStore.set(m.id, m.store_id);
-        menuCountMap.set(m.store_id, (menuCountMap.get(m.store_id) || 0) + 1);
-        if (m.image_url && !storeImageMap.has(m.store_id)) {
-          storeImageMap.set(m.store_id, m.image_url);
-        }
+      menuSummary.forEach((row: any) => {
+        menuCountMap.set(row.store_id, Number(row.menu_count));
+        if (row.first_image) storeImageMap.set(row.store_id, row.first_image);
       });
 
-      return { allStores, menuCountMap, storeImageMap, menuToStore, menuIds: storeMenus.map((m: any) => m.id), storeIds: allStores.map((s) => s.id) };
+      return { allStores, menuCountMap, storeImageMap, storeIds: allStores.map((s: any) => s.id) };
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  // ─── Phase 2: DEFERRED enrichment (reviews, DNA, match) — only after essential loads ───
+  // ─── Phase 2: DEFERRED enrichment — single RPC (server-side aggregation) ───
+  // Replaces: 6 parallel chunkedIn queries + client-side Map building
+  // Now:      1 RPC with DB-side JOINs, returns pre-aggregated rows
   const { data: enrichData } = useQuery({
     queryKey: ["discover-enrich", user?.id ?? "anon"],
     queryFn: async () => {
-      const { menuIds, storeIds, menuToStore } = essentialData!;
+      const { storeIds } = essentialData!;
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      const [reviewsData, recentReviewsData, recentDnaData, userDnaData, allDnaData, allMenuRevData] = await Promise.all([
-        chunkedIn("reviews", "store_id", storeIds, "store_id, metric_id, score"),
-        chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id, created_at",
-          (q: any) => q.gte("created_at", sevenDaysAgo)),
-        chunkedIn("dish_dna", "menu_item_id", menuIds, "menu_item_id, created_at",
-          (q: any) => q.gte("created_at", sevenDaysAgo)),
-        user
-          ? supabase.from("dish_dna").select("component_name, selected_score").eq("user_id", user.id).limit(1000).then((r: any) => r.data || [])
-          : Promise.resolve([] as any[]),
-        chunkedIn("dish_dna", "menu_item_id", menuIds, "menu_item_id, component_name, selected_score"),
-        chunkedIn("menu_reviews", "menu_item_id", menuIds, "menu_item_id"),
-      ]);
+      const { data, error } = await (supabase as any).rpc("get_store_enrichment", {
+        p_store_ids: storeIds,
+        p_since: sevenDaysAgo,
+        p_user_id: user?.id ?? null,
+      });
+      if (error) throw error;
 
+      const reviewScores: any[]     = data?.review_scores     || [];
+      const recentActivity: any[]   = data?.recent_activity   || [];
+      const dnaCounts: any[]        = data?.dna_counts        || [];
+      const menuRevCounts: any[]    = data?.menu_rev_counts   || [];
+      const storeDnaProfile: any[]  = data?.store_dna_profile || [];
+      const userDnaList: any[]      = data?.user_dna          || [];
+
+      // Review scores: RPC returns (store_id, metric_id, avg_score, cnt)
       const metricMap = new Map<string, Map<string, { total: number; count: number }>>();
-      reviewsData.forEach((r: any) => {
+      reviewScores.forEach((r: any) => {
         if (!metricMap.has(r.store_id)) metricMap.set(r.store_id, new Map());
-        const sm = metricMap.get(r.store_id)!;
-        if (!sm.has(r.metric_id)) sm.set(r.metric_id, { total: 0, count: 0 });
-        const entry = sm.get(r.metric_id)!;
-        entry.total += r.score;
-        entry.count++;
+        const cnt = Number(r.cnt);
+        metricMap.get(r.store_id)!.set(r.metric_id, {
+          total: Number(r.avg_score) * cnt,
+          count: cnt,
+        });
       });
 
       const recentActivityMap = new Map<string, number>();
-      recentReviewsData.forEach((r: any) => {
-        const sid = menuToStore.get(r.menu_item_id);
-        if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
-      });
-      recentDnaData.forEach((d: any) => {
-        const sid = menuToStore.get(d.menu_item_id);
-        if (sid) recentActivityMap.set(sid, (recentActivityMap.get(sid) || 0) + 1);
-      });
-
-      const userPrefs = new Map<string, number>();
-      userDnaData.forEach((d: any) => {
-        if (d.selected_score !== 0) userPrefs.set(d.component_name, (userPrefs.get(d.component_name) || 0) + d.selected_score);
+      recentActivity.forEach((r: any) => {
+        recentActivityMap.set(r.store_id, Number(r.activity_count));
       });
 
       const dnaCountMap = new Map<string, number>();
-      const storeDnaMap = new Map<string, Map<string, { total: number; count: number }>>();
-      allDnaData.forEach((d: any) => {
-        const sid = menuToStore.get(d.menu_item_id);
-        if (!sid) return;
-        dnaCountMap.set(sid, (dnaCountMap.get(sid) || 0) + 1);
-        if (!storeDnaMap.has(sid)) storeDnaMap.set(sid, new Map());
-        const sm = storeDnaMap.get(sid)!;
-        if (!sm.has(d.component_name)) sm.set(d.component_name, { total: 0, count: 0 });
-        const entry = sm.get(d.component_name)!;
-        entry.total += d.selected_score;
-        entry.count++;
+      dnaCounts.forEach((r: any) => {
+        dnaCountMap.set(r.store_id, Number(r.dna_count));
       });
 
       const menuRevCountMap = new Map<string, number>();
-      allMenuRevData.forEach((r: any) => {
-        const sid = menuToStore.get(r.menu_item_id);
-        if (sid) menuRevCountMap.set(sid, (menuRevCountMap.get(sid) || 0) + 1);
+      menuRevCounts.forEach((r: any) => {
+        menuRevCountMap.set(r.store_id, Number(r.mr_count));
+      });
+
+      // Store DNA profile: (store_id, component_name, avg_score) — set count=1 so avg works in useMemo
+      const storeDnaMap = new Map<string, Map<string, { total: number; count: number }>>();
+      storeDnaProfile.forEach((r: any) => {
+        if (!storeDnaMap.has(r.store_id)) storeDnaMap.set(r.store_id, new Map());
+        storeDnaMap.get(r.store_id)!.set(r.component_name, {
+          total: Number(r.avg_score),
+          count: 1,
+        });
+      });
+
+      const userPrefs = new Map<string, number>();
+      userDnaList.forEach((r: any) => {
+        userPrefs.set(r.component_name, Number(r.pref_score));
       });
 
       return { metricMap, recentActivityMap, dnaCountMap, storeDnaMap, menuRevCountMap, userPrefs };

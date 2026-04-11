@@ -14,29 +14,54 @@ import SplitBillSheet from "@/components/SplitBillSheet";
 import { useQuery } from "@tanstack/react-query";
 
 /* ── Category-specific quick tags ── */
-const CATEGORY_TAGS: Record<string, { th: string[]; en: string[] }> = {
+type TagLang = "th" | "en" | "zh" | "ja" | "ko";
+const CATEGORY_TAGS: Record<string, Record<TagLang, string[]>> = {
   noodle: {
     th: ["เส้นหนึบ", "เส้นนุ่ม", "น้ำน้อย", "แยกน้ำ", "ไม่ใส่ถั่ว", "ไม่เผ็ด", "เผ็ดมาก", "ไม่ใส่ผักชี"],
     en: ["Firm noodles", "Soft noodles", "Less soup", "Soup separate", "No peanuts", "Not spicy", "Extra spicy", "No cilantro"],
+    zh: ["面条偏硬", "面条偏软", "少汤", "汤另上", "不加花生", "不辣", "加辣", "不加香菜"],
+    ja: ["麺かため", "麺やわらかめ", "スープ少なめ", "スープ別添え", "ピーナッツ抜き", "辛さなし", "辛さ増し", "パクチー抜き"],
+    ko: ["면 단단하게", "면 부드럽게", "국물 적게", "국물 따로", "땅콩 빼기", "안 맵게", "많이 맵게", "고수 빼기"],
   },
   rice: {
     th: ["ข้าวน้อย", "ข้าวเพิ่ม", "ไม่เผ็ด", "เผ็ดน้อย", "เผ็ดมาก", "ไม่ใส่ผัก", "ไม่ใส่ผักชี", "ไข่ดาวสุก"],
     en: ["Less rice", "Extra rice", "Not spicy", "Less spicy", "Extra spicy", "No veggies", "No cilantro", "Well-done egg"],
+    zh: ["米饭少一点", "米饭多一点", "不辣", "微辣", "加辣", "不加蔬菜", "不加香菜", "鸡蛋全熟"],
+    ja: ["ご飯少なめ", "ご飯多め", "辛さなし", "辛さ控えめ", "辛さ増し", "野菜抜き", "パクチー抜き", "目玉焼きよく焼き"],
+    ko: ["밥 적게", "밥 많이", "안 맵게", "덜 맵게", "많이 맵게", "채소 빼기", "고수 빼기", "달걀 완숙"],
   },
   cafe: {
     th: ["หวานน้อย", "ไม่หวาน", "เพิ่มช็อต", "นมออ๊ต", "ไม่ใส่น้ำแข็ง", "ใส่วิปครีม"],
     en: ["Less sweet", "No sugar", "Extra shot", "Oat milk", "No ice", "Add whipped cream"],
+    zh: ["少糖", "无糖", "加浓缩咖啡", "燕麦奶", "不加冰", "加奶油"],
+    ja: ["甘さ控えめ", "砂糖なし", "ショット追加", "オーツミルク", "氷なし", "ホイップクリームあり"],
+    ko: ["덜 달게", "무설탕", "샷 추가", "귀리 우유", "얼음 빼기", "휘핑크림 추가"],
   },
   dessert: {
     th: ["หวานน้อย", "ไม่หวาน", "เพิ่มท็อปปิ้ง", "ไม่ใส่ถั่ว", "ไม่ใส่นม"],
     en: ["Less sweet", "No sugar", "Extra topping", "No peanuts", "No milk"],
+    zh: ["少糖", "无糖", "加配料", "不加花生", "不加牛奶"],
+    ja: ["甘さ控えめ", "砂糖なし", "トッピング追加", "ピーナッツ抜き", "ミルクなし"],
+    ko: ["덜 달게", "무설탕", "토핑 추가", "땅콩 빼기", "우유 빼기"],
   },
 };
 
-const DEFAULT_TAGS = {
+const DEFAULT_TAGS: Record<TagLang, string[]> = {
   th: ["ไม่เผ็ด", "ไม่ใส่ผัก", "ไม่ใส่ผักชี", "เผ็ดน้อย", "เผ็ดมาก", "ไม่ใส่ถั่ว", "ไม่ใส่น้ำตาล", "แยกน้ำ"],
   en: ["Not spicy", "No veggies", "No cilantro", "Less spicy", "Extra spicy", "No peanuts", "No sugar", "Soup separate"],
+  zh: ["不辣", "不加蔬菜", "不加香菜", "微辣", "加辣", "不加花生", "不加糖", "汤另上"],
+  ja: ["辛さなし", "野菜抜き", "パクチー抜き", "辛さ控えめ", "辛さ増し", "ピーナッツ抜き", "砂糖なし", "スープ別添え"],
+  ko: ["안 맵게", "채소 빼기", "고수 빼기", "덜 맵게", "많이 맵게", "땅콩 빼기", "설탕 빼기", "국물 따로"],
 };
+
+function translateOpt(
+  map: Record<string, Record<string, string>> | null | undefined,
+  key: string,
+  lang: string
+): string {
+  if (!map || lang === "th") return key;
+  return map[key]?.[lang] || key;
+}
 
 const OrderSummary = () => {
   const navigate = useNavigate();
@@ -78,10 +103,8 @@ const OrderSummary = () => {
   const handleConfirm = async () => {
     if (!storeId || items.length === 0) {
       toast({
-        title: language === "th" ? "ไม่สามารถส่งออเดอร์ได้" : "Cannot submit order",
-        description: !storeId
-          ? (language === "th" ? "ไม่พบข้อมูลร้านค้า กรุณาเลือกร้านใหม่" : "Store not found. Please select a store again.")
-          : (language === "th" ? "ยังไม่มีรายการอาหาร กรุณาเลือกเมนู" : "No items in order. Please add menu items."),
+        title: t("orderSum.cannotSubmit", language),
+        description: !storeId ? t("orderSum.noStore", language) : t("orderSum.noItems", language),
         variant: "destructive",
       });
       return;
@@ -91,13 +114,15 @@ const OrderSummary = () => {
       const orderItems = items.map((i) => ({
         menuItemId: i.menuItemId,
         name: i.name,
+        nameTranslations: i.nameTranslations || undefined,
         price: i.price,
         quantity: i.quantity,
         type: i.type,
         note: i.note || undefined,
         selectedOptions: i.selectedOptions,
+        optionTranslations: i.optionTranslations || undefined,
       }));
-      const { error } = await supabase.from("orders").insert({
+      const { data: inserted, error } = await supabase.from("orders").insert({
         store_id: storeId,
         user_id: user?.id || null,
         guest_id: user ? null : guestId,
@@ -107,9 +132,8 @@ const OrderSummary = () => {
         total_price: totalPrice,
         notes: notes.trim() || null,
         table_number: tableNumber || null,
-      } as any);
+      } as any).select("id").single();
       if (error) throw error;
-      setConfirmed(true);
       // Send push notification to merchant
       supabase.functions.invoke("send-push", {
         body: {
@@ -120,6 +144,8 @@ const OrderSummary = () => {
           tag: `new-order-${Date.now()}`,
         },
       }).catch(() => {});
+      clearOrder();
+      navigate(`/order/${(inserted as any).id}`, { replace: true });
     } catch (err: any) {
       console.error("Order submit error:", err);
       toast({ title: "ส่งออเดอร์ไม่สำเร็จ", description: err.message, variant: "destructive" });
@@ -128,7 +154,7 @@ const OrderSummary = () => {
     }
   };
   const handleReview = () => navigate("/post-review");
-  const handleDone = () => { clearOrder(); navigate("/store-list"); };
+  const handleDone = () => { clearOrder(); navigate(user ? "/orders" : "/guest-orders"); };
 
   const handleRequestBill = async () => {
     if (!storeId || requestingBill) return;
@@ -211,10 +237,10 @@ const OrderSummary = () => {
                   <CheckCircle2 size={32} className="text-score-emerald" />
                 </div>
                 <p className="text-lg font-bold text-score-emerald">
-                  {language === "th" ? "✅ ชำระเงินเรียบร้อย!" : "✅ Payment complete!"}
+                  {t("orderSum.payDone", language)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {language === "th" ? "กำลังพาไปให้ฟีดแบค..." : "Redirecting to feedback..."}
+                  {t("orderSum.redirectFeedback", language)}
                 </p>
               </motion.div>
             ) : billRequested ? (
@@ -225,10 +251,10 @@ const OrderSummary = () => {
               >
                 <div className="text-3xl animate-bounce">💰</div>
                 <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                  {language === "th" ? "รอพนักงานมาเก็บเงิน..." : "Waiting for staff to collect payment..."}
+                  {t("orderSum.billWaiting", language)}
                 </p>
                 <p className="text-xs text-amber-600/70 dark:text-amber-400/60">
-                  {language === "th" ? "พนักงานได้รับแจ้งเตือนแล้ว" : "Staff has been notified"}
+                  {t("orderSum.billNotified", language)}
                 </p>
               </motion.div>
             ) : (
@@ -236,12 +262,12 @@ const OrderSummary = () => {
                 <motion.button whileTap={{ scale: 0.97 }} onClick={handleRequestBill} disabled={requestingBill}
                   className="flex-1 px-4 py-3.5 rounded-2xl bg-amber-500 text-white text-sm font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
                   <Receipt size={16} />
-                  {language === "th" ? "เก็บเงิน" : "Bill"}
+                  {t("orderSum.bill", language)}
                 </motion.button>
                 <motion.button whileTap={{ scale: 0.97 }} onClick={() => setSplitOpen(true)}
                   className="px-4 py-3.5 rounded-2xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center gap-2 border-2 border-primary/30">
                   <Split size={16} />
-                  {language === "th" ? "แยกบิล" : "Split"}
+                  {t("orderSum.split", language)}
                 </motion.button>
               </div>
             )}
@@ -300,22 +326,33 @@ const OrderSummary = () => {
                 className="rounded-2xl bg-surface-elevated border border-border/50 shadow-luxury px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-foreground truncate">{item.name}</h3>
+                    <h3 className="text-sm font-semibold text-foreground truncate">
+                      {language !== "th" && item.nameTranslations?.[language]
+                        ? item.nameTranslations[language]
+                        : item.name}
+                    </h3>
+                    {language !== "th" && item.nameTranslations?.[language] && (
+                      <p className="text-[10px] text-muted-foreground">{item.name}</p>
+                    )}
                     {item.selectedOptions && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {item.selectedOptions.noodleType && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
-                            🍜 {item.selectedOptions.noodleType}
+                            🍜 {translateOpt(item.optionTranslations?.noodleTypeTranslations, item.selectedOptions.noodleType, language)}
                             {item.selectedOptions.noodleTypePrice ? ` +฿${item.selectedOptions.noodleTypePrice}` : ""}
                           </span>
                         )}
                         {item.selectedOptions.noodleStyle && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
-                            🍲 {item.selectedOptions.noodleStyle}
+                            🍲 {translateOpt(item.optionTranslations?.noodleStyleTranslations, item.selectedOptions.noodleStyle, language)}
                             {item.selectedOptions.noodleStylePrice ? ` +฿${item.selectedOptions.noodleStylePrice}` : ""}
                           </span>
                         )}
-                        {item.selectedOptions.toppings?.map((tp) => <span key={tp} className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-emerald/10 text-score-emerald">{tp}</span>)}
+                        {item.selectedOptions.toppings?.map((tp) => (
+                          <span key={tp} className="text-[9px] px-1.5 py-0.5 rounded-md bg-score-emerald/10 text-score-emerald">
+                            {translateOpt(item.optionTranslations?.toppingTranslations, tp, language)}
+                          </span>
+                        ))}
                         {item.selectedOptions.addOns?.map((ao) => <span key={ao} className="text-[9px] px-1.5 py-0.5 rounded-md bg-accent/60 text-accent-foreground">+ {ao}</span>)}
                       </div>
                     )}
@@ -342,7 +379,7 @@ const OrderSummary = () => {
                     className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <MessageSquare size={10} />
-                    <span>{item.note ? item.note.slice(0, 30) + (item.note.length > 30 ? "…" : "") : (language === "th" ? "เพิ่มโน้ตเฉพาะจาน" : "Add item note")}</span>
+                    <span>{item.note ? item.note.slice(0, 30) + (item.note.length > 30 ? "…" : "") : t("orderSum.addItemNote", language)}</span>
                     <ChevronDown size={10} className={`transition-transform ${expandedNotes.has(item.menuItemId) ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence>
@@ -356,19 +393,21 @@ const OrderSummary = () => {
                       >
                         {/* Quick tags */}
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          {(language === "th" ? quickTags.th : quickTags.en).map((tag) => {
+                          {(quickTags[language as TagLang] ?? quickTags.en).map((tag, idx) => {
+                            // Always store Thai tag in note (kitchen reads Thai)
+                            const thaiTag = quickTags.th[idx] ?? tag;
                             const currentNote = item.note || "";
-                            const isActive = currentNote.includes(tag);
+                            const isActive = currentNote.includes(thaiTag);
                             return (
                               <button
                                 key={tag}
                                 type="button"
                                 onClick={() => {
                                   if (isActive) {
-                                    const updated = currentNote.replace(tag, "").replace(/,\s*,/g, ",").replace(/^,\s*|,\s*$/g, "").trim();
+                                    const updated = currentNote.replace(thaiTag, "").replace(/,\s*,/g, ",").replace(/^,\s*|,\s*$/g, "").trim();
                                     updateItemNote(item.menuItemId, updated);
                                   } else {
-                                    const updated = currentNote ? `${currentNote}, ${tag}` : tag;
+                                    const updated = currentNote ? `${currentNote}, ${thaiTag}` : thaiTag;
                                     updateItemNote(item.menuItemId, updated);
                                   }
                                 }}
@@ -386,7 +425,7 @@ const OrderSummary = () => {
                         <textarea
                           value={item.note || ""}
                           onChange={(e) => updateItemNote(item.menuItemId, e.target.value)}
-                          placeholder={language === "th" ? "พิมพ์เพิ่มเติม..." : "Type more..."}
+                          placeholder={t("orderSum.typeMore", language)}
                           rows={1}
                           maxLength={100}
                           className="w-full mt-2 bg-secondary/60 rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 border-0 outline-none resize-none focus:ring-1 focus:ring-score-emerald/30"
@@ -406,7 +445,7 @@ const OrderSummary = () => {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder={language === "th" ? "เช่น ไม่ใส่ผัก, ไม่เผ็ด, แพ้ถั่ว..." : "e.g. No vegetables, not spicy, nut allergy..."}
+                placeholder={t("orderSum.notesPlaceholder", language)}
                 rows={2}
                 maxLength={200}
                 className="w-full bg-secondary/60 rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 border-0 outline-none resize-none focus:ring-1 focus:ring-score-emerald/30"
@@ -431,7 +470,7 @@ const OrderSummary = () => {
             className="fixed bottom-6 left-4 right-4 z-50">
             <motion.button whileTap={{ scale: 0.97 }} onClick={handleConfirm} disabled={submitting}
               className="w-full py-4 rounded-2xl bg-score-emerald text-primary-foreground text-sm font-bold shadow-luxury disabled:opacity-50">
-              {submitting ? "กำลังส่ง..." : `${t("orderSum.confirmBtn", language)} · ฿${totalPrice.toLocaleString()}`}
+              {submitting ? t("orderSum.submitting", language) : `${t("orderSum.confirmBtn", language)} · ฿${totalPrice.toLocaleString()}`}
             </motion.button>
           </motion.div>
         )}

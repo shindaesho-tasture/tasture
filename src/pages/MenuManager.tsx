@@ -577,11 +577,14 @@ const MenuManager = () => {
                         className="w-full mt-1 px-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald transition-all"
                       />
                     </div>
-                    {form.type === "dual_price" && (
+                    {(form.type === "dual_price" || form.type === "noodle") && (
                       <div className="flex-1">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t("menuMgr.priceSpecial")}</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                          {form.type === "noodle" ? "💰 ราคาพิเศษ (ไซส์ใหญ่)" : t("menuMgr.priceSpecial")}
+                        </label>
                         <input
                           type="number"
+                          placeholder="ว่าง = ไม่มีสองราคา"
                           value={form.price_special ?? ""}
                           onChange={(e) => setForm((f) => ({ ...f, price_special: e.target.value ? Number(e.target.value) : null }))}
                           className="w-full mt-1 px-3 py-2.5 rounded-xl bg-secondary text-sm text-foreground outline-none focus:ring-1 focus:ring-score-emerald transition-all"

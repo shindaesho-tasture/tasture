@@ -34,7 +34,7 @@ const statusCfg: Record<string, { label: string; labelEn: string; color: string;
 const MerchantQueue = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { activeStore, loading: storeLoading } = useMerchant();
+  const { activeStore, loading: storeLoading, soundEnabled: soundOn, setSoundEnabled: setSoundOn } = useMerchant();
   const { language } = useLanguage();
   const { toast } = useToast();
   const isTh = language === "th";
@@ -43,8 +43,6 @@ const MerchantQueue = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [filter, setFilter] = useState<"active" | "all">("active");
-  const [soundOn, setSoundOn] = useState(true);
-
   // Auth guard
   useEffect(() => {
     if (authLoading || storeLoading) return;

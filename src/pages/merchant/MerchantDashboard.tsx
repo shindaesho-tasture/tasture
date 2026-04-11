@@ -16,7 +16,7 @@ const MerchantDashboard = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
-  const { stores, activeStore, setActiveStoreId, loading: storesLoading } = useMerchant();
+  const { stores, activeStore, setActiveStoreId, loading: storesLoading, soundEnabled } = useMerchant();
   const isTh = language === "th";
 
   const [stats, setStats] = useState({ todayOrders: 0, totalOrders: 0, menuItems: 0, reviews: 0, todayRevenue: 0 });
@@ -77,6 +77,30 @@ const MerchantDashboard = () => {
           const newOrder = payload.new as any;
           const price = Number(newOrder.total_price || 0);
 
+          // Sound + vibration
+          if (soundEnabled && newOrder.status === "pending") {
+            try {
+              const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+              ctx.resume().then(() => {
+                const playTone = (freq: number, start: number, dur: number) => {
+                  const osc = ctx.createOscillator();
+                  const gain = ctx.createGain();
+                  osc.type = "sine";
+                  osc.frequency.value = freq;
+                  gain.gain.setValueAtTime(0.5, ctx.currentTime + start);
+                  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + dur);
+                  osc.connect(gain).connect(ctx.destination);
+                  osc.start(ctx.currentTime + start);
+                  osc.stop(ctx.currentTime + start + dur);
+                };
+                playTone(880, 0, 0.15);
+                playTone(1100, 0.18, 0.15);
+                playTone(1320, 0.36, 0.25);
+              });
+            } catch {}
+            navigator.vibrate?.([100, 50, 100, 50, 200]);
+          }
+
           // Update stats in-place
           setStats((prev) => ({
             ...prev,
@@ -120,7 +144,7 @@ const MerchantDashboard = () => {
     { icon: QrCode, labelTh: "QR โต๊ะ", labelEn: "Table QR", path: "/m/qr", color: "bg-blue-500/15 text-blue-600 dark:text-blue-400", iconBg: "bg-blue-500/20" },
   ];
 
-  if (!user && !authLoading) return null;
+  if (!user && !authLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <PageTransition>

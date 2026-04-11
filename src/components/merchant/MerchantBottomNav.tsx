@@ -4,18 +4,17 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/lib/language-context";
 
 const merchantNav = [
-  { id: "dashboard", labelTh: "แดชบอร์ด", labelEn: "Dashboard", icon: LayoutDashboard, path: "/m" },
-  { id: "kitchen", labelTh: "ครัว", labelEn: "Kitchen", icon: ChefHat, path: "/m/kitchen" },
-  { id: "menu", labelTh: "เมนู", labelEn: "Menu", icon: UtensilsCrossed, path: "/m/menu" },
-  { id: "sales", labelTh: "ยอดขาย", labelEn: "Sales", icon: BarChart3, path: "/m/sales" },
-  { id: "profile", labelTh: "โปรไฟล์", labelEn: "Profile", icon: User, path: "/m/profile" },
+  { id: "dashboard", labelKey: "nav.m.dashboard", icon: LayoutDashboard, path: "/m" },
+  { id: "kitchen", labelKey: "nav.m.kitchen", icon: ChefHat, path: "/m/kitchen" },
+  { id: "menu", labelKey: "nav.m.menu", icon: UtensilsCrossed, path: "/m/menu" },
+  { id: "sales", labelKey: "nav.m.sales", icon: BarChart3, path: "/m/sales" },
+  { id: "profile", labelKey: "nav.m.profile", icon: User, path: "/m/profile" },
 ];
 
 const MerchantBottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { language } = useLanguage();
-  const isTh = language === "th";
+  const { t } = useLanguage();
 
   const activeId = merchantNav.find((item) => {
     if (item.path === "/m") return location.pathname === "/m";
@@ -48,7 +47,7 @@ const MerchantBottomNav = () => {
                     isActive ? "text-score-emerald" : "text-muted-foreground"
                   }`}
                 >
-                  {isTh ? item.labelTh : item.labelEn}
+                  {t(item.labelKey)}
                 </span>
               </motion.button>
             );

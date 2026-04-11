@@ -3,6 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 export interface OrderItem {
   menuItemId: string;
   name: string;
+  nameTranslations?: Record<string, string> | null;
   price: number;
   quantity: number;
   type: string;
@@ -16,6 +17,11 @@ export interface OrderItem {
     size?: "ธรรมดา" | "พิเศษ";
     addOns?: string[];
   };
+  optionTranslations?: {
+    noodleTypeTranslations?: Record<string, Record<string, string>>;
+    noodleStyleTranslations?: Record<string, Record<string, string>>;
+    toppingTranslations?: Record<string, Record<string, string>>;
+  } | null;
 }
 
 interface OrderContextType {
