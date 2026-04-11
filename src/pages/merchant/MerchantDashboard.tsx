@@ -11,7 +11,6 @@ import PageTransition from "@/components/PageTransition";
 import MerchantBottomNav from "@/components/merchant/MerchantBottomNav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 
 const MerchantDashboard = () => {
   const navigate = useNavigate();
@@ -23,13 +22,6 @@ const MerchantDashboard = () => {
   const [stats, setStats] = useState({ todayOrders: 0, totalOrders: 0, menuItems: 0, reviews: 0, todayRevenue: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [newOrderPulse, setNewOrderPulse] = useState(false);
-
-  // Global merchant notifications — sound + push on all events
-  const { pushSubscribed, pushSupported, requestPermissionAndSubscribe } = useMerchantNotifications({
-    storeId: activeStore?.id || null,
-    userId: user?.id || null,
-    language,
-  });
 
   useEffect(() => {
     if (authLoading) return;

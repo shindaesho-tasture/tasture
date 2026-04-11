@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
@@ -21,7 +21,6 @@ import TagInput from "@/components/menu/TagInput";
 import AddOnManager from "@/components/menu/AddOnManager";
 import MenuTranslationSheet from "@/components/menu/MenuTranslationSheet";
 import { preTranslateTags } from "@/lib/pre-translate";
-import { useMerchantNotifications } from "@/hooks/use-merchant-notifications";
 type MenuItemRow = {
   id: string;
   name: string;
@@ -67,13 +66,6 @@ const MerchantMenu = () => {
   const queryClient = useQueryClient();
   const storeId = activeStore?.id;
 
-  // Global merchant notifications
-  useMerchantNotifications({
-    storeId: storeId || null,
-    userId: user?.id || null,
-    language,
-  });
-
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -111,11 +103,14 @@ const MerchantMenu = () => {
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });
       const items = (menuRes || []) as (MenuItemRow & { sort_order: number })[];
-      setOrderedItems(items);
       return { items };
     },
     enabled: !!storeId,
   });
+
+  useEffect(() => {
+    if (data?.items) setOrderedItems(data.items);
+  }, [data?.items]);
 
 
   const deleteMutation = useMutation({
