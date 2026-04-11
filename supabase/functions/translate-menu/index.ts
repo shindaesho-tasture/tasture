@@ -23,7 +23,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3,
       clearTimeout(timer);
       if (attempt >= maxRetries) throw err;
       const wait = 1500 * attempt;
-      console.warn(`Attempt ${attempt} failed: ${err.message}, retrying in ${wait}ms`);
+      console.warn(`Attempt ${attempt} failed: ${(err as Error).message}, retrying in ${wait}ms`);
       await new Promise(r => setTimeout(r, wait));
     }
   }
@@ -152,7 +152,7 @@ JSON 배열만 반환: [{"index": 1, "name": "이름", "description": "설명"}]
           });
         }
       } catch (langErr) {
-        console.error(`Failed for ${lang} after retries:`, langErr.message);
+        console.error(`Failed for ${lang} after retries:`, (langErr as Error).message);
         continue;
       }
     }
@@ -169,7 +169,7 @@ JSON 배열만 반환: [{"index": 1, "name": "이름", "description": "설명"}]
     });
   } catch (err) {
     console.error("translate-menu error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
